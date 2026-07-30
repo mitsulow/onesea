@@ -204,8 +204,8 @@ function MonthCal({
     <div className="min-h-[60vh] bg-white" onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}>
       {/* 金の題字 */}
       <div className="px-4 py-2.5 text-center" style={{ background: "linear-gradient(135deg,#1a1208,#2a1a0a)" }}>
-        <div className="text-[9px] tracking-[4px] text-[#a0906a]">太陽黄経三百六十等分</div>
-        <div className="text-[18px] font-extrabold tracking-[3px] text-[#d4b96a]">祈りの手帳</div>
+        <div className="text-[9px] tracking-[4px] text-[#a0906a]">フシワカレツトキ</div>
+        <div className="text-[18px] font-extrabold tracking-[3px] text-[#d4b96a]">願い叶い手帳</div>
       </div>
 
       {/* 月ナビ */}

@@ -113,13 +113,60 @@ export function MorningOpening() {
       tw: Math.random() * Math.PI * 2,
     }));
 
-    /* 天の川銀河（渦状腕2本 + 中心バルジに星を集める） */
-    const gal = Array.from({ length: 3000 }, () => {
-      const arm = Math.random() < 0.5 ? 0 : Math.PI;
-      const rad = Math.pow(Math.random(), 0.55);
-      const ang = arm + rad * 5.2 + (Math.random() - 0.5) * (0.9 - rad * 0.45);
-      return { rad, ang, bright: Math.random(), tw: Math.random() * Math.PI * 2 };
-    });
+    /* 銀河系（渦巻銀河）を一度だけオフスクリーンに描き込む
+       — 毎フレームはこの絵をズーム表示するだけなので星を贅沢に使える */
+    const GAL = 1100;
+    const galCv = document.createElement("canvas");
+    galCv.width = GAL;
+    galCv.height = GAL;
+    const gg = galCv.getContext("2d")!;
+    const GC = GAL / 2;
+    let grad = gg.createRadialGradient(GC, GC, 0, GC, GC, GC * 0.98);
+    grad.addColorStop(0, "rgba(90,80,140,0.35)");
+    grad.addColorStop(0.5, "rgba(60,55,110,0.16)");
+    grad.addColorStop(1, "rgba(30,30,70,0)");
+    gg.fillStyle = grad;
+    gg.fillRect(0, 0, GAL, GAL);
+    for (let i = 0; i < 9000; i++) {
+      const arm = Math.random() < 0.5 ? 0 : 1;
+      const rad = Math.pow(Math.random(), 0.62);
+      const ang = arm * Math.PI + rad * 4.6 + (Math.random() - 0.5) * (1.1 - rad * 0.75);
+      const rr = rad * GC * 0.92 * (0.75 + Math.random() * 0.3);
+      const x = GC + Math.cos(ang) * rr;
+      const y = GC + Math.sin(ang) * rr;
+      const b = Math.random();
+      let col: string;
+      if (rad < 0.25) col = `rgba(255,238,205,${0.25 + b * 0.5})`; // 中心部は暖色
+      else if (b > 0.93) col = `rgba(255,190,210,${0.5 + b * 0.3})`; // 腕のピンク（星形成域）
+      else if (b > 0.55) col = `rgba(200,215,255,${0.25 + b * 0.45})`; // 青白い若い星
+      else col = `rgba(150,165,235,${0.12 + b * 0.3})`;
+      gg.fillStyle = col;
+      const sz = b > 0.9 ? 2.2 : b > 0.6 ? 1.6 : 1.1;
+      gg.fillRect(x, y, sz, sz);
+      if (b > 0.965) {
+        const gl = gg.createRadialGradient(x, y, 0, x, y, 5);
+        gl.addColorStop(0, "rgba(220,230,255,0.5)");
+        gl.addColorStop(1, "rgba(220,230,255,0)");
+        gg.fillStyle = gl;
+        gg.fillRect(x - 5, y - 5, 10, 10);
+      }
+    }
+    /* 中心バルジ: 白熱の核 + 暖色のかさ */
+    grad = gg.createRadialGradient(GC, GC, 0, GC, GC, GC * 0.3);
+    grad.addColorStop(0, "rgba(255,250,235,0.95)");
+    grad.addColorStop(0.25, "rgba(255,235,195,0.6)");
+    grad.addColorStop(1, "rgba(255,220,170,0)");
+    gg.fillStyle = grad;
+    gg.beginPath();
+    gg.arc(GC, GC, GC * 0.3, 0, Math.PI * 2);
+    gg.fill();
+    grad = gg.createRadialGradient(GC, GC, 0, GC, GC, GC * 0.09);
+    grad.addColorStop(0, "rgba(255,255,250,1)");
+    grad.addColorStop(1, "rgba(255,245,220,0)");
+    gg.fillStyle = grad;
+    gg.beginPath();
+    gg.arc(GC, GC, GC * 0.09, 0, Math.PI * 2);
+    gg.fill();
 
     /* らせん太陽系（djsadhu 風） */
     const AXIS = -0.1;
@@ -129,13 +176,16 @@ export function MorningOpening() {
     const perpY = dirX;
     const SOL_T0 = 6700;
     const SOL_T1 = 13900;
+    /* 8惑星（水金地火木土天海・実際に近い色味） */
     const helixPlanets = [
-      { r: 13, period: 900, phase: 0.0, color: "160,200,255", size: 1.7 },
-      { r: 19, period: 1300, phase: 2.1, color: "255,214,150", size: 2.2 },
-      { r: 26, period: 1750, phase: 4.2, color: "110,190,255", size: 2.6 },
-      { r: 33, period: 2300, phase: 1.2, color: "255,150,110", size: 2.0 },
-      { r: 44, period: 3200, phase: 3.4, color: "235,205,160", size: 3.6 },
-      { r: 54, period: 4200, phase: 5.5, color: "210,225,255", size: 3.1 },
+      { r: 10, period: 700, phase: 0.0, color: "175,175,185", size: 1.3 }, // 水星
+      { r: 15, period: 1050, phase: 2.6, color: "255,222,150", size: 2.0 }, // 金星
+      { r: 21, period: 1500, phase: 4.2, color: "110,190,255", size: 2.4 }, // 地球
+      { r: 27, period: 2000, phase: 1.2, color: "255,140,100", size: 1.8 }, // 火星
+      { r: 38, period: 2800, phase: 3.4, color: "240,205,160", size: 3.6 }, // 木星
+      { r: 48, period: 3700, phase: 5.5, color: "235,215,170", size: 3.2 }, // 土星
+      { r: 57, period: 4600, phase: 0.8, color: "170,230,240", size: 2.6 }, // 天王星
+      { r: 65, period: 5500, phase: 2.0, color: "130,170,255", size: 2.5 }, // 海王星
     ];
     const sunPos = (tau: number) => {
       const p = span(tau, SOL_T0, SOL_T1);
@@ -212,40 +262,16 @@ export function MorningOpening() {
       }
       g.globalAlpha = 1;
 
-      /* ---- 天の川 ---- */
+      /* ---- 銀河系（渦巻銀河・傾いた円盤 + ゆっくり自転しながらズーム） ---- */
       if (galIn > 0.01) {
         g.save();
         g.translate(W / 2, H * 0.42);
-        g.rotate(-0.42);
-        g.scale(galZoom, galZoom);
-        const bandLen = W * 0.62;
-        const bandWid = W * 0.16;
-        const halo = g.createRadialGradient(0, 0, 0, 0, 0, bandLen * 0.75);
-        halo.addColorStop(0, `rgba(255,246,224,${0.3 * galIn * cosmicAlpha})`);
-        halo.addColorStop(0.35, `rgba(180,190,235,${0.16 * galIn * cosmicAlpha})`);
-        halo.addColorStop(1, "rgba(140,150,220,0)");
-        g.fillStyle = halo;
-        g.save();
-        g.scale(1, bandWid / (bandLen * 0.75));
-        g.beginPath();
-        g.arc(0, 0, bandLen * 0.75, 0, Math.PI * 2);
-        g.fill();
-        g.restore();
-        for (const p of gal) {
-          const x = Math.cos(p.ang) * p.rad * bandLen * 0.62;
-          const y = Math.sin(p.ang) * p.rad * bandLen * 0.62 * 0.34; // 傾いた銀河円盤
-          const core = 1 - Math.min(1, p.rad * 1.15);
-          const twinkle = 0.7 + 0.3 * Math.sin(t / 700 + p.tw);
-          const a = galIn * cosmicAlpha * (0.14 + p.bright * 0.5 + core * 0.35) * twinkle;
-          g.fillStyle =
-            p.bright > 0.86
-              ? `rgba(255,240,214,${a})`
-              : p.bright > 0.5
-                ? `rgba(235,238,255,${a * 0.9})`
-                : `rgba(170,180,235,${a * 0.75})`;
-          const sz = (p.bright > 0.86 ? 1.6 : 1) / galZoom + 0.3;
-          g.fillRect(x, y, sz, sz);
-        }
+        g.rotate(-0.42 + t * 0.000018); // ごくゆっくり自転
+        g.scale(galZoom, galZoom * 0.42); // 斜めから見た円盤
+        g.globalAlpha = galIn * cosmicAlpha;
+        const gw = W * 0.88;
+        g.drawImage(galCv, -gw / 2, -gw / 2, gw, gw);
+        g.globalAlpha = 1;
         g.restore();
       }
 
@@ -258,67 +284,91 @@ export function MorningOpening() {
         g.scale(camZ, camZ);
         g.translate(-fx, -fy);
 
-        const TAIL = 2600;
-        g.lineWidth = 2.2 / camZ;
-        for (let s0 = TAIL; s0 > 0; s0 -= 90) {
+        /* 太陽の金の尾（淡い太グロー + 明るい芯の二重描き） */
+        const TAIL = 3000;
+        for (let s0 = TAIL; s0 > 0; s0 -= 80) {
           const a = sunPos(t - s0);
-          const b = sunPos(t - s0 + 90);
+          const b = sunPos(t - s0 + 80);
           const k = 1 - s0 / TAIL;
-          g.strokeStyle = `rgba(255,210,110,${0.38 * k * solIn * cosmicAlpha})`;
+          const al = k * solIn * cosmicAlpha;
+          g.strokeStyle = `rgba(255,200,90,${0.14 * al})`;
+          g.lineWidth = 7 / camZ;
+          g.beginPath();
+          g.moveTo(a.x, a.y);
+          g.lineTo(b.x, b.y);
+          g.stroke();
+          g.strokeStyle = `rgba(255,224,140,${0.42 * al})`;
+          g.lineWidth = 2 / camZ;
           g.beginPath();
           g.moveTo(a.x, a.y);
           g.lineTo(b.x, b.y);
           g.stroke();
         }
 
+        /* 惑星のらせん軌跡（本家風: 淡いグロー + 芯の二重、奥は暗く手前は明るく） */
         for (const pl of helixPlanets) {
-          const TRAIL = pl.period * 1.7;
-          const STEP = Math.max(30, pl.period / 34);
-          let prev: { x: number; y: number } | null = null;
+          const TRAIL = pl.period * 2.0;
+          const STEP = Math.max(26, pl.period / 32);
+          const pts: { x: number; y: number; front: boolean }[] = [];
           for (let s0 = TRAIL; s0 >= 0; s0 -= STEP) {
             const tau = t - s0;
             const base = sunPos(tau);
             const th = (tau / pl.period) * Math.PI * 2 + pl.phase;
             const off = Math.sin(th) * pl.r;
             const depth = Math.cos(th);
-            const px = base.x + perpX * off + dirX * depth * pl.r * 0.22;
-            const py = base.y + perpY * off + dirY * depth * pl.r * 0.22;
-            const front = depth > 0;
-            if (prev) {
-              const k = 1 - s0 / TRAIL;
-              const a = (front ? 0.5 : 0.22) * k * solIn * cosmicAlpha;
-              g.strokeStyle = `rgba(${pl.color},${a})`;
-              g.lineWidth = (front ? 1.5 : 1) / camZ;
-              g.beginPath();
-              g.moveTo(prev.x, prev.y);
-              g.lineTo(px, py);
-              g.stroke();
-            }
-            prev = { x: px, y: py };
+            pts.push({
+              x: base.x + perpX * off + dirX * depth * pl.r * 0.22,
+              y: base.y + perpY * off + dirY * depth * pl.r * 0.22,
+              front: depth > 0,
+            });
           }
-          if (prev) {
-            const glow = g.createRadialGradient(prev.x, prev.y, 0, prev.x, prev.y, pl.size * 3.2);
-            glow.addColorStop(0, `rgba(${pl.color},${0.85 * solIn * cosmicAlpha})`);
-            glow.addColorStop(1, `rgba(${pl.color},0)`);
-            g.fillStyle = glow;
+          for (let i = 1; i < pts.length; i++) {
+            const p0 = pts[i - 1];
+            const p1 = pts[i];
+            const k = i / pts.length;
+            const base = (p1.front ? 1 : 0.42) * k * solIn * cosmicAlpha;
+            g.strokeStyle = `rgba(${pl.color},${0.16 * base})`;
+            g.lineWidth = 4.5 / camZ;
             g.beginPath();
-            g.arc(prev.x, prev.y, pl.size * 3.2, 0, Math.PI * 2);
-            g.fill();
-            g.fillStyle = `rgba(255,255,255,${0.9 * solIn * cosmicAlpha})`;
+            g.moveTo(p0.x, p0.y);
+            g.lineTo(p1.x, p1.y);
+            g.stroke();
+            g.strokeStyle = `rgba(${pl.color},${0.55 * base})`;
+            g.lineWidth = 1.3 / camZ;
             g.beginPath();
-            g.arc(prev.x, prev.y, pl.size * 0.7, 0, Math.PI * 2);
-            g.fill();
+            g.moveTo(p0.x, p0.y);
+            g.lineTo(p1.x, p1.y);
+            g.stroke();
           }
+          const hp = pts[pts.length - 1];
+          const glow = g.createRadialGradient(hp.x, hp.y, 0, hp.x, hp.y, pl.size * 3.4);
+          glow.addColorStop(0, `rgba(${pl.color},${0.9 * solIn * cosmicAlpha})`);
+          glow.addColorStop(1, `rgba(${pl.color},0)`);
+          g.fillStyle = glow;
+          g.beginPath();
+          g.arc(hp.x, hp.y, pl.size * 3.4, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = `rgba(255,255,255,${0.92 * solIn * cosmicAlpha})`;
+          g.beginPath();
+          g.arc(hp.x, hp.y, pl.size * 0.7, 0, Math.PI * 2);
+          g.fill();
         }
 
-        const corona = g.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, 46);
-        corona.addColorStop(0, `rgba(255,250,230,${0.95 * solIn * cosmicAlpha})`);
-        corona.addColorStop(0.25, `rgba(255,214,110,${0.75 * solIn * cosmicAlpha})`);
-        corona.addColorStop(1, "rgba(255,170,60,0)");
-        g.fillStyle = corona;
-        g.beginPath();
-        g.arc(sun.x, sun.y, 46, 0, Math.PI * 2);
-        g.fill();
+        /* 太陽コロナ（3層） */
+        const coronaLayers: [number, string, string][] = [
+          [78, "rgba(255,180,70,0.20)", "rgba(255,150,50,0)"],
+          [46, "rgba(255,214,110,0.75)", "rgba(255,170,60,0)"],
+          [22, "rgba(255,252,240,0.98)", "rgba(255,230,160,0)"],
+        ];
+        for (const [rr, c0, c1] of coronaLayers) {
+          const corona = g.createRadialGradient(sun.x, sun.y, 0, sun.x, sun.y, rr);
+          corona.addColorStop(0, c0.replace(/[\d.]+\)$/, (m) => String(parseFloat(m) * solIn * cosmicAlpha) + ")"));
+          corona.addColorStop(1, c1);
+          g.fillStyle = corona;
+          g.beginPath();
+          g.arc(sun.x, sun.y, rr, 0, Math.PI * 2);
+          g.fill();
+        }
         g.restore();
       }
 
