@@ -1,4 +1,4 @@
-import { LINKS, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
+import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
 import { CotozuteComposer } from "./CotozuteComposer";
 
 interface Post {
@@ -53,7 +53,7 @@ export async function CotozuteFeed() {
       <CotozuteComposer />
       {posts.length === 0 ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">
-          言の葉を読み込めませんでした
+          まだ言の葉がありません。最初のひとことをどうぞ 🌿
         </p>
       ) : (
         posts.slice(0, 8).map((p, i) => {
@@ -107,14 +107,6 @@ export async function CotozuteFeed() {
           );
         })
       )}
-      <a
-        href={LINKS.rakuzaCotozute}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-3 block rounded-xl border border-[#e0d6c6] bg-white py-3 text-center text-[13.5px] font-extrabold text-[#8a7a5a] no-underline"
-      >
-        Cotozute をすべて見る ↗
-      </a>
     </section>
   );
 }

@@ -19,8 +19,9 @@ export const LINKS = {
   rakuzaCotozute: "https://rakuza-ten.vercel.app/posts",
 } as const;
 
+/** Onesea 専用 Supabase プロジェクト（東京）。他サービスと認証を共有しない */
 export const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://upfoawnqjfprepanepqj.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://hpgofjkxqguzgrptchqj.supabase.co";
 export const SUPABASE_ANON_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwZm9hd25xamZwcmVwYW5lcHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzU5NTksImV4cCI6MjA5MjI1MTk1OX0.X8sCtshUgyajijFDNIAVipI2ISnJ4eAX5PGw_sSGZtk";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZ29mamt4cWd1emdycHRjaHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MTE4ODEsImV4cCI6MjEwMDk4Nzg4MX0.RUJeAih2h08bfOPiM6DJfm-_cbTx3X4FCheJ8ZUJhKY";

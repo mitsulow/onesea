@@ -2,6 +2,8 @@ import { Otohikari } from "@/components/Otohikari";
 import { TechoCalendar } from "@/components/TechoCalendar";
 import { CotozuteFeed } from "@/components/CotozuteFeed";
 import { Orbital } from "@/components/Orbital";
+import { AuthGate } from "@/components/AuthGate";
+import { HeaderBar } from "@/components/HeaderBar";
 import { LINKS } from "@/lib/config";
 
 const DOORS = [
@@ -45,34 +47,11 @@ const DOORS = [
 
 export default function Home() {
   return (
-    <main className="pb-10">
-      {/* ロゴヘッダー + 右上MY */}
-      <header
-        className="px-5 pb-4 pt-5 text-[#e8f0f6]"
-        style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-2xl font-extrabold tracking-[3px] text-[#f0e6c8]">
-              Onesea
-            </span>
-            <span className="ml-2 text-[11px] tracking-widest text-[#7a9ab4]">
-              すべての海は、ひとつ。
-            </span>
-          </div>
-          <a
-            href={LINKS.rakuzaMyPage}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-xl px-3 py-1.5 text-[11px] font-extrabold tracking-wider text-[#1a2432] no-underline"
-            style={{ background: "#d4b96a" }}
-          >
-            🪪 MY
-          </a>
-        </div>
-      </header>
+    <AuthGate>
+      <main className="pb-10">
+        <HeaderBar />
 
-      <div className="space-y-3.5 px-4 pt-4">
+        <div className="space-y-3.5 px-4 pt-4">
         {/* ① OTOHIKARI */}
         <Otohikari />
 
@@ -122,7 +101,8 @@ export default function Home() {
             🌊 Onesea — すべての海は、ひとつ。
           </div>
         </footer>
-      </div>
-    </main>
+        </div>
+      </main>
+    </AuthGate>
   );
 }

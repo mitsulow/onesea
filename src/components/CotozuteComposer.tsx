@@ -64,8 +64,6 @@ export function CotozuteComposer() {
       user_id: user.id,
       body: body.trim(),
       image_urls: [],
-      likes_count: 0,
-      comments_count: 0,
     });
 
     setSending(false);
@@ -85,8 +83,6 @@ export function CotozuteComposer() {
       <div className="mb-2 rounded-xl border border-[#e8dcc4] bg-white p-3 text-center">
         <p className="mb-2 text-[12.5px] leading-relaxed text-[#8a8070]">
           いまの気持ちを、ひとこと。
-          <br />
-          楽市楽座と共通のアカウントで書き込めます。
         </p>
         <button
           onClick={login}
