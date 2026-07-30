@@ -25,10 +25,11 @@ export function HeaderBar() {
 
   return (
     <header
-      className="flex items-center justify-between px-5 pb-3 pt-4"
+      className="relative flex items-center justify-center px-5 py-2"
       style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
     >
-      <h1 className="text-lg font-extrabold tracking-[5px] text-[#f0e6c8]">マイページ</h1>
+      <h1 className="text-[12px] font-bold tracking-[4px] text-[#f0e6c8]">マイページ</h1>
+      <span className="absolute right-4 top-1/2 -translate-y-1/2">
       <Link href="/my" aria-label="マイページ">
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -36,14 +37,15 @@ export function HeaderBar() {
             src={avatar}
             alt=""
             referrerPolicy="no-referrer"
-            className="h-9 w-9 rounded-full border-2 border-[#d4b96a]/70 object-cover"
+            className="h-8 w-8 rounded-full border-2 border-[#d4b96a]/70 object-cover"
           />
         ) : (
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#d4b96a]/70 text-lg">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#d4b96a]/70 text-lg">
             🌊
           </span>
         )}
       </Link>
+      </span>
     </header>
   );
 }
