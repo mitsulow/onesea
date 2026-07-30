@@ -76,7 +76,7 @@ export function Otohikari() {
         background: "linear-gradient(160deg,#0a1826,#12283a)",
         border: "none",
         borderRadius: 0,
-        margin: "0 -16px",
+        margin: "0 -16px 0 -16px",
       }}
     >
       <div className="flex items-baseline justify-between">

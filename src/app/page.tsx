@@ -1,9 +1,8 @@
 import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
-import { TechoCalendar } from "@/components/TechoCalendar";
+import { InoriTecho } from "@/components/InoriTecho";
 import { CotozuteFeed } from "@/components/CotozuteFeed";
 import { AuthGate } from "@/components/AuthGate";
-import { ProfileSetup } from "@/components/ProfileSetup";
 import { HeaderBar } from "@/components/HeaderBar";
 
 
@@ -13,8 +12,7 @@ export default function Home() {
       <main className="pb-10">
         <HeaderBar />
 
-        <div className="space-y-3.5 px-4 pt-4">
-        <ProfileSetup />
+        <div className="space-y-3.5 px-4 pb-2">
         {/* ① OTOHIKARI（本番: 実測周波数・リアルタイム人数） */}
         <Otohikari />
 
@@ -24,11 +22,8 @@ export default function Home() {
         {/* ② Cotozute */}
         <CotozuteFeed />
 
-        {/* ③ 手帳 */}
-        <section className="card px-2.5 py-3">
-          <div className="sec mb-2 pl-2">📖 手 帳</div>
-          <TechoCalendar />
-        </section>
+        {/* ③ 祈りの手帳 */}
+        <InoriTecho />
 
         {/* フッター */}
         <footer className="pb-4 pt-3 text-center">

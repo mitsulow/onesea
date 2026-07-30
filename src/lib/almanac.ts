@@ -132,6 +132,102 @@ export function nextMoons(count: number, fromMs = Date.now()): MoonEvent[] {
   return res.sort((a, b) => a.time - b.time).slice(0, count);
 }
 
+/**
+ * 太陽の視黄経（Meeus 高精度短式・誤差 ~0.0006° ≈ 時刻で約1分）。
+ * 静的な361点テーブルに依存しないので、どの年でも節分かれつ刻を計算できる。
+ */
+export function sunLongitudeAt(msUtc: number): number {
+  const jd = msUtc / 86400000 + 2440587.5;
+  const T = (jd - 2451545.0) / 36525.0;
+  const L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
+  const M = ((357.52911 + 35999.05029 * T - 0.0001537 * T * T) * Math.PI) / 180;
+  const C =
+    (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M) +
+    (0.019993 - 0.000101 * T) * Math.sin(2 * M) +
+    0.000289 * Math.sin(3 * M);
+  const O = ((125.04 - 1934.136 * T) * Math.PI) / 180;
+  let lam = (L0 + C - 0.00569 - 0.00478 * Math.sin(O)) % 360;
+  if (lam < 0) lam += 360;
+  return lam;
+}
+
+function jstDateKey(ms: number): string {
+  return new Date(ms + 9 * 3600000).toISOString().slice(0, 10);
+}
+function jstTime(ms: number): string {
+  return new Date(ms + 9 * 3600000).toISOString().slice(11, 16);
+}
+
+/** [t0,t1] の間に太陽黄経が整数度を横切る時刻を全て求める（二分法・分単位） */
+export function computeNodes(t0: number, t1: number): Array<{ deg: number; ms: number }> {
+  const res: Array<{ deg: number; ms: number }> = [];
+  const step = 6 * 3600000;
+  let prev = sunLongitudeAt(t0);
+  for (let t = t0 + step; t <= t1 + step; t += step) {
+    const cur = sunLongitudeAt(t);
+    let d0 = Math.floor(prev);
+    let d1 = Math.floor(cur);
+    if (cur < prev) d1 += 360; // 359→0 の折り返し
+    for (let d = d0 + 1; d <= d1; d++) {
+      const target = ((d % 360) + 360) % 360;
+      let a = t - step;
+      let b = t;
+      for (let i = 0; i < 24; i++) {
+        const m = (a + b) / 2;
+        const diff = ((sunLongitudeAt(m) - target + 540) % 360) - 180;
+        if (diff < 0) a = m;
+        else b = m;
+      }
+      res.push({ deg: target, ms: (a + b) / 2 });
+    }
+    prev = cur;
+  }
+  return res;
+}
+
+function levelOfDeg(deg: number): 1 | 2 | 3 | 4 {
+  if (SHISHI.has(deg)) return 4;
+  if (SEKKI[deg]) return 3;
+  if (KOU[deg]) return 2;
+  return 1;
+}
+
+/** 月単位の節分かれつ刻マップ（天文計算・キャッシュつき） */
+const monthCache = new Map<string, Record<string, NodeEvent[]>>();
+export function monthNodeEvents(year: number, month0: number): Record<string, NodeEvent[]> {
+  const key = `${year}-${month0}`;
+  const hit = monthCache.get(key);
+  if (hit) return hit;
+  // 対象月の前後1日ぶん余裕を持って計算（JST基準）
+  const t0 = Date.UTC(year, month0, 1) - 9 * 3600000 - 86400000;
+  const t1 = Date.UTC(year, month0 + 1, 1) - 9 * 3600000 + 86400000;
+  const map: Record<string, NodeEvent[]> = {};
+  for (const { deg, ms } of computeNodes(t0, t1)) {
+    const k = jstDateKey(ms);
+    (map[k] ??= []).push({
+      deg,
+      time: jstTime(ms),
+      level: levelOfDeg(deg),
+      sekki: SEKKI[deg],
+      kou: KOU[deg],
+    });
+  }
+  monthCache.set(key, map);
+  return map;
+}
+
+/** 日付キーの節分かれつ刻イベント（天文計算版） */
+export function eventsOfComputed(dateKey: string): NodeEvent[] {
+  const [y, m] = dateKey.split("-").map(Number);
+  return monthNodeEvents(y, m - 1)[dateKey] ?? [];
+}
+
+export function bestOfComputed(dateKey: string): NodeEvent | null {
+  const events = eventsOfComputed(dateKey);
+  if (!events.length) return null;
+  return events.reduce((a, b) => (b.level > a.level ? b : a));
+}
+
 export const YOBI = ["日", "月", "火", "水", "木", "金", "土"];
 
 /** 端末ローカル（JST想定）の "YYYY-MM-DD" */

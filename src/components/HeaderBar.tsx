@@ -25,9 +25,10 @@ export function HeaderBar() {
 
   return (
     <header
-      className="flex items-center justify-end px-4 pb-2.5 pt-3"
+      className="flex items-center justify-between px-5 pb-3 pt-4"
       style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
     >
+      <h1 className="text-lg font-extrabold tracking-[5px] text-[#f0e6c8]">マイページ</h1>
       <Link href="/my" aria-label="マイページ">
         {avatar ? (
           // eslint-disable-next-line @next/next/no-img-element

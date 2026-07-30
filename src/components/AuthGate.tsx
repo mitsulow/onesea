@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { Onboarding } from "./Onboarding";
 
 /**
  * ログインゲート。onesea.vercel.app にアクセスしたら、まず
@@ -11,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,6 +29,20 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setOnboarded(null);
+      return;
+    }
+    const supabase = createClient();
+    supabase
+      .from("profiles")
+      .select("onboarded_at")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setOnboarded(!!data?.onboarded_at));
+  }, [user]);
 
   const login = async () => {
     setError(null);
@@ -100,6 +116,21 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         </p>
       </div>
     );
+  }
+
+  if (onboarded === null) {
+    return (
+      <div
+        className="flex min-h-screen items-center justify-center"
+        style={{ background: "linear-gradient(170deg,#0e1e2e 0%,#14324a 62%,#1e4a66 100%)" }}
+      >
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#d4b96a] border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!onboarded) {
+    return <Onboarding user={user} onDone={() => setOnboarded(true)} />;
   }
 
   return <>{children}</>;

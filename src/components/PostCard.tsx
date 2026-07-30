@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
 
@@ -27,6 +27,7 @@ export function PostCard({
   const [likeCount, setLikeCount] = useState(post.likes?.[0]?.count ?? 0);
   const commentCount = post.comments?.[0]?.count ?? 0;
   const [gone, setGone] = useState(false);
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   if (gone) return null;
 
   const onLike = async () => {
@@ -34,6 +35,17 @@ export function PostCard({
     setIsLiked(!isLiked);
     setLikeCount((c) => c + (isLiked ? -1 : 1));
     await toggleLike(post.id, me.id, isLiked);
+  };
+
+  const startPress = () => {
+    if (me?.id !== post.user_id) return;
+    pressTimer.current = setTimeout(() => onDelete(), 600);
+  };
+  const endPress = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
   };
 
   const onDelete = async () => {
@@ -62,7 +74,15 @@ export function PostCard({
   );
 
   return (
-    <div className="flex gap-2.5 border-b border-[#f2ece0] py-2.5">
+    <div
+      className="flex gap-2.5 border-b border-[#f2ece0] py-2.5"
+      onTouchStart={startPress}
+      onTouchEnd={endPress}
+      onTouchMove={endPress}
+      onMouseDown={startPress}
+      onMouseUp={endPress}
+      onMouseLeave={endPress}
+    >
       <div className="flex-shrink-0">
         {pr?.username ? (
           <Link href={`/u/${pr.username}`} aria-label={`${pr.display_name ?? ""}のマイページ`}>
