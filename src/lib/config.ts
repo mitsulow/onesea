@@ -16,6 +16,16 @@ export const TARGET_HZ = 8.0219032748;
 /** シューマン共振 実測データ（公式API v1・凍結スキーマ） */
 export const SCHUMANN_DATA_URL = "https://mitsulow.github.io/0Lei/schumann_data.json";
 
+/**
+ * シューマン音© 音源（令和八年夏至点）。
+ * 初回アクセス時に端末へ保存し、以後はローカル再生 — 運営の帯域はほぼゼロ。
+ * 一次配信は jsDelivr（GitHub の無料CDN）、失敗時は自サイト配信にフォールバック。
+ */
+export const AUDIO = {
+  url: "https://cdn.jsdelivr.net/gh/mitsulow/onesea@main/public/audio/schumann_r8_geshi.mp3",
+  fallbackUrl: "/audio/schumann_r8_geshi.mp3",
+} as const;
+
 export const LINKS = {
   sekaimura: "https://sekaimura-gold.vercel.app",
   mmm: "https://mastermindmembers.net",

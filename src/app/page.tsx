@@ -1,4 +1,5 @@
 import { Otohikari } from "@/components/Otohikari";
+import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { TechoCalendar } from "@/components/TechoCalendar";
 import { CotozuteFeed } from "@/components/CotozuteFeed";
 import { Orbital } from "@/components/Orbital";
@@ -54,8 +55,11 @@ export default function Home() {
 
         <div className="space-y-3.5 px-4 pt-4">
         <ProfileSetup />
-        {/* ① OTOHIKARI（本番: 実測周波数・リアルタイム人数・再生） */}
+        {/* ① OTOHIKARI（本番: 実測周波数・リアルタイム人数） */}
         <Otohikari />
+
+        {/* ②シューマン音©（令和八年夏至点）— 端末保存で再生 */}
+        <SchumannAudioPlayer />
 
         {/* ② Cotozute */}
         <CotozuteFeed />
