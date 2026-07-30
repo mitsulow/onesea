@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { BottomNav } from "@/components/BottomNav";
+import { PullToReload } from "@/components/PullToReload";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default function RootLayout({
     <html lang="ja">
       <body>
         <div className="mx-auto min-h-screen max-w-[480px] bg-washi pb-14">
+          <PullToReload />
           {children}
           <BottomNav />
         </div>

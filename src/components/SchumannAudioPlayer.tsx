@@ -261,8 +261,16 @@ export function SchumannAudioPlayer() {
             className="w-full accent-[#8a5aff]"
             aria-label="再生位置"
           />
-          <div className="flex justify-between text-[10.5px] leading-none text-white/85">
+          <div className="flex items-center justify-between text-[10.5px] leading-none text-white/85">
             <span className="num">{fmt(cur)}</span>
+            <a
+              href="https://mitsulow.github.io/schumann/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-bold text-white underline decoration-white/50 underline-offset-2"
+            >
+              今日のシューマン共振 ↗
+            </a>
             <span className="num">{fmt(dur || SCHUMANN_FALLBACK_SEC)}</span>
           </div>
         </div>

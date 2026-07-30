@@ -7,6 +7,14 @@ import { ensureProfile } from "@/lib/cotozute";
 import { EmbedCard, OGPEmbed } from "./EmbedCard";
 import { SnsIcon } from "./SnsIcon";
 import { ImagePair, uploadImagePair } from "@/lib/images";
+import promptsData from "@/data/cotozute-prompts.json";
+
+const DAILY_PROMPTS: string[] = promptsData.prompts;
+function todayPrompt(): string {
+  const now = new Date();
+  const doy = Math.floor((now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000);
+  return DAILY_PROMPTS[doy % DAILY_PROMPTS.length];
+}
 
 const URL_REGEX = /https?:\/\/[^\s]+/g;
 
@@ -168,7 +176,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
         className="mb-2 w-full rounded-xl border border-[#e8dcc4] px-3.5 py-3 text-left text-[13.5px] text-[#8a8070]"
         style={{ background: "linear-gradient(135deg,#fffaf0 0%,#fdf6e9 100%)" }}
       >
-        ✏️ 今日の出来事 ・ 嬉しかったこと ・ 仲間に伝えたいこと…
+        ✏️ {todayPrompt()}
       </button>
     );
   }
@@ -178,7 +186,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="今日の出来事を共有しよう..."
+        placeholder={todayPrompt()}
         maxLength={500}
         rows={3}
         autoFocus

@@ -445,6 +445,7 @@ function BottomSheet({
     <>
       <div onClick={onClose} className="fixed inset-0 z-40 mx-auto max-w-[480px]" style={{ background: "rgba(20,16,10,0.28)" }} />
       <div
+        data-no-pull
         className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-[480px] -translate-x-1/2 flex-col overflow-hidden bg-white"
         style={{
           height: expanded ? "92vh" : "58vh",
