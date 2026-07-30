@@ -113,13 +113,13 @@ export function MorningOpening() {
       tw: Math.random() * Math.PI * 2,
     }));
 
-    /* 天の川 */
-    const gal = Array.from({ length: 1500 }, () => ({
-      along: (Math.random() - 0.5) * 2,
-      spread: (Math.random() + Math.random() + Math.random() - 1.5) / 1.5,
-      bright: Math.random(),
-      tw: Math.random() * Math.PI * 2,
-    }));
+    /* 天の川銀河（渦状腕2本 + 中心バルジに星を集める） */
+    const gal = Array.from({ length: 3000 }, () => {
+      const arm = Math.random() < 0.5 ? 0 : Math.PI;
+      const rad = Math.pow(Math.random(), 0.55);
+      const ang = arm + rad * 5.2 + (Math.random() - 0.5) * (0.9 - rad * 0.45);
+      return { rad, ang, bright: Math.random(), tw: Math.random() * Math.PI * 2 };
+    });
 
     /* らせん太陽系（djsadhu 風） */
     const AXIS = -0.1;
@@ -157,8 +157,9 @@ export function MorningOpening() {
 
       /* ---- フェーズ ---- */
       const starIn = span(t, 0, 1400);
-      const galIn = span(t, 1000, 3100) * (1 - span(t, 6200, 7900) * 0.82);
-      const galZoom = 1 + easeInOut(span(t, 2200, 7900)) * 2.4;
+      /* 銀河はズームし続けながら（ピタッと止まらない）太陽系にバトンを渡す */
+      const galIn = span(t, 1000, 3100) * (1 - span(t, 6800, 9600));
+      const galZoom = 1 + easeInOut(span(t, 2200, 10600)) * 3.6;
       /* カメラ: らせん太陽系ごと 3番目の惑星（地球）へクローズアップしていく */
       const camT = easeInOut(span(t, 12200, 15400));
       const fPl = helixPlanets[2];
@@ -231,9 +232,9 @@ export function MorningOpening() {
         g.fill();
         g.restore();
         for (const p of gal) {
-          const x = p.along * bandLen;
-          const y = p.spread * bandWid * (1 - Math.abs(p.along) * 0.45);
-          const core = 1 - Math.min(1, (Math.abs(p.along) * 1.2 + Math.abs(p.spread)) * 0.85);
+          const x = Math.cos(p.ang) * p.rad * bandLen * 0.62;
+          const y = Math.sin(p.ang) * p.rad * bandLen * 0.62 * 0.34; // 傾いた銀河円盤
+          const core = 1 - Math.min(1, p.rad * 1.15);
           const twinkle = 0.7 + 0.3 * Math.sin(t / 700 + p.tw);
           const a = galIn * cosmicAlpha * (0.14 + p.bright * 0.5 + core * 0.35) * twinkle;
           g.fillStyle =
@@ -321,14 +322,16 @@ export function MorningOpening() {
         g.restore();
       }
 
-      /* ---- 地球（NASA 実画像）: クローズアップした3番目の惑星からゆっくり浮かび上がる ---- */
-      const earthAppear = span(t, 13100, 15700);
+      /* ---- 地球（NASA 実画像）: ズーム中からもうフェードで重なり始めている ---- */
+      const earthAppear = span(t, 12300, 15200);
       if (earthAppear > 0.001) {
-        const cx = fx + panX; // カメラの固定点 = 3番目の惑星の見かけ位置
-        const cy = fy + panY;
-        const r = 5 + (tr - 5) * easeInOut(span(t, 12800, 15400));
+        // 惑星の見かけ位置から早めに着地点へロック（軌道の上下揺れを画像に伝えない）
+        const lockT = easeInOut(span(t, 12300, 14000));
+        const cx = (fx + panX) * (1 - lockT) + tx * lockT;
+        const cy = (fy + panY) * (1 - lockT) + ty * lockT;
+        const r = 5 + (tr - 5) * easeInOut(span(t, 12300, 15000));
         const mist = easeInOut(span(t, 16400, TOTAL)); // キリの中へ溶けて OTOHIKARI へ譲る
-        earth.style.opacity = String(Math.min(1, earthAppear * 1.5) * (1 - mist));
+        earth.style.opacity = String(easeInOut(earthAppear) * (1 - mist));
         earth.style.filter = `blur(${(1 - easeInOut(earthAppear)) * 4 + mist * 14}px)`;
         earth.style.transform = `translate(${cx - r}px, ${cy - r}px)`;
         earth.style.width = `${r * 2}px`;
