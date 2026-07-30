@@ -22,7 +22,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
     if (!host) return;
 
     const W = host.clientWidth;
-    const H = 340;
+    const H = 360;
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 1000);
     camera.position.set(0, 0, 2.85);
@@ -78,7 +78,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
 
     // 簡易海岸線（即表示。詳細版ロード後に置換）
     const roughGroup = new THREE.Group();
-    const landMat = new THREE.MeshBasicMaterial({ color: 0x0e141e, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
+    const landMat = new THREE.MeshBasicMaterial({ color: 0x0a1c18, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     for (const poly of COASTLINES) {
       if (poly.length < 3) continue;
       const verts = poly.map((p) => ll2v(p[0], p[1], 1.0015));
@@ -95,7 +95,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
       g.computeVertexNormals();
       roughGroup.add(new THREE.Mesh(g, landMat));
     }
-    const cMat = new THREE.LineBasicMaterial({ color: 0x8a98b0, transparent: true, opacity: 0.5 });
+    const cMat = new THREE.LineBasicMaterial({ color: 0x2aa88c, transparent: true, opacity: 0.55 });
     for (const line of COASTLINES) {
       roughGroup.add(
         new THREE.Line(new THREE.BufferGeometry().setFromPoints(line.map((p) => ll2v(p[0], p[1], 1.003))), cMat)
@@ -114,7 +114,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const land = feature(topo, topo.objects.land) as any;
         const detail = new THREE.Group();
-        const dMat = new THREE.LineBasicMaterial({ color: 0xc8d4e4, transparent: true, opacity: 0.85 });
+        const dMat = new THREE.LineBasicMaterial({ color: 0x35e0b8, transparent: true, opacity: 0.9 });
         const features = land.type === "FeatureCollection" ? land.features : [land];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         features.forEach((f: any) => {
@@ -675,7 +675,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
   return (
     <div
       ref={hostRef}
-      style={{ height: 340, borderRadius: 14, overflow: "hidden", background: "linear-gradient(180deg,#050a14,#0a1a2e)" }}
+      style={{ height: 360, borderRadius: 0, overflow: "hidden", background: "linear-gradient(180deg,#050a14,#0a1a2e)" }}
       aria-label="地球儀 — 雷はリアルタイム観測、金の柱はいま聴いている人"
     />
   );

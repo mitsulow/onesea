@@ -90,7 +90,7 @@ export function Otohikari() {
         )}
       </div>
 
-      <div className="my-2">
+      <div style={{ margin: "8px -18px" }}>
         <OtohikariGlobe spots={spots} />
       </div>
 
