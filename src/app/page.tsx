@@ -23,7 +23,9 @@ export default function Home() {
         <CotozuteFeed />
 
         {/* ③ 祈りの手帳 */}
-        <InoriTecho />
+        <div id="techo" style={{ scrollMarginTop: 40 }}>
+          <InoriTecho />
+        </div>
 
         {/* フッター */}
         <footer className="pb-4 pt-3 text-center">
