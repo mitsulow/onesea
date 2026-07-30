@@ -236,50 +236,24 @@ function viewHome(){
     <div style="display:flex;align-items:baseline;justify-content:space-between">
       <div><span style="font-size:24px;font-weight:800;letter-spacing:3px;color:#F0E6C8">Onesea</span>
         <span style="font-size:11px;color:#7A9AB4;margin-left:8px;letter-spacing:2px">すべての海は、ひとつ。</span></div>
-      <div style="font-size:13px;color:#9AB8CC" class="num">${NOW.getMonth()+1}/${NOW.getDate()} ${YOBI[NOW.getDay()]}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:13px;color:#9AB8CC" class="num">${NOW.getMonth()+1}/${NOW.getDate()} ${YOBI[NOW.getDay()]}</span>
+        <a href="https://rakuza-ten.vercel.app/my" target="_blank" rel="noopener" style="background:#D4B96A;color:#1A2432;font-size:11px;font-weight:800;padding:6px 12px;border-radius:12px;letter-spacing:1px">🪪 MY</a>
+      </div>
     </div>
     <div style="margin-top:6px;font-size:14px;color:#C8D8E4">今日は <b class="num" style="font-size:22px;color:#E8D8A0">${advOf(TODAY).toLocaleString()}</b> 日目の地球冒険</div>
   </div>
 
   <div style="padding:16px 16px 0">
     ${otohikariHTML()}
-    <div class="card" style="border:1.5px solid ${ac}30">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="sec" style="margin:0">\u2600 今日の節分かれつ刻</span>
-        <span style="font-size:12px;color:#B8B0A0" class="num">黄経 ${ev?ev.deg:"—"}\u00B0</span></div>
-      <div class="num" style="font-size:44px;font-weight:800;color:${ac};text-align:center;line-height:1.35;letter-spacing:1px">${ev?ev.time:"—"}</div>
-      ${ev&&ev.sekki?`<div style="text-align:center;margin-top:2px">
-        <span style="font-size:19px;font-weight:800;color:${ac}">${ev.sekki[0]}</span>
-        <span style="font-size:13px;color:#A09880;margin-left:8px">${ev.sekki[1]}</span></div>`:""}
-      ${ev&&ev.kou?`<div style="margin-top:10px;background:#F2F8F5;border-radius:12px;padding:11px 13px;border-left:3px solid #4A9A88">
-        <span style="font-size:15.5px;font-weight:700;color:#2A7A6A">${ev.kou[0]}</span>
-        <span style="font-size:12px;color:#5AAA9A;margin-left:7px">${ev.kou[1]}</span>
-        <div style="font-size:13.5px;color:#5A6058;margin-top:4px;line-height:1.6">${ev.kou[2]}</div></div>`:""}
-      <div style="display:flex;justify-content:center;gap:18px;margin-top:11px;font-size:13.5px;color:#8A8274">
-        <span>${mo.emoji} 旧暦 ${mo.reki}</span>
-        ${mo.holy?`<span style="color:#B08030;font-weight:800">\u2726 ${mo.holy}</span>`:""}
-      </div>
+
+    <div class="card" style="padding:12px 8px 12px">
+      <div class="sec" style="padding-left:8px">📖 手 帳</div>
+      ${calGridHTML()}
+      <button data-go="cal" class="btn btn-line" style="margin-top:10px;font-size:13.5px">手帳を全画面でひらく</button>
     </div>
 
-    <div class="card" style="background:linear-gradient(150deg,#FFFBF0,#FFFDF8)">
-      <div class="sec">わたしの DDP <span style="font-weight:400;letter-spacing:0;color:#C0B8A8">端的な願い</span></div>
-      <textarea id="ddp" placeholder="願いを、ひとことで。"
-        style="width:100%;min-height:56px;border:1px solid #E8DCC4;border-radius:12px;padding:12px;
-        font-size:16px;line-height:1.7;resize:vertical;background:#FFFDF8;color:#3A3428">${esc(S.ddp)}</textarea>
-      <div style="font-size:12px;color:#B0A488;margin-top:7px;line-height:1.7">
-        \u2600 節分かれつ刻は、流れが一瞬とまる時。<br>願いを確かめ、書き換えるのに向いています。</div>
-    </div>
 
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${plans.length?8:0}px">
-        <span class="sec" style="margin:0">\uD83D\uDCC5 今日の予定</span>
-        <span style="font-size:12px;color:#C0B8A8">${plans.length?plans.length+"件":""}</span></div>
-      ${plans.length?plans.map(p=>`<div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid #F2ECE0">
-        <span class="num" style="color:#C94D3A;font-weight:800;font-size:15px;width:52px">${p[0]}:00</span>
-        <span style="font-size:15px;color:#4A4438">${esc(p[1])}</span></div>`).join("")
-        :`<div style="font-size:14px;color:#B8B0A0;padding:2px 0 8px">まだ予定はありません</div>`}
-      <button data-go="cal" class="btn btn-line" style="margin-top:12px">\uD83D\uDCD6 手帳をひらく</button>
-    </div>
 
     <div class="card" style="background:radial-gradient(circle at 50% 42%,#16324A,#0C1C2C 76%);border:1px solid #1E3A52;padding:0;height:348px;position:relative;overflow:hidden;margin-bottom:16px">
       ${[132,96,62].map(r=>`<div style="position:absolute;left:50%;top:50%;width:${r*2}px;height:${r*2}px;transform:translate(-50%,-50%);border:1px dashed rgba(212,185,106,.16);border-radius:50%"></div>`).join("")}
@@ -299,12 +273,13 @@ function viewHome(){
       <div style="position:absolute;left:0;right:0;bottom:11px;text-align:center;font-size:10px;color:#4A6A84;letter-spacing:2px;pointer-events:none">タップして扉をひらく</div>
     </div>
 
-    <div class="sec" style="padding-left:4px">近 日 の 予 定</div>
-    <div style="display:flex;overflow-x:auto;padding:2px 2px 14px;-webkit-overflow-scrolling:touch">
-      ${upcoming.map(u=>`<div class="chip">
-        <div style="font-size:22px">${u[0]}</div>
-        <div style="font-size:13.5px;font-weight:700;color:#4A4438;margin-top:3px">${u[1]}</div>
-        <div style="font-size:12px;color:#A89E8C;margin-top:1px" class="num">${u[2]}</div></div>`).join("")}
+    <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px">
+      ${["sekai","mmm","tsuki","raku"].map(id=>{const sv=SERVICES.find(x=>x.id===id);
+        return `<div data-go="${id}" style="display:flex;align-items:center;gap:12px;background:${sv.bg};border:1.5px solid ${sv.color}40;border-radius:15px;padding:13px 15px;cursor:pointer;box-shadow:0 1px 5px rgba(90,70,40,.06)">
+          <span style="font-size:24px;position:relative">${sv.icon}${S.badges[id]?`<span class="badge">${S.badges[id]}</span>`:""}</span>
+          <span style="flex:1;min-width:0"><span style="font-size:15.5px;font-weight:800;color:${sv.color}">${sv.name}</span>
+            <span style="display:block;font-size:11px;color:#A09888">${sv.desc}</span></span>
+          <span style="color:${sv.color};font-weight:800;font-size:16px">↗</span></div>`;}).join("")}
     </div>
 
     <div style="display:flex;gap:10px;margin:2px 0 4px">
@@ -320,6 +295,44 @@ function viewHome(){
 }
 
 /* ===== 手帳（月カレンダー） ===== */
+function calGridHTML(){
+  const[y,m]=MONTHS[S.mi];
+  const dim=new Date(y,m+1,0).getDate(),sd=new Date(y,m,1).getDay();
+  const weeks=[];let wk=new Array(sd).fill(null);
+  for(let d=1;d<=dim;d++){wk.push(d);if(wk.length===7){weeks.push(wk);wk=[];}}
+  if(wk.length){while(wk.length<7)wk.push(null);weeks.push(wk);}
+  const cells=weeks.map(w=>`<div style="display:grid;grid-template-columns:repeat(7,1fr)">${w.map((d,di)=>{
+    if(!d)return `<div class="cell" style="background:#F7F3EA;border-right:${di<6?"1px solid #F0E9DC":"none"}"></div>`;
+    const k=keyOf(y,m+1,d),ev=bestOf(k),mo=moonOf(k),isT=k===TODAY,l=ev?ev.level:0;
+    const dm=S.memos[k],cnt=dm&&dm.h?Object.keys(dm.h).length:0;
+    let bg="#FFFDF8",dc=di===0?"#C05030":di===6?"#3070B0":"#3A3428",lab="",lc="#888";
+    if(l===4){bg=SBG[ev.deg];dc=SC[ev.deg];lab=ev.sekki[0];lc=SC[ev.deg];}
+    else if(l===3){bg="#FFFBF0";dc="#8B6914";lab=ev.sekki[0];lc="#8B6914";}
+    else if(l===2){bg="#F6FBF9";}
+    if(isT)bg="#FFF1EB";
+    if(k===S.sheet)bg="#F0F6FF";
+    return `<div class="cell" data-day="${k}" style="background:${bg};border-right:${di<6?"1px solid #F0E9DC":"none"};
+      box-shadow:${isT?"inset 0 0 0 2px #C94D3A":k===S.sheet?"inset 0 0 0 2px #5080C0":"none"}">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:14px;font-weight:${l>=3?800:600};color:${dc};line-height:1.1">${d}</span>
+        <span style="font-size:9px;opacity:.85">${mo.emoji}</span></div>
+      ${lab?`<div style="font-size:8.5px;color:${lc};font-weight:800;line-height:1.2;margin-top:1px">${lab}</div>`:""}
+      ${ev?`<div class="num" style="font-size:8.5px;color:${l>=3?lc:"#A89E8C"};line-height:1.3">☀${ev.time}</div>`:""}
+      ${mo.holy?`<div style="font-size:7.5px;color:#B08030;font-weight:700;line-height:1.2">✦${mo.holy}</div>`:""}
+      ${cnt?`<div style="display:flex;gap:1.5px;margin-top:2px">${Array.from({length:Math.min(cnt,4)}).map(()=>
+        `<div style="width:${cnt<=2?12:7}px;height:3px;border-radius:2px;background:#7BA05B"></div>`).join("")}</div>`:""}
+    </div>`;}).join("")}</div>`).join("");
+  return `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px 4px">
+    <button data-mi="${S.mi-1}" style="color:${S.mi===0?"#DDD":"#C94D3A"};font-size:20px;padding:4px 14px;font-weight:700">◀</button>
+    <span style="font-size:16px;font-weight:800">${ML[S.mi]}</span>
+    <button data-mi="${S.mi+1}" style="color:${S.mi===12?"#DDD":"#C94D3A"};font-size:20px;padding:4px 14px;font-weight:700">▶</button></div>
+  <div id="calbody">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);padding:2px 0">
+      ${YOBI.map((w,i)=>`<div style="text-align:center;font-size:11px;font-weight:600;color:${i===0?"#C05030":i===6?"#3070B0":"#999"}">${w}</div>`).join("")}
+    </div>
+    <div style="border-top:1px solid #E8E0D2">${cells}</div>
+  </div>`;
+}
 function viewCal(){
   const[y,m]=MONTHS[S.mi];
   const dim=new Date(y,m+1,0).getDate(),sd=new Date(y,m,1).getDay();
