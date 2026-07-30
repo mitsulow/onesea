@@ -25,6 +25,7 @@ import {
   recentVillagers,
   Village,
   fetchVillages,
+  fetchActivityFeed,
   createVillage,
   joinVillage,
   myVillageIds,
@@ -151,6 +152,7 @@ export default function SekaiPage() {
       >
         {[
           ["#moots", "🌕 集い"],
+          ["#katsudo", "📣 活動報告"],
           ["#lounge", "🗣 ラウンジ"],
           ["#villages", "⛺ 拠点"],
           ["#clubs", "🎌 部活"],
@@ -173,6 +175,7 @@ export default function SekaiPage() {
 
       <div className="space-y-4 px-4 pt-4">
         <MootsSection me={me} myPref={myPref} mootCount={mootCount} onRsvped={() => me && myMootCount(me.id).then(setMootCount)} />
+        <ActivitySection me={me} router={router} />
         <WelcomeSection me={me} router={router} />
         <LoungeSection
           me={me}
@@ -371,6 +374,125 @@ function MootsSection({
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+/* ═══ 各地の活動報告（村ブログ横断フィード）═══ */
+function ActivitySection({ me, router }: { me: User | null; router: ReturnType<typeof useRouter> }) {
+  const [feed, setFeed] = useState<any[] | null>(null);
+  const [villages, setVillages] = useState<Village[]>([]);
+  const [sent, setSent] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchActivityFeed(10).then((f) => setFeed(f as any[]));
+    fetchVillages(null).then(setVillages);
+  }, []);
+
+  const join = async (post: any) => {
+    const owner = post.villages?.created_by;
+    if (!me || !owner || sent.has(post.id)) return;
+    setSent((prev) => new Set(prev).add(post.id));
+    const chatId = await getOrCreateChat(me.id, owner === me.id ? post.user_id : owner);
+    if (chatId) {
+      await sendMessage(chatId, me.id, `「${post.villages?.name}」の活動報告を見ました。参加したいです 🌱`);
+      router.push(`/line/${chatId}`);
+    }
+  };
+
+  return (
+    <section id="katsudo" className="card" style={{ scrollMarginTop: 56, border: "1.5px solid #3a7a4c44" }}>
+      {/* 見出し */}
+      <div
+        className="-mx-4 -mt-4 mb-3 px-4 pb-2.5 pt-3.5"
+        style={{ background: "linear-gradient(150deg,#163522,#1e4530)", borderRadius: "14px 14px 0 0" }}
+      >
+        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 各地のセカイムラ いま</div>
+        <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">全国の拠点の活動報告 — 今日、村で何があったか</div>
+      </div>
+
+      {/* 拠点一覧（横スクロールのチップ） */}
+      {villages.length > 0 && (
+        <div className="hide-scrollbar -mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4">
+          {villages.map((v) => (
+            <Link
+              key={v.id}
+              href={`/sekai/village/${v.id}`}
+              className="flex-shrink-0 rounded-full border border-[#d8e4da] bg-white px-3 py-1.5 text-[11.5px] font-bold no-underline"
+              style={{ color: GREEN }}
+            >
+              ⛺ {v.name}
+              <span className="ml-1 font-normal text-[#a0aca0]">{v.prefecture}</span>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* 活動報告フィード */}
+      {feed === null ? (
+        <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
+      ) : feed.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-[#4a8a5c44] px-4 py-5 text-center">
+          <div className="text-2xl">📣</div>
+          <p className="mt-1 text-[12.5px] font-bold" style={{ color: GREEN }}>
+            まだ活動報告がありません
+          </p>
+          <p className="mt-0.5 text-[11px] text-[#a0aca0]">
+            「今日は田植えをしました」— あなたの拠点のページから、最初の報告を
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {feed.map((p) => (
+            <div key={p.id} className="overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
+              {p.photo_url && <img src={p.photo_url} alt="" className="max-h-52 w-full object-cover" />}
+              <div className="p-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <Link
+                    href={`/sekai/village/${p.villages?.id}`}
+                    className="min-w-0 truncate text-[13.5px] font-extrabold no-underline"
+                    style={{ color: GREEN }}
+                  >
+                    ⛺ {p.villages?.name ?? "セカイムラ"}
+                  </Link>
+                  <span className="num flex-shrink-0 text-[10px] text-[#c0c8c0]">
+                    {p.villages?.prefecture ?? ""} ・ {new Date(p.created_at).getMonth() + 1}/
+                    {new Date(p.created_at).getDate()}
+                  </span>
+                </div>
+                <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#3a4438]">
+                  {p.body}
+                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <AvatarSm p={p.profiles} size={24} />
+                    <span className="text-[10.5px] text-[#a0aca0]">{p.profiles?.display_name ?? "むらびと"}</span>
+                  </div>
+                  {me && me.id !== (p.villages?.created_by ?? p.user_id) && (
+                    <button
+                      onClick={() => join(p)}
+                      disabled={sent.has(p.id)}
+                      className="rounded-lg px-3.5 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-50"
+                      style={{ background: "#4a8a5c" }}
+                    >
+                      {sent.has(p.id) ? "連絡しました 🌱" : "参加する"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 拠点を立ち上げる */}
+      <a
+        href="#villages"
+        className="mt-3 block w-full rounded-xl py-3 text-center text-[13.5px] font-extrabold text-white no-underline"
+        style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
+      >
+        🔥 これからセカイムラ拠点を立ち上げる
+      </a>
     </section>
   );
 }
