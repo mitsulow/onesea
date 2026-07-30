@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { useState } from "react";
 import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
+import { EmbedCard } from "./EmbedCard";
 
 /**
  * 言の葉カード（楽市楽座「情緒」と同じ操作系）:
@@ -91,6 +92,7 @@ export function PostCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={post.image_urls[0]} alt="" loading="lazy" className="mt-1.5 max-w-full rounded-lg" />
         )}
+        {post.embed && <EmbedCard embed={post.embed} />}
         <div className="mt-1.5 flex items-center gap-5">
           <button
             onClick={onLike}

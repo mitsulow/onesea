@@ -29,7 +29,7 @@ export function CotozuteFeed() {
   }, [reload]);
 
   return (
-    <section className="card" style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)" }}>
+    <section className="card" style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}>
       <div className="sec mb-2.5">
         💭 Cotozute{" "}
         <span className="font-normal tracking-normal text-[#c0b8a8]">みんなの言の葉</span>
