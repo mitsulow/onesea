@@ -353,16 +353,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
         new THREE.LineBasicMaterial({ color: 0x8a5aff, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false })
       )
     );
-    const nodeMat = new THREE.PointsMaterial({
-      color: 0xb08aff,
-      size: 0.032,
-      transparent: true,
-      opacity: 0.7,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      sizeAttenuation: true,
-    });
-    earth.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(GP), nodeMat));
+
 
     interface GridWave {
       group: THREE.Group;
@@ -530,9 +521,9 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
     const onMouseMove = (e: MouseEvent) => {
       if (!dragging) return;
       velY = (e.clientX - prevX) * 0.005;
-      velX = (e.clientY - prevY) * 0.003;
+      velX = (e.clientY - prevY) * 0.005;
       rotY += velY; rotX += velX;
-      rotX = Math.max(-1.2, Math.min(1.2, rotX));
+      rotX = Math.max(-1.5, Math.min(1.5, rotX));
       prevX = e.clientX; prevY = e.clientY;
     };
     const onMouseUp = () => (dragging = false);
@@ -565,7 +556,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (lastPinch > 0) {
             targetZ += (lastPinch - dist) * 0.02;
-            targetZ = Math.max(1.8, Math.min(10, targetZ));
+            targetZ = Math.max(1.22, Math.min(10, targetZ));
           }
           lastPinch = dist;
         }
@@ -575,7 +566,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
       if (touchLock === null) {
         const adx = Math.abs(tx - touchStartX), ady = Math.abs(ty - touchStartY);
         if (adx > 7 || ady > 7) {
-          touchLock = adx > ady ? "rotate" : "scroll";
+          touchLock = adx > ady * 0.6 ? "rotate" : "scroll";
           if (touchLock === "rotate") { dragging = true; prevX = tx; prevY = ty; }
         }
         if (touchLock !== "rotate") return;
@@ -583,9 +574,9 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
       if (touchLock === "scroll") return;
       e.preventDefault();
       velY = (tx - prevX) * 0.005;
-      velX = (ty - prevY) * 0.003;
+      velX = (ty - prevY) * 0.005;
       rotY += velY; rotX += velX;
-      rotX = Math.max(-1.2, Math.min(1.2, rotX));
+      rotX = Math.max(-1.5, Math.min(1.5, rotX));
       prevX = tx; prevY = ty;
     };
     const onTouchEnd = (e: TouchEvent) => {
@@ -622,7 +613,6 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
         nextMeteorAt = t + 6 + Math.random() * 14;
       }
       updateMeteors(t, dt);
-      nodeMat.opacity = 0.45 + 0.3 * (0.5 + 0.5 * Math.sin(t * 1.3));
       // 光柱: presence の場所が変わったら組み直し、脈動させる
       const spotsKey = JSON.stringify(spotsRef.current);
       if (spotsKey !== builtKey) {
