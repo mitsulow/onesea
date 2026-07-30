@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { RealtimeChannel, User } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { OtohikariGlobe } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
@@ -11,32 +11,34 @@ const serif = Cormorant_Garamond({ subsets: ["latin"], weight: ["600", "700"] })
 
 interface SchumannLive {
   f1hz: number | null;
-  amp: number | null;
   updated: string | null;
-  notes: string | null;
 }
 
+/** [lat, lng, 人数] */
+export type Spot = [number, number, number];
+
 /**
- * OTOHIKARI — 光の音柱（本番）。
- * - 地球儀: Canvas 描画（回転する点描の球 + 聴いている人数ぶんの光の柱）
+ * OTOHIKARI — 光の音柱（本番・点呼方式）。
+ * - 上り: 再生中の端末が30秒ごとに beacons へ点呼（約100バイト・0.5°丸め座標）
+ * - 集計: SQL 1発（otohikari_snapshot）
+ * - 下り: /api/otohikari の30秒キャッシュJSONをポーリング —
+ *   利用者数が増えてもDB負荷・転送量は一定（パケ死しない）
  * - 周波数: schumann 公式API v1 の実測値
- * - いま: Supabase Realtime presence（再生中の人だけが光る）
- * - きょう: listens テーブルの実カウント
  * - シューマン音©: Web Audio 合成（無料10秒フェード）
  */
 export function Otohikari() {
-  const channelRef = useRef<RealtimeChannel | null>(null);
   const ctxAudioRef = useRef<AudioContext | null>(null);
-  const playingRef = useRef(false);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const coarseRef = useRef<{ lat: number; lng: number } | null>(null);
 
-  const [live, setLive] = useState<SchumannLive>({ f1hz: null, amp: null, updated: null, notes: null });
+  const [live, setLive] = useState<SchumannLive>({ f1hz: null, updated: null });
   const [nowCount, setNowCount] = useState(0);
-  const [spots, setSpots] = useState<Array<[number, number] | null>>([]);
   const [todayCount, setTodayCount] = useState<number | null>(null);
+  const [spots, setSpots] = useState<Spot[]>([]);
   const [playing, setPlaying] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  /* ---- 実測データ ---- */
+  /* ---- シューマン共振 実測データ ---- */
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -44,15 +46,8 @@ export function Otohikari() {
         const res = await fetch(`${SCHUMANN_DATA_URL}?t=${Date.now()}`);
         const d = await res.json();
         if (cancelled) return;
-        setLive({
-          f1hz: d?.modes?.F1?.hz ?? null,
-          amp: d?.modes?.F1?.amp ?? null,
-          updated: d?.timestamp ?? null,
-          notes: d?.notes ?? null,
-        });
-      } catch {
-        /* 表示は "—" のまま */
-      }
+        setLive({ f1hz: d?.modes?.F1?.hz ?? null, updated: d?.timestamp ?? null });
+      } catch {}
     };
     load();
     const t = setInterval(load, 5 * 60 * 1000);
@@ -62,48 +57,59 @@ export function Otohikari() {
     };
   }, []);
 
-  /* ---- presence（いま聴いている人）+ 今日の回数 ---- */
+  /* ---- 集計スナップショットのポーリング（30秒・エッジキャッシュ） ---- */
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
 
-    const channel = supabase.channel("otohikari", {
-      config: { presence: { key: crypto.randomUUID() } },
-    });
-    channel.on("presence", { event: "sync" }, () => {
-      const state = channel.presenceState() as Record<string, Array<{ lat?: number; lng?: number }>>;
-      const keys = Object.keys(state);
-      setNowCount(keys.length);
-      setSpots(
-        keys.map((k) => {
-          const m = state[k]?.[0];
-          return typeof m?.lat === "number" && typeof m?.lng === "number"
-            ? ([m.lat, m.lng] as [number, number])
-            : null;
-        })
-      );
-    });
-    channel.subscribe();
-    channelRef.current = channel;
-
-    supabase.rpc("today_listens").then(({ data }) => {
-      if (typeof data === "number") setTodayCount(data);
-    });
-
+    let stop = false;
+    const load = async () => {
+      try {
+        const r = await fetch("/api/otohikari");
+        const d = await r.json();
+        if (stop) return;
+        setNowCount(typeof d.now === "number" ? d.now : 0);
+        if (typeof d.today === "number") setTodayCount(d.today);
+        setSpots(Array.isArray(d.spots) ? (d.spots as Spot[]) : []);
+      } catch {}
+    };
+    load();
+    const t = setInterval(load, 30000);
     return () => {
-      supabase.removeChannel(channel);
-      channelRef.current = null;
+      stop = true;
+      clearInterval(t);
     };
   }, []);
+
+  /* ---- 点呼（beacon upsert）---- */
+  const sendBeacon = useCallback(async () => {
+    if (!user) return;
+    const supabase = createClient();
+    await supabase.from("beacons").upsert({
+      user_id: user.id,
+      lat: coarseRef.current?.lat ?? null,
+      lng: coarseRef.current?.lng ?? null,
+      last_seen: new Date().toISOString(),
+    });
+  }, [user]);
+
+  const stopBeacon = useCallback(async () => {
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+    }
+    if (!user) return;
+    const supabase = createClient();
+    await supabase.from("beacons").delete().eq("user_id", user.id);
+  }, [user]);
 
   /* ---- 再生（Web Audio 合成・帯域ゼロ） ---- */
   const toggle = useCallback(async () => {
     if (ctxAudioRef.current) {
       ctxAudioRef.current.close().catch(() => {});
       ctxAudioRef.current = null;
-      playingRef.current = false;
       setPlaying(false);
-      channelRef.current?.untrack();
+      stopBeacon();
       return;
     }
     const AC =
@@ -139,18 +145,15 @@ export function Otohikari() {
       if (ctxAudioRef.current === ctx) {
         ctx.close().catch(() => {});
         ctxAudioRef.current = null;
-        playingRef.current = false;
         setPlaying(false);
-        channelRef.current?.untrack();
+        stopBeacon();
       }
     };
     ctxAudioRef.current = ctx;
-    playingRef.current = true;
     setPlaying(true);
 
-    // 本番カウント: presence で「いま」、listens で「きょう」
-    // 現在地は 0.5°（約50km）に丸めてから送る — 個人の正確な位置は扱わない
-    const coarse = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+    // 現在地は 0.5°（約50km）に丸めてから使う — 個人の正確な位置は扱わない
+    coarseRef.current = await new Promise((resolve) => {
       if (!navigator.geolocation) return resolve(null);
       navigator.geolocation.getCurrentPosition(
         (pos) =>
@@ -162,16 +165,23 @@ export function Otohikari() {
         { timeout: 4000, maximumAge: 600000 }
       );
     });
-    channelRef.current?.track(
-      coarse ? { at: new Date().toISOString(), lat: coarse.lat, lng: coarse.lng } : { at: new Date().toISOString() }
-    );
+
+    // 点呼開始 + きょうの実カウント
+    sendBeacon();
+    heartbeatRef.current = setInterval(sendBeacon, 30000);
     if (user) {
       const supabase = createClient();
       await supabase.from("listens").insert({ user_id: user.id });
       const { data } = await supabase.rpc("today_listens");
       if (typeof data === "number") setTodayCount(data);
     }
-  }, [user]);
+    // 自分の光は即時に見せる（次のスナップショット反映を待たない）
+    setNowCount((n) => Math.max(n, 1));
+    if (coarseRef.current) {
+      const me: Spot = [coarseRef.current.lat, coarseRef.current.lng, 1];
+      setSpots((prev) => [...prev, me]);
+    }
+  }, [user, sendBeacon, stopBeacon]);
 
   const dist = live.f1hz != null ? live.f1hz - TARGET_HZ : null;
 

@@ -11,7 +11,7 @@ import { COASTLINES } from "@/lib/coastlines";
  * - 夜の街明かり・大気グロー・流星
  * - 金の光柱: いまシューマン音©を聴いている人（presence 実数・props.pillars）
  */
-export function OtohikariGlobe({ spots }: { spots: Array<[number, number] | null> }) {
+export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number] | null> }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const spotsRef = useRef(spots);
   spotsRef.current = spots;
@@ -452,20 +452,21 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number] | null
     const pillarGroup = new THREE.Group();
     earth.add(pillarGroup);
     let builtKey = "";
-    const rebuildPillars = (list: Array<[number, number] | null>) => {
+    const rebuildPillars = (list: Array<[number, number, number] | null>) => {
       pillarGroup.clear();
       const count = Math.min(list.length, 40);
       for (let i = 0; i < count; i++) {
         const loc = list[i];
         const lat = loc ? loc[0] : JP_SPOTS[i % JP_SPOTS.length][0] + ((i * 0.7) % 2) - 1;
         const lng = loc ? loc[1] : JP_SPOTS[i % JP_SPOTS.length][1] + ((i * 1.3) % 3) - 1.5;
+        const crowd = Math.min(loc ? loc[2] : 1, 8);
         const base = ll2v(lat, lng, 1.005);
-        const tip = base.clone().normalize().multiplyScalar(1.22);
+        const tip = base.clone().normalize().multiplyScalar(1.16 + crowd * 0.018);
         const lg = new THREE.BufferGeometry().setFromPoints([base, tip]);
         const lm = new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
         pillarGroup.add(new THREE.Line(lg, lm));
         const dot = new THREE.Mesh(
-          new THREE.SphereGeometry(0.014, 8, 8),
+          new THREE.SphereGeometry(0.012 + crowd * 0.0022, 8, 8),
           new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false })
         );
         dot.position.copy(base);
