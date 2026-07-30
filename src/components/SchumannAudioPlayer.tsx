@@ -187,7 +187,7 @@ export function SchumannAudioPlayer() {
   };
 
   return (
-    <section className="card">
+    <section className="card" style={{ margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}>
       {/* タイトル行 */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-baseline gap-1.5">
@@ -270,10 +270,6 @@ export function SchumannAudioPlayer() {
         </button>
       </div>
 
-      <p className="mt-2 text-[10.5px] leading-relaxed text-[#b8ae9c]">
-        🧘 瞑想モード: 再生中にスマホの画面が自動で消えなくなります
-        {meditation ? "（ON）" : ""}。🔁 繰り返し: 曲が終わっても続けて流れます。
-      </p>
 
       <audio
         ref={audioRef}
