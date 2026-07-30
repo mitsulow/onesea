@@ -137,6 +137,41 @@ const S={
   badges:LS.get("onesea-badges",{mmm:5,sekai:12,raku:3,tsuki:0}),
   view:"home",mi:7,sheet:null,expanded:false,editH:null,inputB:""
 };
+const SUPA_URL="https://upfoawnqjfprepanepqj.supabase.co/rest/v1";
+const SUPA_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVwZm9hd25xamZwcmVwYW5lcHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NzU5NTksImV4cCI6MjA5MjI1MTk1OX0.X8sCtshUgyajijFDNIAVipI2ISnJ4eAX5PGw_sSGZtk";
+let CZ=null;
+function loadCotozute(){
+  fetch(SUPA_URL+"/posts?select=body,image_urls,created_at,profiles!posts_user_id_fkey(display_name,username,avatar_url)&order=created_at.desc&limit=20",
+    {headers:{apikey:SUPA_ANON,Authorization:"Bearer "+SUPA_ANON}})
+    .then(r=>r.json())
+    .then(rows=>{
+      CZ=(Array.isArray(rows)?rows:[]).filter(p=>(p.body&&p.body.trim())||(p.image_urls&&p.image_urls.length));
+      if(S.view==="home")render();
+    })
+    .catch(()=>{if(CZ===null)CZ=[];});
+}
+function cotozuteHTML(){
+  return `<div class="card" style="background:linear-gradient(150deg,#FFFBF0,#FFFDF8)">
+    <div class="sec">\uD83D\uDCAD Cotozute <span style="font-weight:400;letter-spacing:0;color:#C0B8A8">みんなの言の葉</span></div>
+    ${CZ===null?`<div style="font-size:13px;color:#B8B0A0;padding:6px 0">読み込み中...</div>`
+     :CZ.length===0?`<div style="font-size:13px;color:#B8B0A0;padding:6px 0">言の葉を読み込めませんでした</div>`
+     :CZ.slice(0,8).map(p=>{
+        const pr=p.profiles||{};
+        const d=new Date(p.created_at);
+        const av=pr.avatar_url?`<img src="${esc(pr.avatar_url)}" style="width:34px;height:34px;border-radius:50%;object-fit:cover" alt="" referrerpolicy="no-referrer">`
+          :`<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(140deg,#CFE8D8,#9CC8AC);display:flex;align-items:center;justify-content:center;font-size:15px">\uD83C\uDF3F</div>`;
+        return `<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #F2ECE0">
+          <div style="flex-shrink:0">${av}</div>
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;justify-content:space-between;gap:8px">
+              <span style="font-size:13px;font-weight:700;color:#4A4438">${esc(pr.display_name||"むらびと")}</span>
+              <span class="num" style="font-size:10.5px;color:#C0B8A8">${d.getMonth()+1}/${d.getDate()}</span></div>
+            ${p.body&&p.body.trim()?`<div style="font-size:13.5px;color:#5A5448;line-height:1.55;word-break:break-word">${esc(p.body)}</div>`:""}
+            ${p.image_urls&&p.image_urls[0]?`<img src="${esc(p.image_urls[0])}" style="max-width:100%;border-radius:10px;margin-top:6px" alt="" loading="lazy">`:""}
+          </div></div>`;}).join("")}
+    <a href="https://rakuza-ten.vercel.app/posts" target="_blank" rel="noopener" class="btn btn-line" style="margin-top:12px;font-size:13.5px">Cotozute をすべて見る \u2197</a>
+  </div>`;
+}
 let AU=null;
 function playSchumann(){
   if(AU){try{AU.ctx.close();}catch(e){}AU=null;render();return;}
@@ -252,6 +287,8 @@ function viewHome(){
       ${calGridHTML()}
       <button data-go="cal" class="btn btn-line" style="margin-top:10px;font-size:13.5px">手帳を全画面でひらく</button>
     </div>
+
+    ${cotozuteHTML()}
 
 
 
@@ -751,6 +788,7 @@ function dragSheet(handle){
 
 /* ===== 起動 ===== */
 render();
+loadCotozute();
 if("serviceWorker" in navigator){
   window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 }
