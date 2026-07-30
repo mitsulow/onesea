@@ -26,6 +26,8 @@ export function SchumannAudioPlayer() {
   const posRef = useRef<{ lat: number; lng: number } | null>(null);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
   const countedRef = useRef(false);
+  const loopedRef = useRef(false); // リピート中に1周以上聴き終えたか
+  const prevCurRef = useRef(0);
 
   const [user, setUser] = useState<User | null>(null);
   const [src, setSrc] = useState<string | null>(null);
@@ -134,15 +136,7 @@ export function SchumannAudioPlayer() {
     }
   }, [user, sendBeacon]);
 
-  const onStopped = useCallback(() => {
-    setPlaying(false);
-    countedRef.current = false;
-    stopBeacon();
-  }, [stopBeacon]);
-
-  // 最後まで聴き終えたら（瞑想おわり）→ 今日のDDPを聞く
-  const onEnded = useCallback(async () => {
-    onStopped();
+  const openDdp = useCallback(async () => {
     if (!user) return;
     const supabase = createClient();
     const today = new Date();
@@ -151,7 +145,25 @@ export function SchumannAudioPlayer() {
     setDdpBody(data?.body ?? "");
     setDdpSaved(false);
     setShowDdp(true);
-  }, [user, onStopped]);
+  }, [user]);
+
+  const onStopped = useCallback(() => {
+    setPlaying(false);
+    countedRef.current = false;
+    stopBeacon();
+    // リピート再生の人は ended が来ないので、
+    // 1周以上聴いたあと停止したタイミングでダイアログを出す
+    if (loopedRef.current) {
+      loopedRef.current = false;
+      openDdp();
+    }
+  }, [stopBeacon, openDdp]);
+
+  // 最後まで聴き終えたら（瞑想おわり）→ 今日のDDPを聞く
+  const onEnded = useCallback(async () => {
+    onStopped();
+    openDdp();
+  }, [onStopped, openDdp]);
 
   const saveDdp = useCallback(async () => {
     if (!user || !ddpBody.trim() || ddpSaving) return;
@@ -301,32 +313,35 @@ export function SchumannAudioPlayer() {
         <div
           className="fixed inset-0 z-[150] flex items-center justify-center px-6"
           style={{ background: "rgba(10,20,16,0.55)", backdropFilter: "blur(3px)" }}
+          onClick={() => setShowDdp(false)}
         >
-          <div className="w-full max-w-[400px] rounded-2xl bg-[#fffdf8] p-4 shadow-2xl">
-            <div className="text-center text-[15px] font-extrabold text-[#2a6a66]">🧘 瞑想おつかれさま</div>
-            <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">今日のDDPを、ひとことで</div>
+          <div className="relative w-full max-w-[400px] rounded-2xl bg-[#fffdf8] p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowDdp(false)}
+              aria-label="閉じる"
+              className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#f0ebe0] text-[13px] font-bold text-[#a09888]"
+            >
+              ✕
+            </button>
+            <div className="text-center text-[15px] font-extrabold text-[#2a6a66]">🧘 シューマン瞑想おつかれさま</div>
+            <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">今日のDDP</div>
             <textarea
               value={ddpBody}
               onChange={(e) => setDdpBody(e.target.value)}
               rows={4}
               autoFocus
               placeholder={"シューマン瞑想で\n「ふと思った事」\n「ふと会いたくなった人」\n「ふと食べたくなったモノ」\n「ふと行きたくなった場所」を入力"}
-              className="mt-3 w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#0abab5]"
+              className="mt-3 w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-center text-[14px] leading-relaxed outline-none focus:border-[#0abab5]"
             />
-            <div className="mt-2.5 flex gap-2">
-              <button onClick={() => setShowDdp(false)} className="rounded-xl px-4 py-2.5 text-[12.5px] font-bold text-[#a09888]">
-                あとで
-              </button>
-              <button
-                onClick={saveDdp}
-                disabled={!ddpBody.trim() || ddpSaving}
-                className="flex-1 rounded-xl py-2.5 text-[14px] font-extrabold text-white disabled:opacity-40"
-                style={{ background: "#0abab5" }}
-              >
-                {ddpSaved ? "刻みました 🌊" : ddpSaving ? "保存中..." : "今日のDDPを刻む"}
-              </button>
-            </div>
-            <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">あなたのマイページに、日付ごとに積み重なります</p>
+            <button
+              onClick={saveDdp}
+              disabled={!ddpBody.trim() || ddpSaving}
+              className="mt-2.5 w-full rounded-xl py-2.5 text-[14px] font-extrabold text-white disabled:opacity-40"
+              style={{ background: "#0abab5" }}
+            >
+              {ddpSaved ? "刻みました 🌊" : ddpSaving ? "保存中..." : "セレンディピティ投稿"}
+            </button>
+            <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">あなたのマイページに、日付ごとに表示されます</p>
           </div>
         </div>
       )}
@@ -338,7 +353,13 @@ export function SchumannAudioPlayer() {
         onPlay={onPlayStarted}
         onPause={onStopped}
         onEnded={onEnded}
-        onTimeUpdate={(e) => setCur((e.target as HTMLAudioElement).currentTime)}
+        onTimeUpdate={(e) => {
+          const a = e.target as HTMLAudioElement;
+          // ループで曲末→曲頭に巻き戻った = 1周聴き終えた
+          if (a.loop && prevCurRef.current > a.duration - 2 && a.currentTime < 1) loopedRef.current = true;
+          prevCurRef.current = a.currentTime;
+          setCur(a.currentTime);
+        }}
         onLoadedMetadata={(e) => setDur((e.target as HTMLAudioElement).duration)}
       />
     </section>
