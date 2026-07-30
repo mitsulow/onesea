@@ -664,6 +664,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
 
   return (
     <div
+      id="otohikari-globe"
       ref={hostRef}
       style={{ height: 360, borderRadius: 0, overflow: "hidden", background: "linear-gradient(180deg,#050a14,#0a1a2e)" }}
       aria-label="地球儀 — 雷はリアルタイム観測、金の柱はいま聴いている人"

@@ -4,11 +4,13 @@ import { InoriTecho } from "@/components/InoriTecho";
 import { CotozuteFeed } from "@/components/CotozuteFeed";
 import { AuthGate } from "@/components/AuthGate";
 import { HeaderBar } from "@/components/HeaderBar";
+import { MorningOpening } from "@/components/MorningOpening";
 
 
 export default function Home() {
   return (
     <AuthGate>
+      <MorningOpening />
       <main className="pb-10">
         <HeaderBar />
 
