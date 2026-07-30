@@ -215,29 +215,13 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
-      {/* シークバー + 操作ボタン（1行に集約） */}
-      <div className="mt-2.5 flex items-center gap-2.5">
-        <div className="min-w-0 flex-1">
-          <input
-            type="range"
-            min={0}
-            max={dur || SCHUMANN_FALLBACK_SEC}
-            step={0.1}
-            value={cur}
-            onChange={(e) => seek(Number(e.target.value))}
-            className="w-full accent-[#3e9b6c]"
-            aria-label="再生位置"
-          />
-          <div className="flex justify-between text-[11px] leading-none text-[#a09888]">
-            <span className="num">{fmt(cur)}</span>
-            <span className="num">{fmt(dur || SCHUMANN_FALLBACK_SEC)}</span>
-          </div>
-        </div>
+      {/* 左に小さな3ボタン + 長いシークバー */}
+      <div className="mt-2.5 flex items-center gap-2">
         <button
           onClick={togglePlay}
           disabled={!src}
           aria-label={playing ? "一時停止" : "再生"}
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-lg text-white shadow-md disabled:opacity-40"
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] text-white shadow disabled:opacity-40"
           style={{ background: "linear-gradient(140deg,#5cbe8c,#3e9b6c)" }}
         >
           {playing ? "❚❚" : "▶"}
@@ -245,7 +229,7 @@ export function SchumannAudioPlayer() {
         <button
           onClick={() => setLoop((v) => !v)}
           aria-label="繰り返し再生"
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border text-base"
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border text-[11px]"
           style={
             loop
               ? { background: "#eaf6ee", borderColor: "#3e9b6c", color: "#3e9b6c" }
@@ -257,7 +241,7 @@ export function SchumannAudioPlayer() {
         <button
           onClick={toggleMeditation}
           aria-label="瞑想モード（画面を消さない）"
-          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border text-base"
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border text-[11px]"
           style={
             meditation
               ? { background: "#eaf6ee", borderColor: "#3e9b6c", color: "#3e9b6c" }
@@ -266,6 +250,22 @@ export function SchumannAudioPlayer() {
         >
           🧘
         </button>
+        <div className="min-w-0 flex-1">
+          <input
+            type="range"
+            min={0}
+            max={dur || SCHUMANN_FALLBACK_SEC}
+            step={0.1}
+            value={cur}
+            onChange={(e) => seek(Number(e.target.value))}
+            className="w-full accent-[#3e9b6c]"
+            aria-label="再生位置"
+          />
+          <div className="flex justify-between text-[10.5px] leading-none text-[#a09888]">
+            <span className="num">{fmt(cur)}</span>
+            <span className="num">{fmt(dur || SCHUMANN_FALLBACK_SEC)}</span>
+          </div>
+        </div>
       </div>
 
       <audio
