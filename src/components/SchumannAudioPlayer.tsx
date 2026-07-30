@@ -215,31 +215,29 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
-      {/* シークバー */}
-      <div className="mt-3">
-        <input
-          type="range"
-          min={0}
-          max={dur || SCHUMANN_FALLBACK_SEC}
-          step={0.1}
-          value={cur}
-          onChange={(e) => seek(Number(e.target.value))}
-          className="w-full accent-[#3e9b6c]"
-          aria-label="再生位置"
-        />
-        <div className="flex justify-between text-[12px] text-[#a09888]">
-          <span className="num">{fmt(cur)}</span>
-          <span className="num">{fmt(dur || SCHUMANN_FALLBACK_SEC)}</span>
+      {/* シークバー + 操作ボタン（1行に集約） */}
+      <div className="mt-2.5 flex items-center gap-2.5">
+        <div className="min-w-0 flex-1">
+          <input
+            type="range"
+            min={0}
+            max={dur || SCHUMANN_FALLBACK_SEC}
+            step={0.1}
+            value={cur}
+            onChange={(e) => seek(Number(e.target.value))}
+            className="w-full accent-[#3e9b6c]"
+            aria-label="再生位置"
+          />
+          <div className="flex justify-between text-[11px] leading-none text-[#a09888]">
+            <span className="num">{fmt(cur)}</span>
+            <span className="num">{fmt(dur || SCHUMANN_FALLBACK_SEC)}</span>
+          </div>
         </div>
-      </div>
-
-      {/* 操作ボタン */}
-      <div className="mt-1 flex items-center justify-end gap-2.5">
         <button
           onClick={togglePlay}
           disabled={!src}
           aria-label={playing ? "一時停止" : "再生"}
-          className="flex h-14 w-14 items-center justify-center rounded-full text-xl text-white shadow-md disabled:opacity-40"
+          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-lg text-white shadow-md disabled:opacity-40"
           style={{ background: "linear-gradient(140deg,#5cbe8c,#3e9b6c)" }}
         >
           {playing ? "❚❚" : "▶"}
@@ -247,7 +245,7 @@ export function SchumannAudioPlayer() {
         <button
           onClick={() => setLoop((v) => !v)}
           aria-label="繰り返し再生"
-          className="flex h-12 w-12 items-center justify-center rounded-2xl border text-lg"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border text-base"
           style={
             loop
               ? { background: "#eaf6ee", borderColor: "#3e9b6c", color: "#3e9b6c" }
@@ -259,7 +257,7 @@ export function SchumannAudioPlayer() {
         <button
           onClick={toggleMeditation}
           aria-label="瞑想モード（画面を消さない）"
-          className="flex h-12 w-12 items-center justify-center rounded-2xl border text-lg"
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border text-base"
           style={
             meditation
               ? { background: "#eaf6ee", borderColor: "#3e9b6c", color: "#3e9b6c" }
@@ -269,7 +267,6 @@ export function SchumannAudioPlayer() {
           🧘
         </button>
       </div>
-
 
       <audio
         ref={audioRef}
