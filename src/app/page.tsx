@@ -2,50 +2,10 @@ import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { TechoCalendar } from "@/components/TechoCalendar";
 import { CotozuteFeed } from "@/components/CotozuteFeed";
-import { Orbital } from "@/components/Orbital";
 import { AuthGate } from "@/components/AuthGate";
 import { ProfileSetup } from "@/components/ProfileSetup";
 import { HeaderBar } from "@/components/HeaderBar";
-import { LINKS } from "@/lib/config";
 
-const DOORS = [
-  {
-    id: "sekai",
-    icon: "🌏",
-    name: "セカイムラ",
-    desc: "世界は一つの村になる。",
-    color: "#4a8a5c",
-    bg: "#eff7f0",
-    url: LINKS.sekaimura,
-  },
-  {
-    id: "mmm",
-    icon: "☀️",
-    name: "マスターマインド",
-    desc: "毎日5分、聴くだけ。",
-    color: "#3e9b6c",
-    bg: "#edf7f0",
-    url: LINKS.mmm,
-  },
-  {
-    id: "tsuki",
-    icon: "🌙",
-    name: "ツキヨガ",
-    desc: "ツキと身体の関係",
-    color: "#5b6ba8",
-    bg: "#f0f2fa",
-    url: LINKS.tsukiyoga,
-  },
-  {
-    id: "raku",
-    icon: "🏮",
-    name: "楽市楽座",
-    desc: "やりたいことを仕事に",
-    color: "#c94d3a",
-    bg: "#fdf0ee",
-    url: LINKS.rakuza,
-  },
-] as const;
 
 export default function Home() {
   return (
@@ -69,34 +29,6 @@ export default function Home() {
           <div className="sec mb-2 pl-2">📖 手 帳</div>
           <TechoCalendar />
         </section>
-
-        {/* ④ 星の画像 */}
-        <Orbital />
-
-        {/* ⑤ 4つのリンク */}
-        <nav className="flex flex-col gap-2.5">
-          {DOORS.map((d) => (
-            <a
-              key={d.id}
-              href={d.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 rounded-2xl border-[1.5px] px-4 py-3.5 no-underline shadow-sm"
-              style={{ background: d.bg, borderColor: `${d.color}40` }}
-            >
-              <span className="text-2xl">{d.icon}</span>
-              <span className="min-w-0 flex-1">
-                <span className="text-[15.5px] font-extrabold" style={{ color: d.color }}>
-                  {d.name}
-                </span>
-                <span className="block text-[11px] text-[#a09888]">{d.desc}</span>
-              </span>
-              <span className="text-base font-extrabold" style={{ color: d.color }}>
-                ↗
-              </span>
-            </a>
-          ))}
-        </nav>
 
         {/* フッター */}
         <footer className="pb-4 pt-3 text-center">
