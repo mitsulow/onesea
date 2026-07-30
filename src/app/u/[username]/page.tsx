@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { CotozutePost, CotozuteProfile, fetchPosts, fetchMyLikes } from "@/lib/cotozute";
+import { getOrCreateChat } from "@/lib/line";
 import { PostCard } from "@/components/PostCard";
 
 /** むらびとのマイページ — プロフィール + その人の言の葉 */
 export default function UserPage() {
   const params = useParams<{ username: string }>();
+  const router = useRouter();
   const username = decodeURIComponent(params.username);
   const [profile, setProfile] = useState<(CotozuteProfile & { id: string }) | null | undefined>(undefined);
   const [posts, setPosts] = useState<CotozutePost[] | null>(null);
@@ -91,6 +93,18 @@ export default function UserPage() {
             {profile.display_name ?? "むらびと"}
           </h1>
           <div className="text-[11.5px] text-[#7a9ab4]">@{profile.username}</div>
+          {me && !isMe && (
+            <button
+              onClick={async () => {
+                const chatId = await getOrCreateChat(me.id, profile.id);
+                if (chatId) router.push(`/line/${chatId}`);
+              }}
+              className="mt-3 rounded-xl px-6 py-2.5 text-[13.5px] font-extrabold text-[#1a2432]"
+              style={{ background: "#d4b96a" }}
+            >
+              💬 連絡を取る
+            </button>
+          )}
         </div>
       </header>
 
