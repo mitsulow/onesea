@@ -93,11 +93,20 @@ export function moonOf(dateKey: string): MoonInfo {
   const emoji =
     age < 1.85 ? "🌑" : age < 5.5 ? "🌒" : age < 9.2 ? "🌓" : age < 12.9 ? "🌔" :
     age < 16.6 ? "🌕" : age < 20.3 ? "🌖" : age < 24 ? "🌗" : age < 27.7 ? "🌘" : "🌑";
+  // 聖点: その日（JST 0時〜24時）の間に朔・上弦・望・下弦の「瞬間」を含む日だけ。
+  // 月齢の幅で判定すると2日連続になるため、黄経差の通過で判定（ツキヨガ方式）
+  const el0 = elongationAt(Date.UTC(y, m - 1, d - 1, 15, 0, 0)); // JST 0:00
+  let el1 = elongationAt(Date.UTC(y, m - 1, d, 15, 0, 0)); // JST 24:00
+  if (el1 < el0) el1 += 360;
   let holy: string | null = null;
-  if (age < 1 || age > SYNODIC - 0.5) holy = "つきたち";
-  else if (Math.abs(age - SYNODIC * 0.25) < 0.6) holy = "かたみに";
-  else if (Math.abs(age - SYNODIC * 0.5) < 0.6) holy = "くまなし";
-  else if (Math.abs(age - SYNODIC * 0.75) < 0.6) holy = "ありあけ";
+  for (const [target, name] of [
+    [90, "かたみに"],
+    [180, "くまなし"],
+    [270, "ありあけ"],
+    [360, "つきたち"],
+  ] as const) {
+    if (el0 < target && target <= el1) holy = name;
+  }
   const rd = Math.floor(age) + 1;
   return { age, emoji, holy, reki: (KANJI[rd] ?? String(rd)) + "日" };
 }

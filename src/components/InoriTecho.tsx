@@ -388,6 +388,58 @@ function BottomSheet({
   const [sheetY, setSheetY] = useState(0);
   const [draggingSheet, setDraggingSheet] = useState(false);
   const dragStart = useRef(0);
+  /* 左右スワイプで前日/翌日（画面を実際に引っ張る手応え付き） */
+  const [hx, setHx] = useState(0);
+  const [hDragging, setHDragging] = useState(false);
+  const hRef = useRef<{ sx: number; sy: number; locked: boolean; dir: string | null }>({
+    sx: 0,
+    sy: 0,
+    locked: false,
+    dir: null,
+  });
+
+  const sTS = (e: React.TouchEvent) => {
+    hRef.current = { sx: e.touches[0].clientX, sy: e.touches[0].clientY, locked: false, dir: null };
+  };
+  const sTM = (e: React.TouchEvent) => {
+    const t0 = e.touches[0];
+    const dx = t0.clientX - hRef.current.sx;
+    const dy = t0.clientY - hRef.current.sy;
+    if (!hRef.current.locked) {
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        hRef.current.locked = true;
+        hRef.current.dir = Math.abs(dx) > Math.abs(dy) * 1.2 ? "h" : "v";
+        if (hRef.current.dir === "h") setHDragging(true);
+      }
+      return;
+    }
+    if (hRef.current.dir !== "h") return;
+    const maxD = window.innerWidth * 0.6; // 画面の途中まで実際に引っ張れる
+    const ratio = Math.min(Math.abs(dx) / window.innerWidth, 1);
+    setHx((dx > 0 ? 1 : -1) * maxD * Math.pow(ratio, 0.78));
+  };
+  const slideTo = (target: number, off: number) => {
+    setHx(target);
+    setTimeout(() => {
+      onShift(off);
+      setHDragging(true); // transition を切って反対側へ瞬間移動
+      setHx(-target);
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          setHDragging(false);
+          setHx(0); // 新しい日がスライドイン
+        })
+      );
+    }, 190);
+  };
+  const sTE = () => {
+    if (hRef.current.dir !== "h") return;
+    setHDragging(false);
+    const th = window.innerWidth * 0.17;
+    if (hx > th) slideTo(window.innerWidth * 0.62, -1);
+    else if (hx < -th) slideTo(-window.innerWidth * 0.62, 1);
+    else setHx(0);
+  };
 
   const hTS = (e: React.TouchEvent) => {
     dragStart.current = e.touches[0].clientY;
@@ -446,15 +498,19 @@ function BottomSheet({
       <div onClick={onClose} className="fixed inset-0 z-40 mx-auto max-w-[480px]" style={{ background: "rgba(20,16,10,0.28)" }} />
       <div
         data-no-pull
-        className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-[480px] -translate-x-1/2 flex-col overflow-hidden bg-white"
+        onTouchStart={sTS}
+        onTouchMove={sTM}
+        onTouchEnd={sTE}
+        className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-[480px] flex-col overflow-hidden bg-white"
         style={{
           height: expanded ? "92vh" : "58vh",
           borderRadius: "20px 20px 0 0",
           boxShadow: "0 -6px 30px rgba(0,0,0,0.18)",
-          transform: `translateY(${Math.max(0, sheetY)}px)`,
-          transition: draggingSheet
-            ? "none"
-            : "height 0.28s cubic-bezier(0.22,1,0.36,1), transform 0.28s cubic-bezier(0.22,1,0.36,1)",
+          transform: `translate(calc(-50% + ${hx}px), ${Math.max(0, sheetY)}px)`,
+          transition:
+            draggingSheet || hDragging
+              ? "none"
+              : "height 0.28s cubic-bezier(0.22,1,0.36,1), transform 0.28s cubic-bezier(0.22,1,0.36,1)",
         }}
       >
         {/* ハンドル */}
