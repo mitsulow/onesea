@@ -4,15 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * 朝いちのオープニング（約15秒・タップでスキップ）。
- * 宇宙 → 天の川銀河（日付・ドセンター） → らせん太陽系（djsadhu風:
- * 太陽が金の尾を引いて銀河を進み、惑星が青いらせんを描いて追いかける）
- * → 地球クローズアップ（「今日の地球を、どう楽しむ？」を地球の中心に）
- * → OTOHIKARI の地球儀へぴったり着地。
+ * 朝いちのオープニング（約18秒・タップでスキップ）。
+ * 宇宙 → 天の川銀河（日付・ドセンター） → らせん太陽系（djsadhu風）
+ * → カメラが太陽系ごと3番目の惑星へクローズアップ → NASA画像へゆっくりクロスフェード
+ * → キリの中から OTOHIKARI の地球儀が現れて着地。
+ * 「今日の地球を、どう楽しむ？」だけ着地後も約2秒フェードで残る。
  * すべて rAF の同一時計で制御（機種非依存）。地球のみ NASA 実画像。
  */
 
-const TOTAL = 15000;
+const TOTAL = 18000; // 宇宙〜OTOHIKARI着地
+const LINGER = 20500; // 「今日の地球を…」だけ着地後も約2秒残す
 
 function easeInOut(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -50,7 +51,7 @@ export function MorningOpening() {
     // } catch {}
 
     const yobi = ["日", "月", "火", "水", "木", "金", "土"][today.getDay()];
-    setDateLine(`${today.getMonth() + 1}月${today.getDate()}日（${yobi}）`);
+    setDateLine(`${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日（${yobi}）`);
     setAdvLines(["", "今日も", "地球冒険の日"]);
     setShow(true);
 
@@ -93,13 +94,13 @@ export function MorningOpening() {
     /* 着地点: OTOHIKARI の地球儀 */
     let tx = W / 2;
     let ty = Math.min(H * 0.42, 320);
-    let tr = Math.min(W, 360) * 0.42;
+    let tr = Math.min(W, 360) * 0.5;
     const globeEl = document.getElementById("otohikari-globe");
     if (globeEl) {
       const r = globeEl.getBoundingClientRect();
       tx = r.left + r.width / 2;
       ty = r.top + r.height / 2;
-      tr = r.height * 0.423;
+      tr = r.height * 0.507; // OTOHIKARI の球より2割大きく重ねて没入感を出す
     }
     setEarthCenterY(ty);
 
@@ -126,8 +127,8 @@ export function MorningOpening() {
     const dirY = -Math.sin(AXIS); // 右→左へ進む
     const perpX = -dirY;
     const perpY = dirX;
-    const SOL_T0 = 5600;
-    const SOL_T1 = 11600;
+    const SOL_T0 = 6700;
+    const SOL_T1 = 13900;
     const helixPlanets = [
       { r: 13, period: 900, phase: 0.0, color: "160,200,255", size: 1.7 },
       { r: 19, period: 1300, phase: 2.1, color: "255,214,150", size: 2.2 },
@@ -147,19 +148,31 @@ export function MorningOpening() {
 
     const start = performance.now();
     let raf = 0;
+    let released = false;
 
     const draw = (now: number) => {
       const t = now - start;
       if (doneRef.current) return;
       g.clearRect(0, 0, W, H);
 
-      /* ---- フェーズ（2倍ゆっくり） ---- */
-      const starIn = span(t, 0, 1200);
-      const galIn = span(t, 800, 2600) * (1 - span(t, 5200, 6600) * 0.82);
-      const galZoom = 1 + easeInOut(span(t, 1800, 6600)) * 2.4;
-      const solIn = span(t, 5600, 6900) * (1 - span(t, 10400, 11500));
-      const earthIn = span(t, 10600, 13200);
-      const allOut = span(t, 13600, TOTAL);
+      /* ---- フェーズ ---- */
+      const starIn = span(t, 0, 1400);
+      const galIn = span(t, 1000, 3100) * (1 - span(t, 6200, 7900) * 0.82);
+      const galZoom = 1 + easeInOut(span(t, 2200, 7900)) * 2.4;
+      /* カメラ: らせん太陽系ごと 3番目の惑星（地球）へクローズアップしていく */
+      const camT = easeInOut(span(t, 12200, 15400));
+      const fPl = helixPlanets[2];
+      const fBase = sunPos(t);
+      const fTh = (t / fPl.period) * Math.PI * 2 + fPl.phase;
+      const fOff = Math.sin(fTh) * fPl.r;
+      const fDep = Math.cos(fTh);
+      const fx = fBase.x + perpX * fOff + dirX * fDep * fPl.r * 0.22;
+      const fy = fBase.y + perpY * fOff + dirY * fDep * fPl.r * 0.22;
+      const camZ = 1 + camT * 12;
+      const panX = (tx - fx) * camT;
+      const panY = (ty - fy) * camT;
+      const solIn = span(t, 6700, 8300) * (1 - span(t, 13800, 15000));
+      const allOut = span(t, 16300, TOTAL);
       const cosmicAlpha = (1 - allOut) * 0.98;
 
       /* ---- テキスト（同一時計・機種非依存） ---- */
@@ -180,11 +193,11 @@ export function MorningOpening() {
           ? `translate(-50%, calc(-50% + ${rise}px)) scale(${1.04 - ein * 0.04})`
           : `translate(-50%, ${rise}px) scale(${1.04 - ein * 0.04})`;
       };
-      textAnim(text1Ref.current, 2000, 3200, 4900, 5800, true); // 日付ドセンター
-      textAnim(adv0Ref.current, 6600, 7500, 10100, 10900); // ◯◯隊員
-      textAnim(adv1Ref.current, 7500, 8400, 10100, 10900); // N回目となる
-      textAnim(adv2Ref.current, 8400, 9300, 10100, 10900); // 地球冒険の日
-      textAnim(text3Ref.current, 11600, 12600, 13900, 14700, true); // 地球の中心
+      textAnim(text1Ref.current, 2400, 3800, 5900, 7000, true); // 日付ドセンター
+      textAnim(adv0Ref.current, 7900, 9000, 12100, 13100); // ◯◯隊員
+      textAnim(adv1Ref.current, 9000, 10100, 12100, 13100); // N回目となる
+      textAnim(adv2Ref.current, 10100, 11200, 12100, 13100); // 地球冒険の日
+      textAnim(text3Ref.current, 14800, 15900, 19300, 20400, true); // 地球の中心・着地後も残る
 
       /* ---- 星 ---- */
       g.globalAlpha = starIn * cosmicAlpha;
@@ -238,9 +251,14 @@ export function MorningOpening() {
       /* ---- らせん太陽系（金の尾の太陽 + らせんの惑星たち） ---- */
       if (solIn > 0.01) {
         const sun = sunPos(t);
+        /* カメラ変換: 3番目の惑星を固定点に、太陽系全体を拡大しながら着地点へパン */
+        g.save();
+        g.translate(fx + panX, fy + panY);
+        g.scale(camZ, camZ);
+        g.translate(-fx, -fy);
 
         const TAIL = 2600;
-        g.lineWidth = 2.2;
+        g.lineWidth = 2.2 / camZ;
         for (let s0 = TAIL; s0 > 0; s0 -= 90) {
           const a = sunPos(t - s0);
           const b = sunPos(t - s0 + 90);
@@ -269,7 +287,7 @@ export function MorningOpening() {
               const k = 1 - s0 / TRAIL;
               const a = (front ? 0.5 : 0.22) * k * solIn * cosmicAlpha;
               g.strokeStyle = `rgba(${pl.color},${a})`;
-              g.lineWidth = front ? 1.5 : 1;
+              g.lineWidth = (front ? 1.5 : 1) / camZ;
               g.beginPath();
               g.moveTo(prev.x, prev.y);
               g.lineTo(px, py);
@@ -300,27 +318,37 @@ export function MorningOpening() {
         g.beginPath();
         g.arc(sun.x, sun.y, 46, 0, Math.PI * 2);
         g.fill();
+        g.restore();
       }
 
-      /* ---- 地球（実画像） ---- */
-      if (earthIn > 0.001) {
-        const e = easeInOut(earthIn);
-        const from = sunPos(TOTAL);
-        const startR = 6;
-        const r = startR + (tr - startR) * e;
-        const sx = from.x + (tx - from.x) * e;
-        const sy = from.y + (ty - from.y) * e;
-        const fadeOut = 1 - span(t, 14200, TOTAL);
-        earth.style.opacity = String(Math.min(1, earthIn * 2.5) * fadeOut);
-        earth.style.transform = `translate(${sx - r}px, ${sy - r}px)`;
+      /* ---- 地球（NASA 実画像）: クローズアップした3番目の惑星からゆっくり浮かび上がる ---- */
+      const earthAppear = span(t, 13100, 15700);
+      if (earthAppear > 0.001) {
+        const cx = fx + panX; // カメラの固定点 = 3番目の惑星の見かけ位置
+        const cy = fy + panY;
+        const r = 5 + (tr - 5) * easeInOut(span(t, 12800, 15400));
+        const mist = easeInOut(span(t, 16400, TOTAL)); // キリの中へ溶けて OTOHIKARI へ譲る
+        earth.style.opacity = String(Math.min(1, earthAppear * 1.5) * (1 - mist));
+        earth.style.filter = `blur(${(1 - easeInOut(earthAppear)) * 4 + mist * 14}px)`;
+        earth.style.transform = `translate(${cx - r}px, ${cy - r}px)`;
         earth.style.width = `${r * 2}px`;
         earth.style.height = `${r * 2}px`;
       }
 
-      if (root) root.style.background = `rgba(2,6,14,${1 - easeInOut(allOut)})`;
-      canvas.style.opacity = String(1 - easeInOut(allOut));
+      /* キリ（靄）の中から OTOHIKARI が現れるフェード */
+      const eOut = easeInOut(allOut);
+      const fog = allOut > 0 && allOut < 1 ? `blur(${(1 - eOut) * 14}px)` : "none";
+      root.style.background = `rgba(2,6,14,${1 - eOut})`;
+      root.style.backdropFilter = fog;
+      (root.style as CSSStyleDeclaration & { webkitBackdropFilter?: string }).webkitBackdropFilter = fog;
+      canvas.style.opacity = String(1 - eOut);
 
-      if (t < TOTAL) raf = requestAnimationFrame(draw);
+      if (t >= TOTAL && !released) {
+        released = true;
+        root.style.pointerEvents = "none"; // 文字だけ残し、ページ操作はもう可能に
+        document.body.style.overflow = "";
+      }
+      if (t < LINGER) raf = requestAnimationFrame(draw);
       else finish();
     };
 
@@ -346,10 +374,16 @@ export function MorningOpening() {
     left: "50%",
     width: "88%",
     textAlign: "center",
-    color: "#f4efd8",
-    textShadow: "0 0 24px rgba(110,196,245,0.5), 0 2px 16px rgba(0,0,0,0.9)",
+    color: "#f3e3b6",
+    fontFamily: '"Shippori Mincho", "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif',
+    textShadow: "0 0 28px rgba(255,214,120,0.5), 0 2px 16px rgba(0,0,0,0.92)",
     pointerEvents: "none",
     opacity: 0,
+  };
+  /* 「◯◯隊員」「N回目となる」だけ蛍光アクア */
+  const aqua: React.CSSProperties = {
+    color: "#8ff0e4",
+    textShadow: "0 0 24px rgba(64,224,208,0.7), 0 2px 14px rgba(0,0,0,0.92)",
   };
 
   return (
@@ -376,28 +410,24 @@ export function MorningOpening() {
         style={{ opacity: 0, willChange: "transform, opacity", boxShadow: "0 0 60px rgba(90,160,255,.35)" }}
       />
 
-      {/* ① 日付 — 画面のドセンター */}
-      <div
-        ref={text1Ref}
-        style={{ ...textBase, top: "50%", fontSize: 24, fontWeight: 700, letterSpacing: 4 }}
-        className="num"
-      >
+      {/* ① 日付（年入り） — 画面のドセンター */}
+      <div ref={text1Ref} style={{ ...textBase, top: "50%", fontSize: 25, fontWeight: 600, letterSpacing: 3 }}>
         {dateLine}
       </div>
 
-      {/* ② 隊員3行 — 一行ずつフェード */}
-      <div ref={adv0Ref} style={{ ...textBase, top: "38%", fontSize: 20, fontWeight: 800, letterSpacing: 2 }}>
+      {/* ② 隊員3行 — 一行ずつフェード・行間は詰める */}
+      <div ref={adv0Ref} style={{ ...textBase, ...aqua, top: "40%", fontSize: 23, fontWeight: 700, letterSpacing: 2 }}>
         {advLines[0]}
       </div>
-      <div ref={adv1Ref} className="num" style={{ ...textBase, top: "46%", fontSize: 18, fontWeight: 700, letterSpacing: 2 }}>
+      <div ref={adv1Ref} style={{ ...textBase, ...aqua, top: "45.5%", fontSize: 19, fontWeight: 600, letterSpacing: 2 }}>
         {advLines[1]}
       </div>
-      <div ref={adv2Ref} style={{ ...textBase, top: "54%", fontSize: 20, fontWeight: 800, letterSpacing: 3 }}>
+      <div ref={adv2Ref} style={{ ...textBase, top: "51%", fontSize: 23, fontWeight: 700, letterSpacing: 3 }}>
         {advLines[2]}
       </div>
 
-      {/* ③ 今日の地球を、どう楽しむ？ — 地球のど真ん中 */}
-      <div ref={text3Ref} style={{ ...textBase, top: earthCenterY, fontSize: 19, fontWeight: 800, letterSpacing: 2 }}>
+      {/* ③ 今日の地球を、どう楽しむ？ — 地球のど真ん中・着地後も約2秒残る */}
+      <div ref={text3Ref} style={{ ...textBase, top: earthCenterY, fontSize: 21, fontWeight: 700, letterSpacing: 3 }}>
         今日の地球を、どう楽しむ？
       </div>
     </div>
