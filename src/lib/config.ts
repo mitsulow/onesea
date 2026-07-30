@@ -10,6 +10,12 @@ export const SCHUMANN = {
   length: "5:36",
 } as const;
 
+/** 目標周波数（恒星日 86,164秒 ÷ (8回転 × 86,400秒) 由来）— schumann API v1 と共通 */
+export const TARGET_HZ = 8.0219032748;
+
+/** シューマン共振 実測データ（公式API v1・凍結スキーマ） */
+export const SCHUMANN_DATA_URL = "https://mitsulow.github.io/0Lei/schumann_data.json";
+
 export const LINKS = {
   sekaimura: "https://sekaimura-gold.vercel.app",
   mmm: "https://mastermindmembers.net",

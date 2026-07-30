@@ -52,17 +52,17 @@ export default function Home() {
         <HeaderBar />
 
         <div className="space-y-3.5 px-4 pt-4">
-        {/* ① OTOHIKARI */}
+        {/* ① OTOHIKARI（本番: 実測周波数・リアルタイム人数・再生） */}
         <Otohikari />
 
-        {/* ② 手帳 */}
+        {/* ② Cotozute */}
+        <CotozuteFeed />
+
+        {/* ③ 手帳 */}
         <section className="card px-2.5 py-3">
           <div className="sec mb-2 pl-2">📖 手 帳</div>
           <TechoCalendar />
         </section>
-
-        {/* ③ Cotozute */}
-        <CotozuteFeed />
 
         {/* ④ 星の画像 */}
         <Orbital />
