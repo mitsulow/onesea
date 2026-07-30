@@ -1,4 +1,5 @@
 import { LINKS, SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/config";
+import { CotozuteComposer } from "./CotozuteComposer";
 
 interface Post {
   body: string | null;
@@ -49,6 +50,7 @@ export async function CotozuteFeed() {
           みんなの言の葉
         </span>
       </div>
+      <CotozuteComposer />
       {posts.length === 0 ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">
           言の葉を読み込めませんでした
