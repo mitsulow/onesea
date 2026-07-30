@@ -677,12 +677,12 @@ function VillagesSection({
     return (
       <div className="rounded-xl border border-[#e2eae0] bg-white p-3">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="text-[14.5px] font-extrabold text-[#2a4a34]">⛺ {v.name}</div>
+          <Link href={`/sekai/village/${v.id}`} className="min-w-0 no-underline">
+            <div className="text-[14.5px] font-extrabold text-[#2a4a34]">⛺ {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
             <div className="mt-0.5 text-[11px] text-[#a0aca0]">
               {v.prefecture} ・ {members}人 ・ 世話人 {v.profiles?.display_name ?? "—"}
             </div>
-          </div>
+          </Link>
           <span
             className="flex-shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold"
             style={
