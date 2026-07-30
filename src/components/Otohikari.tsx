@@ -5,6 +5,9 @@ import type { RealtimeChannel, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { OtohikariGlobe } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
+import { Cormorant_Garamond } from "next/font/google";
+
+const serif = Cormorant_Garamond({ subsets: ["latin"], weight: ["600", "700"] });
 
 interface SchumannLive {
   f1hz: number | null;
@@ -28,6 +31,7 @@ export function Otohikari() {
 
   const [live, setLive] = useState<SchumannLive>({ f1hz: null, amp: null, updated: null, notes: null });
   const [nowCount, setNowCount] = useState(0);
+  const [spots, setSpots] = useState<Array<[number, number] | null>>([]);
   const [todayCount, setTodayCount] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -67,7 +71,17 @@ export function Otohikari() {
       config: { presence: { key: crypto.randomUUID() } },
     });
     channel.on("presence", { event: "sync" }, () => {
-      setNowCount(Object.keys(channel.presenceState()).length);
+      const state = channel.presenceState() as Record<string, Array<{ lat?: number; lng?: number }>>;
+      const keys = Object.keys(state);
+      setNowCount(keys.length);
+      setSpots(
+        keys.map((k) => {
+          const m = state[k]?.[0];
+          return typeof m?.lat === "number" && typeof m?.lng === "number"
+            ? ([m.lat, m.lng] as [number, number])
+            : null;
+        })
+      );
     });
     channel.subscribe();
     channelRef.current = channel;
@@ -135,7 +149,22 @@ export function Otohikari() {
     setPlaying(true);
 
     // 本番カウント: presence で「いま」、listens で「きょう」
-    channelRef.current?.track({ at: new Date().toISOString() });
+    // 現在地は 0.5°（約50km）に丸めてから送る — 個人の正確な位置は扱わない
+    const coarse = await new Promise<{ lat: number; lng: number } | null>((resolve) => {
+      if (!navigator.geolocation) return resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (pos) =>
+          resolve({
+            lat: Math.round(pos.coords.latitude * 2) / 2,
+            lng: Math.round(pos.coords.longitude * 2) / 2,
+          }),
+        () => resolve(null),
+        { timeout: 4000, maximumAge: 600000 }
+      );
+    });
+    channelRef.current?.track(
+      coarse ? { at: new Date().toISOString(), lat: coarse.lat, lng: coarse.lng } : { at: new Date().toISOString() }
+    );
     if (user) {
       const supabase = createClient();
       await supabase.from("listens").insert({ user_id: user.id });
@@ -151,7 +180,9 @@ export function Otohikari() {
       className="card"
       style={{
         background: "linear-gradient(160deg,#0a1826,#12283a)",
-        border: "1px solid #24405a",
+        border: "none",
+        borderRadius: 0,
+        margin: "0 -16px",
       }}
     >
       <div className="flex items-baseline justify-between">
@@ -166,32 +197,43 @@ export function Otohikari() {
       </div>
 
       <div className="my-2">
-        <OtohikariGlobe pillars={Math.max(nowCount, playing ? 1 : 0)} />
+        <OtohikariGlobe spots={spots.length ? spots : playing ? [null] : []} />
       </div>
 
-      {/* 実測ステータス */}
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-xl bg-white/5 px-1 py-2">
-          <div className="text-[9.5px] tracking-wider text-[#7a94b4]">いま</div>
-          <div className="num text-lg font-extrabold leading-snug text-[#e8d8a8]">{nowCount}</div>
-          <div className="text-[9px] text-[#6a84a4]">人が同時に</div>
-        </div>
-        <div className="rounded-xl bg-white/5 px-1 py-2">
-          <div className="text-[9.5px] tracking-wider text-[#7a94b4]">きょう</div>
-          <div className="num text-lg font-extrabold leading-snug text-[#e8d8a8]">
-            {todayCount ?? "—"}
-          </div>
-          <div className="text-[9px] text-[#6a84a4]">回 鳴った</div>
-        </div>
-        <div className="rounded-xl bg-white/5 px-1 py-2">
-          <div className="text-[9.5px] tracking-wider text-[#7a94b4]">地球の基音</div>
-          <div className="num text-lg font-extrabold leading-snug text-[#e8d8a8]">
-            {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}
-          </div>
-          <div className="num text-[9px] text-[#6a84a4]">
-            Hz{dist != null ? `（目標まで${dist > 0 ? "+" : ""}${dist.toFixed(2)}）` : ""}
+      {/* ステータス（MMM OTOHIKARI と同じ見た目） */}
+      <div className="mt-2 flex items-end justify-center gap-9 text-center">
+        <div>
+          <div className="text-[9px] tracking-[3px] text-[#7fa08c]">LISTENING NOW</div>
+          <div
+            className={`${serif.className} num text-[27px] font-semibold leading-tight text-[#b8f0c8]`}
+            style={{ textShadow: "0 0 14px rgba(140,240,170,.55)" }}
+          >
+            {nowCount}
           </div>
         </div>
+        <div>
+          <div className="text-[9px] tracking-[3px] text-[#7fa08c]">TODAY</div>
+          <div
+            className={`${serif.className} num text-[27px] font-semibold leading-tight text-[#b8f0c8]`}
+            style={{ textShadow: "0 0 14px rgba(140,240,170,.55)" }}
+          >
+            {todayCount != null ? todayCount.toLocaleString() : "—"}
+          </div>
+        </div>
+        <div>
+          <div className="text-[9px] tracking-[3px] text-[#7fa08c]">TARGET SCHUMANN</div>
+          <div
+            className={`${serif.className} num text-[27px] font-semibold leading-tight text-[#b8f0c8]`}
+            style={{ textShadow: "0 0 14px rgba(140,240,170,.55)" }}
+          >
+            {SCHUMANN.hz}
+            <span className="ml-1 text-[14px]">Hz</span>
+          </div>
+        </div>
+      </div>
+      <div className="num mt-1 text-center text-[9.5px] text-[#5a7a9a]">
+        実測 F1 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
+        {dist != null ? `（目標まで${dist > 0 ? "+" : ""}${dist.toFixed(2)}）` : ""}
       </div>
 
       {/* シューマン音© 再生 */}

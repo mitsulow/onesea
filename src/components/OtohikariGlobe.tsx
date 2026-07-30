@@ -11,10 +11,10 @@ import { COASTLINES } from "@/lib/coastlines";
  * - 夜の街明かり・大気グロー・流星
  * - 金の光柱: いまシューマン音©を聴いている人（presence 実数・props.pillars）
  */
-export function OtohikariGlobe({ pillars }: { pillars: number }) {
+export function OtohikariGlobe({ spots }: { spots: Array<[number, number] | null> }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const pillarsRef = useRef(pillars);
-  pillarsRef.current = pillars;
+  const spotsRef = useRef(spots);
+  spotsRef.current = spots;
 
   useEffect(() => {
     const host = hostRef.current;
@@ -451,14 +451,15 @@ export function OtohikariGlobe({ pillars }: { pillars: number }) {
     ];
     const pillarGroup = new THREE.Group();
     earth.add(pillarGroup);
-    let builtPillars = -1;
-    const rebuildPillars = (n: number) => {
-      builtPillars = n;
+    let builtKey = "";
+    const rebuildPillars = (list: Array<[number, number] | null>) => {
       pillarGroup.clear();
-      const count = Math.min(n, 14);
+      const count = Math.min(list.length, 40);
       for (let i = 0; i < count; i++) {
-        const [lat, lng] = JP_SPOTS[i % JP_SPOTS.length];
-        const base = ll2v(lat + (i * 0.7) % 2 - 1, lng + (i * 1.3) % 3 - 1.5, 1.005);
+        const loc = list[i];
+        const lat = loc ? loc[0] : JP_SPOTS[i % JP_SPOTS.length][0] + ((i * 0.7) % 2) - 1;
+        const lng = loc ? loc[1] : JP_SPOTS[i % JP_SPOTS.length][1] + ((i * 1.3) % 3) - 1.5;
+        const base = ll2v(lat, lng, 1.005);
         const tip = base.clone().normalize().multiplyScalar(1.22);
         const lg = new THREE.BufferGeometry().setFromPoints([base, tip]);
         const lm = new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
@@ -616,8 +617,12 @@ export function OtohikariGlobe({ pillars }: { pillars: number }) {
       }
       updateMeteors(t, dt);
       nodeMat.opacity = 0.45 + 0.3 * (0.5 + 0.5 * Math.sin(t * 1.3));
-      // 光柱: presence 数が変わったら組み直し、脈動させる
-      if (pillarsRef.current !== builtPillars) rebuildPillars(pillarsRef.current);
+      // 光柱: presence の場所が変わったら組み直し、脈動させる
+      const spotsKey = JSON.stringify(spotsRef.current);
+      if (spotsKey !== builtKey) {
+        builtKey = spotsKey;
+        rebuildPillars(spotsRef.current);
+      }
       const pulse = 0.65 + 0.35 * Math.sin(t * 2.2);
       pillarGroup.children.forEach((c, i) => {
         const m = (c as THREE.Line | THREE.Mesh).material as THREE.Material & { opacity: number };
