@@ -134,7 +134,7 @@ export function Otohikari() {
         </div>
       </div>
       <div className="num mt-1.5 text-center text-[11px] text-[#8aa8d0]">
-        今日のシューマン共振 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
+        今のシューマン電磁波 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
         {needed != null
           ? `（目標値まで${needed >= 0 ? "＋" : "−"}${Math.abs(needed).toFixed(2)}Hz）`
           : ""}
