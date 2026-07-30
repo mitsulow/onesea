@@ -16,6 +16,7 @@
 html,
 body {
   background: var(--color-sea-deep);
+  overscroll-behavior-y: none;
 }
 
 body {

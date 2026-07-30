@@ -27,15 +27,6 @@ export default function Home() {
           <InoriTecho />
         </div>
 
-        {/* フッター */}
-        <footer className="pb-4 pt-3 text-center">
-          <div className="text-[10.5px] text-[#c8c0b0]">
-            手帳と暦は、ずっと無料で使えます
-          </div>
-          <div className="mt-3 text-[11px] tracking-widest text-[#b8ae9c]">
-            🌊 Onesea — すべての海は、ひとつ。
-          </div>
-        </footer>
         </div>
       </main>
     </AuthGate>

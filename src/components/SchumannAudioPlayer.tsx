@@ -187,26 +187,26 @@ export function SchumannAudioPlayer() {
   };
 
   return (
-    <section className="card" style={{ margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}>
+    <section className="card" style={{ margin: "0 -16px", borderRadius: 0, border: "none", background: "#0abab5" }}>
       {/* タイトル行 */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-baseline gap-1.5">
           <span className="text-[15px]">⚡</span>
-          <span className="text-[16px] font-extrabold tracking-wide" style={{ color: "#3e9b6c" }}>
+          <span className="text-[16px] font-extrabold tracking-wide text-white" style={{ textShadow: "0 1px 3px rgba(0,0,0,.15)" }}>
             シューマン音
           </span>
-          <span className="text-[12.5px] text-[#a09888]">（夏至 {SCHUMANN.hz}HZ）</span>
+          <span className="text-[12.5px] text-white/85">（夏至 {SCHUMANN.hz}HZ）</span>
         </div>
         <button
           onClick={() => setShowDlInfo((v) => !v)}
-          className="flex-shrink-0 rounded-full border border-[#e0d6c6] px-3 py-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"
+          className="flex-shrink-0 rounded-full border border-white/60 px-3 py-1 text-[10.5px] font-bold tracking-wider text-white/90"
         >
           DL INFO
         </button>
       </div>
 
       {showDlInfo && (
-        <div className="mt-2 rounded-xl bg-[#f4f0e6] px-3 py-2 text-[11.5px] leading-relaxed text-[#8a7a5a]">
+        <div className="mt-2 rounded-xl bg-white/85 px-3 py-2 text-[11.5px] leading-relaxed text-[#2a6a66]">
           {dl === "cached"
             ? "✅ 音源はこの端末に保存済みです。再生してもギガは減りません（初回の1回だけ約10MBをダウンロードします）。"
             : dl === "loading"
@@ -222,7 +222,7 @@ export function SchumannAudioPlayer() {
           disabled={!src}
           aria-label={playing ? "一時停止" : "再生"}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] text-white shadow disabled:opacity-40"
-          style={{ background: "linear-gradient(140deg,#5cbe8c,#3e9b6c)" }}
+          style={{ background: "linear-gradient(140deg,#a070ff,#8a5aff)" }}
         >
           {playing ? "❚❚" : "▶"}
         </button>
@@ -232,7 +232,7 @@ export function SchumannAudioPlayer() {
           className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border text-[11px]"
           style={
             loop
-              ? { background: "#eaf6ee", borderColor: "#3e9b6c", color: "#3e9b6c" }
+              ? { background: "#f0e8ff", borderColor: "#8a5aff", color: "#8a5aff" }
               : { background: "#fff", borderColor: "#e0d6c6", color: "#8a8070" }
           }
         >
@@ -244,7 +244,7 @@ export function SchumannAudioPlayer() {
           className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border text-[11px]"
           style={
             meditation
-              ? { background: "#eaf6ee", borderColor: "#3e9b6c", color: "#3e9b6c" }
+              ? { background: "#f0e8ff", borderColor: "#8a5aff", color: "#8a5aff" }
               : { background: "#fff", borderColor: "#e0d6c6", color: "#8a8070" }
           }
         >
@@ -258,10 +258,10 @@ export function SchumannAudioPlayer() {
             step={0.1}
             value={cur}
             onChange={(e) => seek(Number(e.target.value))}
-            className="w-full accent-[#3e9b6c]"
+            className="w-full accent-[#8a5aff]"
             aria-label="再生位置"
           />
-          <div className="flex justify-between text-[10.5px] leading-none text-[#a09888]">
+          <div className="flex justify-between text-[10.5px] leading-none text-white/85">
             <span className="num">{fmt(cur)}</span>
             <span className="num">{fmt(dur || SCHUMANN_FALLBACK_SEC)}</span>
           </div>

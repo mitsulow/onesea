@@ -385,6 +385,30 @@ function BottomSheet({
   const inputRef = useRef<HTMLInputElement>(null);
   const [tide, setTide] = useState<TideDay | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [sheetY, setSheetY] = useState(0);
+  const [draggingSheet, setDraggingSheet] = useState(false);
+  const dragStart = useRef(0);
+
+  const hTS = (e: React.TouchEvent) => {
+    dragStart.current = e.touches[0].clientY;
+    setDraggingSheet(true);
+  };
+  const hTM = (e: React.TouchEvent) => {
+    if (!draggingSheet) return;
+    const dy = e.touches[0].clientY - dragStart.current;
+    setSheetY(Math.max(-140, dy));
+  };
+  const hTE = () => {
+    if (!draggingSheet) return;
+    setDraggingSheet(false);
+    if (sheetY > 90) {
+      onClose();
+      return;
+    }
+    if (sheetY < -60) setExpanded(true);
+    else if (sheetY > 40 && expanded) setExpanded(false);
+    setSheetY(0);
+  };
 
   useEffect(() => {
     if (editH !== null && inputRef.current) inputRef.current.focus();
@@ -426,18 +450,24 @@ function BottomSheet({
           height: expanded ? "92vh" : "58vh",
           borderRadius: "20px 20px 0 0",
           boxShadow: "0 -6px 30px rgba(0,0,0,0.18)",
-          transition: "height 0.28s cubic-bezier(0.22,1,0.36,1)",
+          transform: `translateY(${Math.max(0, sheetY)}px)`,
+          transition: draggingSheet
+            ? "none"
+            : "height 0.28s cubic-bezier(0.22,1,0.36,1), transform 0.28s cubic-bezier(0.22,1,0.36,1)",
         }}
       >
         {/* ハンドル */}
         <div
           onClick={() => setExpanded(!expanded)}
+          onTouchStart={hTS}
+          onTouchMove={hTM}
+          onTouchEnd={hTE}
           className="flex-shrink-0 cursor-grab border-b border-[#f0ede6] pb-2 pt-2.5"
-          style={{ background: "linear-gradient(180deg,#faf7f2,#fff)" }}
+          style={{ background: "linear-gradient(180deg,#faf7f2,#fff)", touchAction: "none" }}
         >
           <div className="mx-auto mb-1 h-[5px] w-[60px] rounded bg-[#c8c0b2]" />
           <div className="text-center text-[9.5px] tracking-wider text-[#b0a898]">
-            {expanded ? "▼ タップで下げる" : "▲ タップで全画面"}
+            {expanded ? "▼ 下へスワイプで閉じる" : "▲ 上へスワイプで全画面"}
           </div>
         </div>
 
@@ -474,7 +504,7 @@ function BottomSheet({
           })}
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {/* 日付ヘッダー */}
           <div className="flex items-baseline justify-between px-4 pb-1.5 pt-2.5">
             <div>
