@@ -42,6 +42,9 @@ export default function UserPage() {
   const [bioDraft, setBioDraft] = useState("");
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
   const [shops, setShops] = useState<Shop[]>([]);
+  const [masterDdp, setMasterDdp] = useState<string | null>(null);
+  const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string }>>([]);
+  const [ddpOpen, setDdpOpen] = useState(false);
   const coverInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
 
@@ -54,7 +57,17 @@ export default function UserPage() {
       .maybeSingle();
     const prof = (data as FullProfile) ?? null;
     setProfile(prof);
-    if (prof) fetchShopsByOwner(prof.id).then(setShops);
+    if (prof) {
+      fetchShopsByOwner(prof.id).then(setShops);
+      supabase.from("ddp").select("body").eq("user_id", prof.id).maybeSingle().then(({ data: d }) => setMasterDdp(d?.body ?? null));
+      supabase
+        .from("daily_ddp")
+        .select("day, body")
+        .eq("user_id", prof.id)
+        .order("day", { ascending: false })
+        .limit(120)
+        .then(({ data: dd }) => setDailyDdps((dd as Array<{ day: string; body: string }>) ?? []));
+    }
   };
 
   useEffect(() => {
@@ -204,6 +217,17 @@ export default function UserPage() {
             </div>
           )}
         </div>
+
+        {/* DDP（端的な夢） */}
+        {masterDdp && (
+          <div
+            className="mt-2.5 rounded-xl px-3.5 py-2.5"
+            style={{ background: "linear-gradient(135deg,#e6f7f6,#fdfbf4)", border: "1px solid #0abab544" }}
+          >
+            <div className="text-[9.5px] font-bold tracking-[2px] text-[#0abab5]">🌊 DDP</div>
+            <div className="mt-0.5 whitespace-pre-wrap text-[14px] font-bold leading-relaxed text-[#2a5a56]">{masterDdp}</div>
+          </div>
+        )}
 
         {/* 自己紹介 */}
         <div className="mt-2">
@@ -410,6 +434,50 @@ export default function UserPage() {
           )}
         </div>
       </div>
+
+      {/* 今日のDDPの積み重ね（タイムライン） */}
+      {dailyDdps.length > 0 && (
+        <div className="px-4 pt-5">
+          <div className="card">
+            <div className="sec mb-3">🌊 {isMe ? "あなたの今日のDDP" : "この人の今日のDDP"}</div>
+            <div className="relative pl-5">
+              <div className="absolute bottom-1 left-[5px] top-1 w-[2px] rounded-full" style={{ background: "linear-gradient(180deg,#0abab5,#d4b96a44)" }} />
+              {dailyDdps.slice(0, 5).map((d) => {
+                const dt = new Date(d.day + "T00:00:00");
+                return (
+                  <div key={d.day} className="relative pb-4">
+                    <div className="absolute -left-[19px] top-1 h-3 w-3 rounded-full border-2 border-[#fffdf8]" style={{ background: "#0abab5" }} />
+                    <div className="num text-[10.5px] font-bold text-[#0abab5]">
+                      {dt.getMonth() + 1}月{dt.getDate()}日
+                    </div>
+                    <div className="mt-0.5 whitespace-pre-wrap text-[13.5px] leading-relaxed text-[#4a4438]">{d.body}</div>
+                  </div>
+                );
+              })}
+              {dailyDdps.length > 5 && (
+                <>
+                  {ddpOpen &&
+                    dailyDdps.slice(5).map((d) => {
+                      const dt = new Date(d.day + "T00:00:00");
+                      return (
+                        <div key={d.day} className="relative pb-4">
+                          <div className="absolute -left-[19px] top-1 h-3 w-3 rounded-full border-2 border-[#fffdf8]" style={{ background: "#9cc8c4" }} />
+                          <div className="num text-[10.5px] font-bold text-[#8ab4b0]">
+                            {dt.getMonth() + 1}月{dt.getDate()}日
+                          </div>
+                          <div className="mt-0.5 whitespace-pre-wrap text-[13px] leading-relaxed text-[#5a5448]">{d.body}</div>
+                        </div>
+                      );
+                    })}
+                  <button onClick={() => setDdpOpen(!ddpOpen)} className="relative -left-1 text-[11.5px] font-bold text-[#0abab5] underline">
+                    {ddpOpen ? "たたむ" : "さらに " + String(dailyDdps.length - 5) + "日ぶんをたどる"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -12,8 +12,7 @@ import { YOBI } from "@/lib/almanac";
  * フェードの気持ちよさはツキヨガ準拠: scale 1.08→1 / 文字は下から20px / cubic-bezier(0.22,1,0.36,1)
  */
 
-const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
-const TOTAL = 3300;
+const TOTAL = 7400;
 
 function easeInOut(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -33,15 +32,21 @@ export function MorningOpening() {
   const earthRef = useRef<HTMLImageElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const doneRef = useRef(false);
+  const text1Ref = useRef<HTMLDivElement>(null);
+  const text2Ref = useRef<HTMLDivElement>(null);
+  const text3Ref = useRef<HTMLDivElement>(null);
 
   // その日最初のオープンだけ
   useEffect(() => {
     const today = new Date();
     const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-    try {
-      if (localStorage.getItem("onesea-morning-shown") === key) return;
-      localStorage.setItem("onesea-morning-shown", key);
-    } catch {}
+    // チェック期間中はリロードのたびに毎回表示。
+    // 本番運用に戻すときは下のコメントを解除（その日最初の1回だけになる）
+    // try {
+    //   if (localStorage.getItem("onesea-morning-shown") === key) return;
+    //   localStorage.setItem("onesea-morning-shown", key);
+    // } catch {}
+    void key;
 
     const dateLine = `${today.getMonth() + 1}月${today.getDate()}日 ${YOBI[today.getDay()]}曜日`;
     setLines({ date: dateLine, adventure: "今日も、地球冒険の日" });
@@ -132,14 +137,32 @@ export function MorningOpening() {
       if (doneRef.current) return;
       g.clearRect(0, 0, W, H);
 
-      /* ---- フェーズ進行 ---- */
-      const starIn = span(t, 0, 500); // 星が生まれる
-      const galIn = span(t, 250, 950) * (1 - span(t, 1450, 2050)); // 天の川
-      const galZoom = 1 + easeInOut(span(t, 700, 2050)) * 2.6; // 銀河に向かって進む
-      const solIn = span(t, 1350, 1950) * (1 - span(t, 2350, 2850)); // 太陽系
-      const solZoom = 0.7 + easeInOut(span(t, 1350, 2750)) * 1.5;
-      const earthIn = span(t, 2150, 2950); // 地球クローズアップ
-      const allOut = span(t, 2850, TOTAL); // 宇宙は暮れて OTOHIKARI へ
+      /* ---- フェーズ進行（読める速度・全部同じ時計） ---- */
+      const starIn = span(t, 0, 800); // 星が生まれる
+      const galIn = span(t, 500, 1500) * (1 - span(t, 2700, 3400)); // 天の川
+      const galZoom = 1 + easeInOut(span(t, 1200, 3400)) * 2.6; // 銀河に向かって進む
+      const solIn = span(t, 2700, 3500) * (1 - span(t, 4900, 5600)); // 太陽系
+      const solZoom = 0.7 + easeInOut(span(t, 2700, 5300)) * 1.5;
+      const earthIn = span(t, 4900, 6300); // 地球クローズアップ
+      const allOut = span(t, 6500, TOTAL); // 宇宙は暮れて OTOHIKARI へ
+
+      /* ---- テキスト（rAF同一時計・機種に依存しない） ---- */
+      const textAnim = (
+        el: HTMLDivElement | null,
+        inA: number,
+        inB: number,
+        outA: number,
+        outB: number
+      ) => {
+        if (!el) return;
+        const ein = easeInOut(span(t, inA, inB));
+        const eout = span(t, outA, outB);
+        el.style.opacity = String(ein * (1 - eout));
+        el.style.transform = `translate(-50%, ${(1 - ein) * 22}px) scale(${1.04 - ein * 0.04})`;
+      };
+      textAnim(text1Ref.current, 900, 1650, 2700, 3200); // 日付（天の川）
+      textAnim(text2Ref.current, 3100, 3850, 4900, 5400); // ◯回目の地球冒険（太陽系）
+      textAnim(text3Ref.current, 5300, 6050, 6800, 7300); // 今日は、地球をどう楽しもうか？
 
       const cosmicAlpha = (1 - allOut) * 0.98;
 
@@ -243,7 +266,7 @@ export function MorningOpening() {
         const r = startR + (tr - startR) * e;
         const sx = W / 2 + (tx - W / 2) * e;
         const sy = H * 0.44 + (ty - H * 0.44) * e;
-        const fadeOut = 1 - span(t, 3000, TOTAL); // 最後は OTOHIKARI へ譲る
+        const fadeOut = 1 - span(t, 6900, TOTAL); // 最後は OTOHIKARI へ譲る
         earth.style.opacity = String(Math.min(1, earthIn * 2.2) * fadeOut);
         earth.style.transform = `translate(${sx - r}px, ${sy - r}px)`;
         earth.style.width = `${r * 2}px`;
@@ -311,15 +334,8 @@ export function MorningOpening() {
 
       {/* ① 日付（天の川） */}
       <div
-        style={{
-          ...textBase,
-          top: "24%",
-          transform: "translateX(-50%)",
-          fontSize: 21,
-          fontWeight: 700,
-          letterSpacing: 3,
-          animation: `mo-text-in 700ms ${EASE} 380ms both, mo-text-out 340ms ease 1180ms both`,
-        }}
+        ref={text1Ref}
+        style={{ ...textBase, top: "24%", transform: "translateX(-50%)", opacity: 0, fontSize: 21, fontWeight: 700, letterSpacing: 3 }}
         className="num"
       >
         {lines.date}
@@ -327,16 +343,8 @@ export function MorningOpening() {
 
       {/* ② ◯回目の地球冒険（太陽系） */}
       <div
-        style={{
-          ...textBase,
-          top: "22%",
-          transform: "translateX(-50%)",
-          fontSize: 18,
-          fontWeight: 700,
-          letterSpacing: 1.5,
-          lineHeight: 1.7,
-          animation: `mo-text-in 640ms ${EASE} 1480ms both, mo-text-out 320ms ease 2270ms both`,
-        }}
+        ref={text2Ref}
+        style={{ ...textBase, top: "22%", transform: "translateX(-50%)", opacity: 0, fontSize: 18, fontWeight: 700, letterSpacing: 1.5, lineHeight: 1.7 }}
         className="num"
       >
         {lines.adventure}
@@ -344,15 +352,8 @@ export function MorningOpening() {
 
       {/* ③ 今日は、地球をどう楽しもうか？ */}
       <div
-        style={{
-          ...textBase,
-          top: "18%",
-          transform: "translateX(-50%)",
-          fontSize: 19,
-          fontWeight: 800,
-          letterSpacing: 2,
-          animation: `mo-text-in 620ms ${EASE} 2420ms both, mo-text-out 380ms ease 3020ms both`,
-        }}
+        ref={text3Ref}
+        style={{ ...textBase, top: "18%", transform: "translateX(-50%)", opacity: 0, fontSize: 19, fontWeight: 800, letterSpacing: 2 }}
       >
         今日は、地球をどう楽しもうか？
       </div>
