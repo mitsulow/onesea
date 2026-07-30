@@ -88,9 +88,21 @@ export function PostCard({
         {post.body?.trim() && (
           <p className="break-words text-[13.5px] leading-relaxed text-[#5a5448]">{post.body}</p>
         )}
-        {post.image_urls?.[0] && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.image_urls[0]} alt="" loading="lazy" className="mt-1.5 max-w-full rounded-lg" />
+        {post.image_urls && post.image_urls.length > 0 && (
+          <div className={`mt-1.5 grid gap-1 ${post.image_urls.length > 1 ? "grid-cols-2" : ""}`}>
+            {post.image_urls.map((full, i) => (
+              <a key={i} href={full} target="_blank" rel="noopener noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={post.thumb_urls?.[i] ?? full}
+                  alt=""
+                  loading="lazy"
+                  className="w-full rounded-lg object-cover"
+                  style={post.image_urls!.length > 1 ? { aspectRatio: "1" } : { maxHeight: 360 }}
+                />
+              </a>
+            ))}
+          </div>
         )}
         {post.embed && <EmbedCard embed={post.embed} />}
         <div className="mt-1.5 flex items-center gap-5">

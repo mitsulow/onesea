@@ -60,7 +60,7 @@ export function BottomNav() {
         {/* ホーム */}
         <Link href="/" className={itemCls(pathname === "/")}>
           {pathname === "/" && activeBar}
-          <span className="text-lg leading-none">🌊</span>
+          <span className="text-lg leading-none">🏠</span>
           {label("ホーム", pathname === "/")}
         </Link>
 

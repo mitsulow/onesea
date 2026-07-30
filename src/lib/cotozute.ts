@@ -14,6 +14,7 @@ export interface CotozutePost {
   user_id: string;
   body: string;
   image_urls: string[] | null;
+  thumb_urls: string[] | null;
   embed: {
     url: string;
     title?: string;
@@ -36,7 +37,7 @@ export interface CotozuteComment {
 }
 
 const POST_SELECT =
-  "id, user_id, body, image_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url), likes(count), comments(count)";
+  "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url), likes(count), comments(count)";
 
 export async function fetchPosts(username?: string): Promise<CotozutePost[]> {
   const supabase = createClient();

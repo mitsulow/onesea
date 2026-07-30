@@ -5,10 +5,12 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/cotozute";
 import { EmbedCard, OGPEmbed } from "./EmbedCard";
+import { SnsIcon } from "./SnsIcon";
+import { ImagePair, uploadImagePair } from "@/lib/images";
 
 const URL_REGEX = /https?:\/\/[^\s]+/g;
 
-const PLATFORMS = ["Instagram", "X", "YouTube", "TikTok", "note", "アメブロ", "Facebook"];
+const PLATFORMS: Array<[string, string]> = [["instagram", "Instagram"], ["x", "X"], ["youtube", "YouTube"], ["tiktok", "TikTok"], ["note", "note"], ["ameblo", "アメブロ"], ["facebook", "Facebook"]];
 
 function detectPlatform(url: string): string | undefined {
   if (/instagram\.com/.test(url)) return "instagram";
@@ -55,6 +57,8 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const [embed, setEmbed] = useState<OGPEmbed | null>(null);
   const [loadingOGP, setLoadingOGP] = useState(false);
+  const [images, setImages] = useState<ImagePair[]>([]);
+  const [uploading, setUploading] = useState(false);
   const lastFetchedUrl = useRef<string | null>(null);
 
   useEffect(() => {
@@ -107,7 +111,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
   };
 
   const submit = async () => {
-    if (!user || (!body.trim() && !embed) || sending) return;
+    if (!user || (!body.trim() && !embed && images.length === 0) || sending) return;
     setSending(true);
     setMessage(null);
     const supabase = createClient();
@@ -117,7 +121,8 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
     const { error } = await supabase.from("posts").insert({
       user_id: user.id,
       body: body.trim(),
-      image_urls: [],
+      image_urls: images.map((i) => i.full),
+      thumb_urls: images.map((i) => i.thumb),
       embed: embed ?? null,
     });
 
@@ -129,6 +134,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
     setBody("");
     setLinkUrl("");
     setEmbed(null);
+    setImages([]);
     lastFetchedUrl.current = null;
     setExpanded(false);
     setMessage("投稿しました 🌿");
@@ -179,6 +185,45 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
         className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
       />
 
+      {/* 写真（サムネ+本体の2枚方式で自動圧縮） */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        {images.map((img, i) => (
+          <div key={img.thumb} className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={img.thumb} alt="" className="h-16 w-16 rounded-lg object-cover" />
+            <button
+              onClick={() => setImages(images.filter((_, j) => j !== i))}
+              aria-label="画像を外す"
+              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[10px] text-white"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        {images.length < 4 && (
+          <label className="flex h-16 cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8dcc4] bg-white px-3 text-[12.5px] font-bold text-[#8a7a5a]">
+            {uploading ? "⏳ 圧縮中..." : "📷 写真"}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={async (e) => {
+                if (!user || !e.target.files || uploading) return;
+                setUploading(true);
+                const pairs: ImagePair[] = [];
+                for (const f of Array.from(e.target.files).slice(0, 4 - images.length)) {
+                  const pair = await uploadImagePair("post-images", user.id, f);
+                  if (pair) pairs.push(pair);
+                }
+                setImages((prev) => [...prev, ...pairs].slice(0, 4));
+                setUploading(false);
+              }}
+            />
+          </label>
+        )}
+      </div>
+
       {/* OGP プレビュー */}
       {loadingOGP && (
         <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[#b0a898]">
@@ -209,12 +254,13 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
           </span>
         </div>
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          {PLATFORMS.map((p) => (
+          {PLATFORMS.map(([id, label]) => (
             <span
-              key={p}
-              className="rounded-full border border-[#ede5d8] bg-white px-2 py-0.5 text-[10.5px] text-[#b0a898]"
+              key={id}
+              className="inline-flex items-center gap-1 rounded-full border border-[#ede5d8] bg-white px-2 py-0.5 text-[10.5px] text-[#b0a898]"
             >
-              {p}
+              <SnsIcon platform={id} size={12} />
+              {label}
             </span>
           ))}
         </div>
@@ -245,7 +291,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
           </button>
           <button
             onClick={submit}
-            disabled={(!body.trim() && !embed) || sending}
+            disabled={(!body.trim() && !embed && images.length === 0) || sending || uploading}
             className="rounded-xl px-5 py-2 text-[13px] font-extrabold text-white disabled:opacity-40"
             style={{ background: "#c94d3a" }}
           >

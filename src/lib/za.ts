@@ -42,6 +42,16 @@ export async function fetchShops(category?: string | null): Promise<Shop[]> {
   return (data as unknown as Shop[]) ?? [];
 }
 
+export async function fetchShopsByOwner(ownerId: string): Promise<Shop[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("shops")
+    .select(SHOP_SELECT)
+    .eq("owner_id", ownerId)
+    .order("created_at", { ascending: false });
+  return (data as unknown as Shop[]) ?? [];
+}
+
 export async function fetchShop(id: string): Promise<Shop | null> {
   const supabase = createClient();
   const { data } = await supabase.from("shops").select(SHOP_SELECT).eq("id", id).maybeSingle();
