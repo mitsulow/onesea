@@ -3,6 +3,7 @@ import { TechoCalendar } from "@/components/TechoCalendar";
 import { CotozuteFeed } from "@/components/CotozuteFeed";
 import { Orbital } from "@/components/Orbital";
 import { AuthGate } from "@/components/AuthGate";
+import { ProfileSetup } from "@/components/ProfileSetup";
 import { HeaderBar } from "@/components/HeaderBar";
 import { LINKS } from "@/lib/config";
 
@@ -52,6 +53,7 @@ export default function Home() {
         <HeaderBar />
 
         <div className="space-y-3.5 px-4 pt-4">
+        <ProfileSetup />
         {/* ① OTOHIKARI（本番: 実測周波数・リアルタイム人数・再生） */}
         <Otohikari />
 

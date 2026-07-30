@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 /** マイページのヘッダー。アバターとログアウトだけの控えめな帯 */
@@ -36,17 +37,19 @@ export function HeaderBar() {
     >
       <h1 className="text-lg font-extrabold tracking-[4px] text-[#f0e6c8]">マイページ</h1>
       <div className="flex items-center gap-2.5">
-        {avatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={avatar}
-            alt={name}
-            referrerPolicy="no-referrer"
-            className="h-8 w-8 rounded-full border border-[#d4b96a]/60 object-cover"
-          />
-        ) : (
-          <span className="text-lg">🌊</span>
-        )}
+        <Link href="/my" aria-label="あなたの名刺">
+          {avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatar}
+              alt={name}
+              referrerPolicy="no-referrer"
+              className="h-8 w-8 rounded-full border border-[#d4b96a]/60 object-cover"
+            />
+          ) : (
+            <span className="text-lg">🌊</span>
+          )}
+        </Link>
         <button
           onClick={logout}
           className="rounded-lg border border-[#3e6a88] px-2.5 py-1 text-[10.5px] font-bold text-[#9ab8cc]"

@@ -78,7 +78,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
 
     // 簡易海岸線（即表示。詳細版ロード後に置換）
     const roughGroup = new THREE.Group();
-    const landMat = new THREE.MeshBasicMaterial({ color: 0x0c1e18, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
+    const landMat = new THREE.MeshBasicMaterial({ color: 0x0e141e, transparent: true, opacity: 0.7, side: THREE.DoubleSide });
     for (const poly of COASTLINES) {
       if (poly.length < 3) continue;
       const verts = poly.map((p) => ll2v(p[0], p[1], 1.0015));
@@ -95,7 +95,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
       g.computeVertexNormals();
       roughGroup.add(new THREE.Mesh(g, landMat));
     }
-    const cMat = new THREE.LineBasicMaterial({ color: 0x1a6b50, transparent: true, opacity: 0.45 });
+    const cMat = new THREE.LineBasicMaterial({ color: 0x8a98b0, transparent: true, opacity: 0.5 });
     for (const line of COASTLINES) {
       roughGroup.add(
         new THREE.Line(new THREE.BufferGeometry().setFromPoints(line.map((p) => ll2v(p[0], p[1], 1.003))), cMat)
@@ -107,14 +107,14 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
     let disposed = false;
     (async () => {
       try {
-        const res = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json");
+        const res = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json");
         if (!res.ok || disposed) return;
         const topo = await res.json();
         const { feature } = await import("topojson-client");
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const land = feature(topo, topo.objects.land) as any;
         const detail = new THREE.Group();
-        const dMat = new THREE.LineBasicMaterial({ color: 0x3fd692, transparent: true, opacity: 0.8 });
+        const dMat = new THREE.LineBasicMaterial({ color: 0xc8d4e4, transparent: true, opacity: 0.85 });
         const features = land.type === "FeatureCollection" ? land.features : [land];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         features.forEach((f: any) => {
@@ -350,11 +350,11 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
     earth.add(
       new THREE.LineSegments(
         permLineG,
-        new THREE.LineBasicMaterial({ color: 0x3a80ff, transparent: true, opacity: 0.13, blending: THREE.AdditiveBlending, depthWrite: false })
+        new THREE.LineBasicMaterial({ color: 0x8a5aff, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false })
       )
     );
     const nodeMat = new THREE.PointsMaterial({
-      color: 0x6ec8ff,
+      color: 0xb08aff,
       size: 0.032,
       transparent: true,
       opacity: 0.7,
@@ -396,7 +396,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
       group.add(
         new THREE.LineSegments(
           lG,
-          new THREE.LineBasicMaterial({ color: 0x60b0ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+          new THREE.LineBasicMaterial({ color: 0xa070ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
         )
       );
       const reflectTris = selected.filter(() => Math.random() < 0.1 + Math.random() * 0.1);
@@ -411,7 +411,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
         group.add(
           new THREE.Mesh(
             rG,
-            new THREE.MeshBasicMaterial({ color: 0x80d0ff, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
+            new THREE.MeshBasicMaterial({ color: 0xc090ff, transparent: true, opacity: 0, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })
           )
         );
       }

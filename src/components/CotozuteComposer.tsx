@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { ensureProfile } from "@/lib/cotozute";
 
 /**
  * Cotozute 書き込み欄。
  * 楽市楽座と共通の Supabase アカウントでログインし、その場で言の葉を投げる。
  */
-export function CotozuteComposer() {
-  const router = useRouter();
+export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [body, setBody] = useState("");
@@ -46,19 +45,7 @@ export function CotozuteComposer() {
     setMessage(null);
     const supabase = createClient();
 
-    // 初めての人でも投稿できるよう、プロフィールが無ければ最小構成で作る
-    const meta = user.user_metadata ?? {};
-    const email: string = user.email ?? "";
-    await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        username: email ? email.split("@")[0] : user.id.slice(0, 8),
-        display_name: (meta.full_name as string) ?? (meta.name as string) ?? "むらびと",
-        email,
-        avatar_url: (meta.avatar_url as string) ?? null,
-      },
-      { onConflict: "id", ignoreDuplicates: true }
-    );
+    await ensureProfile(user);
 
     const { error } = await supabase.from("posts").insert({
       user_id: user.id,
@@ -73,7 +60,7 @@ export function CotozuteComposer() {
     }
     setBody("");
     setMessage("言の葉を投げました 🌿");
-    router.refresh();
+    onPosted?.();
   };
 
   if (!ready) return null;
