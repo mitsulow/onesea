@@ -30,10 +30,7 @@ export function CotozuteFeed() {
 
   return (
     <section className="card" style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}>
-      <div className="sec mb-2.5">
-        💭 Cotozute{" "}
-        <span className="font-normal tracking-normal text-[#c0b8a8]">みんなの言の葉</span>
-      </div>
+      <div className="sec mb-2.5">💭 Cotozute</div>
       <CotozuteComposer onPosted={reload} />
       {posts === null ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>

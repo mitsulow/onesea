@@ -60,25 +60,29 @@ export function BottomNav() {
         {/* ホーム */}
         <Link href="/" className={itemCls(pathname === "/")}>
           {pathname === "/" && activeBar}
-          <span className="text-lg leading-none">🏠</span>
+          <span
+            className={`text-lg leading-none transition-transform duration-150 ${pathname === "/" ? "-translate-y-0.5 scale-[1.35]" : ""}`}
+          >
+            🏠
+          </span>
           {label("ホーム", pathname === "/")}
         </Link>
 
         {/* MMM = 太陽 */}
         <a href={LINKS.mmm} target="_blank" rel="noopener noreferrer" className={itemCls(false)}>
-          <span className="cel cel-sun" style={{ width: 21, height: 21 }} />
+          <span className="cel cel-sun transition-transform duration-150 active:scale-125" style={{ width: 21, height: 21 }} />
           {label("MMM")}
         </a>
 
         {/* セカイムラ = 地球 */}
         <a href={LINKS.sekaimura} target="_blank" rel="noopener noreferrer" className={itemCls(false)}>
-          <span className="cel cel-earth" style={{ width: 21, height: 21 }} />
+          <span className="cel cel-earth transition-transform duration-150 active:scale-125" style={{ width: 21, height: 21 }} />
           {label("セカイムラ")}
         </a>
 
         {/* ツキヨガ = 月 */}
         <a href={LINKS.tsukiyoga} target="_blank" rel="noopener noreferrer" className={itemCls(false)}>
-          <span className="cel cel-moon" style={{ width: 21, height: 21 }} />
+          <span className="cel cel-moon transition-transform duration-150 active:scale-125" style={{ width: 21, height: 21 }} />
           {label("ツキヨガ")}
         </a>
 
@@ -89,7 +93,7 @@ export function BottomNav() {
           <img
             src="/rakuichi/logo-emblem.webp"
             alt=""
-            className="rounded-full object-cover"
+            className={`rounded-full object-cover transition-transform duration-150 ${pathname.startsWith("/za") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
             style={{ width: 21, height: 21 }}
           />
           {label("楽市楽座", pathname.startsWith("/za"))}
@@ -98,7 +102,9 @@ export function BottomNav() {
         {/* LINE */}
         <Link href="/line" className={itemCls(pathname.startsWith("/line"))}>
           {pathname.startsWith("/line") && activeBar}
-          <span className="relative text-lg leading-none">
+          <span
+            className={`relative text-lg leading-none transition-transform duration-150 ${pathname.startsWith("/line") ? "-translate-y-0.5 scale-[1.35]" : ""}`}
+          >
             💬
             {unread > 0 && (
               <span
