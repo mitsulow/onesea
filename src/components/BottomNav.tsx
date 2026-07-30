@@ -75,7 +75,9 @@ export function BottomNav() {
             src="/icons/tab-sun.png"
             alt=""
             className="object-contain transition-transform duration-150 active:scale-125"
-            style={{ width: 22, height: 22 }}
+            // フレア込みで正方形化されている分、本体の球が小さく見えるので大きめに描画
+            // （レイアウト上は他と同じ22px分だけ占有）
+            style={{ width: 33, height: 33, margin: "-5.5px 0" }}
           />
           {label("MMM")}
         </a>
