@@ -329,6 +329,7 @@ export function SchumannAudioPlayer() {
               value={ddpBody}
               onChange={(e) => setDdpBody(e.target.value)}
               rows={4}
+              maxLength={30}
               autoFocus
               placeholder={"シューマン瞑想で\n「ふと思った事」\n「ふと会いたくなった人」\n「ふと食べたくなったモノ」\n「ふと行きたくなった場所」を入力"}
               className="mt-3 w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-center text-[14px] leading-relaxed outline-none focus:border-[#0abab5]"

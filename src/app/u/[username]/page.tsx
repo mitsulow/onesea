@@ -439,7 +439,7 @@ export default function UserPage() {
       {dailyDdps.length > 0 && (
         <div className="px-4 pt-5">
           <div className="card">
-            <div className="sec mb-3">🌊 {isMe ? "あなたの今日のDDP" : "この人の今日のDDP"}</div>
+            <div className="sec mb-3">⚡過去のシンクロニシティ⚡</div>
             <div className="relative pl-5">
               <div className="absolute bottom-1 left-[5px] top-1 w-[2px] rounded-full" style={{ background: "linear-gradient(180deg,#0abab5,#d4b96a44)" }} />
               {dailyDdps.slice(0, 5).map((d) => {
