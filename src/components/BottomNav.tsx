@@ -85,12 +85,13 @@ export function BottomNav() {
         {/* 楽市楽座 = 「楽」 */}
         <Link href="/za" className={itemCls(pathname.startsWith("/za"))}>
           {pathname.startsWith("/za") && activeBar}
-          <span
-            className="flex items-center justify-center rounded-full text-[12px] font-extrabold text-white"
-            style={{ width: 21, height: 21, background: "#c94d3a", lineHeight: 1 }}
-          >
-            楽
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/rakuichi/logo-emblem.webp"
+            alt=""
+            className="rounded-full object-cover"
+            style={{ width: 21, height: 21 }}
+          />
           {label("楽市楽座", pathname.startsWith("/za"))}
         </Link>
 

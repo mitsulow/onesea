@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { Shop, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
+import { ZaFeatured } from "@/components/ZaFeatured";
+import { VillagerSuggestions } from "@/components/VillagerSuggestions";
 
 function priceLabel(s: Shop): string {
   if (s.is_trial) return "0円〜";
@@ -14,6 +17,18 @@ function priceLabel(s: Shop): string {
 export default function ZaPage() {
   const [shops, setShops] = useState<Shop[] | null>(null);
   const [category, setCategory] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // 未ログインでも閲覧できる公開ページ（URLシェア用）。
+    // ログイン中ならアイコンを出してマイページへ飛べるようにする
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setLoggedIn(!!session?.user);
+      setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
+    });
+  }, []);
 
   useEffect(() => {
     setShops(null);
@@ -22,15 +37,50 @@ export default function ZaPage() {
 
   return (
     <main className="pb-20">
-      <header
-        className="flex items-center justify-between px-5 pb-3.5 pt-4"
-        style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
-      >
-        <h1 className="text-lg font-extrabold tracking-[4px] text-[#f0e6c8]">楽 座</h1>
-        <span className="text-[11px] tracking-widest text-[#7a9ab4]">やりたいことを仕事に</span>
+      <header className="relative">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/rakuichi/logo-edo.webp" alt="楽市楽座" className="h-[92px] w-full object-cover" />
+        {loggedIn ? (
+          <Link href="/my" aria-label="マイページ" className="absolute right-3 top-2.5">
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatar}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="h-8 w-8 rounded-full border-2 border-white/80 object-cover shadow"
+              />
+            ) : (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/80 bg-black/20 text-base shadow">
+                🌊
+              </span>
+            )}
+          </Link>
+        ) : (
+          <Link
+            href="/"
+            className="absolute right-3 top-2.5 rounded-full bg-black/30 px-3 py-1.5 text-[11px] font-bold text-white no-underline"
+          >
+            ログイン
+          </Link>
+        )}
+        <div className="absolute bottom-1.5 right-3 flex flex-col items-end gap-1">
+          <span className="rounded-full bg-black/25 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-white">
+            日本人総フリーランス化計画
+          </span>
+          <span className="rounded-full bg-black/25 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-white">
+            やりたいことを仕事に
+          </span>
+        </div>
       </header>
 
-      <div className="px-4 pt-3">
+      <div className="space-y-3 px-4 pt-3">
+        {/* 本日のパワープッシュ楽座 */}
+        {shops && shops.length > 0 && <ZaFeatured shops={shops} />}
+
+        {/* おすすめのむらびと */}
+        <VillagerSuggestions />
+
         {/* カテゴリチップ */}
         <div className="hide-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-2">
           <button
@@ -66,12 +116,12 @@ export default function ZaPage() {
             className="mb-3 flex items-center gap-2.5 rounded-xl border border-[#c94d3a66] px-3 py-2.5"
             style={{ background: "linear-gradient(135deg,#f5e8d5 0%,#ffffff 50%,#f5e8d5 100%)" }}
           >
-            <div
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-base text-white"
-              style={{ background: "#c94d3a" }}
-            >
-              🏮
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/rakuichi/logo-emblem.webp"
+              alt=""
+              className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+            />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-bold leading-tight text-[#3a3428]">
                 あなたも楽座を出しましょう

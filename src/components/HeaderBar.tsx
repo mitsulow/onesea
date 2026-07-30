@@ -35,7 +35,27 @@ export function HeaderBar() {
       className="relative z-[60] flex items-center justify-center px-5 py-2"
       style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
     >
-      <h1 className="text-[12px] font-bold tracking-[4px] text-[#f0e6c8]">マイページ</h1>
+      <h1
+        className="rounded-full border px-4 py-0.5 text-[11px] font-bold tracking-[4px] text-[#f0e6c8]"
+        style={{
+          borderColor: "rgba(212,185,106,.65)",
+          boxShadow: "0 0 10px rgba(212,185,106,.25), inset 0 0 8px rgba(212,185,106,.12)",
+        }}
+      >
+        <span className="flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 200 200" aria-hidden>
+            <circle cx="100" cy="82" r="56" fill="none" stroke="#D4B96A" strokeWidth="14" />
+            <path
+              d="M20 150 Q 50 132 80 150 T 140 150 T 200 150"
+              fill="none"
+              stroke="#7AB8D8"
+              strokeWidth="14"
+              strokeLinecap="round"
+            />
+          </svg>
+          マイページ
+        </span>
+      </h1>
       <button
         onClick={() => setMenuOpen((v) => !v)}
         aria-label="メニュー"

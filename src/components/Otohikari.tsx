@@ -80,7 +80,14 @@ export function Otohikari() {
       }}
     >
       <div className="flex items-baseline justify-between">
-        <div className="sec" style={{ color: "#0abab5" }}>
+        <div
+          className="sec"
+          style={{
+            color: "#8ff4ff",
+            textShadow:
+              "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 28px rgba(40,200,255,.45)",
+          }}
+        >
           OTOHIKARI — 光の音柱
         </div>
         {live.updated && (
