@@ -201,7 +201,7 @@ export default function NewShopPage() {
             className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
             style={{ background: "#c94d3a" }}
           >
-            {saving ? "出品中..." : "🏮 楽座を出す"}
+            {saving ? "出品中..." : "楽座を出す"}
           </button>
         </div>
       )}

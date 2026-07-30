@@ -82,10 +82,10 @@ export default function ShopDetailPage() {
           <img src={shop.image_urls[imgIndex]} alt={shop.name} className="h-full w-full object-cover" />
         ) : (
           <div
-            className="flex h-full w-full items-center justify-center text-6xl"
+            className="flex h-full w-full items-center justify-center"
             style={{ background: "linear-gradient(135deg,#c94d3a 0%,#d4a043 50%,#5a7d4a 100%)" }}
           >
-            🏮
+            <img src="/rakuichi/logo-emblem.webp" alt="" className="h-24 w-24 rounded-full object-cover opacity-90" />
           </div>
         )}
         {shop.image_urls.length > 1 && (

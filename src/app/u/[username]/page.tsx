@@ -369,7 +369,7 @@ export default function UserPage() {
       {shops.length > 0 && (
         <div className="px-4 pt-5">
           <div className="card">
-            <div className="sec mb-2.5">🏮 {isMe ? "あなたの楽座" : "この人の楽座"}</div>
+            <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>{isMe ? "あなたの楽座" : "この人の楽座"}</span></div>
             <div className="grid grid-cols-2 gap-3">
               {shops.map((shop) => {
                 const cat = categoryOf(shop.category);
@@ -386,10 +386,10 @@ export default function UserPage() {
                           <img src={shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
                         ) : (
                           <div
-                            className="flex h-full w-full items-center justify-center text-3xl"
+                            className="flex h-full w-full items-center justify-center"
                             style={{ background: "linear-gradient(135deg,#c94d3a 0%,#d4a043 50%,#5a7d4a 100%)" }}
                           >
-                            🏮
+                            <img src="/rakuichi/logo-emblem.webp" alt="" className="h-12 w-12 rounded-full object-cover opacity-90" />
                           </div>
                         )}
                         {cat && (

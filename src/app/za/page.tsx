@@ -144,7 +144,7 @@ export default function ZaPage() {
             className="rounded-2xl border-2 border-dashed px-6 py-10 text-center"
             style={{ borderColor: "#c94d3a40", background: "linear-gradient(135deg,#fdf6e9,#f5e8d5)" }}
           >
-            <div className="text-4xl">🏮</div>
+            <img src="/rakuichi/logo-emblem.webp" alt="" className="mx-auto h-14 w-14 rounded-full object-cover" />
             <p className="mt-2 text-sm font-bold" style={{ color: "#c94d3a" }}>
               まだ楽座がありません
             </p>
@@ -167,10 +167,10 @@ export default function ZaPage() {
                         <img src={shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
                       ) : (
                         <div
-                          className="flex h-full w-full items-center justify-center text-4xl"
+                          className="flex h-full w-full items-center justify-center"
                           style={{ background: "linear-gradient(135deg,#c94d3a 0%,#d4a043 50%,#5a7d4a 100%)" }}
                         >
-                          🏮
+                          <img src="/rakuichi/logo-emblem.webp" alt="" className="h-14 w-14 rounded-full object-cover opacity-90" />
                         </div>
                       )}
                       {cat && (

@@ -36,6 +36,19 @@ export function SnsIcon({ platform, size = 20, className = "" }: SnsIconProps) {
     "aria-hidden": true,
   };
 
+  if (platform === "ameblo") {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src="/icons/ameblo.png"
+        alt=""
+        width={size}
+        height={size}
+        className={className}
+        style={{ objectFit: "contain" }}
+      />
+    );
+  }
   switch (platform) {
     case "instagram":
       return (

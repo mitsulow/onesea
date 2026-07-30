@@ -194,7 +194,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
       />
 
       {/* 写真（サムネ+本体の2枚方式で自動圧縮） */}
-      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+      <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2">
         {images.map((img, i) => (
           <div key={img.thumb} className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -209,8 +209,18 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
           </div>
         ))}
         {images.length < 4 && (
-          <label className="flex h-16 cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8dcc4] bg-white px-3 text-[12.5px] font-bold text-[#8a7a5a]">
-            {uploading ? "⏳ 圧縮中..." : "📷 写真"}
+          <label className="flex h-16 cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8dcc4] bg-white px-4 text-[12.5px] font-bold text-[#8a7a5a]">
+            {uploading ? (
+              "⏳ 圧縮中..."
+            ) : (
+              <>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M4 7h3l1.5-2.2A1 1 0 0 1 9.3 4.4h5.4a1 1 0 0 1 .8.4L17 7h3a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 18V8.5A1.5 1.5 0 0 1 4 7Z" />
+              <circle cx="12" cy="13" r="3.6" />
+            </svg>
+                写真
+              </>
+            )}
             <input
               type="file"
               accept="image/*"
@@ -258,7 +268,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
         <div className="mb-1.5 flex items-center gap-1.5">
           <span className="text-base">🔗</span>
           <span className="text-xs font-medium text-[#5a5448]">
-            他のSNSに投稿したもの、そのまま取り込める
+            SNS取り込めます
           </span>
         </div>
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
