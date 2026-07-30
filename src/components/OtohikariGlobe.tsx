@@ -9,7 +9,8 @@ import { COASTLINES } from "@/lib/coastlines";
  * - 雷ホタル: Blitzortung.org の世界の雷リアルタイム観測（シューマン共振の源）
  * - 電離層グリッド共振: 約3秒ごとに球全体が波のように光る
  * - 夜の街明かり・大気グロー・流星
- * - 金の光柱: いまシューマン音©を聴いている人（presence 実数・props.pillars）
+ * - 水色のホタル: いまシューマン音©を聴いている人の場所（点呼の実データ）
+ * - 雷は黄色、聴いている人は水色で色分け
  */
 export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number] | null> }) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -181,7 +182,7 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
       float alpha=smoothstep(0.5,0.05,d);float core=smoothstep(0.22,0.0,d);
       float b=alpha*pulse*vIn*0.62*ain*aout*flash;
       if(b<0.004)discard;
-      vec3 col=mix(vec3(0.55,0.68,0.95),vec3(1.0,1.0,1.0),core);
+      vec3 col=mix(vec3(1.0,0.82,0.28),vec3(1.0,1.0,0.9),core);
       gl_FragColor=vec4(col*b,b);}`,
       uniforms: { uTime: { value: 0 }, uLife: { value: STRIKE_LIFE } },
       transparent: true,
@@ -454,23 +455,27 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
     let builtKey = "";
     const rebuildPillars = (list: Array<[number, number, number] | null>) => {
       pillarGroup.clear();
-      const count = Math.min(list.length, 40);
+      const count = Math.min(list.length, 60);
       for (let i = 0; i < count; i++) {
         const loc = list[i];
         const lat = loc ? loc[0] : JP_SPOTS[i % JP_SPOTS.length][0] + ((i * 0.7) % 2) - 1;
         const lng = loc ? loc[1] : JP_SPOTS[i % JP_SPOTS.length][1] + ((i * 1.3) % 3) - 1.5;
         const crowd = Math.min(loc ? loc[2] : 1, 8);
-        const base = ll2v(lat, lng, 1.005);
-        const tip = base.clone().normalize().multiplyScalar(1.16 + crowd * 0.018);
-        const lg = new THREE.BufferGeometry().setFromPoints([base, tip]);
-        const lm = new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
-        pillarGroup.add(new THREE.Line(lg, lm));
-        const dot = new THREE.Mesh(
-          new THREE.SphereGeometry(0.012 + crowd * 0.0022, 8, 8),
-          new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false })
+        const base = ll2v(lat, lng, 1.008);
+        // ホタルのコア（水色）
+        const core = new THREE.Mesh(
+          new THREE.SphereGeometry(0.009 + crowd * 0.0016, 8, 8),
+          new THREE.MeshBasicMaterial({ color: 0xbdeeff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
         );
-        dot.position.copy(base);
-        pillarGroup.add(dot);
+        core.position.copy(base);
+        pillarGroup.add(core);
+        // ほのかなハロ
+        const halo = new THREE.Mesh(
+          new THREE.SphereGeometry(0.028 + crowd * 0.005, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0x6fd0ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false })
+        );
+        halo.position.copy(base);
+        pillarGroup.add(halo);
       }
     };
 
@@ -624,10 +629,10 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
         builtKey = spotsKey;
         rebuildPillars(spotsRef.current);
       }
-      const pulse = 0.65 + 0.35 * Math.sin(t * 2.2);
       pillarGroup.children.forEach((c, i) => {
-        const m = (c as THREE.Line | THREE.Mesh).material as THREE.Material & { opacity: number };
-        m.opacity = (i % 2 === 0 ? 0.85 : 1) * pulse;
+        const m = (c as THREE.Mesh).material as THREE.Material & { opacity: number };
+        const breath = 0.55 + 0.45 * Math.sin(t * 1.1 + i * 1.9);
+        m.opacity = (i % 2 === 0 ? 0.9 : 0.25) * breath;
       });
       if (!dragging) {
         velX *= 0.94; velY *= 0.94;

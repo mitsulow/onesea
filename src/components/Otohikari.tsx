@@ -19,7 +19,7 @@ export type Spot = [number, number, number];
 
 /**
  * OTOHIKARI — 光の音柱（本番・点呼方式）。
- * - 上り: 再生中の端末が30秒ごとに beacons へ点呼（約100バイト・0.5°丸め座標）
+ * - 上り: 再生中の端末が30秒ごとに beacons へ点呼（約100バイト）
  * - 集計: SQL 1発（otohikari_snapshot）
  * - 下り: /api/otohikari の30秒キャッシュJSONをポーリング —
  *   利用者数が増えてもDB負荷・転送量は一定（パケ死しない）
@@ -152,15 +152,11 @@ export function Otohikari() {
     ctxAudioRef.current = ctx;
     setPlaying(true);
 
-    // 現在地は 0.5°（約50km）に丸めてから使う — 個人の正確な位置は扱わない
+    // 現在地（ユーザー方針: 丸めずそのまま使う）
     coarseRef.current = await new Promise((resolve) => {
       if (!navigator.geolocation) return resolve(null);
       navigator.geolocation.getCurrentPosition(
-        (pos) =>
-          resolve({
-            lat: Math.round(pos.coords.latitude * 2) / 2,
-            lng: Math.round(pos.coords.longitude * 2) / 2,
-          }),
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         () => resolve(null),
         { timeout: 4000, maximumAge: 600000 }
       );
