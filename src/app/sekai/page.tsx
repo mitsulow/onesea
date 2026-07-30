@@ -591,6 +591,54 @@ function WelcomeSection({ me, router }: { me: User | null; router: ReturnType<ty
   );
 }
 
+/* ═══ ラウンジ喫茶（常時オープンのビデオ通話）入口 ═══ */
+function CafeBar({ pref }: { pref: string }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const supabase = createClient();
+    // 見るだけ（track しない）ので在室者にはカウントされない
+    const ch = supabase.channel(`cafe:${pref}`);
+    ch.on("presence", { event: "sync" }, () => {
+      const st = ch.presenceState() as Record<string, Array<{ t?: number }>>;
+      setCount(Object.keys(st).filter((k) => st[k][0]?.t !== undefined).length);
+    });
+    ch.subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [pref]);
+
+  return (
+    <Link
+      href={`/sekai/cafe/${encodeURIComponent(pref)}`}
+      className="mb-3 flex items-center gap-3 rounded-xl px-3.5 py-3 no-underline"
+      style={{ background: "linear-gradient(135deg,#241c14,#3a2e1e)", border: "1px solid #c8a86055" }}
+    >
+      <span className="text-[30px]">☕</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">{pref}ラウンジ喫茶 — 常時オープン</div>
+        <div className="mt-0.5 text-[10.5px] text-[#a89878]">
+          {count > 0 ? (
+            <span className="font-bold text-[#8ad8a8]">
+              <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#5ad890] align-middle" />
+              いま {count}人がお店にいます — 顔を見て話せます
+            </span>
+          ) : (
+            "いまは誰もいません。一番乗りでお茶をどうぞ"
+          )}
+        </div>
+      </div>
+      <span
+        className="flex-shrink-0 rounded-xl px-3.5 py-2 text-[12px] font-extrabold text-[#241c14]"
+        style={{ background: "linear-gradient(135deg,#e8cc90,#c8a860)" }}
+      >
+        入店する
+      </span>
+    </Link>
+  );
+}
+
 /* ═══ 地域ラウンジ + 旅先モード ═══ */
 function LoungeSection({
   me,
@@ -644,6 +692,9 @@ function LoungeSection({
           </span>
         )}
       </div>
+
+      {/* 喫茶店（常時オープンのビデオ通話） */}
+      <CafeBar pref={pref} />
 
       {/* 県セレクタ = 旅先モード */}
       <div className="mb-2.5 flex items-center gap-2">
