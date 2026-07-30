@@ -242,6 +242,7 @@ function viewHome(){
   </div>
 
   <div style="padding:16px 16px 0">
+    ${otohikariHTML()}
     <div class="card" style="border:1.5px solid ${ac}30">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <span class="sec" style="margin:0">\u2600 今日の節分かれつ刻</span>
@@ -465,10 +466,9 @@ function doorHead(s){
     :`<div class="btn btn-line" style="max-width:280px;margin:12px auto 0;font-size:13px;color:#B0A898">サイト準備中</div>`}
   </div>`;
 }
-function viewMMM(){const s=SERVICES[0];
+function otohikariHTML(){
   const pts=[[38,30],[57,42],[46,58],[68,64],[30,52],[52,25],[62,50],[42,44],[72,38],[35,66]];
-  return doorHead(s)+`<div style="padding:14px 14px 0">
-  <div class="card" style="background:linear-gradient(160deg,#0A1826,#12283A);border:1px solid #24405A;padding:18px 16px">
+  return `<div class="card" style="background:linear-gradient(160deg,#0A1826,#12283A);border:1px solid #24405A;padding:18px 16px">
     <div class="sec" style="color:#8AA8D0">OTOHIKARI — 光の音柱</div>
     <div style="position:relative;width:160px;height:160px;margin:8px auto 12px">
       <div style="position:absolute;inset:0;border-radius:50%;
@@ -483,7 +483,11 @@ function viewMMM(){const s=SERVICES[0];
         <div style="font-size:9.5px;color:#7A94B4;letter-spacing:1px">${a[0]}</div>
         <div class="num" style="font-size:19px;font-weight:800;color:#E8D8A8;line-height:1.35">${a[1]}</div>
         <div style="font-size:9px;color:#6A84A4">${a[2]}</div></div>`).join("")}</div>
-  </div>
+  </div>`;
+}
+function viewMMM(){const s=SERVICES[0];
+  return doorHead(s)+`<div style="padding:14px 14px 0">
+  ${otohikariHTML()}
   <div class="card">
     <div class="sec" style="color:${s.color}">シューマン音\u00A9 <span style="font-weight:400;color:#C0B8A8">メインサービス</span></div>
     <div style="display:flex;align-items:center;gap:14px">
