@@ -10,6 +10,13 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Onesea — すべての海は、ひとつ。</title>
+<meta name="description" content="太陽と月と潮のリズムで生きる、無料の手帳アプリ。360の節分かれつ刻と、四つの扉（セカイムラ・MMM・楽市楽座・ツキヨガ）。">
+<meta property="og:title" content="Onesea — すべての海は、ひとつ。">
+<meta property="og:description" content="太陽と月と潮のリズムで生きる、無料の手帳アプリ。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://onesea.vercel.app">
+<meta property="og:image" content="https://onesea.vercel.app/icon-512.png">
+<meta name="twitter:card" content="summary">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:#0E1E2E;overscroll-behavior-y:none}
@@ -57,6 +64,18 @@ a{text-decoration:none;color:inherit}
 .orbit{position:absolute;inset:0;animation:orb var(--t,24s) linear infinite;pointer-events:none;z-index:3}
 .opos{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translateY(calc(-1 * var(--r,100px)))}
 .opl{animation:orbR var(--t,24s) linear infinite;pointer-events:auto;cursor:pointer}
+.cel{border-radius:50%;position:relative;margin:0 auto}
+.cel-mmm{background:radial-gradient(circle at 35% 30%,#FFF3C8,#FFD86A 40%,#F0A828 70%,#C87810 95%)}
+.cel-sekai{background:
+  radial-gradient(circle at 63% 40%,rgba(88,168,96,.95) 0 16%,rgba(88,168,96,0) 21%),
+  radial-gradient(circle at 32% 62%,rgba(96,176,104,.9) 0 13%,rgba(96,176,104,0) 17%),
+  radial-gradient(circle at 48% 22%,rgba(255,255,255,.5) 0 9%,rgba(255,255,255,0) 14%),
+  radial-gradient(circle at 35% 30%,#9AD4EE,#3E8AC0 48%,#173F66 88%)}
+.cel-tsuki{background:
+  radial-gradient(circle at 30% 32%,rgba(130,134,156,.85) 0 7%,rgba(130,134,156,0) 10%),
+  radial-gradient(circle at 62% 58%,rgba(120,124,148,.8) 0 5%,rgba(120,124,148,0) 8%),
+  radial-gradient(circle at 52% 26%,rgba(140,144,166,.7) 0 4%,rgba(140,144,166,0) 6%),
+  radial-gradient(circle at 35% 30%,#F2F2FA,#C4C8DC 52%,#8E92B0 90%)}
 </style>
 </head>
 <body>
@@ -298,13 +317,13 @@ function viewHome(){
         <div style="width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#E86A50,#B03A28);display:flex;align-items:center;justify-content:center;font-size:29px;box-shadow:0 0 26px rgba(230,110,80,.45);position:relative">\uD83C\uDFEA${S.badges.raku?`<div class="badge">${S.badges.raku}</div>`:""}</div>
         <div style="font-size:10.5px;color:#FFB8A8;font-weight:700;margin-top:5px;letter-spacing:1px">楽市楽座</div>
       </div>
-      ${[["mmm","\u2600\uFE0F","MMM",42,132,"32s","0s","#FFD27A","0 0 22px rgba(255,200,90,.55)"],
-         ["sekai","\uD83C\uDF0F","セカイムラ",37,96,"21s","-13s","#8FE0A8","0 0 16px rgba(120,220,160,.45)"],
-         ["tsuki","\uD83C\uDF19","ツキヨガ",31,62,"13s","-4s","#B8C6F2","0 0 14px rgba(150,170,240,.5)"]]
+      ${[["mmm","\u2600\uFE0F","MMM",42,132,"32s","0s","#FFD27A","0 0 24px rgba(255,200,90,.8),0 0 56px rgba(255,180,60,.35)"],
+         ["sekai","\uD83C\uDF0F","セカイムラ",37,96,"21s","-13s","#8FE0A8","0 0 18px rgba(110,190,230,.55),inset -5px -5px 12px rgba(0,0,20,.45)"],
+         ["tsuki","\uD83C\uDF19","ツキヨガ",31,62,"13s","-4s","#B8C6F2","0 0 15px rgba(200,205,235,.6),inset -4px -4px 10px rgba(20,20,50,.4)"]]
         .map(o=>`<div class="orbit" style="--t:${o[5]};animation-delay:${o[6]}">
           <div class="opos" style="--r:${o[4]}px">
             <div class="opl" data-go="${o[0]}" style="animation-duration:${o[5]};animation-delay:${o[6]}">
-              <div style="font-size:${o[3]}px;line-height:1;filter:drop-shadow(${o[8]});position:relative">${o[1]}${S.badges[o[0]]?`<div class="badge">${S.badges[o[0]]}</div>`:""}</div>
+              <div class="cel cel-${o[0]}" style="width:${o[3]}px;height:${o[3]}px;box-shadow:${o[8]}">${S.badges[o[0]]?`<div class="badge">${S.badges[o[0]]}</div>`:""}</div>
               <div style="font-size:10px;color:${o[7]};font-weight:700;margin-top:3px;letter-spacing:1px;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.6)">${o[2]}</div>
             </div></div></div>`).join("")}
       <div style="position:absolute;left:0;right:0;bottom:11px;text-align:center;font-size:10px;color:#4A6A84;letter-spacing:2px;pointer-events:none">タップして扉をひらく</div>
@@ -327,6 +346,7 @@ function viewHome(){
     <div style="text-align:center;padding:4px 0 18px">
       <span data-act="member" style="font-size:13px;color:#A08E6E;text-decoration:underline;cursor:pointer">わらわ〜会員の方・会員について</span>
       <div style="font-size:10.5px;color:#C8C0B0;margin-top:6px">手帳と暦は、ずっと無料で使えます</div>
+      <div style="font-size:11px;color:#B8AE9C;margin-top:16px;letter-spacing:2px">🌊 Onesea — すべての海は、ひとつ。</div>
     </div>
   </div>`;
 }
