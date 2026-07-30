@@ -67,7 +67,8 @@ export function Otohikari() {
     };
   }, []);
 
-  const dist = live.f1hz != null ? live.f1hz - TARGET_HZ : null;
+  // 目標値まで「あと何Hz必要か」（目標 - 実測）
+  const needed = live.f1hz != null ? TARGET_HZ - live.f1hz : null;
 
   return (
     <section
@@ -132,9 +133,21 @@ export function Otohikari() {
           </div>
         </div>
       </div>
-      <div className="num mt-1 text-center text-[9.5px] text-[#5a7a9a]">
-        実測 F1 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
-        {dist != null ? `（目標まで${dist > 0 ? "+" : ""}${dist.toFixed(2)}）` : ""}
+      <div className="num mt-1.5 text-center text-[11px] text-[#8aa8d0]">
+        今日のシューマン共振 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
+        {needed != null
+          ? `（目標値まで${needed >= 0 ? "＋" : "−"}${Math.abs(needed).toFixed(2)}Hz）`
+          : ""}
+      </div>
+      <div className="mt-0.5 text-center">
+        <a
+          href="https://mitsulow.github.io/schumann/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[9.5px] text-[#5a7a9a] underline decoration-[#5a7a9a]/50 underline-offset-2"
+        >
+          実際の値をチェック ↗
+        </a>
       </div>
     </section>
   );
