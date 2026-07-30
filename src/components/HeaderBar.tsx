@@ -36,14 +36,14 @@ export function HeaderBar() {
       style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
     >
       <h1
-        className="rounded-full border px-4 py-0.5 text-[11px] font-bold tracking-[4px] text-[#f0e6c8]"
+        className="rounded-full border px-5 py-1"
         style={{
           borderColor: "rgba(212,185,106,.65)",
-          boxShadow: "0 0 10px rgba(212,185,106,.25), inset 0 0 8px rgba(212,185,106,.12)",
+          boxShadow: "0 0 12px rgba(212,185,106,.3), inset 0 0 10px rgba(212,185,106,.14)",
         }}
       >
-        <span className="flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 200 200" aria-hidden>
+        <span className="flex items-center gap-2.5">
+          <svg width="18" height="18" viewBox="0 0 200 200" aria-hidden>
             <circle cx="100" cy="82" r="56" fill="none" stroke="#D4B96A" strokeWidth="14" />
             <path
               d="M20 150 Q 50 132 80 150 T 140 150 T 200 150"
@@ -53,7 +53,28 @@ export function HeaderBar() {
               strokeLinecap="round"
             />
           </svg>
-          マイページ
+          <span className="flex flex-col items-start leading-none">
+            <span
+              className="text-[8.5px] font-bold text-[#d4b96a]"
+              style={{ letterSpacing: 5, fontFamily: '"Shippori Mincho", "Yu Mincho", "Hiragino Mincho ProN", serif' }}
+            >
+              地球アプリ
+            </span>
+            <span
+              className="mt-0.5 text-[17px] font-semibold"
+              style={{
+                fontFamily: '"Cormorant Garamond", "Georgia", "Times New Roman", serif',
+                letterSpacing: 3,
+                background: "linear-gradient(120deg,#f6e9c4,#d4b96a 55%,#f0e6c8)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+                textShadow: "0 0 18px rgba(212,185,106,.35)",
+              }}
+            >
+              OneSea
+            </span>
+          </span>
         </span>
       </h1>
       <button

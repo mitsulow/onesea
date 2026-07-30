@@ -70,23 +70,38 @@ export function BottomNav() {
 
         {/* MMM = 太陽 */}
         <a href={LINKS.mmm} target="_blank" rel="noopener noreferrer" className={itemCls(false)}>
-          <span className="cel cel-sun transition-transform duration-150 active:scale-125" style={{ width: 21, height: 21 }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icons/tab-sun.png"
+            alt=""
+            className="object-contain transition-transform duration-150 active:scale-125"
+            style={{ width: 22, height: 22 }}
+          />
           {label("MMM")}
         </a>
 
         {/* セカイムラ = 地球 */}
         <Link href="/sekai" className={itemCls(pathname.startsWith("/sekai"))}>
           {pathname.startsWith("/sekai") && activeBar}
-          <span
-            className={`cel cel-earth transition-transform duration-150 ${pathname.startsWith("/sekai") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
-            style={{ width: 21, height: 21 }}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icons/tab-earth.png"
+            alt=""
+            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/sekai") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
+            style={{ width: 22, height: 22 }}
           />
           {label("セカイムラ", pathname.startsWith("/sekai"))}
         </Link>
 
         {/* ツキヨガ = 月 */}
         <a href={LINKS.tsukiyoga} target="_blank" rel="noopener noreferrer" className={itemCls(false)}>
-          <span className="cel cel-moon transition-transform duration-150 active:scale-125" style={{ width: 21, height: 21 }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icons/tab-moon.png"
+            alt=""
+            className="object-contain transition-transform duration-150 active:scale-125"
+            style={{ width: 22, height: 22 }}
+          />
           {label("ツキヨガ")}
         </a>
 
