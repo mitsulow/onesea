@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel, User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { OtohikariGlobe } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
 
 interface SchumannLive {
@@ -21,7 +22,6 @@ interface SchumannLive {
  * - シューマン音©: Web Audio 合成（無料10秒フェード）
  */
 export function Otohikari() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const ctxAudioRef = useRef<AudioContext | null>(null);
   const playingRef = useRef(false);
@@ -144,110 +144,6 @@ export function Otohikari() {
     }
   }, [user]);
 
-  /* ---- 地球儀 Canvas ---- */
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const SIZE = 220;
-    canvas.width = SIZE * dpr;
-    canvas.height = SIZE * dpr;
-    const g = canvas.getContext("2d");
-    if (!g) return;
-    g.scale(dpr, dpr);
-
-    // 点描の球（緯度経度グリッド）
-    const pts: Array<[number, number, number]> = [];
-    for (let lat = -75; lat <= 75; lat += 12) {
-      const r = Math.cos((lat * Math.PI) / 180);
-      const y = Math.sin((lat * Math.PI) / 180);
-      const n = Math.max(6, Math.round(26 * r));
-      for (let i = 0; i < n; i++) {
-        const lon = (i / n) * Math.PI * 2;
-        pts.push([r * Math.cos(lon), y, r * Math.sin(lon)]);
-      }
-    }
-    // 光の柱の位置（presence 数ぶん表示。位置は決定的に散らす）
-    const pillarPos = (idx: number): [number, number, number] => {
-      const a = (idx * 2.399963) % (Math.PI * 2); // 黄金角
-      const y = ((idx * 0.618) % 1.4) - 0.7;
-      const r = Math.sqrt(1 - y * y);
-      return [r * Math.cos(a), y, r * Math.sin(a)];
-    };
-
-    let raf = 0;
-    const R = 88;
-    const cx = SIZE / 2;
-    const cy = SIZE / 2;
-    let rot = 0;
-    let last = performance.now();
-
-    const draw = (now: number) => {
-      const dt = (now - last) / 1000;
-      last = now;
-      rot += dt * 0.22;
-      g.clearRect(0, 0, SIZE, SIZE);
-
-      // 背後の靄
-      const halo = g.createRadialGradient(cx, cy, R * 0.5, cx, cy, R * 1.45);
-      halo.addColorStop(0, "rgba(60,130,190,0.16)");
-      halo.addColorStop(1, "rgba(60,130,190,0)");
-      g.fillStyle = halo;
-      g.fillRect(0, 0, SIZE, SIZE);
-
-      // 球体の点描
-      for (const [x0, y0, z0] of pts) {
-        const x = x0 * Math.cos(rot) + z0 * Math.sin(rot);
-        const z = -x0 * Math.sin(rot) + z0 * Math.cos(rot);
-        const px = cx + x * R;
-        const py = cy - y0 * R;
-        const front = z > 0;
-        const alpha = front ? 0.28 + z * 0.5 : 0.06;
-        const size = front ? 1.4 + z * 0.9 : 1;
-        g.beginPath();
-        g.arc(px, py, size, 0, Math.PI * 2);
-        g.fillStyle = `rgba(122,184,216,${alpha})`;
-        g.fill();
-      }
-
-      // 縁のリング（金）
-      g.beginPath();
-      g.arc(cx, cy, R + 6, 0, Math.PI * 2);
-      g.strokeStyle = "rgba(212,185,106,0.28)";
-      g.lineWidth = 1;
-      g.stroke();
-
-      // 光の柱（いま聴いている人）
-      const pillars = Math.min(Math.max(nowCount, playingRef.current ? 1 : 0), 14);
-      for (let i = 0; i < pillars; i++) {
-        const [x0, y0, z0] = pillarPos(i);
-        const x = x0 * Math.cos(rot * 0.8) + z0 * Math.sin(rot * 0.8);
-        const z = -x0 * Math.sin(rot * 0.8) + z0 * Math.cos(rot * 0.8);
-        if (z < -0.15) continue; // 裏側は描かない
-        const px = cx + x * R;
-        const py = cy - y0 * R;
-        const pulse = 0.7 + 0.3 * Math.sin(now / 400 + i * 1.7);
-        const h = 26 * pulse;
-        const grad = g.createLinearGradient(px, py, px, py - h);
-        grad.addColorStop(0, "rgba(255,224,138,0.9)");
-        grad.addColorStop(1, "rgba(255,224,138,0)");
-        g.fillStyle = grad;
-        g.fillRect(px - 1.2, py - h, 2.4, h);
-        g.beginPath();
-        g.arc(px, py, 2.6, 0, Math.PI * 2);
-        g.fillStyle = "rgba(255,224,138,0.95)";
-        g.shadowColor = "rgba(255,220,130,0.9)";
-        g.shadowBlur = 8 * pulse;
-        g.fill();
-        g.shadowBlur = 0;
-      }
-
-      raf = requestAnimationFrame(draw);
-    };
-    raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
-  }, [nowCount]);
-
   const dist = live.f1hz != null ? live.f1hz - TARGET_HZ : null;
 
   return (
@@ -269,12 +165,9 @@ export function Otohikari() {
         )}
       </div>
 
-      <canvas
-        ref={canvasRef}
-        style={{ width: 220, height: 220 }}
-        className="mx-auto my-1 block"
-        aria-label="地球儀 — 光の柱はいま聴いている人"
-      />
+      <div className="my-2">
+        <OtohikariGlobe pillars={Math.max(nowCount, playing ? 1 : 0)} />
+      </div>
 
       {/* 実測ステータス */}
       <div className="grid grid-cols-3 gap-2 text-center">
