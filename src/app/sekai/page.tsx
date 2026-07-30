@@ -14,6 +14,8 @@ import {
   upcomingMoots,
   nextMisoka,
   fetchMootData,
+  mootFaces,
+  todaysVillager,
   toggleRsvp,
   myMootCount,
   fetchSettings,
@@ -83,7 +85,7 @@ const SectionTitle = ({ children, sub }: { children: React.ReactNode; sub?: stri
     <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
       {children}
     </span>
-    {sub && <span className="ml-2 text-[11px] font-normal text-[#a0ac a0]">{sub}</span>}
+    {sub && <span className="ml-2 text-[11px] font-normal text-[#a0aca0]">{sub}</span>}
   </div>
 );
 
@@ -214,6 +216,7 @@ function MootsSection({
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [faces, setFaces] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     const r = await fetchMootData(
@@ -228,6 +231,10 @@ function MootsSection({
     load();
     fetchSettings().then(setSettings);
   }, [load]);
+
+  useEffect(() => {
+    if (moots[0]) mootFaces(moots[0].dateKey).then(setFaces);
+  }, [moots, mine]);
 
   const next = moots[0];
 
@@ -310,6 +317,28 @@ function MootsSection({
               </div>
             )}
           </div>
+          {faces.length > 0 && (
+            <div className="mt-2.5 flex items-center gap-1.5">
+              <div className="flex -space-x-2">
+                {faces.slice(0, 8).map((f, i) =>
+                  f.avatar_url ? (
+                    <img
+                      key={i}
+                      src={f.avatar_url}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="h-7 w-7 rounded-full border-2 border-[#1a2a38] object-cover"
+                    />
+                  ) : (
+                    <span key={i} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#1a2a38] bg-[#2a4a3a] text-[12px]">
+                      🌿
+                    </span>
+                  )
+                )}
+              </div>
+              <span className="text-[10.5px] text-[#7aa88a]">この顔ぶれと集います</span>
+            </div>
+          )}
           <div className="mt-2 text-[10.5px] leading-relaxed text-[#5a7a68]">
             終わったあとは {myPref} のブレイクアウトへ。話したい人だけ、そのまま地域ラウンジで。
           </div>
@@ -350,9 +379,11 @@ function MootsSection({
 function WelcomeSection({ me, router }: { me: User | null; router: ReturnType<typeof useRouter> }) {
   const [recent, setRecent] = useState<any[]>([]);
   const [sent, setSent] = useState<Set<string>>(new Set());
+  const [spotlight, setSpotlight] = useState<any | null>(null);
 
   useEffect(() => {
     recentVillagers(30).then(setRecent);
+    todaysVillager().then(setSpotlight);
   }, []);
 
   const welcome = async (p: any) => {
@@ -365,10 +396,43 @@ function WelcomeSection({ me, router }: { me: User | null; router: ReturnType<ty
     }
   };
 
-  if (recent.length === 0) return null;
+  if (recent.length === 0 && !spotlight) return null;
 
   return (
     <section className="card">
+      {/* 今日の村人（日替わりスポットライト） */}
+      {spotlight && (
+        <div
+          className="mb-3 flex items-center gap-3 rounded-xl px-3 py-2.5"
+          style={{ background: "linear-gradient(135deg,#fdf8ec,#fffdf8)", border: "1px solid #e8dcb888" }}
+        >
+          <AvatarSm p={spotlight} size={46} />
+          <div className="min-w-0 flex-1">
+            <div className="text-[9.5px] font-bold tracking-[2px] text-[#c8a030]">🌞 今日の村人</div>
+            <div className="truncate text-[13.5px] font-extrabold text-[#3a3428]">
+              {spotlight.display_name ?? "むらびと"}
+              <span className="ml-1.5 text-[10.5px] font-normal text-[#a0aca0]">{spotlight.prefecture ?? ""}</span>
+            </div>
+            {(spotlight.status_line || spotlight.bio) && (
+              <div className="truncate text-[11px] text-[#8a8070]">{spotlight.status_line ?? spotlight.bio}</div>
+            )}
+          </div>
+          {me && me.id !== spotlight.id && (
+            <button
+              onClick={async () => {
+                const chatId = await getOrCreateChat(me.id, spotlight.id);
+                if (chatId) router.push(`/line/${chatId}`);
+              }}
+              className="flex-shrink-0 rounded-lg px-3 py-2 text-[11.5px] font-extrabold text-white"
+              style={{ background: "#c8a030" }}
+            >
+              話しかける
+            </button>
+          )}
+        </div>
+      )}
+      {recent.length > 0 && (
+      <>
       <div className="mb-2.5 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
           🌱 新しい村人
@@ -399,6 +463,8 @@ function WelcomeSection({ me, router }: { me: User | null; router: ReturnType<ty
           </div>
         ))}
       </div>
+      </>
+      )}
     </section>
   );
 }
@@ -575,6 +641,7 @@ function VillagesSection({
   const [vPref, setVPref] = useState(pref);
   const [policy, setPolicy] = useState<Village["policy"]>("open");
   const [saving, setSaving] = useState(false);
+  const [born, setBorn] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const list = await fetchVillages(null);
@@ -597,9 +664,11 @@ function VillagesSection({
     await createVillage(me.id, { name: name.trim(), prefecture: vPref, description: desc.trim(), policy });
     setSaving(false);
     setCreating(false);
+    setBorn(name.trim());
     setName("");
     setDesc("");
     load();
+    setTimeout(() => setBorn(null), 6000);
   };
 
   const VillageCard = ({ v }: { v: Village }) => {
@@ -670,6 +739,18 @@ function VillagesSection({
         <span className="text-[10px] text-[#a0aca0]">一つの県に、いくつでも</span>
       </div>
 
+      {born && (
+        <div
+          className="mb-2.5 rounded-xl px-4 py-3 text-center"
+          style={{ background: "linear-gradient(135deg,#eaf6ee,#fdf8ec)", border: "1.5px solid #4a8a5c66" }}
+        >
+          <div className="text-[22px]">🎉🔥🎉</div>
+          <div className="mt-0.5 text-[14px] font-extrabold" style={{ color: GREEN }}>
+            「{born}」が生まれました
+          </div>
+          <div className="mt-0.5 text-[11px] text-[#8a968a]">あなたが世話人です。地図にも灯りました</div>
+        </div>
+      )}
       {villages === null ? (
         <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
       ) : inPref.length === 0 ? (

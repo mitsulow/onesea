@@ -99,6 +99,33 @@ export async function fetchMootData(dates: string[], userId: string | null) {
   return { counts, mine };
 }
 
+/** 次の集いに「集います」した村人の顔ぶれ */
+export async function mootFaces(dateKey: string) {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("moot_rsvps")
+    .select("profiles!moot_rsvps_user_id_fkey(username, display_name, avatar_url)")
+    .eq("moot_date", dateKey)
+    .limit(10);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((r: any) => r.profiles).filter(Boolean);
+}
+
+/** 今日の村人（日替わりスポットライト・決定的に選ぶ） */
+export async function todaysVillager() {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url, prefecture, status_line, bio")
+    .not("username", "is", null)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  const list = data ?? [];
+  if (list.length === 0) return null;
+  const doy = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  return list[doy % list.length];
+}
+
 export async function toggleRsvp(userId: string, dateKey: string, kind: "new" | "full", isRsvped: boolean) {
   const supabase = createClient();
   if (isRsvped) await supabase.from("moot_rsvps").delete().eq("user_id", userId).eq("moot_date", dateKey);
