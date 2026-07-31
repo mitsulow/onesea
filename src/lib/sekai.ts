@@ -179,6 +179,7 @@ export interface Village {
   prefecture: string;
   description: string | null;
   policy: "open" | "approval" | "invite" | "paused" | "full";
+  city: string | null; // 市区町村（海外拠点は null）
   is_official: boolean; // セカイムラ事務局が認定した公式拠点
   created_by: string | null;
   profiles: P | null;
@@ -275,7 +276,7 @@ export async function detectPrefecture(): Promise<string | null> {
 
 /* ============ 拠点（村） ============ */
 const VILLAGE_SELECT =
-  "id, name, prefecture, description, policy, is_official, created_by, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
+  "id, name, prefecture, city, description, policy, is_official, created_by, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
 
 export async function fetchVillages(pref?: string | null): Promise<Village[]> {
   const supabase = createClient();
@@ -300,7 +301,7 @@ export async function fetchActivityFeed(limit = 10) {
 
 export async function createVillage(
   userId: string,
-  v: { name: string; prefecture: string; description: string; policy: Village["policy"] }
+  v: { name: string; prefecture: string; city?: string | null; description: string; policy: Village["policy"] }
 ) {
   const supabase = createClient();
   const { data, error } = await supabase

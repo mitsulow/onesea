@@ -48,6 +48,16 @@ import {
   closeTasukete,
 } from "@/lib/sekai";
 import { detectPrefecture } from "@/lib/sekai";
+import JP_CITIES_JSON from "@/data/jp-cities.json";
+
+const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
+
+/** 海外拠点の主要な国名（47都道府県の次に並ぶ） */
+export const OVERSEAS_AREAS = [
+  "アメリカ", "カナダ", "ブラジル", "イギリス", "フランス", "ドイツ", "イタリア", "スペイン",
+  "オーストラリア", "ニュージーランド", "タイ", "ベトナム", "フィリピン", "インドネシア",
+  "マレーシア", "シンガポール", "インド", "中国", "台湾", "韓国", "その他海外",
+];
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { moonsOfYear, YOBI } from "@/lib/almanac";
@@ -1038,10 +1048,13 @@ export function VillagesSection({
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [vPref, setVPref] = useState(pref);
+  const [vCity, setVCity] = useState("");
   const [policy, setPolicy] = useState<Village["policy"]>("open");
   const [saving, setSaving] = useState(false);
   const [born, setBorn] = useState<string | null>(null);
+
+  const isJapan = (PREFS as readonly string[]).includes(pref);
+  useEffect(() => setVCity(""), [pref]);
 
   const load = useCallback(async () => {
     const list = await fetchVillages(null);
@@ -1053,8 +1066,6 @@ export function VillagesSection({
     load();
   }, [load]);
 
-  useEffect(() => setVPref(pref), [pref]);
-
   const officials = (villages ?? []).filter((v) => v.is_official);
   const inPref = (villages ?? []).filter((v) => !v.is_official && v.prefecture === pref);
   const others = (villages ?? []).filter((v) => !v.is_official && v.prefecture !== pref);
@@ -1062,7 +1073,13 @@ export function VillagesSection({
   const create = async () => {
     if (!me || !name.trim() || saving) return;
     setSaving(true);
-    await createVillage(me.id, { name: name.trim(), prefecture: vPref, description: desc.trim(), policy });
+    await createVillage(me.id, {
+      name: name.trim(),
+      prefecture: pref,
+      city: isJapan && vCity ? vCity : null,
+      description: desc.trim(),
+      policy,
+    });
     setSaving(false);
     setCreating(false);
     setBorn(name.trim());
@@ -1081,7 +1098,8 @@ export function VillagesSection({
           <Link href={`/sekai/village/${v.id}`} className="min-w-0 no-underline">
             <div className="text-[14.5px] font-extrabold text-[#2a4a34]">⛺ {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
             <div className="mt-0.5 text-[11px] text-[#a0aca0]">
-              {v.prefecture} ・ {members}人 ・ 世話人 {v.profiles?.display_name ?? "—"}
+              {v.prefecture}
+              {v.city ? ` ${v.city}` : ""} ・ {members}人 ・ 世話人 {v.profiles?.display_name ?? "—"}
             </div>
           </Link>
           <span className="flex flex-shrink-0 items-center gap-1">
@@ -1171,12 +1189,21 @@ export function VillagesSection({
         onChange={(e) => setPref(e.target.value)}
         className="mb-2.5 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
       >
-        {PREFS.map((p) => (
-          <option key={p} value={p}>
-            {p}
-            {p === myPref ? "（わたしの地域）" : ""}
-          </option>
-        ))}
+        <optgroup label="日本（47都道府県）">
+          {PREFS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+              {p === myPref ? "（わたしの地域）" : ""}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="海外">
+          {OVERSEAS_AREAS.map((p) => (
+            <option key={p} value={p}>
+              {p}
+            </option>
+          ))}
+        </optgroup>
       </select>
 
       {born && (
@@ -1222,29 +1249,34 @@ export function VillagesSection({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={`例: セカイムラ${vPref.replace(/[都道府県]$/, "")}${inPref.length > 0 ? inPref.length + 1 : ""}`}
+              placeholder={`例: セカイムラ${pref.replace(/[都道府県]$/, "")}${inPref.length > 0 ? inPref.length + 1 : ""}`}
               className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[14px] outline-none focus:border-[#4a8a5c]"
             />
-            <div className="mb-2 grid grid-cols-2 gap-2">
+            <div className="mb-2 text-[10.5px] text-[#8a968a]">
+              場所: <b className="text-[#3a5a44]">{pref}</b>（上の選択と連動）
+            </div>
+            {/* 日本の県なら市区町村（総務省の全国市区町村）を選べる。海外は不要 */}
+            {isJapan && (
               <select
-                value={vPref}
-                onChange={(e) => setVPref(e.target.value)}
-                className="rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+                value={vCity}
+                onChange={(e) => setVCity(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
               >
-                {PREFS.map((p) => (
-                  <option key={p}>{p}</option>
+                <option value="">市区町村を選ぶ（任意）</option>
+                {(JP_CITIES[pref] ?? []).map((c) => (
+                  <option key={c}>{c}</option>
                 ))}
               </select>
-              <select
-                value={policy}
-                onChange={(e) => setPolicy(e.target.value as Village["policy"])}
-                className="rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
-              >
-                <option value="open">誰でも参加OK</option>
-                <option value="approval">申請・承認制</option>
-                <option value="invite">招待制</option>
-              </select>
-            </div>
+            )}
+            <select
+              value={policy}
+              onChange={(e) => setPolicy(e.target.value as Village["policy"])}
+              className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+            >
+              <option value="open">誰でも参加OK</option>
+              <option value="approval">申請・承認制</option>
+              <option value="invite">招待制</option>
+            </select>
             <textarea
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
