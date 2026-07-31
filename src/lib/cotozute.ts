@@ -39,6 +39,17 @@ export interface CotozuteComment {
 const POST_SELECT =
   "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url), likes(count), comments(count)";
 
+/** ページ単位で取得（メモリ保護のため一度に全件は読まない） */
+export async function fetchPostsPage(offset: number, limit = 20): Promise<CotozutePost[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+  return (data as unknown as CotozutePost[]) ?? [];
+}
+
 export async function fetchPosts(username?: string): Promise<CotozutePost[]> {
   const supabase = createClient();
   let q = supabase.from("posts").select(POST_SELECT).order("created_at", { ascending: false }).limit(30);
