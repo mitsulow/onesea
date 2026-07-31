@@ -13,9 +13,31 @@ export function BottomNav() {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
   const [sekaiMenu, setSekaiMenu] = useState(false);
+  const [kbOpen, setKbOpen] = useState(false);
 
   // ページが変わったらメニューを閉じる
   useEffect(() => setSekaiMenu(false), [pathname]);
+
+  // iOS: キーボードが開くと fixed バーが画面の途中に浮くため、文字入力中はタブを隠す
+  useEffect(() => {
+    const isField = (el: EventTarget | null) =>
+      el instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName);
+    const onIn = (e: FocusEvent) => {
+      if (isField(e.target)) setKbOpen(true);
+    };
+    const onOut = () => {
+      setTimeout(() => {
+        const a = document.activeElement;
+        if (!(a && ["INPUT", "TEXTAREA", "SELECT"].includes(a.tagName))) setKbOpen(false);
+      }, 60);
+    };
+    window.addEventListener("focusin", onIn);
+    window.addEventListener("focusout", onOut);
+    return () => {
+      window.removeEventListener("focusin", onIn);
+      window.removeEventListener("focusout", onOut);
+    };
+  }, []);
 
   useEffect(() => {
     let stop = false;
@@ -74,6 +96,10 @@ export function BottomNav() {
   ] as const;
   const sekaiActive = (href: string) => (href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href));
   const current = SEKAI_PAGES.find(([href]) => sekaiActive(href));
+  void current;
+
+  // 文字入力中（キーボード表示中）はバーを出さない
+  if (kbOpen) return null;
 
   return (
     <>

@@ -15,7 +15,12 @@ import { createClient } from "@/lib/supabase/client";
  * サーバー費用ゼロ。喫茶店的な少人数（〜6人目安）のおしゃべり向き。
  */
 
-const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const ICE = {
+  iceServers: [
+    { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"] },
+    { urls: "stun:stun.cloudflare.com:3478" },
+  ],
+};
 
 /** 1ルームの上限（P2Pメッシュが快適な人数）。超えたら No.2, No.3... が自動で開く */
 const ROOM_CAP = 5;
@@ -73,6 +78,7 @@ export default function CafePage() {
   const localStream = useRef<MediaStream | null>(null);
   const chRef = useRef<RealtimeChannel | null>(null);
   const pcs = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const pcBorn = useRef<Map<string, number>>(new Map());
   const pendingIce = useRef<Map<string, RTCIceCandidateInit[]>>(new Map());
   const myT = useRef(0);
 
@@ -88,6 +94,7 @@ export default function CafePage() {
   const closePeer = useCallback((peerId: string) => {
     pcs.current.get(peerId)?.close();
     pcs.current.delete(peerId);
+    pcBorn.current.delete(peerId);
     pendingIce.current.delete(peerId);
     setStreams((prev) => {
       const next = { ...prev };
@@ -102,6 +109,7 @@ export default function CafePage() {
       if (pc) return pc;
       pc = new RTCPeerConnection(ICE);
       pcs.current.set(peerId, pc);
+      pcBorn.current.set(peerId, Date.now());
       localStream.current?.getTracks().forEach((t) => pc!.addTrack(t, localStream.current!));
       pc.onicecandidate = (e) => {
         if (e.candidate) send({ from: myId, to: peerId, kind: "ice", cand: e.candidate.toJSON() });
@@ -194,6 +202,37 @@ export default function CafePage() {
       localRef.current.play().catch(() => {});
     }
   }, [phase, audioOnly]);
+
+  // 5秒ごとの自己修復: 未接続・切断の相手に接続を張り直す
+  // （シグナリングは配達保証がないため、1回きりだと欠けたまま固定される）
+  useEffect(() => {
+    if (phase !== "in" || !me) return;
+    const myId = me.id;
+    const t = setInterval(() => {
+      const ch = chRef.current;
+      if (!ch) return;
+      const st = ch.presenceState() as Record<string, Array<{ t?: number }>>;
+      for (const [id, metas] of Object.entries(st)) {
+        if (id === myId) continue;
+        const theirT = metas[0]?.t;
+        if (theirT === undefined) continue;
+        const pc = pcs.current.get(id);
+        const born = pcBorn.current.get(id) ?? 0;
+        const stale =
+          !pc ||
+          pc.connectionState === "failed" ||
+          pc.connectionState === "closed" ||
+          pc.connectionState === "disconnected" ||
+          (pc.connectionState !== "connected" && Date.now() - born > 8000);
+        // 後から入った側（offer担当）が張り直す
+        if (stale && myT.current > theirT) {
+          if (pc) closePeer(id);
+          makeOffer(id, myId);
+        }
+      }
+    }, 5000);
+    return () => clearInterval(t);
+  }, [phase, me, makeOffer, closePeer]);
 
   const join = async (audioOnlyWanted = false) => {
     if (!me || phase !== "lobby") return;
