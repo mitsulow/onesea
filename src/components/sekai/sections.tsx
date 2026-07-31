@@ -554,11 +554,11 @@ export function ActivitySection({ me }: { me: User | null }) {
   };
 
   return (
-    <section id="katsudo" className="card" style={{ scrollMarginTop: 56, border: "1.5px solid #3a7a4c44" }}>
+    <section id="katsudo" className="card" style={{ scrollMarginTop: 56, border: "none", padding: "0 0 8px" }}>
       {/* 見出し */}
       <div
-        className="-mx-4 -mt-4 mb-3 px-4 pb-2.5 pt-3.5"
-        style={{ background: "linear-gradient(150deg,#163522,#1e4530)", borderRadius: "14px 14px 0 0" }}
+        className="mb-2 px-4 pb-2.5 pt-3.5"
+        style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}
       >
         <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 各県のセカイムラ情報</div>
         <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
@@ -566,7 +566,7 @@ export function ActivitySection({ me }: { me: User | null }) {
 
       {/* 拠点一覧（横スクロールのチップ） */}
       {villages.length > 0 && (
-        <div className="hide-scrollbar -mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4">
+        <div className="hide-scrollbar mb-2 flex gap-1.5 overflow-x-auto px-2">
           {villages.map((v) => (
             <Link
               key={v.id}
@@ -610,8 +610,8 @@ export function ActivitySection({ me }: { me: User | null }) {
                     className="min-w-0 truncate text-[13.5px] font-extrabold no-underline"
                     style={{ color: GREEN }}
                   >
-                    ⛺ 拠点「{p.villages?.name ?? "セカイムラ"}
-                    {p.villages?.prefecture ? `（${p.villages.prefecture}）` : ""}」
+                    ⛺ 拠点『{p.villages?.name ?? "セカイムラ"}
+                    {p.villages?.prefecture ? `（${p.villages.prefecture}）` : ""}』
                   </Link>
                   <span className="num flex-shrink-0 text-[10px] text-[#c0c8c0]">
                     {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
