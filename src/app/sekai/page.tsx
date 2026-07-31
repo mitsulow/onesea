@@ -188,8 +188,8 @@ export default function SekaiPage() {
           }}
           router={router}
         />
-        <VillagesSection me={me} pref={pref} mootCount={mootCount} router={router} />
-        <ClubsSection me={me} mootCount={mootCount} />
+        <VillagesSection me={me} pref={pref} router={router} />
+        <ClubsSection me={me} />
         <KomeSection me={me} myPref={myPref} />
         <JinjaSection me={me} myPref={myPref} />
         <MeisterSection me={me} />
@@ -249,7 +249,7 @@ function MootsSection({
         </span>
         {me && (
           <span className="text-[10px] text-[#5a7a68]">
-            あなたの参加 {mootCount}回{mootCount >= 3 ? " ・ 創設の火が使えます" : ""}
+            あなたの参加 {mootCount}回
           </span>
         )}
       </div>
@@ -798,12 +798,10 @@ function LoungeSection({
 function VillagesSection({
   me,
   pref,
-  mootCount,
   router,
 }: {
   me: User | null;
   pref: string;
-  mootCount: number;
   router: ReturnType<typeof useRouter>;
 }) {
   const [villages, setVillages] = useState<Village[] | null>(null);
@@ -1008,7 +1006,7 @@ function VillagesSection({
             className="mt-3 w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
             style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
           >
-            🔥 村をつくる{mootCount < 3 ? "（集い3回で開放・いまは体験でOK）" : ""}
+            🔥 村をつくる
           </button>
         ))}
 
@@ -1030,7 +1028,7 @@ function VillagesSection({
 }
 
 /* ═══ 部活動 ═══ */
-function ClubsSection({ me, mootCount }: { me: User | null; mootCount: number }) {
+function ClubsSection({ me }: { me: User | null }) {
   const [clubs, setClubs] = useState<Club[] | null>(null);
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
   const [creating, setCreating] = useState(false);
@@ -1159,7 +1157,7 @@ function ClubsSection({ me, mootCount }: { me: User | null; mootCount: number })
             className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
             style={{ borderColor: "#4a8a5c66", color: GREEN }}
           >
-            🚩 部活をつくる{mootCount < 3 ? "（集い3回で開放・いまは体験でOK）" : ""}
+            🚩 部活をつくる
           </button>
         ))}
     </section>

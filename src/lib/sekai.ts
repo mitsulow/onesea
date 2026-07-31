@@ -132,7 +132,7 @@ export async function toggleRsvp(userId: string, dateKey: string, kind: "new" | 
   else await supabase.from("moot_rsvps").insert({ user_id: userId, moot_date: dateKey, kind });
 }
 
-/** 自分の集い参加回数（信頼の節目: 1回で投稿、3回で創設系が開く） */
+/** 自分の集い参加回数（表示用） */
 export async function myMootCount(userId: string): Promise<number> {
   const supabase = createClient();
   const { count } = await supabase
