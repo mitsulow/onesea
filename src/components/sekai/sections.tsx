@@ -163,7 +163,8 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
           )}
         </Link>
       </header>
-      <div className="space-y-4 pt-4">{children}</div>
+      {/* セクションは縦も隙間なしで繋げる */}
+      <div>{children}</div>
     </main>
   );
 }
