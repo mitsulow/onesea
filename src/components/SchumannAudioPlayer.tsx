@@ -144,10 +144,8 @@ export function SchumannAudioPlayer() {
       clearInterval(heartbeatRef.current);
       heartbeatRef.current = null;
     }
-    if (!user) return;
-    const supabase = createClient();
-    await supabase.from("beacons").delete().eq("user_id", user.id);
-  }, [user]);
+    // 行は消さない: 朝3:36リセットまで「今日再生した場所」として光り続ける
+  }, []);
 
   const onPlayStarted = useCallback(async () => {
     if (suppressRef.current) return;
