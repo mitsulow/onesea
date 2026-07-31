@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchUnreadTotal } from "@/lib/line";
+import { setBadge, ensureSw } from "@/lib/push";
 import { LINKS } from "@/lib/config";
 
 /** 下部タブ: ホーム / MMM(太陽) / セカイムラ(地球) / ツキヨガ(月) / 楽市楽座(楽) / LINE */
@@ -17,10 +18,15 @@ export function BottomNav() {
     let userId: string | null = null;
     const supabase = createClient();
 
+    ensureSw(); // プッシュ受信用SWを常に登録しておく
+
     const refresh = async () => {
       if (stop || !userId) return;
       const n = await fetchUnreadTotal(userId);
-      if (!stop) setUnread(n);
+      if (!stop) {
+        setUnread(n);
+        setBadge(n); // ホーム画面アイコンの「③」も同期
+      }
     };
 
     supabase.auth.getSession().then(({ data: { session } }) => {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ChatSummary, fetchChats } from "@/lib/line";
+import { enablePush, pushEnabled, pushSupported } from "@/lib/push";
 
 function timeLabel(iso: string | null): string {
   if (!iso) return "";
@@ -21,6 +22,8 @@ export default function LinePage() {
   const [me, setMe] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [chats, setChats] = useState<ChatSummary[] | null>(null);
+  const [showBell, setShowBell] = useState(false);
+  const [bellBusy, setBellBusy] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -28,9 +31,22 @@ export default function LinePage() {
       const u = session?.user ?? null;
       setMe(u);
       setReady(true);
-      if (u) setChats(await fetchChats(u.id));
+      if (u) {
+        setChats(await fetchChats(u.id));
+        if (pushSupported()) setShowBell(!(await pushEnabled()));
+      }
     });
   }, []);
+
+  const turnOnBell = async () => {
+    if (!me || bellBusy) return;
+    setBellBusy(true);
+    const r = await enablePush(me.id);
+    setBellBusy(false);
+    if (r === "ok") setShowBell(false);
+    else if (r === "denied")
+      alert("通知がブロックされています。端末の設定 > 通知 からOneSeaを許可してください。");
+  };
 
   // 30秒ごとに更新
   useEffect(() => {
@@ -48,6 +64,27 @@ export default function LinePage() {
         <h1 className="text-lg font-extrabold tracking-[4px] text-[#f0e6c8]">LINE</h1>
         <span className="text-[11px] tracking-widest text-[#7a9ab4]">メッセージ</span>
       </header>
+
+      {me && showBell && (
+        <button
+          onClick={turnOnBell}
+          disabled={bellBusy}
+          className="flex w-full items-center gap-2.5 border-b border-[#e8e0d0] bg-[#fdf8ec] px-4 py-2.5 text-left"
+        >
+          <span className="text-[18px]">🔔</span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[12.5px] font-bold text-[#8a6a20]">
+              {bellBusy ? "設定中..." : "新着の通知と、アイコンの未読バッジをオンにする"}
+            </span>
+            <span className="block text-[10px] text-[#b0a070]">
+              ホーム画面に追加したOneSeaのアイコンに「③」が出ます（iPhoneはiOS 16.4以降）
+            </span>
+          </span>
+          <span className="flex-shrink-0 rounded-lg bg-[#c8a030] px-3 py-1.5 text-[11.5px] font-extrabold text-white">
+            オンにする
+          </span>
+        </button>
+      )}
 
       {!ready ? null : !me ? (
         <p className="px-5 py-10 text-center text-sm text-[#8a8070]">

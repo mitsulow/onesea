@@ -117,6 +117,19 @@ export async function sendMessage(chatId: string, myId: string, body: string) {
   const { error } = await supabase.from("messages").insert({ chat_id: chatId, sender_id: myId, body });
   if (!error) {
     await supabase.from("chats").update({ last_message_at: new Date().toISOString() }).eq("id", chatId);
+    // 相手のホーム画面バッジ・通知を更新（失敗しても本文送信には影響させない）
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        fetch("/api/push", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ chatId, body }),
+        }).catch(() => {});
+      }
+    } catch {}
   }
   return { error };
 }
