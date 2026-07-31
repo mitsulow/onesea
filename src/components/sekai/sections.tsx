@@ -57,6 +57,27 @@ import {
 import JP_CITIES_JSON from "@/data/jp-cities.json";
 
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
+
+/** 本文中のURLをリンク化（別タブで開く） */
+const URL_RE = /(https?:\/\/[^\s]+)/g;
+export function linkify(text: string): React.ReactNode[] {
+  return text.split(URL_RE).map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all underline"
+        style={{ color: "#2a7ab8" }}
+      >
+        {part}
+      </a>
+    ) : (
+      part
+    )
+  );
+}
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { moonsOfYear, YOBI, keyOf } from "@/lib/almanac";
@@ -578,7 +599,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       day.h = day.h ?? {};
       const hour = String(d.getHours());
       const label = `⛺${p.villages?.name ?? "セカイムラ"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
-      day.h[hour] = day.h[hour] ? `${day.h[hour]} / ${label}` : label;
+      day.h[hour] = day.h[hour] ? `${day.h[hour]}\n${label}` : label; // 2件目以降は改行で追記
       memos[key] = day;
       localStorage.setItem("techo-memos", JSON.stringify(memos));
       localStorage.setItem(`onesea-ev-${p.id}`, "1");
@@ -616,14 +637,28 @@ export function ActivitySection({ me }: { me: User | null }) {
     if (!me || !wVillage || !wBody.trim() || wSaving) return;
     setWSaving(true);
     const supabase = createClient();
-    await supabase.from("village_posts").insert({
-      village_id: wVillage,
-      user_id: me.id,
-      body: wBody.trim(),
-      photo_url: wPhoto,
-      kind: wKind,
-      event_at: wKind === "event" && wEventAt ? new Date(wEventAt).toISOString() : null,
-    });
+    const eventAt = wKind === "event" && wEventAt ? new Date(wEventAt).toISOString() : null;
+    const { data: inserted } = await supabase
+      .from("village_posts")
+      .insert({
+        village_id: wVillage,
+        user_id: me.id,
+        body: wBody.trim(),
+        photo_url: wPhoto,
+        kind: wKind,
+        event_at: eventAt,
+      })
+      .select("id")
+      .single();
+    // 自分で立ち上げたイベントは、参加ボタンなしで自分の手帳に自動登録
+    if (eventAt && inserted) {
+      joinEvent({
+        id: inserted.id,
+        event_at: eventAt,
+        body: wBody.trim(),
+        villages: { name: myVills.find((v) => v.id === wVillage)?.name },
+      });
+    }
     setWSaving(false);
     setWriting(false);
     setWBody("");
@@ -721,7 +756,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                   </div>
                 )}
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#3a4438]">
-                  {p.body}
+                  {linkify(String(p.body ?? ""))}
                 </p>
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
                 {(() => {

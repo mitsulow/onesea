@@ -382,7 +382,7 @@ function BottomSheet({
   const moon = moonOf(dk);
   const dayMemo = memos[dk] ?? { note: "", h: {} };
   const [editH, setEditH] = useState<number | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [tide, setTide] = useState<TideDay | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [sheetY, setSheetY] = useState(0);
@@ -714,23 +714,20 @@ function BottomSheet({
                         </div>
                       ))}
                       {isEd ? (
-                        <input
+                        <textarea
                           ref={inputRef}
-                          type="text"
                           value={hNote}
                           onChange={(e) => onSave(dk, String(h), e.target.value)}
                           onBlur={() => setEditH(null)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              setEditH(h < 23 ? h + 1 : null);
-                            }
-                          }}
-                          placeholder="予定..."
-                          className="w-full bg-transparent px-2 py-1 text-xs text-[#333] outline-none"
+                          placeholder={"予定...（改行で2件目もOK）"}
+                          rows={Math.max(2, hNote.split("\n").length)}
+                          className="w-full resize-none bg-transparent px-2 py-1 text-xs leading-relaxed text-[#333] outline-none"
                         />
                       ) : (
-                        <div className="w-full px-2 py-1 text-xs" style={{ color: hNote ? "#333" : "transparent", minHeight: 17 }}>
+                        <div
+                          className="w-full whitespace-pre-wrap px-2 py-1 text-xs leading-relaxed"
+                          style={{ color: hNote ? "#333" : "transparent", minHeight: 17 }}
+                        >
                           {hNote || "."}
                         </div>
                       )}

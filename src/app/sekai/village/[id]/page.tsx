@@ -21,6 +21,7 @@ import {
 } from "@/lib/sekai";
 import { CameraIcon } from "@/components/CameraIcon";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
+import { linkify } from "@/components/sekai/sections";
 
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
 
@@ -423,7 +424,9 @@ export default function VillagePage() {
                     {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                   </span>
                 </div>
-                <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">{p.body}</p>
+                <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">
+                  {linkify(String(p.body ?? ""))}
+                </p>
                 {p.photo_url && <img src={p.photo_url} alt="" loading="lazy" className="mt-1.5 max-h-72 rounded-lg object-cover" />}
 
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
