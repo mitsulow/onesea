@@ -482,10 +482,9 @@ function MootArchive() {
 }
 
 /* ═══ 各地の活動報告（村ブログ横断フィード）═══ */
-export function ActivitySection({ me, router }: { me: User | null; router: ReturnType<typeof useRouter> }) {
+export function ActivitySection({ me }: { me: User | null }) {
   const [feed, setFeed] = useState<any[] | null>(null);
   const [villages, setVillages] = useState<Village[]>([]);
-  const [sent, setSent] = useState<Set<string>>(new Set());
   const [myVills, setMyVills] = useState<Village[]>([]);
   const [writing, setWriting] = useState(false);
   const [wVillage, setWVillage] = useState("");
@@ -521,17 +520,6 @@ export function ActivitySection({ me, router }: { me: User | null; router: Retur
     setWBody("");
     setWPhoto(null);
     loadFeed();
-  };
-
-  const join = async (post: any) => {
-    const owner = post.villages?.created_by;
-    if (!me || !owner || sent.has(post.id)) return;
-    setSent((prev) => new Set(prev).add(post.id));
-    const chatId = await getOrCreateChat(me.id, owner === me.id ? post.user_id : owner);
-    if (chatId) {
-      await sendMessage(chatId, me.id, `「${post.villages?.name}」の活動報告を見ました。参加したいです 🌱`);
-      router.push(`/line/${chatId}`);
-    }
   };
 
   return (
@@ -579,7 +567,11 @@ export function ActivitySection({ me, router }: { me: User | null; router: Retur
         <div className="space-y-2.5">
           {feed.map((p) => (
             <div key={p.id} className="overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
-              {p.photo_url && <img src={p.photo_url} alt="" className="max-h-52 w-full object-cover" />}
+              {p.photo_url && (
+                <Link href={`/sekai/village/${p.villages?.id}`} className="block">
+                  <img src={p.photo_url} alt="" className="max-h-52 w-full object-cover" />
+                </Link>
+              )}
               <div className="p-3">
                 <div className="flex items-baseline justify-between gap-2">
                   <Link
@@ -597,21 +589,9 @@ export function ActivitySection({ me, router }: { me: User | null; router: Retur
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#3a4438]">
                   {p.body}
                 </p>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <AvatarSm p={p.profiles} size={24} />
-                    <span className="text-[10.5px] text-[#a0aca0]">{p.profiles?.display_name ?? "むらびと"}</span>
-                  </div>
-                  {me && me.id !== (p.villages?.created_by ?? p.user_id) && (
-                    <button
-                      onClick={() => join(p)}
-                      disabled={sent.has(p.id)}
-                      className="rounded-lg px-3.5 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-50"
-                      style={{ background: "#4a8a5c" }}
-                    >
-                      {sent.has(p.id) ? "連絡しました 🌱" : "参加する"}
-                    </button>
-                  )}
+                <div className="mt-2 flex items-center gap-1.5">
+                  <AvatarSm p={p.profiles} size={24} />
+                  <span className="text-[10.5px] text-[#a0aca0]">{p.profiles?.display_name ?? "むらびと"}</span>
                 </div>
               </div>
             </div>

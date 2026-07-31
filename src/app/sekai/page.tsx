@@ -19,7 +19,7 @@ export default function SekaiHomePage() {
   return (
     <SekaiShell>
       <MootsSection me={me} myPref={myPref} mootCount={mootCount} onRsvped={refreshMootCount} />
-      <ActivitySection me={me} router={router} />
+      <ActivitySection me={me} />
       <WelcomeSection me={me} router={router} />
       <CafeBar pref={myPref} />
       <section className="card">
