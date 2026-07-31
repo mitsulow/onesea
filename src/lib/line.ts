@@ -146,13 +146,122 @@ export async function markRead(chatId: string, myId: string) {
   window.dispatchEvent(new Event("onesea:unreadRefresh"));
 }
 
-/** ナビバッジ用: 全チャットの未読合計 */
+/** ナビバッジ用: 個人チャット + グループの未読合計 */
 export async function fetchUnreadTotal(myId: string): Promise<number> {
   const supabase = createClient();
-  const { count } = await supabase
-    .from("messages")
-    .select("id", { count: "exact", head: true })
-    .is("read_at", null)
-    .neq("sender_id", myId);
-  return count ?? 0;
+  const [{ count }, groups] = await Promise.all([
+    supabase
+      .from("messages")
+      .select("id", { count: "exact", head: true })
+      .is("read_at", null)
+      .neq("sender_id", myId),
+    fetchGroups(myId).catch(() => [] as GroupSummary[]),
+  ]);
+  const groupUnread = groups.reduce((s, g) => s + g.unread, 0);
+  return (count ?? 0) + groupUnread;
+}
+
+/* ============ グループLINE（村・部活のトークルーム）============ */
+
+export interface GroupSummary {
+  key: string; // `${type}:${id}`
+  type: "village" | "club";
+  id: string;
+  name: string;
+  emoji: string;
+  lastBody: string | null;
+  lastAt: string | null;
+  unread: number;
+}
+
+export interface GroupMessageRow {
+  id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  profiles: (CotozuteProfile & { username: string | null }) | null;
+}
+
+/** 自分が入っている村・部活のグループ一覧（最新メッセージ・未読つき） */
+export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
+  const supabase = createClient();
+  const [vm, cm] = await Promise.all([
+    supabase.from("village_members").select("village_id, villages(name)").eq("user_id", myId),
+    supabase.from("club_members").select("club_id, clubs(name, emoji)").eq("user_id", myId),
+  ]);
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const groups: Array<{ type: "village" | "club"; id: string; name: string; emoji: string }> = [
+    ...((vm.data ?? []) as any[]).map((r) => ({
+      type: "village" as const,
+      id: r.village_id as string,
+      name: (r.villages?.name as string) ?? "村",
+      emoji: "⛺",
+    })),
+    ...((cm.data ?? []) as any[]).map((r) => ({
+      type: "club" as const,
+      id: r.club_id as string,
+      name: (r.clubs?.name as string) ?? "部活",
+      emoji: (r.clubs?.emoji as string) ?? "🎌",
+    })),
+  ];
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+  if (groups.length === 0) return [];
+
+  const ids = groups.map((g) => g.id);
+  const [{ data: msgs }, { data: reads }] = await Promise.all([
+    supabase
+      .from("group_messages")
+      .select("scope_type, scope_id, sender_id, body, created_at")
+      .in("scope_id", ids)
+      .order("created_at", { ascending: false })
+      .limit(400),
+    supabase.from("group_reads").select("scope_type, scope_id, last_read_at").eq("user_id", myId),
+  ]);
+  const readBy = new Map((reads ?? []).map((r) => [`${r.scope_type}:${r.scope_id}`, r.last_read_at as string]));
+  const lastBy = new Map<string, { body: string; created_at: string }>();
+  const unreadBy = new Map<string, number>();
+  for (const m of msgs ?? []) {
+    const k = `${m.scope_type}:${m.scope_id}`;
+    if (!lastBy.has(k)) lastBy.set(k, m);
+    const lr = readBy.get(k);
+    if (m.sender_id !== myId && (!lr || m.created_at > lr)) unreadBy.set(k, (unreadBy.get(k) ?? 0) + 1);
+  }
+  return groups
+    .map((g) => {
+      const k = `${g.type}:${g.id}`;
+      const last = lastBy.get(k);
+      return {
+        ...g,
+        key: k,
+        lastBody: last?.body ?? null,
+        lastAt: last?.created_at ?? null,
+        unread: unreadBy.get(k) ?? 0,
+      };
+    })
+    .sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? ""));
+}
+
+export async function fetchGroupMessages(type: string, id: string): Promise<GroupMessageRow[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("group_messages")
+    .select("id, sender_id, body, created_at, profiles!group_messages_sender_id_fkey(username, display_name, avatar_url)")
+    .eq("scope_type", type)
+    .eq("scope_id", id)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  return (data as unknown as GroupMessageRow[]) ?? [];
+}
+
+export async function sendGroupMessage(type: string, id: string, myId: string, body: string) {
+  const supabase = createClient();
+  return supabase.from("group_messages").insert({ scope_type: type, scope_id: id, sender_id: myId, body });
+}
+
+export async function markGroupRead(type: string, id: string, myId: string) {
+  const supabase = createClient();
+  await supabase
+    .from("group_reads")
+    .upsert({ user_id: myId, scope_type: type, scope_id: id, last_read_at: new Date().toISOString() });
+  window.dispatchEvent(new Event("onesea:unreadRefresh"));
 }
