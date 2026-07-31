@@ -33,6 +33,9 @@ export const viewport: Viewport = {
   themeColor: "#0e1e2e",
   width: "device-width",
   initialScale: 1,
+  // iOS: 入力欄タップ時の自動ズームで固定バーがずれるのを防ぐ
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
 };
 
