@@ -17,6 +17,36 @@ import { createClient } from "@/lib/supabase/client";
 
 const ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
+/** 1ルームの上限（P2Pメッシュが快適な人数）。超えたら No.2, No.3... が自動で開く */
+const ROOM_CAP = 5;
+
+/** ルームの在室人数を覗く（trackしないのでカウントされない） */
+function countRoom(chName: string): Promise<number> {
+  return new Promise((resolve) => {
+    const supabase = createClient();
+    const ch = supabase.channel(chName);
+    let done = false;
+    const finish = (v: number) => {
+      if (done) return;
+      done = true;
+      supabase.removeChannel(ch);
+      resolve(v);
+    };
+    const timer = setTimeout(() => finish(0), 1800);
+    ch.on("presence", { event: "sync" }, () => {
+      clearTimeout(timer);
+      const st = ch.presenceState() as Record<string, Array<{ t?: number }>>;
+      finish(Object.keys(st).filter((k) => st[k][0]?.t !== undefined).length);
+    });
+    ch.subscribe((status) => {
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+        clearTimeout(timer);
+        finish(0);
+      }
+    });
+  });
+}
+
 interface Sig {
   from: string;
   to: string;
@@ -29,6 +59,7 @@ export default function CafePage() {
   const params = useParams<{ pref: string }>();
   const pref = decodeURIComponent(params.pref);
   const [me, setMe] = useState<User | null>(null);
+  const [roomKey, setRoomKey] = useState<string | null>(null); // 満席なら「東京都 No.2」など
   const [phase, setPhase] = useState<"lobby" | "joining" | "in">("lobby");
   const [err, setErr] = useState<string | null>(null);
   const [micOn, setMicOn] = useState(true);
@@ -179,10 +210,22 @@ export default function CafePage() {
     localStream.current = stream;
     if (localRef.current) localRef.current.srcObject = stream;
 
+    // 満席なら No.2, No.3... と空いている店を探す
+    let room = pref;
+    for (let n = 1; n <= 20; n++) {
+      const key = n === 1 ? pref : `${pref} No.${n}`;
+      const c = await countRoom(`cafe:${key}`);
+      if (c < ROOM_CAP) {
+        room = key;
+        break;
+      }
+    }
+    setRoomKey(room);
+
     const supabase = createClient();
     const myId = me.id;
     myT.current = Date.now();
-    const ch = supabase.channel(`cafe:${pref}`, {
+    const ch = supabase.channel(`cafe:${room}`, {
       config: { presence: { key: myId }, broadcast: { self: false } },
     });
     chRef.current = ch;
@@ -237,7 +280,7 @@ export default function CafePage() {
           ◀ セカイムラ
         </Link>
         <div className="text-center">
-          <div className="text-[14px] font-extrabold tracking-[1px] text-[#f0e2c8]">☕ {pref}ラウンジ喫茶</div>
+          <div className="text-[14px] font-extrabold tracking-[1px] text-[#f0e2c8]">☕ {roomKey ?? pref}ラウンジ喫茶</div>
           <div className="text-[9.5px] tracking-[2px] text-[#8a7a60]">常時オープン</div>
         </div>
         <span className="w-16 text-right text-[11px] text-[#8a7a60]">
@@ -274,6 +317,7 @@ export default function CafePage() {
           )}
           <p className="mt-4 text-[9.5px] leading-relaxed text-[#6a5a48]">
             カメラとマイクの許可が必要です（音声だけの参加もOK）
+            <br />1店 {ROOM_CAP}人まで。満席のときは No.2 のお店が自動で開きます
           </p>
         </div>
       ) : (
