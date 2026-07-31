@@ -129,15 +129,15 @@ export function PostCard({
           <button
             onClick={onLike}
             disabled={!me}
-            className={`flex items-center gap-1 text-[12px] ${isLiked ? "font-bold text-[#4a8a5c]" : "text-[#b0a898]"}`}
+            className={`flex items-center gap-1 text-[12px] ${isLiked ? "font-bold text-[#e05070]" : "text-[#b0a898]"}`}
             aria-label="いいね"
           >
-            🌱 {likeCount > 0 ? likeCount : ""}
+            {isLiked ? "❤️" : "🤍"} {likeCount > 0 ? likeCount : ""}
           </button>
           <Link
             href={`/post/${post.id}`}
             className="flex items-center gap-1 text-[12px] text-[#b0a898] no-underline"
-            aria-label="文を寄せる"
+            aria-label="コメント"
           >
             💬 {commentCount > 0 ? commentCount : ""}
           </Link>

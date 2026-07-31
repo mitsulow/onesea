@@ -89,11 +89,11 @@ export default function PostDetailPage() {
         <div className="card">
           <PostCard post={post} me={me} liked={likedSet.has(post.id)} />
 
-          {/* 文を寄せる */}
+          {/* コメント */}
           <div className="mt-3">
-            <div className="sec mb-2">✉ 文を寄せる</div>
+            <div className="sec mb-2">💬 コメント</div>
             {comments.length === 0 ? (
-              <p className="pb-2 text-[12.5px] text-[#b8b0a0]">まだ文はありません</p>
+              <p className="pb-2 text-[12.5px] text-[#b8b0a0]">まだコメントはありません</p>
             ) : (
               comments.map((c) => {
                 const d = new Date(c.created_at);
@@ -156,12 +156,12 @@ export default function PostDetailPage() {
                     className="rounded-xl px-5 py-2 text-[13px] font-extrabold text-white disabled:opacity-40"
                     style={{ background: "#c94d3a" }}
                   >
-                    {sending ? "送信中..." : "文を寄せる"}
+                    {sending ? "送信中..." : "投稿"}
                   </button>
                 </div>
               </div>
             ) : (
-              <p className="pt-2 text-[11.5px] text-[#b8b0a0]">文を寄せるにはログインしてください</p>
+              <p className="pt-2 text-[11.5px] text-[#b8b0a0]">コメントするにはログインしてください</p>
             )}
           </div>
         </div>
