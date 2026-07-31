@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { OtohikariGlobe } from "./OtohikariGlobe";
+import { OtohikariGlobe, MapMode } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
 import { Cormorant_Garamond } from "next/font/google";
 
@@ -15,17 +15,48 @@ interface SchumannLive {
 /** [lat, lng, 人数] */
 export type Spot = [number, number, number];
 
+const MAP_MODES: Array<{ id: MapMode; name: string; desc: string }> = [
+  { id: "otohikari", name: "OTOHIKARI MAP", desc: "光の音柱" },
+  { id: "thunder", name: "sprite&thunder MAP", desc: "雷電活動" },
+  { id: "all", name: "ALL MAP", desc: "全てを表示" },
+];
+
 /**
- * OTOHIKARI — 光の音柱（本番・点呼方式）。
- * - 下り: /api/otohikari の30秒キャッシュJSONをポーリング（パケ死しない）
- * - 周波数: schumann 公式API v1 の実測値
- * - 再生と点呼の送信は SchumannAudioPlayer が担当
+ * MasterMindSystem — 地球儀 + 実測シューマン + 点呼集計。
+ * - マップモード: 光の音柱のみ / 雷電活動のみ / 全て（プルダウンで選択）
+ * - 再生・瞑想などで接続中は「MasterMindに接続しています」を地球儀上に表示
+ * - 集計値は南半球の下部に重ねて一体化
  */
 export function Otohikari() {
   const [live, setLive] = useState<SchumannLive>({ f1hz: null, updated: null });
   const [nowCount, setNowCount] = useState(0);
   const [todayCount, setTodayCount] = useState<number | null>(null);
   const [spots, setSpots] = useState<Spot[]>([]);
+  const [mode, setMode] = useState<MapMode>("all");
+  const [modeOpen, setModeOpen] = useState(false);
+  const [connected, setConnected] = useState(false);
+
+  /* ---- マップモード（端末に記憶） ---- */
+  useEffect(() => {
+    try {
+      const m = localStorage.getItem("onesea-map-mode") as MapMode | null;
+      if (m === "otohikari" || m === "thunder" || m === "all") setMode(m);
+    } catch {}
+  }, []);
+  const pickMode = (m: MapMode) => {
+    setMode(m);
+    setModeOpen(false);
+    try {
+      localStorage.setItem("onesea-map-mode", m);
+    } catch {}
+  };
+
+  /* ---- プレイヤーからの接続通知 ---- */
+  useEffect(() => {
+    const on = (e: Event) => setConnected((e as CustomEvent).detail?.on === true);
+    window.addEventListener("onesea:mm", on);
+    return () => window.removeEventListener("onesea:mm", on);
+  }, []);
 
   /* ---- シューマン共振 実測データ ---- */
   useEffect(() => {
@@ -67,8 +98,20 @@ export function Otohikari() {
     };
   }, []);
 
-  // 目標値まで「あと何Hz必要か」（目標 - 実測）
   const needed = live.f1hz != null ? TARGET_HZ - live.f1hz : null;
+  const current = MAP_MODES.find((m) => m.id === mode)!;
+
+  const stat = (label: string, value: React.ReactNode) => (
+    <div>
+      <div className="text-[8.5px] tracking-[3px] text-[#7fa08c]">{label}</div>
+      <div
+        className={`${serif.className} num text-[24px] font-semibold leading-tight text-[#b8f0c8]`}
+        style={{ textShadow: "0 0 14px rgba(140,240,170,.6), 0 2px 8px rgba(0,0,0,.6)" }}
+      >
+        {value}
+      </div>
+    </div>
+  );
 
   return (
     <section
@@ -80,16 +123,51 @@ export function Otohikari() {
         margin: "0 -16px 0 -16px",
       }}
     >
-      <div className="flex items-baseline justify-between">
-        <div
-          className="sec"
-          style={{
-            color: "#8ff4ff",
-            textShadow:
-              "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 28px rgba(40,200,255,.45)",
-          }}
-        >
-          OTOHIKARI — 光の音柱
+      <div className="flex items-start justify-between">
+        <div>
+          {/* ヒーロー: MasterMindSystem */}
+          <div
+            className="text-[16px] font-extrabold tracking-[2px]"
+            style={{
+              color: "#8ff4ff",
+              textShadow:
+                "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
+            }}
+          >
+            MasterMindSystem
+          </div>
+          {/* マップモード（選ぶ時だけ展開） */}
+          <div className="relative mt-1">
+            <button
+              onClick={() => setModeOpen((v) => !v)}
+              className="rounded-full border border-[#2a4a5e] bg-[#0c1c2a]/80 px-2.5 py-0.5 text-[9.5px] font-bold tracking-wider text-[#7ab8d8]"
+            >
+              {current.name} {modeOpen ? "▴" : "▾"}
+            </button>
+            {modeOpen && (
+              <div
+                className="absolute left-0 top-full z-30 mt-1 w-60 overflow-hidden rounded-xl border border-[#2a4a5e] bg-[#0c1c2a]"
+                style={{ boxShadow: "0 8px 30px rgba(0,0,0,.5)" }}
+              >
+                {MAP_MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => pickMode(m.id)}
+                    className="flex w-full items-baseline justify-between gap-2 border-b border-[#16283a] px-3 py-2.5 text-left last:border-0"
+                    style={{ background: m.id === mode ? "#12283a" : "transparent" }}
+                  >
+                    <span
+                      className="text-[11px] font-extrabold tracking-wider"
+                      style={{ color: m.id === mode ? "#8ff4ff" : "#7a9ab4" }}
+                    >
+                      {m.name}
+                    </span>
+                    <span className="flex-shrink-0 text-[10px] text-[#5a7a9a]">{m.desc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         {live.updated && (
           <span className="num text-[9.5px] text-[#5a7a9a]">
@@ -98,41 +176,73 @@ export function Otohikari() {
         )}
       </div>
 
-      <div style={{ margin: "8px -18px" }}>
-        <OtohikariGlobe spots={spots} />
+      {/* 地球儀 + オーバーレイ */}
+      <div className="relative" style={{ margin: "8px -18px 0" }}>
+        <OtohikariGlobe spots={spots} mode={mode} />
+
+        {/* MasterMind接続中 — ヘッドホン + パルス波形 */}
+        {connected && (
+          <div className="pointer-events-none absolute left-0 right-0 top-2.5 flex flex-col items-center">
+            <div className="flex items-center gap-2">
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#8ff4ff"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ filter: "drop-shadow(0 0 5px rgba(120,235,255,.9))" }}
+                aria-hidden
+              >
+                <path d="M4 14a8 8 0 0 1 16 0" />
+                <rect x="3" y="13.5" width="4" height="6.5" rx="1.8" fill="rgba(143,244,255,.18)" />
+                <rect x="17" y="13.5" width="4" height="6.5" rx="1.8" fill="rgba(143,244,255,.18)" />
+              </svg>
+              <span
+                className="text-[10.5px] font-extrabold tracking-[3px]"
+                style={{
+                  color: "#8ff4ff",
+                  textShadow: "0 0 8px rgba(120,235,255,.95), 0 0 18px rgba(60,210,255,.6)",
+                }}
+              >
+                MasterMindに接続しています
+              </span>
+            </div>
+            {/* パルス波形 */}
+            <div className="mt-1.5 flex h-[14px] items-center gap-[3px]">
+              {[0.5, 0.9, 0.65, 1, 0.75, 1, 0.6, 0.9, 0.5].map((h, i) => (
+                <span
+                  key={i}
+                  className="inline-block w-[2.5px] rounded-full"
+                  style={{
+                    height: `${h * 14}px`,
+                    background: "#8ff4ff",
+                    boxShadow: "0 0 6px rgba(120,235,255,.9)",
+                    animation: `mmEq 1.1s ease-in-out ${i * 0.11}s infinite`,
+                    transformOrigin: "center",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 集計 — 南半球の下部に重ねる */}
+        <div className="pointer-events-none absolute bottom-1 left-0 right-0 flex items-end justify-center gap-8 text-center">
+          {stat("LISTENING NOW", nowCount)}
+          {stat("TODAY", todayCount != null ? todayCount.toLocaleString() : "—")}
+          {stat(
+            "TARGET SCHUMANN",
+            <>
+              {SCHUMANN.hz}
+              <span className="ml-1 text-[13px]">Hz</span>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* ステータス（MMM OTOHIKARI と同じ見た目） */}
-      <div className="mt-2 flex items-end justify-center gap-9 text-center">
-        <div>
-          <div className="text-[9px] tracking-[3px] text-[#7fa08c]">LISTENING NOW</div>
-          <div
-            className={`${serif.className} num text-[27px] font-semibold leading-tight text-[#b8f0c8]`}
-            style={{ textShadow: "0 0 14px rgba(140,240,170,.55)" }}
-          >
-            {nowCount}
-          </div>
-        </div>
-        <div>
-          <div className="text-[9px] tracking-[3px] text-[#7fa08c]">TODAY</div>
-          <div
-            className={`${serif.className} num text-[27px] font-semibold leading-tight text-[#b8f0c8]`}
-            style={{ textShadow: "0 0 14px rgba(140,240,170,.55)" }}
-          >
-            {todayCount != null ? todayCount.toLocaleString() : "—"}
-          </div>
-        </div>
-        <div>
-          <div className="text-[9px] tracking-[3px] text-[#7fa08c]">TARGET SCHUMANN</div>
-          <div
-            className={`${serif.className} num text-[27px] font-semibold leading-tight text-[#b8f0c8]`}
-            style={{ textShadow: "0 0 14px rgba(140,240,170,.55)" }}
-          >
-            {SCHUMANN.hz}
-            <span className="ml-1 text-[14px]">Hz</span>
-          </div>
-        </div>
-      </div>
       <div className="num mt-1.5 text-center text-[11px] text-[#8aa8d0]">
         今のシューマン電磁波 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
         {needed != null

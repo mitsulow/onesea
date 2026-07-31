@@ -12,7 +12,17 @@ import { COASTLINES } from "@/lib/coastlines";
  * - 水色のホタル: いまシューマン音©を聴いている人の場所（点呼の実データ）
  * - 雷は黄色、聴いている人は水色で色分け
  */
-export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number] | null> }) {
+export type MapMode = "otohikari" | "thunder" | "all";
+
+export function OtohikariGlobe({
+  spots,
+  mode = "all",
+}: {
+  spots: Array<[number, number, number] | null>;
+  mode?: MapMode;
+}) {
+  const modeRef = useRef<MapMode>(mode);
+  modeRef.current = mode;
   const hostRef = useRef<HTMLDivElement>(null);
   const spotsRef = useRef(spots);
   spotsRef.current = spots;
@@ -189,7 +199,8 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
-    earth.add(new THREE.Points(fG, ffMat));
+    const strikePoints = new THREE.Points(fG, ffMat);
+    earth.add(strikePoints);
 
     const clock = new THREE.Clock();
     let strikeIdx = 0;
@@ -613,6 +624,9 @@ export function OtohikariGlobe({ spots }: { spots: Array<[number, number, number
         nextMeteorAt = t + 6 + Math.random() * 14;
       }
       updateMeteors(t, dt);
+      // 表示モード: OTOHIKARI MAP=光柱のみ / sprite&thunder MAP=雷のみ / ALL=両方
+      strikePoints.visible = modeRef.current !== "otohikari";
+      pillarGroup.visible = modeRef.current !== "thunder";
       // 光柱: presence の場所が変わったら組み直し、脈動させる
       const spotsKey = JSON.stringify(spotsRef.current);
       if (spotsKey !== builtKey) {

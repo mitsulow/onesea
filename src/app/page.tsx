@@ -17,11 +17,11 @@ export default function Home() {
         <HeaderBar />
 
         <div className="space-y-3.5 px-4 pb-2">
-        {/* ① OTOHIKARI（本番: 実測周波数・リアルタイム人数） */}
-        <Otohikari />
-
-        {/* ②シューマン音©（令和八年夏至点）— 端末保存で再生 */}
-        <SchumannAudioPlayer />
+        {/* ① MasterMindSystem = 地球儀 + シューマン音プレイヤー（一体化） */}
+        <div>
+          <Otohikari />
+          <SchumannAudioPlayer />
+        </div>
 
         {/* ② Cotozute */}
         <CotozuteFeed />

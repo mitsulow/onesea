@@ -46,6 +46,8 @@ export default function UserPage() {
   const [masterDdp, setMasterDdp] = useState<string | null>(null);
   const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string }>>([]);
   const [ddpOpen, setDdpOpen] = useState(false);
+  const [ideas, setIdeas] = useState<Array<{ id: string; body: string; created_at: string }>>([]);
+  const [ideasOpen, setIdeasOpen] = useState(false);
   const coverInput = useRef<HTMLInputElement>(null);
   const avatarInput = useRef<HTMLInputElement>(null);
 
@@ -68,6 +70,14 @@ export default function UserPage() {
         .order("day", { ascending: false })
         .limit(120)
         .then(({ data: dd }) => setDailyDdps((dd as Array<{ day: string; body: string }>) ?? []));
+      // アイディア一覧（RLSで本人にしか返らない）
+      supabase
+        .from("ideas")
+        .select("id, body, created_at")
+        .eq("user_id", prof.id)
+        .order("created_at", { ascending: false })
+        .limit(120)
+        .then(({ data: ii }) => setIdeas((ii as Array<{ id: string; body: string; created_at: string }>) ?? []));
     }
   };
 
@@ -483,6 +493,33 @@ export default function UserPage() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* アイディア一覧（本人にだけ見える） */}
+      {ideas.length > 0 && (
+        <div className="px-4 pt-5">
+          <div className="card">
+            <div className="sec mb-3">💡 アイディア一覧</div>
+            <div className="space-y-2">
+              {(ideasOpen ? ideas : ideas.slice(0, 5)).map((i) => {
+                const dt = new Date(i.created_at);
+                return (
+                  <div key={i.id} className="rounded-xl border border-[#ece4f4] bg-[#fbfaff] px-3 py-2">
+                    <div className="num text-[10px] font-bold text-[#8a5aff]">
+                      {dt.getMonth() + 1}月{dt.getDate()}日
+                    </div>
+                    <div className="mt-0.5 whitespace-pre-wrap text-[13.5px] leading-relaxed text-[#4a4438]">{i.body}</div>
+                  </div>
+                );
+              })}
+            </div>
+            {ideas.length > 5 && (
+              <button onClick={() => setIdeasOpen(!ideasOpen)} className="mt-2 text-[11.5px] font-bold text-[#8a5aff] underline">
+                {ideasOpen ? "たたむ" : `さらに ${ideas.length - 5}件をみる`}
+              </button>
+            )}
           </div>
         </div>
       )}

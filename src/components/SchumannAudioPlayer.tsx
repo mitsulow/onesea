@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { AUDIO, SCHUMANN } from "@/lib/config";
+import { AUDIO, SCHUMANN, SCHUMANN_DATA_URL } from "@/lib/config";
 
 const CACHE_NAME = "onesea-audio-v1";
 
@@ -14,11 +14,15 @@ function fmt(sec: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+type ProgramKind = "meditation" | "idea" | "synchro";
+
 /**
- * シューマン音©（令和八年夏至点）プレイヤー — MMM の再生セクションを踏襲。
- * - 初回アクセスで端末に保存（Cache API）→ 以後はローカル再生（ギガも帯域も減らない）
- * - シークバー（いまどこを聴いているか）/ 🔁 繰り返し / 🧘 瞑想モード（画面を消さない）
- * - 再生中は点呼（beacons）で地球儀にホタルが灯り、listens で今日の回数が増える
+ * MasterMindSystem — シューマン音©（令和八年夏至点）プレイヤー。
+ * - 通常再生: ▶ ボタン
+ * - 瞑想モード(10/15分): 鈴3打(実測シューマン×64Hz) → シューマン音 → 静寂 → 鈴3打
+ * - アイディアモード: 1回再生 → 「浮かんだ単語を列挙」ダイアログ → マイページのアイディア一覧へ
+ * - シンクロモード: 1回再生 → 「ふと、全体に繋がろう」(今日のDDP)
+ * 再生・プログラム中は地球儀に「MasterMindに接続しています」が灯る。
  */
 export function SchumannAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -26,8 +30,7 @@ export function SchumannAudioPlayer() {
   const posRef = useRef<{ lat: number; lng: number } | null>(null);
   const wakeRef = useRef<WakeLockSentinel | null>(null);
   const countedRef = useRef(false);
-  const loopedRef = useRef(false); // リピート中に1周以上聴き終えたか
-  const prevCurRef = useRef(0);
+  const suppressRef = useRef(false); // iOSの音声アンロック時にイベントを無視する
 
   const [user, setUser] = useState<User | null>(null);
   const [src, setSrc] = useState<string | null>(null);
@@ -36,12 +39,31 @@ export function SchumannAudioPlayer() {
   const [cur, setCur] = useState(0);
   const [dur, setDur] = useState(0);
   const [loop, setLoop] = useState(false);
-  const [meditation, setMeditation] = useState(false);
   const [showDlInfo, setShowDlInfo] = useState(false);
+
+  /* モード（瞑想/アイディア/シンクロ） */
+  const [modeOpen, setModeOpen] = useState(false);
+  const [program, setProgram] = useState<{ kind: ProgramKind; course?: number } | null>(null);
+  const programRef = useRef(program);
+  programRef.current = program;
+  const [phase, setPhase] = useState("");
+  const [remain, setRemain] = useState<number | null>(null);
+  const timers = useRef<number[]>([]);
+  const countdownRef = useRef<number | null>(null);
+  const bellCtx = useRef<AudioContext | null>(null);
+  const liveF1 = useRef<number | null>(null);
+
+  /* シンクロ(DDP)ダイアログ */
   const [showDdp, setShowDdp] = useState(false);
   const [ddpBody, setDdpBody] = useState("");
   const [ddpSaving, setDdpSaving] = useState(false);
   const [ddpSaved, setDdpSaved] = useState(false);
+
+  /* アイディアダイアログ */
+  const [showIdea, setShowIdea] = useState(false);
+  const [ideaBody, setIdeaBody] = useState("");
+  const [ideaSaving, setIdeaSaving] = useState(false);
+  const [ideaSaved, setIdeaSaved] = useState(false);
 
   /* ---- セッション ---- */
   useEffect(() => {
@@ -49,7 +71,17 @@ export function SchumannAudioPlayer() {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
   }, []);
 
-  /* ---- 初回アクセスで端末に保存（エンジニアさん方式を踏襲） ---- */
+  /* ---- 実測F1（鈴の周波数 = F1 × 64） ---- */
+  useEffect(() => {
+    fetch(SCHUMANN_DATA_URL)
+      .then((r) => r.json())
+      .then((d) => {
+        liveF1.current = d?.modes?.F1?.hz ?? null;
+      })
+      .catch(() => {});
+  }, []);
+
+  /* ---- 初回アクセスで端末に保存 ---- */
   useEffect(() => {
     let revoke: string | null = null;
     let cancelled = false;
@@ -117,6 +149,7 @@ export function SchumannAudioPlayer() {
   }, [user]);
 
   const onPlayStarted = useCallback(async () => {
+    if (suppressRef.current) return;
     setPlaying(true);
     if (!posRef.current && navigator.geolocation) {
       posRef.current = await new Promise((resolve) => {
@@ -136,80 +169,223 @@ export function SchumannAudioPlayer() {
     }
   }, [user, sendBeacon]);
 
+  const onStopped = useCallback(() => {
+    if (suppressRef.current) return;
+    setPlaying(false);
+    countedRef.current = false;
+    stopBeacon();
+  }, [stopBeacon]);
+
+  /* ---- MasterMind接続状態を地球儀へ通知 ---- */
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("onesea:mm", { detail: { on: playing || program !== null } }));
+  }, [playing, program]);
+
+  /* ---- Wake Lock（プログラム中は画面を消さない） ---- */
+  const wakeOn = useCallback(async () => {
+    try {
+      wakeRef.current = (await navigator.wakeLock?.request("screen")) ?? null;
+    } catch {}
+  }, []);
+  const wakeOff = useCallback(async () => {
+    try {
+      await wakeRef.current?.release();
+    } catch {}
+    wakeRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (programRef.current && document.visibilityState === "visible") wakeOn();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [wakeOn]);
+
+  /* ---- シンギング・リン（WebAudio合成・実測シューマン×64Hz） ---- */
+  const ringBell = (ctx: AudioContext, freq: number, when: number, dur = 5.5) => {
+    const partials: Array<[number, number]> = [
+      [1, 0.5],
+      [2.72, 0.16],
+      [5.41, 0.07],
+    ];
+    for (const [mult, amp] of partials) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = freq * mult;
+      g.gain.setValueAtTime(0, when);
+      g.gain.linearRampToValueAtTime(amp, when + 0.025);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(when);
+      o.stop(when + dur + 0.1);
+    }
+  };
+
+  const playBells = useCallback(async (): Promise<number> => {
+    try {
+      const AC =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const ctx = bellCtx.current && bellCtx.current.state !== "closed" ? bellCtx.current : new AC();
+      bellCtx.current = ctx;
+      await ctx.resume();
+      const freq = (liveF1.current ?? SCHUMANN.hz) * 64;
+      const t0 = ctx.currentTime + 0.15;
+      for (let i = 0; i < 3; i++) ringBell(ctx, freq, t0 + i * 6);
+      return 18;
+    } catch {
+      return 0;
+    }
+  }, []);
+
+  /* ---- プログラム進行 ---- */
+  const after = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
+
+  const stopCountdown = () => {
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    setRemain(null);
+  };
+
+  const startCountdown = (sec: number) => {
+    setRemain(sec);
+    countdownRef.current = window.setInterval(() => {
+      setRemain((r) => (r == null || r <= 1 ? 0 : r - 1));
+    }, 1000);
+  };
+
+  const endProgram = useCallback(() => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
+    stopCountdown();
+    try {
+      bellCtx.current?.close();
+    } catch {}
+    bellCtx.current = null;
+    wakeOff();
+    setProgram(null);
+    setPhase("");
+  }, [wakeOff]);
+
+  const cancelProgram = useCallback(() => {
+    const a = audioRef.current;
+    if (a && !a.paused) a.pause();
+    endProgram();
+  }, [endProgram]);
+
+  const beginProgram = async (kind: ProgramKind, course?: number) => {
+    const a = audioRef.current;
+    if (!a || !src || program) return;
+    setModeOpen(false);
+    setLoop(false);
+    a.loop = false;
+    setProgram({ kind, course });
+    wakeOn();
+
+    if (kind === "meditation") {
+      // ユーザー操作の中で一度 play→pause して音声をアンロック（iOS対策）
+      suppressRef.current = true;
+      try {
+        await a.play();
+      } catch {}
+      a.pause();
+      a.currentTime = 0;
+      suppressRef.current = false;
+
+      setPhase("開始の鈴 — ゆっくり深呼吸");
+      const bells = await playBells();
+      startCountdown(bells);
+      after(bells * 1000, () => {
+        stopCountdown();
+        setPhase("シューマン音");
+        a.currentTime = 0;
+        a.play().catch(() => {});
+      });
+    } else {
+      setPhase(kind === "idea" ? "叡智に接続中 — イデアを受け取る" : "ふと、全体に繋がろう");
+      a.currentTime = 0;
+      a.play().catch(() => {});
+    }
+  };
+
+  /* ---- 再生終了時の分岐 ---- */
   const openDdp = useCallback(async () => {
     if (!user) return;
     const supabase = createClient();
     const today = new Date();
-    const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+    const day =
+      today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
     const { data } = await supabase.from("daily_ddp").select("body").eq("user_id", user.id).eq("day", day).maybeSingle();
     setDdpBody(data?.body ?? "");
     setDdpSaved(false);
     setShowDdp(true);
   }, [user]);
 
-  const onStopped = useCallback(() => {
-    setPlaying(false);
-    countedRef.current = false;
-    stopBeacon();
-    // リピート再生の人は ended が来ないので、
-    // 1周以上聴いたあと停止したタイミングでダイアログを出す
-    if (loopedRef.current) {
-      loopedRef.current = false;
-      openDdp();
-    }
-  }, [stopBeacon, openDdp]);
-
-  // 最後まで聴き終えたら（瞑想おわり）→ 今日のDDPを聞く
   const onEnded = useCallback(async () => {
     onStopped();
-    openDdp();
-  }, [onStopped, openDdp]);
+    const p = programRef.current;
+    if (!p) return;
+    if (p.kind === "meditation") {
+      const track = dur || SCHUMANN_FALLBACK_SEC;
+      const total = (p.course ?? 10) * 60;
+      const silence = Math.max(30, Math.round(total - track - 36)); // 鈴2回ぶんを引いた静寂
+      setPhase("静寂の瞑想");
+      startCountdown(silence);
+      after(silence * 1000, async () => {
+        stopCountdown();
+        setPhase("終わりの鈴");
+        const bells = await playBells();
+        after(bells * 1000, endProgram);
+      });
+    } else if (p.kind === "idea") {
+      endProgram();
+      setIdeaBody("");
+      setIdeaSaved(false);
+      setShowIdea(true);
+    } else {
+      endProgram();
+      openDdp();
+    }
+  }, [onStopped, dur, playBells, endProgram, openDdp]);
 
   const saveDdp = useCallback(async () => {
     if (!user || !ddpBody.trim() || ddpSaving) return;
     setDdpSaving(true);
     const supabase = createClient();
     const today = new Date();
-    const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+    const day =
+      today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
     await supabase.from("daily_ddp").upsert({ user_id: user.id, day, body: ddpBody.trim() });
     setDdpSaving(false);
     setDdpSaved(true);
     setTimeout(() => setShowDdp(false), 900);
   }, [user, ddpBody, ddpSaving]);
 
-  /* ---- 瞑想モード: 画面を消さない（Wake Lock） ---- */
-  const toggleMeditation = useCallback(async () => {
-    if (meditation) {
-      setMeditation(false);
-      try {
-        await wakeRef.current?.release();
-      } catch {}
-      wakeRef.current = null;
-      return;
-    }
-    setMeditation(true);
-    try {
-      wakeRef.current = (await navigator.wakeLock?.request("screen")) ?? null;
-    } catch {}
-  }, [meditation]);
-
-  // 画面復帰時に Wake Lock を取り直す
-  useEffect(() => {
-    const onVis = async () => {
-      if (meditation && document.visibilityState === "visible") {
-        try {
-          wakeRef.current = (await navigator.wakeLock?.request("screen")) ?? null;
-        } catch {}
-      }
-    };
-    document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
-  }, [meditation]);
+  const saveIdea = useCallback(async () => {
+    if (!user || !ideaBody.trim() || ideaSaving) return;
+    setIdeaSaving(true);
+    const supabase = createClient();
+    await supabase.from("ideas").insert({ user_id: user.id, body: ideaBody.trim() });
+    setIdeaSaving(false);
+    setIdeaSaved(true);
+    setTimeout(() => setShowIdea(false), 900);
+  }, [user, ideaBody, ideaSaving]);
 
   useEffect(() => {
     return () => {
       wakeRef.current?.release().catch(() => {});
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      timers.current.forEach(clearTimeout);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      try {
+        bellCtx.current?.close();
+      } catch {}
+      window.dispatchEvent(new CustomEvent("onesea:mm", { detail: { on: false } }));
     };
   }, []);
 
@@ -226,6 +402,13 @@ export function SchumannAudioPlayer() {
     a.currentTime = v;
     setCur(v);
   };
+
+  const programLabel =
+    program?.kind === "meditation"
+      ? `🧘 瞑想モード（${program.course}分）`
+      : program?.kind === "idea"
+        ? "💡 アイディアモード"
+        : "🌊 シンクロモード";
 
   return (
     <section className="card" style={{ margin: "0 -16px", borderRadius: 0, border: "none", background: "#0abab5" }}>
@@ -256,11 +439,11 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
-      {/* 左に小さな3ボタン + 長いシークバー */}
+      {/* 再生ボタン + 🔁 + モード + シークバー */}
       <div className="mt-2.5 flex items-center gap-2">
         <button
           onClick={togglePlay}
-          disabled={!src}
+          disabled={!src || program !== null}
           aria-label={playing ? "一時停止" : "再生"}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] text-white shadow disabled:opacity-40"
           style={{ background: "linear-gradient(140deg,#a070ff,#8a5aff)" }}
@@ -269,8 +452,9 @@ export function SchumannAudioPlayer() {
         </button>
         <button
           onClick={() => setLoop((v) => !v)}
+          disabled={program !== null}
           aria-label="繰り返し再生"
-          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border text-[11px]"
+          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border text-[11px] disabled:opacity-40"
           style={
             loop
               ? { background: "#f0e8ff", borderColor: "#8a5aff", color: "#8a5aff" }
@@ -280,16 +464,16 @@ export function SchumannAudioPlayer() {
           🔁
         </button>
         <button
-          onClick={toggleMeditation}
-          aria-label="瞑想モード（画面を消さない）"
-          className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border text-[11px]"
+          onClick={() => setModeOpen((v) => !v)}
+          disabled={program !== null}
+          className="h-6 flex-shrink-0 rounded-lg border px-2 text-[10px] font-bold disabled:opacity-40"
           style={
-            meditation
+            modeOpen
               ? { background: "#f0e8ff", borderColor: "#8a5aff", color: "#8a5aff" }
               : { background: "#fff", borderColor: "#e0d6c6", color: "#8a8070" }
           }
         >
-          🧘
+          モード{modeOpen ? "▴" : "▾"}
         </button>
         <div className="min-w-0 flex-1">
           <input
@@ -309,6 +493,76 @@ export function SchumannAudioPlayer() {
         </div>
       </div>
 
+      {/* モード選択（選ぶ時だけ展開） */}
+      {modeOpen && !program && (
+        <div className="mt-2 space-y-1.5 rounded-xl bg-white/25 p-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[12px] font-extrabold text-white">🧘 瞑想モード</div>
+              <div className="text-[9.5px] leading-snug text-white/80">鈴3打 → シューマン音 → 静寂 → 鈴3打</div>
+            </div>
+            <div className="flex flex-shrink-0 gap-1.5">
+              <button
+                onClick={() => beginProgram("meditation", 10)}
+                className="rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
+              >
+                10分
+              </button>
+              <button
+                onClick={() => beginProgram("meditation", 15)}
+                className="rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
+              >
+                15分
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
+            <div className="min-w-0">
+              <div className="text-[12px] font-extrabold text-white">💡 アイディアモード</div>
+              <div className="text-[9.5px] leading-snug text-white/80">叡智に繋がって、イデアを降ろす</div>
+            </div>
+            <button
+              onClick={() => beginProgram("idea")}
+              className="flex-shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
+            >
+              はじめる
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
+            <div className="min-w-0">
+              <div className="text-[12px] font-extrabold text-white">🌊 シンクロモード</div>
+              <div className="text-[9.5px] leading-snug text-white/80">ふと、全体に繋がろう</div>
+            </div>
+            <button
+              onClick={() => beginProgram("synchro")}
+              className="flex-shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
+            >
+              はじめる
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* プログラム進行表示 */}
+      {program && (
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-white/25 px-3 py-2">
+          <div className="min-w-0">
+            <div className="text-[10.5px] font-extrabold tracking-wider text-white/90">{programLabel}</div>
+            <div className="num text-[13px] font-bold text-white">
+              {phase}
+              {remain != null ? ` — ${fmt(remain)}` : ""}
+            </div>
+          </div>
+          <button
+            onClick={cancelProgram}
+            className="flex-shrink-0 rounded-lg border border-white/50 px-3 py-1.5 text-[11px] font-bold text-white/90"
+          >
+            中止
+          </button>
+        </div>
+      )}
+
+      {/* シンクロ（今日のDDP）ダイアログ */}
       {showDdp && (
         <div
           className="fixed inset-0 z-[150] flex items-center justify-center px-6"
@@ -323,7 +577,7 @@ export function SchumannAudioPlayer() {
             >
               ✕
             </button>
-            <div className="text-center text-[15px] font-extrabold text-[#2a6a66]">🧘 シューマン瞑想おつかれさま</div>
+            <div className="text-center text-[15px] font-extrabold text-[#2a6a66]">🌊 ふと、全体に繋がろう</div>
             <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">今日のDDP</div>
             <textarea
               value={ddpBody}
@@ -347,6 +601,44 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
+      {/* アイディアダイアログ */}
+      {showIdea && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center px-6"
+          style={{ background: "rgba(10,16,24,0.55)", backdropFilter: "blur(3px)" }}
+          onClick={() => setShowIdea(false)}
+        >
+          <div className="relative w-full max-w-[400px] rounded-2xl bg-[#fffdf8] p-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowIdea(false)}
+              aria-label="閉じる"
+              className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#f0ebe0] text-[13px] font-bold text-[#a09888]"
+            >
+              ✕
+            </button>
+            <div className="text-center text-[15px] font-extrabold text-[#7a5ac0]">💡 IDEA</div>
+            <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">叡智から降りてきたものを、逃さないで</div>
+            <textarea
+              value={ideaBody}
+              onChange={(e) => setIdeaBody(e.target.value)}
+              rows={4}
+              autoFocus
+              placeholder={"1分以内に浮かんだ単語を列挙しましょう"}
+              className="mt-3 w-full resize-y rounded-xl border border-[#e0d8f0] bg-white p-3 text-center text-[14px] leading-relaxed outline-none focus:border-[#8a5aff]"
+            />
+            <button
+              onClick={saveIdea}
+              disabled={!ideaBody.trim() || ideaSaving}
+              className="mt-2.5 w-full rounded-xl py-2.5 text-[14px] font-extrabold text-white disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg,#a070ff,#8a5aff)" }}
+            >
+              {ideaSaved ? "刻みました 💡" : ideaSaving ? "保存中..." : "アイディアを保存"}
+            </button>
+            <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">あなたのマイページの「アイディア一覧」に貯まっていきます</p>
+          </div>
+        </div>
+      )}
+
       <audio
         ref={audioRef}
         src={src ?? undefined}
@@ -354,13 +646,7 @@ export function SchumannAudioPlayer() {
         onPlay={onPlayStarted}
         onPause={onStopped}
         onEnded={onEnded}
-        onTimeUpdate={(e) => {
-          const a = e.target as HTMLAudioElement;
-          // ループで曲末→曲頭に巻き戻った = 1周聴き終えた
-          if (a.loop && prevCurRef.current > a.duration - 2 && a.currentTime < 1) loopedRef.current = true;
-          prevCurRef.current = a.currentTime;
-          setCur(a.currentTime);
-        }}
+        onTimeUpdate={(e) => setCur((e.target as HTMLAudioElement).currentTime)}
         onLoadedMetadata={(e) => setDur((e.target as HTMLAudioElement).duration)}
       />
     </section>

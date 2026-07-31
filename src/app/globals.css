@@ -149,3 +149,9 @@ body {
     opacity: 0;
   }
 }
+
+/* MasterMind接続中のパルス波形 */
+@keyframes mmEq {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
