@@ -62,6 +62,7 @@ export default function CafePage() {
   const [roomKey, setRoomKey] = useState<string | null>(null); // 満席なら「東京都 No.2」など
   const [phase, setPhase] = useState<"lobby" | "joining" | "in">("lobby");
   const [err, setErr] = useState<string | null>(null);
+  const [permDenied, setPermDenied] = useState(false); // ブラウザ設定で拒否されている状態
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [audioOnly, setAudioOnly] = useState(false);
@@ -186,23 +187,50 @@ export default function CafePage() {
 
   useEffect(() => leave, [leave]); // アンマウント時に退室
 
-  const join = async () => {
+  // 店内画面が表示されてから自分のカメラ映像を挿す（入店時はまだ映像枠が無いため）
+  useEffect(() => {
+    if (phase === "in" && localRef.current && localStream.current) {
+      localRef.current.srcObject = localStream.current;
+      localRef.current.play().catch(() => {});
+    }
+  }, [phase, audioOnly]);
+
+  const join = async (audioOnlyWanted = false) => {
     if (!me || phase !== "lobby") return;
     setErr(null);
     setPhase("joining");
     let stream: MediaStream | null = null;
     try {
+      if (audioOnlyWanted) throw new Error("audio-only");
       stream = await navigator.mediaDevices.getUserMedia({
         video: { width: { ideal: 640 }, facingMode: "user" },
         audio: { echoCancellation: true, noiseSuppression: true },
       });
+      setAudioOnly(false);
+      setCamOn(true);
+      setPermDenied(false);
     } catch {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         setAudioOnly(true);
         setCamOn(false);
       } catch {
-        setErr("カメラ・マイクを使えませんでした。ブラウザの許可を確認してください。");
+        // ブラウザ設定で「拒否」になっているかを調べる
+        let denied = false;
+        try {
+          const nav = navigator as Navigator & { permissions?: Permissions };
+          const [cam, mic] = await Promise.all([
+            nav.permissions?.query({ name: "camera" as PermissionName }).catch(() => null),
+            nav.permissions?.query({ name: "microphone" as PermissionName }).catch(() => null),
+          ]);
+          denied = cam?.state === "denied" || mic?.state === "denied";
+        } catch {}
+        setPermDenied(denied);
+        setErr(
+          denied
+            ? "カメラ・マイクが「拒否」に設定されています。下の手順で許可してください。"
+            : "カメラ・マイクを使えませんでした。下のボタンからもう一度お試しください。"
+        );
         setPhase("lobby");
         return;
       }
@@ -302,10 +330,40 @@ export default function CafePage() {
             <br />
             誰もいなくても、お茶を飲みながら待つのも良い時間。
           </p>
-          {err && <p className="mt-3 text-[12px] text-[#e08060]">{err}</p>}
+          {err && (
+            <div className="mt-3 w-full max-w-[340px] rounded-xl border border-[#6a4a38] bg-[#2a1c14] px-4 py-3 text-left">
+              <p className="text-[12px] font-bold text-[#e0906a]">{err}</p>
+              <div className="mt-2.5 grid gap-2">
+                <button
+                  onClick={() => join(false)}
+                  className="rounded-xl py-2.5 text-[13px] font-extrabold text-[#241c14]"
+                  style={{ background: "linear-gradient(135deg,#e8cc90,#c8a860)" }}
+                >
+                  🎥 カメラの使用を許可して入店
+                </button>
+                <button
+                  onClick={() => join(true)}
+                  className="rounded-xl border border-[#c8a86066] py-2.5 text-[12.5px] font-bold text-[#e8d5a8]"
+                >
+                  🎙 マイクだけで入店（顔なし）
+                </button>
+              </div>
+              {permDenied && (
+                <div className="mt-2.5 text-[10.5px] leading-relaxed text-[#c8a888]">
+                  「拒否」になっている場合は、ここを許可に：
+                  <br />
+                  <b>iPhone (Safari)</b>: アドレスバー左の「ぁあ」→ Webサイトの設定 → カメラ/マイクを「許可」
+                  <br />
+                  <b>iPhone (ホーム画面アプリ)</b>: 設定アプリ → 下へスクロールして OneSea → カメラ・マイクをON
+                  <br />
+                  <b>Android (Chrome)</b>: アドレスバーの🔒 → 権限 → カメラ/マイクを許可 → 再読み込み
+                </div>
+              )}
+            </div>
+          )}
           {me ? (
             <button
-              onClick={join}
+              onClick={() => join(false)}
               disabled={phase === "joining"}
               className="mt-6 rounded-2xl px-10 py-4 text-[16px] font-extrabold text-[#241c14] disabled:opacity-50"
               style={{ background: "linear-gradient(135deg,#e8cc90,#c8a860)", boxShadow: "0 4px 24px rgba(200,168,96,.35)" }}
