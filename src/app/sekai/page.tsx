@@ -246,7 +246,7 @@ function MootsSection({
     <section id="moots" className="card" style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "1px solid #2a4a3a", scrollMarginTop: 56 }}>
       <div className="mb-2 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px] text-[#7aa88a]">
-          🌕 セカイムラの集い
+          {moots[0]?.kind === "new" ? "🌑 セカイムラ新月会" : "🌕 セカイムラ満月会"}
         </span>
         {me && (
           <span className="text-[10px] text-[#5a7a68]">

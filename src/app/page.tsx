@@ -6,6 +6,7 @@ import { AuthGate } from "@/components/AuthGate";
 import { HeaderBar } from "@/components/HeaderBar";
 import { MorningOpening } from "@/components/MorningOpening";
 import { A2hsPrompt } from "@/components/A2hsPrompt";
+import { MoonMootBanner } from "@/components/MoonMootBanner";
 
 
 export default function Home() {
@@ -17,6 +18,9 @@ export default function Home() {
         <HeaderBar />
 
         <div className="space-y-3.5 px-4 pb-2">
+        {/* ⓪ セカイムラ満月会 / 新月会 */}
+        <MoonMootBanner />
+
         {/* ① MasterMindSystem = 地球儀 + シューマン音プレイヤー（一体化） */}
         <div>
           <Otohikari />
