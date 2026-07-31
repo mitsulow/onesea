@@ -24,6 +24,9 @@ body {
   color: var(--color-text-main);
   -webkit-font-smoothing: antialiased;
   line-height: 1.6;
+  /* iPhoneのホーム画面アプリ: ステータスバー(ノッチ)の下に潜らないよう余白。
+     さらに +6px で右上アイコンが確実に触れるようにする */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
 }
 
 .num {
