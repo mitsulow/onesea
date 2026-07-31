@@ -57,11 +57,45 @@ export function BottomNav() {
     <span className="absolute left-1/2 top-0 h-[3px] w-6 -translate-x-1/2 rounded-b-full bg-[#c94d3a]" />
   );
 
+  const inSekai = pathname.startsWith("/sekai");
+
   return (
     <nav
       className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t border-[#e5dccb] bg-[#fffdf8]/95 backdrop-blur-sm"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
+      {/* セカイムラのサブタブ（地球タブから枝分かれ） */}
+      {inSekai && (
+        <div className="border-b border-[#dce8dc]" style={{ background: "rgba(238,248,240,.97)" }}>
+          <div className="hide-scrollbar flex items-center gap-1 overflow-x-auto px-2 py-1.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/tab-earth.png" alt="" className="mx-0.5 h-[15px] w-[15px] flex-shrink-0 object-contain opacity-80" />
+            <span className="mr-0.5 h-3.5 w-px flex-shrink-0 bg-[#c0d4c4]" />
+            {(
+              [
+                ["/sekai#moots", "🌕 集い"],
+                ["/sekai#katsudo", "📣 活動"],
+                ["/sekai#lounge", "☕ ラウンジ"],
+                ["/sekai#villages", "⛺ 拠点"],
+                ["/sekai#clubs", "🎌 部活"],
+                ["/sekai#kome", "🌾 米部"],
+                ["/sekai#jinja", "⛩ 神社"],
+                ["/sekai#meister", "🫙 講座"],
+                ["/sekai#tasukete", "🤝 助けて"],
+                ["/sekai#map", "🗾 地図"],
+              ] as const
+            ).map(([href, label]) => (
+              <a
+                key={href}
+                href={href}
+                className="flex-shrink-0 rounded-full border border-[#d0e0d2] bg-white px-2.5 py-1 text-[10.5px] font-bold text-[#3a7a4c] no-underline"
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="flex h-[54px] items-center justify-around">
         {/* ホーム */}
         <Link href="/" className={itemCls(pathname === "/")}>

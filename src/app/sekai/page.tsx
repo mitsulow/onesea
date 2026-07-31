@@ -121,7 +121,7 @@ export default function SekaiPage() {
   }, []);
 
   return (
-    <main className="pb-20">
+    <main className="pb-28">
       {/* ═══ ヒーロー（説明文なし） ═══ */}
       <header className="px-6 pb-7 pt-10 text-center" style={{ background: DARKGREEN_BG }}>
         <div className="text-[52px] leading-none">🌏</div>
@@ -149,34 +149,7 @@ export default function SekaiPage() {
         </div>
       </header>
 
-      {/* アンカーナビ */}
-      <nav
-        className="hide-scrollbar sticky top-0 z-40 flex gap-1.5 overflow-x-auto border-b border-[#e2eae0] px-3 py-2"
-        style={{ background: "rgba(242,237,228,.97)", backdropFilter: "blur(8px)" }}
-      >
-        {[
-          ["#moots", "🌕 集い"],
-          ["#katsudo", "📣 活動報告"],
-          ["#lounge", "🗣 ラウンジ"],
-          ["#villages", "⛺ 拠点"],
-          ["#clubs", "🎌 部活"],
-          ["#kome", "🌾 米部"],
-          ["#jinja", "⛩ 神社町"],
-          ["#meister", "🫙 マイスター"],
-          ["#tasukete", "🤝 助けて"],
-          ["#map", "🗾 地図"],
-        ].map(([href, label]) => (
-          <a
-            key={href}
-            href={href}
-            className="flex-shrink-0 rounded-full border border-[#d8e4da] bg-white px-3 py-1.5 text-[11.5px] font-bold no-underline"
-            style={{ color: GREEN }}
-          >
-            {label}
-          </a>
-        ))}
-      </nav>
-
+      {/* セクション移動は下タブ（地球マークから枝分かれするサブタブ）に統合 */}
       <div className="space-y-4 px-4 pt-4">
         <MootsSection me={me} myPref={myPref} mootCount={mootCount} onRsvped={() => me && myMootCount(me.id).then(setMootCount)} />
         <ActivitySection me={me} router={router} />
