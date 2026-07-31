@@ -785,13 +785,19 @@ export function WelcomeSection({ me, router }: { me: User | null; router: Return
 }
 
 /* ═══ ラウンジ喫茶（常時オープンのビデオ通話）入口 ═══ */
+/** ラウンジ喫茶の地域一覧（47都道府県 + 48番目に海外） */
+const CAFE_AREAS = [...PREFS, "海外"] as const;
+
 export function CafeBar({ pref }: { pref: string }) {
+  const [sel, setSel] = useState<string>(pref);
   const [count, setCount] = useState(0);
+
+  useEffect(() => setSel(pref), [pref]);
 
   useEffect(() => {
     const supabase = createClient();
     // 見るだけ（track しない）ので在室者にはカウントされない
-    const ch = supabase.channel(`cafe:${pref}`);
+    const ch = supabase.channel(`cafe:${sel}`);
     ch.on("presence", { event: "sync" }, () => {
       const st = ch.presenceState() as Record<string, Array<{ t?: number }>>;
       setCount(Object.keys(st).filter((k) => st[k][0]?.t !== undefined).length);
@@ -800,35 +806,50 @@ export function CafeBar({ pref }: { pref: string }) {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [pref]);
+  }, [sel]);
 
   return (
-    <Link
-      href={`/sekai/cafe/${encodeURIComponent(pref)}`}
-      className="mb-3 flex items-center gap-3 rounded-xl px-3.5 py-3 no-underline"
+    <div
+      className="mb-3 rounded-xl px-3.5 py-3"
       style={{ background: "linear-gradient(135deg,#241c14,#3a2e1e)", border: "1px solid #c8a86055" }}
     >
-      <span className="text-[30px]">☕</span>
-      <div className="min-w-0 flex-1">
-        <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">{pref}ラウンジ喫茶 — 常時オープン</div>
-        <div className="mt-0.5 text-[10.5px] text-[#a89878]">
-          {count > 0 ? (
-            <span className="font-bold text-[#8ad8a8]">
-              <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#5ad890] align-middle" />
-              いま {count}人がお店にいます — 顔を見て話せます
-            </span>
-          ) : (
-            "いまは誰もいません。一番乗りでお茶をどうぞ"
-          )}
+      <div className="flex items-center gap-3">
+        <span className="text-[30px]">☕</span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">{sel}ラウンジ喫茶 — 常時オープン</div>
+          <div className="mt-0.5 text-[10.5px] text-[#a89878]">
+            {count > 0 ? (
+              <span className="font-bold text-[#8ad8a8]">
+                <span className="mr-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[#5ad890] align-middle" />
+                いま {count}人がお店にいます — 顔を見て話せます
+              </span>
+            ) : (
+              "いまは誰もいません。一番乗りでお茶をどうぞ"
+            )}
+          </div>
         </div>
+        <Link
+          href={`/sekai/cafe/${encodeURIComponent(sel)}`}
+          className="flex-shrink-0 rounded-xl px-3.5 py-2 text-[12px] font-extrabold text-[#241c14] no-underline"
+          style={{ background: "linear-gradient(135deg,#e8cc90,#c8a860)" }}
+        >
+          入店する
+        </Link>
       </div>
-      <span
-        className="flex-shrink-0 rounded-xl px-3.5 py-2 text-[12px] font-extrabold text-[#241c14]"
-        style={{ background: "linear-gradient(135deg,#e8cc90,#c8a860)" }}
+      {/* 地域を選ぶ（47都道府県 + 海外） */}
+      <select
+        value={sel}
+        onChange={(e) => setSel(e.target.value)}
+        className="mt-2.5 w-full rounded-lg border border-[#c8a86044] bg-[#1a140e] px-3 py-2 text-[12.5px] text-[#e8d5a8] outline-none"
       >
-        入店する
-      </span>
-    </Link>
+        {CAFE_AREAS.map((p) => (
+          <option key={p} value={p}>
+            {p}
+            {p === pref ? "（わたしの地域）" : ""}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
