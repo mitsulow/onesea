@@ -7,8 +7,11 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
-import { joinVillage, POLICY_LABEL, fetchSettings } from "@/lib/sekai";
+import { joinVillage, updateVillage, POLICY_LABEL, PREFS, OVERSEAS_AREAS, fetchSettings, Village } from "@/lib/sekai";
 import { CameraIcon } from "@/components/CameraIcon";
+import JP_CITIES_JSON from "@/data/jp-cities.json";
+
+const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -29,6 +32,41 @@ export default function VillagePage() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
+  /* 拠点の修正（立ち上げ村長のみ） */
+  const [editing, setEditing] = useState(false);
+  const [eName, setEName] = useState("");
+  const [ePref, setEPref] = useState("東京都");
+  const [eCity, setECity] = useState("");
+  const [eDesc, setEDesc] = useState("");
+  const [ePolicy, setEPolicy] = useState<Village["policy"]>("open");
+  const [eSaving, setESaving] = useState(false);
+  const eIsJapan = (PREFS as readonly string[]).includes(ePref);
+
+  const openEdit = () => {
+    if (!village) return;
+    setEName(village.name ?? "");
+    setEPref(village.prefecture ?? "東京都");
+    setECity(village.city ?? "");
+    setEDesc(village.description ?? "");
+    setEPolicy(village.policy ?? "open");
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    if (!me || !eName.trim() || eSaving) return;
+    if (eIsJapan && !eCity) return;
+    setESaving(true);
+    await updateVillage(me.id, villageId, {
+      name: eName.trim(),
+      prefecture: ePref,
+      city: eIsJapan ? eCity : null,
+      description: eDesc.trim() || null,
+      policy: ePolicy,
+    });
+    setESaving(false);
+    setEditing(false);
+    load();
+  };
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -140,6 +178,14 @@ export default function VillagePage() {
             </button>
           )}
           {joined && <span className="rounded-xl border border-[#4a9a6a] px-4 py-2.5 text-[12.5px] font-bold text-[#a8d8b8]">✓ あなたの村</span>}
+          {me && village.created_by === me.id && (
+            <button
+              onClick={openEdit}
+              className="rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]"
+            >
+              ✎ 修正する
+            </button>
+          )}
           {me && steward && village.created_by && me.id !== village.created_by && (
             <button
               onClick={async () => {
@@ -180,6 +226,81 @@ export default function VillagePage() {
           </button>
         )}
       </header>
+
+      {/* 拠点の修正フォーム */}
+      {editing && (
+        <div className="mx-4 mt-4 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
+          <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
+            ✎ 拠点を修正する
+          </div>
+          <input
+            value={eName}
+            onChange={(e) => setEName(e.target.value)}
+            placeholder="拠点名"
+            className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[14px] outline-none focus:border-[#4a8a5c]"
+          />
+          <select
+            value={ePref}
+            onChange={(e) => {
+              setEPref(e.target.value);
+              setECity("");
+            }}
+            className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+          >
+            <optgroup label="日本（47都道府県）">
+              {PREFS.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </optgroup>
+            <optgroup label="海外">
+              {OVERSEAS_AREAS.map((p) => (
+                <option key={p}>{p}</option>
+              ))}
+            </optgroup>
+          </select>
+          {eIsJapan && (
+            <select
+              value={eCity}
+              onChange={(e) => setECity(e.target.value)}
+              className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+            >
+              <option value="">市区町村を選ぶ *</option>
+              {(JP_CITIES[ePref] ?? []).map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+          )}
+          <textarea
+            value={eDesc}
+            onChange={(e) => setEDesc(e.target.value)}
+            rows={2}
+            placeholder="どんな集まりにしたい？"
+            className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13px] leading-relaxed outline-none focus:border-[#4a8a5c]"
+          />
+          <select
+            value={ePolicy}
+            onChange={(e) => setEPolicy(e.target.value as Village["policy"])}
+            className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+          >
+            <option value="open">誰でも参加OK</option>
+            <option value="approval">申請・承認制</option>
+            <option value="invite">招待制</option>
+          </select>
+          <div className="flex gap-2">
+            <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+              やめる
+            </button>
+            <button
+              onClick={saveEdit}
+              disabled={!eName.trim() || (eIsJapan && !eCity) || eSaving}
+              className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+              style={{ background: "#4a8a5c" }}
+            >
+              {eSaving ? "保存中..." : "保存する"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3.5 px-4 pt-4">
         {/* 村人 */}

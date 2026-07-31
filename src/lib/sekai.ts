@@ -247,6 +247,13 @@ export async function recentVillagers(days = 30) {
   return data ?? [];
 }
 
+/** 海外拠点の主要な国名（47都道府県の次に並ぶ） */
+export const OVERSEAS_AREAS = [
+  "アメリカ", "カナダ", "ブラジル", "イギリス", "フランス", "ドイツ", "イタリア", "スペイン",
+  "オーストラリア", "ニュージーランド", "タイ", "ベトナム", "フィリピン", "インドネシア",
+  "マレーシア", "シンガポール", "インド", "中国", "台湾", "韓国", "その他海外",
+];
+
 /** 位置情報から最寄りの都道府県を推定（外部APIなし・県庁座標との最短距離） */
 export async function detectPrefecture(): Promise<string | null> {
   if (typeof navigator === "undefined" || !navigator.geolocation) return null;
@@ -297,6 +304,16 @@ export async function fetchActivityFeed(limit = 10) {
     .order("created_at", { ascending: false })
     .limit(limit);
   return data ?? [];
+}
+
+/** 拠点の修正（立ち上げ村長のみ・RLSでも保護） */
+export async function updateVillage(
+  userId: string,
+  id: string,
+  v: { name: string; prefecture: string; city: string | null; description: string | null; policy: Village["policy"] }
+) {
+  const supabase = createClient();
+  return supabase.from("villages").update(v).eq("id", id).eq("created_by", userId);
 }
 
 export async function createVillage(

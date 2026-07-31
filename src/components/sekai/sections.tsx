@@ -47,17 +47,10 @@ import {
   addTasukete,
   closeTasukete,
 } from "@/lib/sekai";
-import { detectPrefecture } from "@/lib/sekai";
+import { detectPrefecture, OVERSEAS_AREAS } from "@/lib/sekai";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
 
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
-
-/** 海外拠点の主要な国名（47都道府県の次に並ぶ） */
-export const OVERSEAS_AREAS = [
-  "アメリカ", "カナダ", "ブラジル", "イギリス", "フランス", "ドイツ", "イタリア", "スペイン",
-  "オーストラリア", "ニュージーランド", "タイ", "ベトナム", "フィリピン", "インドネシア",
-  "マレーシア", "シンガポール", "インド", "中国", "台湾", "韓国", "その他海外",
-];
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { moonsOfYear, YOBI } from "@/lib/almanac";
@@ -1262,7 +1255,7 @@ export function VillagesSection({
                 onChange={(e) => setVCity(e.target.value)}
                 className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
               >
-                <option value="">市区町村を選ぶ（任意）</option>
+                <option value="">市区町村を選ぶ *</option>
                 {(JP_CITIES[pref] ?? []).map((c) => (
                   <option key={c}>{c}</option>
                 ))}
@@ -1290,7 +1283,7 @@ export function VillagesSection({
               </button>
               <button
                 onClick={create}
-                disabled={!name.trim() || saving}
+                disabled={!name.trim() || (isJapan && !vCity) || saving}
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >
