@@ -316,6 +316,33 @@ export async function updateVillage(
   return supabase.from("villages").update(v).eq("id", id).eq("created_by", userId);
 }
 
+/* ---- 活動報告へのコメント ---- */
+export interface VillagePostComment {
+  id: string;
+  post_id: string;
+  user_id: string;
+  body: string;
+  created_at: string;
+  profiles: P | null;
+}
+
+export async function fetchVillagePostComments(postIds: string[]): Promise<VillagePostComment[]> {
+  if (postIds.length === 0) return [];
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("village_post_comments")
+    .select("id, post_id, user_id, body, created_at, profiles!village_post_comments_user_id_fkey(username, display_name, avatar_url)")
+    .in("post_id", postIds)
+    .order("created_at", { ascending: true })
+    .limit(500);
+  return (data as unknown as VillagePostComment[]) ?? [];
+}
+
+export async function addVillagePostComment(postId: string, userId: string, body: string) {
+  const supabase = createClient();
+  return supabase.from("village_post_comments").insert({ post_id: postId, user_id: userId, body });
+}
+
 export async function createVillage(
   userId: string,
   v: { name: string; prefecture: string; city?: string | null; description: string; policy: Village["policy"] }

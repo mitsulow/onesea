@@ -188,7 +188,7 @@ export default function ClubPage() {
                         const f = e.target.files?.[0];
                         if (!f || !me) return;
                         setUploading(true);
-                        setPhoto(await uploadImage("post-images", me.id, f));
+                        setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
                         setUploading(false);
                       }}
                     />

@@ -47,7 +47,13 @@ import {
   addTasukete,
   closeTasukete,
 } from "@/lib/sekai";
-import { detectPrefecture, OVERSEAS_AREAS } from "@/lib/sekai";
+import {
+  detectPrefecture,
+  OVERSEAS_AREAS,
+  VillagePostComment,
+  fetchVillagePostComments,
+  addVillagePostComment,
+} from "@/lib/sekai";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
 
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
@@ -494,7 +500,31 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [wUploading, setWUploading] = useState(false);
   const [wSaving, setWSaving] = useState(false);
 
-  const loadFeed = useCallback(() => fetchActivityFeed(10).then((f) => setFeed(f as any[])), []);
+  const [cmts, setCmts] = useState<Record<string, VillagePostComment[]>>({});
+  const [cOpen, setCOpen] = useState<Set<string>>(new Set());
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [cSending, setCSending] = useState<string | null>(null);
+
+  const loadFeed = useCallback(async () => {
+    const f = (await fetchActivityFeed(10)) as any[];
+    setFeed(f);
+    const map: Record<string, VillagePostComment[]> = {};
+    for (const c of await fetchVillagePostComments(f.map((p) => p.id))) {
+      (map[c.post_id] = map[c.post_id] ?? []).push(c);
+    }
+    setCmts(map);
+  }, []);
+
+  const sendCmt = async (postId: string) => {
+    const body = (drafts[postId] ?? "").trim();
+    if (!me || !body || cSending) return;
+    setCSending(postId);
+    await addVillagePostComment(postId, me.id, body);
+    setDrafts((d) => ({ ...d, [postId]: "" }));
+    setCSending(null);
+    const list = await fetchVillagePostComments([postId]);
+    setCmts((m) => ({ ...m, [postId]: list }));
+  };
 
   useEffect(() => {
     loadFeed();
@@ -530,8 +560,8 @@ export function ActivitySection({ me }: { me: User | null }) {
         className="-mx-4 -mt-4 mb-3 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#163522,#1e4530)", borderRadius: "14px 14px 0 0" }}
       >
-        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 各地のセカイムラ情報</div>
-        <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、拠点で何があったか？ 〜</div>
+        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 各県のセカイムラ情報</div>
+        <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
       </div>
 
       {/* 拠点一覧（横スクロールのチップ） */}
@@ -594,6 +624,62 @@ export function ActivitySection({ me }: { me: User | null }) {
                   <AvatarSm p={p.profiles} size={24} />
                   <span className="text-[10.5px] text-[#a0aca0]">{p.profiles?.display_name ?? "むらびと"}</span>
                 </div>
+
+                {/* コメント（5件まで表示、以降は折りたたみ） */}
+                {(() => {
+                  const list = cmts[p.id] ?? [];
+                  const open = cOpen.has(p.id);
+                  const shown = open ? list : list.slice(0, 5);
+                  return (
+                    <div className="mt-2 border-t border-[#eef2ec] pt-2">
+                      {shown.map((c) => (
+                        <div key={c.id} className="mb-1.5 flex items-start gap-1.5">
+                          <AvatarSm p={c.profiles} size={20} />
+                          <div className="min-w-0 flex-1 rounded-lg bg-[#f4f8f2] px-2 py-1">
+                            <span className="mr-1.5 text-[10px] font-bold text-[#5a7a5c]">
+                              {c.profiles?.display_name ?? "むらびと"}
+                            </span>
+                            <span className="break-words text-[12px] leading-relaxed text-[#4a4438]">{c.body}</span>
+                          </div>
+                        </div>
+                      ))}
+                      {list.length > 5 && (
+                        <button
+                          onClick={() =>
+                            setCOpen((s) => {
+                              const n = new Set(s);
+                              if (open) n.delete(p.id);
+                              else n.add(p.id);
+                              return n;
+                            })
+                          }
+                          className="mb-1.5 text-[11px] font-bold underline"
+                          style={{ color: GREEN }}
+                        >
+                          {open ? "たたむ" : `もっと見る（あと${list.length - 5}件）`}
+                        </button>
+                      )}
+                      {me && (
+                        <div className="flex items-end gap-1.5">
+                          <input
+                            value={drafts[p.id] ?? ""}
+                            onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
+                            placeholder="コメントする..."
+                            className="min-w-0 flex-1 rounded-full border border-[#e2eae0] bg-white px-3 py-1.5 text-[12.5px] outline-none focus:border-[#4a8a5c]"
+                          />
+                          <button
+                            onClick={() => sendCmt(p.id)}
+                            disabled={!(drafts[p.id] ?? "").trim() || cSending === p.id}
+                            className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-40"
+                            style={{ background: "#4a8a5c" }}
+                          >
+                            送る
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           ))}
@@ -640,7 +726,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                     const f = e.target.files?.[0];
                     if (!f || !me) return;
                     setWUploading(true);
-                    setWPhoto(await uploadImage("post-images", me.id, f));
+                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
                     setWUploading(false);
                   }}
                 />
@@ -1554,7 +1640,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
                     const f = e.target.files?.[0];
                     if (!f || !me) return;
                     setUploading(true);
-                    setPhoto(await uploadImage("post-images", me.id, f));
+                    setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
                     setUploading(false);
                   }}
                 />
@@ -1702,7 +1788,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
                     const f = e.target.files?.[0];
                     if (!f || !me) return;
                     setUploading(true);
-                    setPhoto(await uploadImage("post-images", me.id, f));
+                    setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
                     setUploading(false);
                   }}
                 />
