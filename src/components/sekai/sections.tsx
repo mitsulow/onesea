@@ -1094,7 +1094,7 @@ export function CafeBar({ pref }: { pref: string }) {
       <div className="flex items-center gap-3">
         <span className="text-[30px]">☕</span>
         <div className="min-w-0 flex-1">
-          <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">☕ 村人ラウンジ喫茶 〜常時オープン〜</div>
+          <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">村人ラウンジ喫茶 〜常時オープン〜</div>
           <div className="mt-0.5 text-[10.5px] text-[#a89878]">
             {count > 0 ? (
               <span className="font-bold text-[#8ad8a8]">
