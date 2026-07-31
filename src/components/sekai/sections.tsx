@@ -15,7 +15,6 @@ import {
   nextMisoka,
   fetchMootData,
   mootFaces,
-  todaysVillager,
   toggleRsvp,
   myMootCount,
   fetchSettings,
@@ -727,6 +726,109 @@ export function ActivitySection({ me }: { me: User | null }) {
         <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
       </div>
 
+      {/* 活動を報告する（自分の村がある人だけ） */}
+      {me && myVills.length > 0 && (
+        writing ? (
+          <div className="mx-2 mb-2 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
+            <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
+              📣 活動を報告する
+            </div>
+            {myVills.length > 1 && (
+              <select
+                value={wVillage}
+                onChange={(e) => setWVillage(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+              >
+                {myVills.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    ⛺ {v.name}（{v.prefecture}）
+                  </option>
+                ))}
+              </select>
+            )}
+            {/* 日々の活動 / イベント投稿 */}
+            <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl bg-white p-1">
+              {(
+                [
+                  ["normal", "📣 日々の活動"],
+                  ["event", "📅 イベント投稿"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => setWKind(id)}
+                  className="rounded-lg py-1.5 text-[12px] font-extrabold"
+                  style={wKind === id ? { background: "#4a8a5c", color: "#fff" } : { background: "transparent", color: "#8a968a" }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {wKind === "event" && (
+              <input
+                type="datetime-local"
+                value={wEventAt}
+                onChange={(e) => setWEventAt(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
+              />
+            )}
+            <textarea
+              value={wBody}
+              onChange={(e) => setWBody(e.target.value)}
+              rows={2}
+              placeholder={
+                wKind === "event"
+                  ? "例: 田植えイベントやります！持ち物は長靴と着替え"
+                  : "例: 今日は田植えをしました / 古民家の床を張り替えました"
+              }
+              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
+            />
+            <div className="mb-2 flex items-center gap-2">
+              {wPhoto && <img src={wPhoto} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
+                {wUploading ? "⏳" : <CameraIcon size={16} />}
+                写真
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me) return;
+                    setWUploading(true);
+                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
+                    setWUploading(false);
+                  }}
+                />
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+                やめる
+              </button>
+              <button
+                onClick={publish}
+                disabled={!wBody.trim() || (wKind === "event" && !wEventAt) || wSaving || wUploading}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#4a8a5c" }}
+              >
+                {wSaving ? "投稿中..." : wKind === "event" ? "📅 イベントを投稿する" : "📣 全国に報告する"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setWriting(true)}
+            className="mx-2 mb-2 w-[calc(100%-16px)] rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
+            style={{ borderColor: "#4a8a5c66", color: GREEN }}
+          >
+            📣 うちの村の活動を報告する
+          </button>
+        )
+      )}
+
+
+
       {/* 拠点一覧（横スクロールのチップ） */}
       {villages.length > 0 && (
         <div className="hide-scrollbar mb-2 flex gap-1.5 overflow-x-auto px-2">
@@ -889,128 +991,25 @@ export function ActivitySection({ me }: { me: User | null }) {
         </button>
       )}
 
-      {/* 活動を報告する（自分の村がある人だけ） */}
-      {me && myVills.length > 0 && (
-        writing ? (
-          <div className="mt-3 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
-            <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-              📣 活動を報告する
-            </div>
-            {myVills.length > 1 && (
-              <select
-                value={wVillage}
-                onChange={(e) => setWVillage(e.target.value)}
-                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
-              >
-                {myVills.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    ⛺ {v.name}（{v.prefecture}）
-                  </option>
-                ))}
-              </select>
-            )}
-            {/* 日々の活動 / イベント投稿 */}
-            <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl bg-white p-1">
-              {(
-                [
-                  ["normal", "📣 日々の活動"],
-                  ["event", "📅 イベント投稿"],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setWKind(id)}
-                  className="rounded-lg py-1.5 text-[12px] font-extrabold"
-                  style={wKind === id ? { background: "#4a8a5c", color: "#fff" } : { background: "transparent", color: "#8a968a" }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            {wKind === "event" && (
-              <input
-                type="datetime-local"
-                value={wEventAt}
-                onChange={(e) => setWEventAt(e.target.value)}
-                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
-              />
-            )}
-            <textarea
-              value={wBody}
-              onChange={(e) => setWBody(e.target.value)}
-              rows={2}
-              placeholder={
-                wKind === "event"
-                  ? "例: 田植えイベントやります！持ち物は長靴と着替え"
-                  : "例: 今日は田植えをしました / 古民家の床を張り替えました"
-              }
-              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
-            />
-            <div className="mb-2 flex items-center gap-2">
-              {wPhoto && <img src={wPhoto} alt="" className="h-14 w-14 rounded-lg object-cover" />}
-              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
-                {wUploading ? "⏳" : <CameraIcon size={16} />}
-                写真
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f || !me) return;
-                    setWUploading(true);
-                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
-                    setWUploading(false);
-                  }}
-                />
-              </label>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
-              </button>
-              <button
-                onClick={publish}
-                disabled={!wBody.trim() || (wKind === "event" && !wEventAt) || wSaving || wUploading}
-                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
-                style={{ background: "#4a8a5c" }}
-              >
-                {wSaving ? "投稿中..." : wKind === "event" ? "📅 イベントを投稿する" : "📣 全国に報告する"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setWriting(true)}
-            className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
-            style={{ borderColor: "#4a8a5c66", color: GREEN }}
-          >
-            📣 うちの村の活動を報告する
-          </button>
-        )
-      )}
-
-      {/* 拠点を立ち上げる */}
-      <a
-        href="/sekai/villages"
-        className="mt-3 block w-full rounded-xl py-3 text-center text-[13.5px] font-extrabold text-white no-underline"
-        style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
-      >
-        ⛺ これからセカイムラ拠点を立ち上げる
-      </a>
     </section>
   );
 }
 
 /* ═══ 顔を知る: 今日の村人 + 新しい村人を迎える ═══ */
-export function WelcomeSection({ me, router }: { me: User | null; router: ReturnType<typeof useRouter> }) {
+export function WelcomeSection({
+  me,
+  myPref,
+  router,
+}: {
+  me: User | null;
+  myPref: string;
+  router: ReturnType<typeof useRouter>;
+}) {
   const [recent, setRecent] = useState<any[]>([]);
   const [sent, setSent] = useState<Set<string>>(new Set());
-  const [spotlight, setSpotlight] = useState<any | null>(null);
 
   useEffect(() => {
-    recentVillagers(30).then(setRecent);
-    todaysVillager().then(setSpotlight);
+    recentVillagers(60).then(setRecent);
   }, []);
 
   const welcome = async (p: any) => {
@@ -1023,51 +1022,20 @@ export function WelcomeSection({ me, router }: { me: User | null; router: Return
     }
   };
 
-  if (recent.length === 0 && !spotlight) return null;
+  // 自分と同じ県の新入り村人だけ
+  const samePref = recent.filter((p) => p.prefecture === myPref);
+  if (samePref.length === 0) return null;
 
   return (
     <section className="card">
-      {/* 今日の村人（日替わりスポットライト） */}
-      {spotlight && (
-        <div
-          className="mb-3 flex items-center gap-3 rounded-xl px-3 py-2.5"
-          style={{ background: "linear-gradient(135deg,#fdf8ec,#fffdf8)", border: "1px solid #e8dcb888" }}
-        >
-          <AvatarSm p={spotlight} size={46} />
-          <div className="min-w-0 flex-1">
-            <div className="text-[9.5px] font-bold tracking-[2px] text-[#c8a030]">🌞 今日の村人</div>
-            <div className="truncate text-[13.5px] font-extrabold text-[#3a3428]">
-              {spotlight.display_name ?? "むらびと"}
-              <span className="ml-1.5 text-[10.5px] font-normal text-[#a0aca0]">{spotlight.prefecture ?? ""}</span>
-            </div>
-            {(spotlight.status_line || spotlight.bio) && (
-              <div className="truncate text-[11px] text-[#8a8070]">{spotlight.status_line ?? spotlight.bio}</div>
-            )}
-          </div>
-          {me && me.id !== spotlight.id && (
-            <button
-              onClick={async () => {
-                const chatId = await getOrCreateChat(me.id, spotlight.id);
-                if (chatId) router.push(`/line/${chatId}`);
-              }}
-              className="flex-shrink-0 rounded-lg px-3 py-2 text-[11.5px] font-extrabold text-white"
-              style={{ background: "#c8a030" }}
-            >
-              話しかける
-            </button>
-          )}
-        </div>
-      )}
-      {recent.length > 0 && (
-      <>
       <div className="mb-2.5 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-          🌱 新しい村人
+          🔰 私の県の新しい村人
         </span>
         <span className="text-[10px] text-[#a0aca0]">入った人を、ひとりにしない</span>
       </div>
-      <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-        {recent.map((p) => (
+      <div className="hide-scrollbar flex gap-2 overflow-x-auto px-2">
+        {samePref.map((p) => (
           <div
             key={p.id}
             className="w-32 flex-shrink-0 rounded-xl border border-[#e2eae0] bg-white p-2.5 text-center"
@@ -1090,8 +1058,6 @@ export function WelcomeSection({ me, router }: { me: User | null; router: Return
           </div>
         ))}
       </div>
-      </>
-      )}
     </section>
   );
 }
@@ -1128,7 +1094,7 @@ export function CafeBar({ pref }: { pref: string }) {
       <div className="flex items-center gap-3">
         <span className="text-[30px]">☕</span>
         <div className="min-w-0 flex-1">
-          <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">{sel}ラウンジ喫茶 — 常時オープン</div>
+          <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">☕ 村人待合喫茶</div>
           <div className="mt-0.5 text-[10.5px] text-[#a89878]">
             {count > 0 ? (
               <span className="font-bold text-[#8ad8a8]">
