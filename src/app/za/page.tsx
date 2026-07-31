@@ -75,7 +75,7 @@ export default function ZaPage() {
         </div>
       </header>
 
-      <div className="space-y-3 px-4 pt-3">
+      <div className="space-y-3 pt-3">
         {/* 本日のパワープッシュ楽座 */}
         {shops && shops.length > 0 && <ZaFeatured shops={shops} />}
 

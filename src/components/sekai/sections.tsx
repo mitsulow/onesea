@@ -163,7 +163,7 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
           )}
         </Link>
       </header>
-      <div className="space-y-4 px-4 pt-4">{children}</div>
+      <div className="space-y-4 pt-4">{children}</div>
     </main>
   );
 }

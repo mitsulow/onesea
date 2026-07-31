@@ -150,7 +150,7 @@ export default function ShopDetailPage() {
         )}
       </div>
 
-      <div className="space-y-3.5 px-4 pt-4">
+      <div className="space-y-3.5 px-2 pt-4">
         <div>
           <div className="flex items-center gap-2">
             <span

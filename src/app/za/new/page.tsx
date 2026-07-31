@@ -89,7 +89,7 @@ export default function NewShopPage() {
       {!me ? (
         <p className="px-5 py-10 text-center text-sm text-[#8a8070]">ログインすると出品できます</p>
       ) : (
-        <div className="space-y-4 px-4 pt-4">
+        <div className="space-y-4 px-2 pt-4">
           {/* 楽市 or 楽座 */}
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">どちらに出す？</label>

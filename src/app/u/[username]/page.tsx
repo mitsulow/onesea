@@ -195,12 +195,16 @@ export default function UserPage() {
             style={{ background: "linear-gradient(160deg,#0e1e2e 0%,#17384e 60%,#1e4a66 100%)" }}
           />
         )}
-        <Link
-          href="/"
-          className="absolute left-3 top-3 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white no-underline backdrop-blur-sm"
+        <button
+          onClick={() => {
+            // 直前のページへ（履歴がなければホームへ）
+            if (window.history.length > 1) router.back();
+            else router.push("/");
+          }}
+          className="absolute left-3 top-3 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-sm"
         >
           ◀ もどる
-        </Link>
+        </button>
         {isMe && (
           <>
             <button
@@ -430,7 +434,7 @@ export default function UserPage() {
       </div>
 
       {shops.length > 0 && (
-        <div className="px-4 pt-5">
+        <div className="pt-5">
           <div className="card">
             <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>{isMe ? "あなたの楽座" : "この人の楽座"}</span></div>
             <div className="grid grid-cols-2 gap-3">
@@ -477,7 +481,7 @@ export default function UserPage() {
       )}
 
       {/* 言の葉 */}
-      <div className="px-4 pt-5">
+      <div className="pt-5">
         <div className="card">
           <div className="sec mb-2">💭 {isMe ? "あなたの言の葉" : "この人の言の葉"}</div>
           {posts === null ? (
@@ -500,7 +504,7 @@ export default function UserPage() {
 
       {/* 今日のDDPの積み重ね（タイムライン） */}
       {dailyDdps.length > 0 && (
-        <div className="px-4 pt-5">
+        <div className="pt-5">
           <div className="card">
             <div className="sec mb-3">⚡過去のシンクロニシティ⚡</div>
             <div className="relative pl-5">
@@ -546,7 +550,7 @@ export default function UserPage() {
 
       {/* アイディア一覧（本人にだけ見える） */}
       {ideas.length > 0 && (
-        <div className="px-4 pt-5">
+        <div className="pt-5">
           <div className="card">
             <div className="sec mb-3">💡 アイディア一覧</div>
             <div className="space-y-2">

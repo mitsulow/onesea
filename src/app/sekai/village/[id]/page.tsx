@@ -229,7 +229,7 @@ export default function VillagePage() {
 
       {/* 拠点の修正フォーム */}
       {editing && (
-        <div className="mx-4 mt-4 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
+        <div className="mt-4 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
           <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
             ✎ 拠点を修正する
           </div>
@@ -302,7 +302,7 @@ export default function VillagePage() {
         </div>
       )}
 
-      <div className="space-y-3.5 px-4 pt-4">
+      <div className="space-y-3.5 pt-4">
         {/* 村人 */}
         <section className="card">
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>

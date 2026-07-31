@@ -129,7 +129,7 @@ export default function ClubPage() {
         )}
       </header>
 
-      <div className="space-y-3.5 px-4 pt-4">
+      <div className="space-y-3.5 pt-4">
         {/* 部員 */}
         <section className="card">
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
