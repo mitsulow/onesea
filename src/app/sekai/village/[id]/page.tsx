@@ -212,7 +212,7 @@ export default function VillagePage() {
                   className="rounded-xl px-4 py-2 text-[12.5px] font-extrabold text-white disabled:opacity-40"
                   style={{ background: "#4a8a5c" }}
                 >
-                  {sending ? "くべています..." : "囲炉裏にくべる"}
+                  {sending ? "投稿中..." : "投稿する"}
                 </button>
               </div>
             </div>
