@@ -140,21 +140,33 @@ export function useSekaiMe() {
   return { me, myPref, mootCount, refreshMootCount };
 }
 
-/** 各ページ共通の外枠（コンパクトなヒーロー + 右上にマイページアイコン） */
+/** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
     });
   }, []);
+
+  const logout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
+
   return (
     <main className="pb-32">
-      <header className="relative px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
+      <header className="relative z-[60] px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
         <div className="text-[10px] leading-tight tracking-[3px] text-[#a8cca8]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eae6b8]">セカイムラ</div>
-        <Link href="/my" aria-label="マイページ" className="absolute right-3 top-1/2 -translate-y-1/2">
+        <button
+          onClick={() => setMenuOpen((v) => !v)}
+          aria-label="メニュー"
+          className="absolute right-3 top-1/2 -translate-y-1/2"
+        >
           {avatar ? (
             <img
               src={avatar}
@@ -167,7 +179,38 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
               🌏
             </span>
           )}
-        </Link>
+        </button>
+
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 z-[70]" onClick={() => setMenuOpen(false)} />
+            <div
+              className="absolute right-3 top-full z-[80] mt-1.5 w-44 overflow-hidden rounded-xl border border-[#ede5d8] bg-white text-left"
+              style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.18)" }}
+            >
+              <Link
+                href="/my"
+                onClick={() => setMenuOpen(false)}
+                className="block border-b border-[#f2ece0] px-4 py-3 text-[14px] font-medium text-[#3a3428] no-underline active:bg-[#faf4ea]"
+              >
+                🪪 マイページ
+              </Link>
+              <Link
+                href="/#techo"
+                onClick={() => setMenuOpen(false)}
+                className="block border-b border-[#f2ece0] px-4 py-3 text-[14px] font-medium text-[#3a3428] no-underline active:bg-[#faf4ea]"
+              >
+                📖 手帳
+              </Link>
+              <button
+                onClick={logout}
+                className="block w-full px-4 py-3 text-left text-[14px] font-medium text-[#a05040] active:bg-[#faf4ea]"
+              >
+                ログアウト
+              </button>
+            </div>
+          </>
+        )}
       </header>
       {/* セクションは縦も隙間なしで繋げる */}
       <div>{children}</div>
