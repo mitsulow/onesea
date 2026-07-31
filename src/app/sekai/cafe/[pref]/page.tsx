@@ -214,22 +214,17 @@ export default function CafePage() {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         setAudioOnly(true);
         setCamOn(false);
-      } catch {
-        // ブラウザ設定で「拒否」になっているかを調べる
-        let denied = false;
-        try {
-          const nav = navigator as Navigator & { permissions?: Permissions };
-          const [cam, mic] = await Promise.all([
-            nav.permissions?.query({ name: "camera" as PermissionName }).catch(() => null),
-            nav.permissions?.query({ name: "microphone" as PermissionName }).catch(() => null),
-          ]);
-          denied = cam?.state === "denied" || mic?.state === "denied";
-        } catch {}
-        setPermDenied(denied);
+      } catch (e2) {
+        // iOS Safari は権限状態をJSから読めないので、エラー名と API有無で判定し、手順は常に出す
+        const name = (e2 as DOMException)?.name ?? "";
+        const noApi = typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia;
+        setPermDenied(true);
         setErr(
-          denied
-            ? "カメラ・マイクが「拒否」に設定されています。下の手順で許可してください。"
-            : "カメラ・マイクを使えませんでした。下のボタンからもう一度お試しください。"
+          noApi
+            ? "このブラウザではカメラを使えません（LINEやInstagramの中のブラウザは不可）。SafariかChromeで onesea.vercel.app を開き直してください。"
+            : name === "NotAllowedError" || name === "SecurityError"
+              ? "カメラ・マイクが許可されていません。下の手順で許可してから、もう一度お試しください。"
+              : "カメラ・マイクを使えませんでした。下のボタンからもう一度お試しください。"
         );
         setPhase("lobby");
         return;
@@ -350,13 +345,19 @@ export default function CafePage() {
               </div>
               {permDenied && (
                 <div className="mt-2.5 text-[10.5px] leading-relaxed text-[#c8a888]">
-                  「拒否」になっている場合は、ここを許可に：
+                  📱 <b>iPhone (Safari)</b>:
                   <br />
-                  <b>iPhone (Safari)</b>: アドレスバー左の「ぁあ」→ Webサイトの設定 → カメラ/マイクを「許可」
+                  ① 設定アプリ →「Safari」→ 下の方の「カメラ」「マイク」を<b>「確認」または「許可」</b>に
                   <br />
-                  <b>iPhone (ホーム画面アプリ)</b>: 設定アプリ → 下へスクロールして OneSea → カメラ・マイクをON
+                  ② アドレスバー左の「ぁあ」(または「⋯」) → Webサイトの設定 → カメラ/マイクを「許可」
                   <br />
-                  <b>Android (Chrome)</b>: アドレスバーの🔒 → 権限 → カメラ/マイクを許可 → 再読み込み
+                  ③ 直したら、このページを一度閉じて開き直す
+                  <br />
+                  📱 <b>iPhone (ホーム画面アプリ)</b>: 設定アプリ → 下へスクロールして OneSea → カメラ・マイクをON
+                  <br />
+                  🤖 <b>Android (Chrome)</b>: アドレスバーの🔒 → 権限 → カメラ/マイクを許可 → 再読み込み
+                  <br />
+                  ⚠️ LINEなどのアプリの中から開いている場合は、右下の「…」→「Safariで開く」が先に必要です
                 </div>
               )}
             </div>
