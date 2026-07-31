@@ -38,6 +38,10 @@ export function MorningOpening() {
   const adv1Ref = useRef<HTMLDivElement>(null);
   const adv2Ref = useRef<HTMLDivElement>(null);
   const text3Ref = useRef<HTMLDivElement>(null);
+  const rimRef = useRef<HTMLDivElement>(null);
+  const barTopRef = useRef<HTMLDivElement>(null);
+  const barBotRef = useRef<HTMLDivElement>(null);
+  const vigRef = useRef<HTMLDivElement>(null);
   const [earthCenterY, setEarthCenterY] = useState(260);
 
   useEffect(() => {
@@ -104,14 +108,39 @@ export function MorningOpening() {
     }
     setEarthCenterY(ty);
 
-    /* 星 */
-    const stars = Array.from({ length: 240 }, () => ({
+    /* 星（3層パララックス） */
+    const stars = Array.from({ length: 300 }, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
-      z: 0.3 + Math.random() * 0.7,
-      s: 0.4 + Math.random() * 1.3,
+      z: 0.25 + Math.random() * 0.75,
+      s: 0.4 + Math.random() * 1.4,
       tw: Math.random() * Math.PI * 2,
     }));
+
+    /* 星雲（オフスクリーンに一度だけ描く） */
+    const neb = document.createElement("canvas");
+    neb.width = neb.height = 512;
+    const ng = neb.getContext("2d")!;
+    const blobs: Array<[number, number, string, number]> = [
+      [160, 180, "40,60,140", 170],
+      [340, 220, "90,50,150", 190],
+      [250, 360, "30,110,140", 170],
+      [410, 120, "120,60,160", 130],
+      [110, 390, "50,80,160", 150],
+    ];
+    for (const [bx, by, c, br] of blobs) {
+      const g2 = ng.createRadialGradient(bx, by, 0, bx, by, br);
+      g2.addColorStop(0, `rgba(${c},0.5)`);
+      g2.addColorStop(1, `rgba(${c},0)`);
+      ng.fillStyle = g2;
+      ng.fillRect(0, 0, 512, 512);
+    }
+
+    /* 流れ星（時刻固定の2発） */
+    const shoots = [
+      { t0: 3400, x: W * 0.16, y: H * 0.16, ang: 0.45 },
+      { t0: 9200, x: W * 0.68, y: H * 0.1, ang: 2.5 },
+    ];
 
     /* 銀河系（渦巻銀河）を一度だけオフスクリーンに描き込む
        — 毎フレームはこの絵をズーム表示するだけなので星を贅沢に使える */
@@ -199,6 +228,7 @@ export function MorningOpening() {
     const start = performance.now();
     let raf = 0;
     let released = false;
+    let prevGalZoom = 1;
 
     const draw = (now: number) => {
       const t = now - start;
@@ -248,19 +278,79 @@ export function MorningOpening() {
       textAnim(adv0Ref.current, 7900, 9000, 12100, 13100); // ◯◯隊員
       textAnim(adv1Ref.current, 9000, 10100, 12100, 13100); // N回目となる
       textAnim(adv2Ref.current, 10100, 11200, 12100, 13100); // 地球冒険の日
-      textAnim(text3Ref.current, 14800, 15900, 19300, 20400, true); // 地球の中心・着地後も残る
+      /* 最後のメッセージは一文字ずつ浮かび上がる */
+      if (text3Ref.current) {
+        const el3 = text3Ref.current;
+        const eout3 = span(t, 19300, 20400);
+        const ein3 = easeInOut(span(t, 14800, 15600));
+        el3.style.opacity = "1";
+        el3.style.transform = `translate(-50%, calc(-50% + ${(1 - ein3) * 20}px))`;
+        const chars = el3.children;
+        for (let ci = 0; ci < chars.length; ci++) {
+          (chars[ci] as HTMLElement).style.opacity = String(
+            span(t, 14800 + ci * 90, 15500 + ci * 90) * (1 - eout3)
+          );
+        }
+      }
 
-      /* ---- 星 ---- */
+      /* ---- 星雲（宇宙の奥行き。銀河ズームとともに退場） ---- */
+      const nebIn = starIn * (1 - span(t, 5200, 8600));
+      if (nebIn > 0.01) {
+        g.save();
+        g.globalAlpha = 0.45 * nebIn * cosmicAlpha;
+        g.translate(W / 2, H * 0.45);
+        g.rotate(t * 0.00001);
+        const ns = Math.max(W, H) * 1.35 * (1 + (galZoom - 1) * 0.15);
+        g.drawImage(neb, -ns / 2, -ns / 2, ns, ns);
+        g.restore();
+        g.globalAlpha = 1;
+      }
+
+      /* ---- 星（ズーム中はワープの流線になる） ---- */
+      const zoomVel = galZoom - prevGalZoom;
+      prevGalZoom = galZoom;
       g.globalAlpha = starIn * cosmicAlpha;
       for (const s of stars) {
         const par = 1 + (galZoom - 1) * s.z * 0.35;
         const x = tx + (s.x - tx) * par;
         const y = ty + (s.y - ty) * par;
         const twinkle = 0.6 + 0.4 * Math.sin(t / 500 + s.tw);
-        g.fillStyle = `rgba(255,255,255,${0.5 * twinkle})`;
-        g.fillRect(x, y, s.s, s.s);
+        const dx = x - tx;
+        const dy = y - ty;
+        const dist = Math.hypot(dx, dy) || 1;
+        const L = Math.min(22, zoomVel * 2600 * s.z);
+        if (L > 1.6) {
+          g.strokeStyle = `rgba(255,255,255,${0.4 * twinkle})`;
+          g.lineWidth = s.s * 0.8;
+          g.beginPath();
+          g.moveTo(x, y);
+          g.lineTo(x - (dx / dist) * L, y - (dy / dist) * L);
+          g.stroke();
+        } else {
+          g.fillStyle = `rgba(255,255,255,${0.5 * twinkle})`;
+          g.fillRect(x, y, s.s, s.s);
+        }
       }
       g.globalAlpha = 1;
+
+      /* ---- 流れ星 ---- */
+      for (const s of shoots) {
+        const k = span(t, s.t0, s.t0 + 800);
+        if (k <= 0 || k >= 1) continue;
+        const a = Math.sin(Math.PI * k) * cosmicAlpha;
+        const px = s.x + Math.cos(s.ang) * 300 * k;
+        const py = s.y + Math.sin(s.ang) * 140 * k;
+        const tail = 90;
+        const gr = g.createLinearGradient(px, py, px - Math.cos(s.ang) * tail, py - Math.sin(s.ang) * tail);
+        gr.addColorStop(0, `rgba(255,255,255,${0.9 * a})`);
+        gr.addColorStop(1, "rgba(255,255,255,0)");
+        g.strokeStyle = gr;
+        g.lineWidth = 1.6;
+        g.beginPath();
+        g.moveTo(px, py);
+        g.lineTo(px - Math.cos(s.ang) * tail, py - Math.sin(s.ang) * tail);
+        g.stroke();
+      }
 
       /* ---- 銀河系（渦巻銀河・傾いた円盤 + ゆっくり自転しながらズーム） ---- */
       if (galIn > 0.01) {
@@ -352,6 +442,19 @@ export function MorningOpening() {
           g.beginPath();
           g.arc(hp.x, hp.y, pl.size * 0.7, 0, Math.PI * 2);
           g.fill();
+          if (pl.r === 48) {
+            // 土星の環
+            g.save();
+            g.translate(hp.x, hp.y);
+            g.rotate(-0.45);
+            g.scale(1, 0.35);
+            g.strokeStyle = `rgba(235,215,170,${0.7 * solIn * cosmicAlpha})`;
+            g.lineWidth = 1.2 / camZ;
+            g.beginPath();
+            g.arc(0, 0, pl.size * 2.1, 0, Math.PI * 2);
+            g.stroke();
+            g.restore();
+          }
         }
 
         /* 太陽コロナ（3層） */
@@ -370,6 +473,33 @@ export function MorningOpening() {
           g.fill();
         }
         g.restore();
+
+        /* レンズフレア（スクリーン空間で太陽の位置に） */
+        const sunScr = {
+          x: (sun.x - fx) * camZ + fx + panX,
+          y: (sun.y - fy) * camZ + fy + panY,
+        };
+        const fl = solIn * cosmicAlpha;
+        const streak = g.createLinearGradient(sunScr.x - W * 0.45, sunScr.y, sunScr.x + W * 0.45, sunScr.y);
+        streak.addColorStop(0, "rgba(255,200,120,0)");
+        streak.addColorStop(0.5, `rgba(255,228,175,${0.3 * fl})`);
+        streak.addColorStop(1, "rgba(255,200,120,0)");
+        g.fillStyle = streak;
+        g.fillRect(sunScr.x - W * 0.45, sunScr.y - 1.2, W * 0.9, 2.4);
+        for (const [k, r2, a2] of [
+          [0.7, 9, 0.12],
+          [1.35, 15, 0.07],
+        ] as const) {
+          const gx2 = sunScr.x + (W / 2 - sunScr.x) * k;
+          const gy2 = sunScr.y + (H / 2 - sunScr.y) * k;
+          const gg2 = g.createRadialGradient(gx2, gy2, 0, gx2, gy2, r2);
+          gg2.addColorStop(0, `rgba(200,230,255,${a2 * fl})`);
+          gg2.addColorStop(1, "rgba(200,230,255,0)");
+          g.fillStyle = gg2;
+          g.beginPath();
+          g.arc(gx2, gy2, r2, 0, Math.PI * 2);
+          g.fill();
+        }
       }
 
       /* ---- 地球（NASA 実画像）: ズーム中からもうフェードで重なり始めている ---- */
@@ -386,6 +516,15 @@ export function MorningOpening() {
         earth.style.transform = `translate(${cx - r}px, ${cy - r}px)`;
         earth.style.width = `${r * 2}px`;
         earth.style.height = `${r * 2}px`;
+        /* 大気のリム光 */
+        const rim = rimRef.current;
+        if (rim) {
+          const rr = r * 1.05;
+          rim.style.opacity = String(easeInOut(earthAppear) * (1 - mist) * 0.95);
+          rim.style.transform = `translate(${cx - rr}px, ${cy - rr}px)`;
+          rim.style.width = `${rr * 2}px`;
+          rim.style.height = `${rr * 2}px`;
+        }
       }
 
       /* キリ（靄）の中から OTOHIKARI が現れるフェード */
@@ -395,6 +534,12 @@ export function MorningOpening() {
       root.style.backdropFilter = fog;
       (root.style as CSSStyleDeclaration & { webkitBackdropFilter?: string }).webkitBackdropFilter = fog;
       canvas.style.opacity = String(1 - eOut);
+
+      /* シネマバー（上下の黒帯）は最後に開いていく */
+      const barH = H * 0.062 * (1 - eOut);
+      if (barTopRef.current) barTopRef.current.style.height = `${barH}px`;
+      if (barBotRef.current) barBotRef.current.style.height = `${barH}px`;
+      if (vigRef.current) vigRef.current.style.opacity = String(0.85 * (1 - eOut));
 
       if (t >= TOTAL && !released) {
         released = true;
@@ -460,7 +605,18 @@ export function MorningOpening() {
         src="/space/earth-blue-marble.webp"
         alt=""
         className="absolute left-0 top-0 rounded-full"
-        style={{ opacity: 0, willChange: "transform, opacity", boxShadow: "0 0 60px rgba(90,160,255,.35)" }}
+        style={{ opacity: 0, willChange: "transform, opacity", boxShadow: "0 0 70px rgba(90,160,255,.4), 0 0 18px rgba(140,200,255,.55)" }}
+      />
+      {/* 大気のリム光 */}
+      <div
+        ref={rimRef}
+        className="pointer-events-none absolute left-0 top-0 rounded-full"
+        style={{
+          opacity: 0,
+          willChange: "transform, opacity",
+          background:
+            "radial-gradient(circle at 38% 32%, rgba(0,0,0,0) 58%, rgba(140,200,255,0.08) 72%, rgba(150,210,255,0.35) 88%, rgba(160,220,255,0) 97%)",
+        }}
       />
 
       {/* ① 日付（年入り） — 画面のドセンター */}
@@ -479,10 +635,23 @@ export function MorningOpening() {
         {advLines[2]}
       </div>
 
-      {/* ③ 今日の地球を、どう楽しむ？ — 地球のど真ん中・着地後も約2秒残る */}
+      {/* ③ 今日の地球を、どう楽しむ？ — 一文字ずつ・地球のど真ん中・着地後も約2秒残る */}
       <div ref={text3Ref} style={{ ...textBase, top: earthCenterY, fontSize: 21, fontWeight: 700, letterSpacing: 3 }}>
-        今日の地球を、どう楽しむ？
+        {Array.from("今日の地球を、どう楽しむ？").map((c, i) => (
+          <span key={i} style={{ opacity: 0, display: "inline-block" }}>
+            {c}
+          </span>
+        ))}
       </div>
+
+      {/* シネマバー + ビネット */}
+      <div ref={barTopRef} className="pointer-events-none absolute left-0 right-0 top-0 bg-black" style={{ height: "6.2vh" }} />
+      <div ref={barBotRef} className="pointer-events-none absolute bottom-0 left-0 right-0 bg-black" style={{ height: "6.2vh" }} />
+      <div
+        ref={vigRef}
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(ellipse at center, rgba(0,0,0,0) 52%, rgba(2,4,12,0.55) 100%)" }}
+      />
     </div>
   );
 }
