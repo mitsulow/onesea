@@ -182,18 +182,18 @@ export function Otohikari() {
 
         {/* MasterMind接続中 — ヘッドホン + パルス波形 */}
         {connected && (
-          <div className="pointer-events-none absolute left-0 right-0 top-2.5 flex flex-col items-center">
-            <div className="flex items-center gap-2">
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+            <div className="flex items-center gap-2.5">
               <svg
-                width="17"
-                height="17"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="#8ff4ff"
                 strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                style={{ filter: "drop-shadow(0 0 5px rgba(120,235,255,.9))" }}
+                style={{ filter: "drop-shadow(0 0 6px rgba(120,235,255,.9))" }}
                 aria-hidden
               >
                 <path d="M4 14a8 8 0 0 1 16 0" />
@@ -201,25 +201,26 @@ export function Otohikari() {
                 <rect x="17" y="13.5" width="4" height="6.5" rx="1.8" fill="rgba(143,244,255,.18)" />
               </svg>
               <span
-                className="text-[10.5px] font-extrabold tracking-[3px]"
+                className="text-[15px] font-extrabold tracking-[3px]"
                 style={{
                   color: "#8ff4ff",
-                  textShadow: "0 0 8px rgba(120,235,255,.95), 0 0 18px rgba(60,210,255,.6)",
+                  textShadow:
+                    "0 0 10px rgba(120,235,255,.95), 0 0 24px rgba(60,210,255,.7), 0 2px 12px rgba(0,0,0,.8)",
                 }}
               >
-                MasterMindに接続しています
+                MasterMindに繋がっています
               </span>
             </div>
             {/* パルス波形 */}
-            <div className="mt-1.5 flex h-[14px] items-center gap-[3px]">
+            <div className="mt-2 flex h-[18px] items-center gap-[3.5px]">
               {[0.5, 0.9, 0.65, 1, 0.75, 1, 0.6, 0.9, 0.5].map((h, i) => (
                 <span
                   key={i}
-                  className="inline-block w-[2.5px] rounded-full"
+                  className="inline-block w-[3px] rounded-full"
                   style={{
-                    height: `${h * 14}px`,
+                    height: `${h * 18}px`,
                     background: "#8ff4ff",
-                    boxShadow: "0 0 6px rgba(120,235,255,.9)",
+                    boxShadow: "0 0 7px rgba(120,235,255,.9)",
                     animation: `mmEq 1.1s ease-in-out ${i * 0.11}s infinite`,
                     transformOrigin: "center",
                   }}
