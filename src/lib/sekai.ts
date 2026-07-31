@@ -179,6 +179,7 @@ export interface Village {
   prefecture: string;
   description: string | null;
   policy: "open" | "approval" | "invite" | "paused" | "full";
+  is_official: boolean; // セカイムラ事務局が認定した公式拠点
   created_by: string | null;
   profiles: P | null;
   village_members: Array<{ count: number }>;
@@ -245,9 +246,36 @@ export async function recentVillagers(days = 30) {
   return data ?? [];
 }
 
+/** 位置情報から最寄りの都道府県を推定（外部APIなし・県庁座標との最短距離） */
+export async function detectPrefecture(): Promise<string | null> {
+  if (typeof navigator === "undefined" || !navigator.geolocation) return null;
+  const pos = await new Promise<GeolocationPosition | null>((resolve) =>
+    navigator.geolocation.getCurrentPosition(resolve, () => resolve(null), {
+      timeout: 5000,
+      maximumAge: 600000,
+    })
+  );
+  if (!pos) return null;
+  const { latitude: lat, longitude: lng } = pos.coords;
+  // 日本から大きく外れていたら「海外」
+  if (lat < 20 || lat > 46 || lng < 122 || lng > 154) return "海外";
+  let best: string | null = null;
+  let bd = Infinity;
+  for (const [name, [plat, plng]] of Object.entries(PREF_COORDS)) {
+    const dx = (plng - lng) * Math.cos((lat * Math.PI) / 180);
+    const dy = plat - lat;
+    const d = dx * dx + dy * dy;
+    if (d < bd) {
+      bd = d;
+      best = name;
+    }
+  }
+  return best;
+}
+
 /* ============ 拠点（村） ============ */
 const VILLAGE_SELECT =
-  "id, name, prefecture, description, policy, created_by, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
+  "id, name, prefecture, description, policy, is_official, created_by, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
 
 export async function fetchVillages(pref?: string | null): Promise<Village[]> {
   const supabase = createClient();

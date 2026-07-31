@@ -5,9 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { getOrCreateChat } from "@/lib/line";
+import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
-import { joinVillage, POLICY_LABEL } from "@/lib/sekai";
+import { joinVillage, POLICY_LABEL, fetchSettings } from "@/lib/sekai";
 import { CameraIcon } from "@/components/CameraIcon";
 
 /* eslint-disable @next/next/no-img-element */
@@ -104,8 +104,18 @@ export default function VillagePage() {
           <Link href="/sekai" className="text-[13px] font-bold text-[#a8cca8] no-underline">
             ◀ セカイムラ
           </Link>
-          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-[#a8cca8]">
-            {POLICY_LABEL[village.policy as keyof typeof POLICY_LABEL] ?? village.policy}
+          <span className="flex items-center gap-1.5">
+            {village.is_official && (
+              <span
+                className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold"
+                style={{ background: "#d4b96a", color: "#1a2432" }}
+              >
+                🏛 公式拠点
+              </span>
+            )}
+            <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-bold text-[#a8cca8]">
+              {POLICY_LABEL[village.policy as keyof typeof POLICY_LABEL] ?? village.policy}
+            </span>
           </span>
         </div>
         <div className="mt-3 text-[40px] leading-none">⛺</div>
@@ -142,6 +152,33 @@ export default function VillagePage() {
             </button>
           )}
         </div>
+
+        {/* 公式拠点の申請（立ち上げ村長だけに見える） */}
+        {me && village.created_by === me.id && !village.is_official && (
+          <button
+            onClick={async () => {
+              const settings = await fetchSettings();
+              const admin = settings.admin_user_id;
+              if (!admin) {
+                alert("公式拠点の申請窓口は準備中です（事務局の管理者が設定され次第、ここから申請できます）");
+                return;
+              }
+              const chatId = await getOrCreateChat(me.id, admin);
+              if (chatId) {
+                await sendMessage(
+                  chatId,
+                  me.id,
+                  `🏛 公式拠点の申請\n「${village.name}」（${village.prefecture}）をセカイムラ公式拠点として申請します。よろしくお願いします。`
+                );
+                router.push(`/line/${chatId}`);
+              }
+            }}
+            className="mx-auto mt-3 block rounded-xl border px-5 py-2.5 text-[12.5px] font-extrabold"
+            style={{ borderColor: "#d4b96a88", color: "#e8d5a0", background: "rgba(212,185,106,.1)" }}
+          >
+            🏛 公式拠点を事務局に申請する
+          </button>
+        )}
       </header>
 
       <div className="space-y-3.5 px-4 pt-4">

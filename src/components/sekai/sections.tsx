@@ -47,6 +47,7 @@ import {
   addTasukete,
   closeTasukete,
 } from "@/lib/sekai";
+import { detectPrefecture } from "@/lib/sekai";
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { moonsOfYear, YOBI } from "@/lib/almanac";
@@ -107,8 +108,16 @@ export function useSekaiMe() {
       setMe(u);
       if (u) {
         const { data } = await supabase.from("profiles").select("prefecture").eq("id", u.id).maybeSingle();
-        if (data?.prefecture && (PREFS as readonly string[]).includes(data.prefecture)) {
+        if (data?.prefecture && ([...PREFS, "海外"] as readonly string[]).includes(data.prefecture)) {
+          // マイページで編集した都道府県が最優先
           setMyPref(data.prefecture);
+        } else {
+          // 未設定なら位置情報から推定して、プロフィールにも保存しておく
+          const g = await detectPrefecture();
+          if (g) {
+            setMyPref(g);
+            supabase.from("profiles").update({ prefecture: g }).eq("id", u.id).then(() => {});
+          }
         }
         setMootCount(await myMootCount(u.id));
       }
@@ -684,7 +693,7 @@ export function ActivitySection({ me, router }: { me: User | null; router: Retur
         className="mt-3 block w-full rounded-xl py-3 text-center text-[13.5px] font-extrabold text-white no-underline"
         style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
       >
-        🔥 これからセカイムラ拠点を立ち上げる
+        ⛺ これからセカイムラ拠点を立ち上げる
       </a>
     </section>
   );
@@ -1046,8 +1055,9 @@ export function VillagesSection({
 
   useEffect(() => setVPref(pref), [pref]);
 
-  const inPref = (villages ?? []).filter((v) => v.prefecture === pref);
-  const others = (villages ?? []).filter((v) => v.prefecture !== pref);
+  const officials = (villages ?? []).filter((v) => v.is_official);
+  const inPref = (villages ?? []).filter((v) => !v.is_official && v.prefecture === pref);
+  const others = (villages ?? []).filter((v) => !v.is_official && v.prefecture !== pref);
 
   const create = async () => {
     if (!me || !name.trim() || saving) return;
@@ -1074,15 +1084,25 @@ export function VillagesSection({
               {v.prefecture} ・ {members}人 ・ 世話人 {v.profiles?.display_name ?? "—"}
             </div>
           </Link>
-          <span
-            className="flex-shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-bold"
-            style={
-              v.policy === "open"
-                ? { background: "#eaf6ee", color: GREEN }
-                : { background: "#f4f0e6", color: "#a08030" }
-            }
-          >
-            {POLICY_LABEL[v.policy]}
+          <span className="flex flex-shrink-0 items-center gap-1">
+            {v.is_official && (
+              <span
+                className="rounded-full px-2 py-0.5 text-[9.5px] font-extrabold"
+                style={{ background: "#f8f0d8", color: "#a08030", border: "1px solid #d4b96a" }}
+              >
+                🏛 公式
+              </span>
+            )}
+            <span
+              className="rounded-full px-2 py-0.5 text-[9.5px] font-bold"
+              style={
+                v.policy === "open"
+                  ? { background: "#eaf6ee", color: GREEN }
+                  : { background: "#f4f0e6", color: "#a08030" }
+              }
+            >
+              {POLICY_LABEL[v.policy]}
+            </span>
           </span>
         </div>
         {v.description && <p className="mt-1 text-[12px] leading-relaxed text-[#5a6458]">{v.description}</p>}
@@ -1123,6 +1143,23 @@ export function VillagesSection({
 
   return (
     <section id="villages" className="card" style={{ scrollMarginTop: 56 }}>
+      {/* 公式拠点（事務局認定・全国） */}
+      {officials.length > 0 && (
+        <div className="mb-4">
+          <div className="mb-2 flex items-baseline justify-between">
+            <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: "#a08030" }}>
+              🏛 セカイムラ公式拠点
+            </span>
+            <span className="text-[10px] text-[#a0aca0]">セカイムラ事務局が認定</span>
+          </div>
+          <div className="space-y-2">
+            {officials.map((v) => (
+              <VillageCard key={v.id} v={v} />
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mb-2.5 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
           ⛺ {pref}の拠点
@@ -1161,11 +1198,11 @@ export function VillagesSection({
           className="rounded-xl border-2 border-dashed px-4 py-5 text-center"
           style={{ borderColor: "#4a8a5c55", background: "linear-gradient(135deg,#eff7f0,#fffdf8)" }}
         >
-          <div className="text-3xl">🔥</div>
+          <div className="text-3xl">⛺</div>
           <p className="mt-1.5 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
             {pref}には、まだ拠点がありません
           </p>
-          <p className="mt-0.5 text-[11.5px] text-[#8a968a]">最初の火を、あなたが灯しませんか</p>
+          <p className="mt-0.5 text-[11.5px] text-[#8a968a]">最初の拠点を、あなたが立ち上げませんか</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -1180,7 +1217,7 @@ export function VillagesSection({
         (creating ? (
           <div className="mt-3 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
             <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-              🔥 村をつくる
+              拠点を立ち上げる
             </div>
             <input
               value={name}
@@ -1225,7 +1262,7 @@ export function VillagesSection({
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >
-                {saving ? "灯しています..." : "🔥 この村を灯す"}
+                {saving ? "立ち上げています..." : "拠点を立ち上げる"}
               </button>
             </div>
             <p className="mt-1.5 text-[10px] leading-relaxed text-[#a0aca0]">
@@ -1238,7 +1275,7 @@ export function VillagesSection({
             className="mt-3 w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
             style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
           >
-            🔥 村をつくる
+            ⛺ 拠点を立ち上げる
           </button>
         ))}
 
