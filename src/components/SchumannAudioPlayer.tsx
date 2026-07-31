@@ -43,6 +43,7 @@ export function SchumannAudioPlayer() {
 
   /* モード（瞑想/アイディア/シンクロ） */
   const [modeOpen, setModeOpen] = useState(false);
+  const [introKind, setIntroKind] = useState<Exclude<ProgramKind, "meditation"> | null>(null);
   const [program, setProgram] = useState<{ kind: ProgramKind; course?: number } | null>(null);
   const programRef = useRef(program);
   programRef.current = program;
@@ -519,10 +520,13 @@ export function SchumannAudioPlayer() {
           <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
             <div className="min-w-0">
               <div className="text-[12px] font-extrabold text-white">💡 アイディアモード</div>
-              <div className="text-[9.5px] leading-snug text-white/80">叡智に繋がって、イデアを降ろす</div>
+              <div className="text-[9.5px] leading-snug text-white/80">全体からアイディアを降ろします</div>
             </div>
             <button
-              onClick={() => beginProgram("idea")}
+              onClick={() => {
+                setModeOpen(false);
+                setIntroKind("idea");
+              }}
               className="flex-shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
             >
               はじめる
@@ -531,10 +535,13 @@ export function SchumannAudioPlayer() {
           <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
             <div className="min-w-0">
               <div className="text-[12px] font-extrabold text-white">🌊 シンクロモード</div>
-              <div className="text-[9.5px] leading-snug text-white/80">ふと、全体に繋がろう</div>
+              <div className="text-[9.5px] leading-snug text-white/80">今日の「やりたいこと」に許可を出す</div>
             </div>
             <button
-              onClick={() => beginProgram("synchro")}
+              onClick={() => {
+                setModeOpen(false);
+                setIntroKind("synchro");
+              }}
               className="flex-shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
             >
               はじめる
@@ -562,6 +569,73 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
+      {/* モード開始前の手順ダイアログ */}
+      {introKind && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center px-6"
+          style={{ background: "rgba(6,12,20,0.6)", backdropFilter: "blur(3px)" }}
+          onClick={() => setIntroKind(null)}
+        >
+          <div
+            className="relative w-full max-w-[400px] rounded-2xl p-5 shadow-2xl"
+            style={{ background: "linear-gradient(160deg,#0a1826,#12283a)", border: "1px solid #2a4a5e" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIntroKind(null)}
+              aria-label="閉じる"
+              className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-[13px] font-bold text-[#7a9ab4]"
+            >
+              ✕
+            </button>
+            <div className="text-center text-[16px] font-extrabold text-white">
+              {introKind === "idea" ? "💡 アイディアモード" : "🌊 シンクロモード"}
+            </div>
+            <div className="mt-0.5 text-center text-[11px] text-[#7ab8d8]">
+              {introKind === "idea" ? "全体からアイディアを降ろします" : "今日の「やりたいこと」に許可を出す"}
+            </div>
+            <ol className="mt-4 space-y-2.5">
+              {(introKind === "idea"
+                ? [
+                    "MasterMindシステムに接続します",
+                    "5分間、シューマン音を目を閉じて聴いてください",
+                    "浮かんだアイディアを、1分以内にバラバラに単語でメモしてください",
+                  ]
+                : [
+                    "MasterMindシステムに接続します",
+                    "5分間、シューマン音を目を閉じて聴いてください",
+                    "ふと、繋がった事を書き記してください",
+                  ]
+              ).map((step, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <span
+                    className="num mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10.5px] font-extrabold"
+                    style={{ background: "rgba(143,244,255,.12)", color: "#8ff4ff", border: "1px solid #8ff4ff55" }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="text-[13px] leading-relaxed text-[#cfe0ea]">{step}</span>
+                </li>
+              ))}
+            </ol>
+            <button
+              onClick={() => {
+                const k = introKind;
+                setIntroKind(null);
+                beginProgram(k);
+              }}
+              className="mt-4 w-full rounded-xl py-3 text-[14.5px] font-extrabold text-[#0a1826]"
+              style={{
+                background: "linear-gradient(135deg,#8ff4ff,#40d8f0)",
+                boxShadow: "0 0 22px rgba(80,220,255,.4)",
+              }}
+            >
+              MasterMindに接続する
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* シンクロ（今日のDDP）ダイアログ */}
       {showDdp && (
         <div
@@ -578,7 +652,7 @@ export function SchumannAudioPlayer() {
               ✕
             </button>
             <div className="text-center text-[15px] font-extrabold text-[#2a6a66]">🌊 ふと、全体に繋がろう</div>
-            <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">今日のDDP</div>
+            <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">ふと、繋がった事を書き記してください</div>
             <textarea
               value={ddpBody}
               onChange={(e) => setDdpBody(e.target.value)}
@@ -623,7 +697,7 @@ export function SchumannAudioPlayer() {
               onChange={(e) => setIdeaBody(e.target.value)}
               rows={4}
               autoFocus
-              placeholder={"1分以内に浮かんだ単語を列挙しましょう"}
+              placeholder={"浮かんだアイディアを、1分以内に\nバラバラに単語でメモしてください"}
               className="mt-3 w-full resize-y rounded-xl border border-[#e0d8f0] bg-white p-3 text-center text-[14px] leading-relaxed outline-none focus:border-[#8a5aff]"
             />
             <button
@@ -632,7 +706,7 @@ export function SchumannAudioPlayer() {
               className="mt-2.5 w-full rounded-xl py-2.5 text-[14px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "linear-gradient(135deg,#a070ff,#8a5aff)" }}
             >
-              {ideaSaved ? "刻みました 💡" : ideaSaving ? "保存中..." : "アイディアを保存"}
+              {ideaSaved ? "刻みました 💡" : ideaSaving ? "保存中..." : "アイディアを保存する"}
             </button>
             <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">あなたのマイページの「アイディア一覧」に貯まっていきます</p>
           </div>

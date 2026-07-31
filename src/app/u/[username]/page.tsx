@@ -44,7 +44,8 @@ export default function UserPage() {
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
   const [shops, setShops] = useState<Shop[]>([]);
   const [masterDdp, setMasterDdp] = useState<string | null>(null);
-  const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string }>>([]);
+  const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string; fulfilled_pct: number | null }>>([]);
+  const pctTimers = useRef<Record<string, number>>({});
   const [ddpOpen, setDdpOpen] = useState(false);
   const [ideas, setIdeas] = useState<Array<{ id: string; body: string; created_at: string }>>([]);
   const [ideasOpen, setIdeasOpen] = useState(false);
@@ -65,11 +66,13 @@ export default function UserPage() {
       supabase.from("ddp").select("body").eq("user_id", prof.id).maybeSingle().then(({ data: d }) => setMasterDdp(d?.body ?? null));
       supabase
         .from("daily_ddp")
-        .select("day, body")
+        .select("day, body, fulfilled_pct")
         .eq("user_id", prof.id)
         .order("day", { ascending: false })
         .limit(120)
-        .then(({ data: dd }) => setDailyDdps((dd as Array<{ day: string; body: string }>) ?? []));
+        .then(({ data: dd }) =>
+          setDailyDdps((dd as Array<{ day: string; body: string; fulfilled_pct: number | null }>) ?? [])
+        );
       // アイディア一覧（RLSで本人にしか返らない）
       supabase
         .from("ideas")
@@ -108,6 +111,17 @@ export default function UserPage() {
     setBusy(null);
   };
 
+  /* 叶った度（%）: スライダーを動かすとすぐ反映、保存は0.5秒デバウンス */
+  const setPct = (day: string, pct: number) => {
+    setDailyDdps((prev) => prev.map((d) => (d.day === day ? { ...d, fulfilled_pct: pct } : d)));
+    if (pctTimers.current[day]) clearTimeout(pctTimers.current[day]);
+    pctTimers.current[day] = window.setTimeout(async () => {
+      if (!me) return;
+      const supabase = createClient();
+      await supabase.from("daily_ddp").update({ fulfilled_pct: pct }).eq("user_id", me.id).eq("day", day);
+    }, 500);
+  };
+
   const saveBio = async () => {
     if (!me) return;
     const supabase = createClient();
@@ -136,6 +150,37 @@ export default function UserPage() {
   }
 
   const isMe = me?.id === profile.id;
+
+  /* シンクロ単語の下に「何％叶ったか」— 本人は左右に動かしてすぐ選べる */
+  const pctRow = (d: { day: string; body: string; fulfilled_pct: number | null }) =>
+    isMe ? (
+      <div className="mt-1.5 flex items-center gap-2">
+        <span className="flex-shrink-0 text-[9px] tracking-wider text-[#a0aca0]">叶った度</span>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={d.fulfilled_pct ?? 0}
+          onChange={(e) => setPct(d.day, Number(e.target.value))}
+          className="h-1 min-w-0 flex-1 accent-[#0abab5]"
+          aria-label="叶った度"
+        />
+        <span className="num w-11 flex-shrink-0 text-right text-[12px] font-extrabold text-[#0abab5]">
+          {d.fulfilled_pct != null ? `${d.fulfilled_pct}%` : "—"}
+        </span>
+      </div>
+    ) : d.fulfilled_pct != null ? (
+      <div className="mt-1.5 flex items-center gap-2">
+        <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[#e4f0ee]">
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${d.fulfilled_pct}%`, background: "linear-gradient(90deg,#0abab5,#7ad8c8)" }}
+          />
+        </div>
+        <span className="num flex-shrink-0 text-[11px] font-bold text-[#0abab5]">{d.fulfilled_pct}%叶った</span>
+      </div>
+    ) : null;
 
   return (
     <main className="pb-20">
@@ -469,6 +514,7 @@ export default function UserPage() {
                       {dt.getMonth() + 1}月{dt.getDate()}日
                     </div>
                     <div className="mt-0.5 whitespace-pre-wrap text-[13.5px] leading-relaxed text-[#4a4438]">{d.body}</div>
+                    {pctRow(d)}
                   </div>
                 );
               })}
@@ -484,6 +530,7 @@ export default function UserPage() {
                             {dt.getMonth() + 1}月{dt.getDate()}日
                           </div>
                           <div className="mt-0.5 whitespace-pre-wrap text-[13px] leading-relaxed text-[#5a5448]">{d.body}</div>
+                          {pctRow(d)}
                         </div>
                       );
                     })}
