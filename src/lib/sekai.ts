@@ -293,8 +293,8 @@ export async function fetchVillages(pref?: string | null): Promise<Village[]> {
   return (data as unknown as Village[]) ?? [];
 }
 
-/** 全国の拠点の活動報告（村ブログ）を新しい順に横断取得 */
-export async function fetchActivityFeed(limit = 10) {
+/** 全国の拠点の活動報告（村ブログ）を新しい順にページ取得 */
+export async function fetchActivityFeed(limit = 10, offset = 0) {
   const supabase = createClient();
   const { data } = await supabase
     .from("village_posts")
@@ -302,7 +302,7 @@ export async function fetchActivityFeed(limit = 10) {
       "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, created_by), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
     )
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .range(offset, offset + limit - 1);
   return data ?? [];
 }
 

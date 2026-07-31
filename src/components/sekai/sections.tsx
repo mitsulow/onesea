@@ -572,21 +572,71 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [cSending, setCSending] = useState<string | null>(null);
 
-  const loadFeed = useCallback(async () => {
-    const f = (await fetchActivityFeed(10)) as any[];
-    setFeed(f);
+  const FEED_PAGE = 10;
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const extrasFor = async (posts: any[]) => {
     const map: Record<string, VillagePostComment[]> = {};
-    for (const c of await fetchVillagePostComments(f.map((p) => p.id))) {
+    for (const c of await fetchVillagePostComments(posts.map((p) => p.id))) {
       (map[c.post_id] = map[c.post_id] ?? []).push(c);
     }
-    setCmts(map);
-    // 参加済みイベント（この端末の手帳に入れたもの）
+    setCmts((prev) => ({ ...prev, ...map }));
     try {
       const j = new Set<string>();
-      for (const p of f) if (localStorage.getItem(`onesea-ev-${p.id}`) === "1") j.add(p.id);
-      setJoinedEv(j);
+      for (const p of posts) if (localStorage.getItem(`onesea-ev-${p.id}`) === "1") j.add(p.id);
+      setJoinedEv((prev) => new Set([...prev, ...j]));
     } catch {}
+  };
+
+  const loadFeed = useCallback(async () => {
+    const f = (await fetchActivityFeed(FEED_PAGE, 0)) as any[];
+    setFeed(f);
+    setHasMore(f.length === FEED_PAGE);
+    await extrasFor(f);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /** もっと見る: さらに10件（その下にまた「もっと見る」） */
+  const showMoreFeed = async () => {
+    if (loadingMore) return;
+    setLoadingMore(true);
+    const more = (await fetchActivityFeed(FEED_PAGE, feed?.length ?? 0)) as any[];
+    setFeed((prev) => [...(prev ?? []), ...more]);
+    setHasMore(more.length === FEED_PAGE);
+    await extrasFor(more);
+    setLoadingMore(false);
+  };
+
+  const eventLabel = (p: any) =>
+    `⛺${p.villages?.name ?? "セカイムラ"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
+
+  /** 参加を取り消す → 手帳からその行を消す */
+  const cancelEvent = (p: any) => {
+    if (!p.event_at) return;
+    const d = new Date(p.event_at);
+    const key = keyOf(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    const hour = String(d.getHours());
+    const label = eventLabel(p);
+    try {
+      const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+      const day = memos[key];
+      if (day?.h?.[hour]) {
+        const lines = String(day.h[hour]).split("\n").filter((l: string) => l !== label);
+        if (lines.length) day.h[hour] = lines.join("\n");
+        else delete day.h[hour];
+        if (!day.note && Object.keys(day.h ?? {}).length === 0) delete memos[key];
+        else memos[key] = day;
+        localStorage.setItem("techo-memos", JSON.stringify(memos));
+      }
+      localStorage.removeItem(`onesea-ev-${p.id}`);
+    } catch {}
+    setJoinedEv((s) => {
+      const n = new Set(s);
+      n.delete(p.id);
+      return n;
+    });
+  };
 
   /** イベントに参加 → 手帳（メモ帳）のその日時にスケジュールを書き込む */
   const joinEvent = (p: any) => {
@@ -598,7 +648,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       const day = memos[key] ?? { note: "", h: {} };
       day.h = day.h ?? {};
       const hour = String(d.getHours());
-      const label = `⛺${p.villages?.name ?? "セカイムラ"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
+      const label = eventLabel(p);
       day.h[hour] = day.h[hour] ? `${day.h[hour]}\n${label}` : label; // 2件目以降は改行で追記
       memos[key] = day;
       localStorage.setItem("techo-memos", JSON.stringify(memos));
@@ -743,16 +793,24 @@ export function ActivitySection({ me }: { me: User | null }) {
                         return `${d.getMonth() + 1}月${d.getDate()}日（${YOBI[d.getDay()]}）${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}〜`;
                       })()}
                     </span>
-                    {me && (
-                      <button
-                        onClick={() => joinEvent(p)}
-                        disabled={joinedEv.has(p.id)}
-                        className="flex-shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-60"
-                        style={{ background: "#c8a030" }}
-                      >
-                        {joinedEv.has(p.id) ? "✓ 手帳に入れました" : "参加する"}
-                      </button>
-                    )}
+                    {me &&
+                      (joinedEv.has(p.id) ? (
+                        <button
+                          onClick={() => cancelEvent(p)}
+                          className="flex-shrink-0 rounded-lg border px-3 py-1.5 text-[11.5px] font-bold"
+                          style={{ borderColor: "#c8a030", color: "#a07820", background: "#fff" }}
+                        >
+                          ✓ 参加中（タップで取消）
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => joinEvent(p)}
+                          className="flex-shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-extrabold text-white"
+                          style={{ background: "#c8a030" }}
+                        >
+                          参加する
+                        </button>
+                      ))}
                   </div>
                 )}
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#3a4438]">
@@ -817,6 +875,18 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
           ))}
         </div>
+      )}
+
+      {/* 10件目以降は折りたたみ — もっと見るでさらに10件（その下にまた出る） */}
+      {hasMore && (
+        <button
+          onClick={showMoreFeed}
+          disabled={loadingMore}
+          className="mt-2 w-full rounded-xl border border-[#d8e4da] bg-white py-2.5 text-[12.5px] font-bold disabled:opacity-50"
+          style={{ color: GREEN }}
+        >
+          {loadingMore ? "読み込み中..." : "▼ もっと見る"}
+        </button>
       )}
 
       {/* 活動を報告する（自分の村がある人だけ） */}
