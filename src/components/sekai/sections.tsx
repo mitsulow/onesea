@@ -239,7 +239,7 @@ export function MootsSection({
                     : { background: "#d4b96a", color: "#1a2432" }
                 }
               >
-                {mine.has(next.dateKey) ? "✓ 集います" : "集います"}
+                {mine.has(next.dateKey) ? "✓ 参加します" : "参加する"}
               </button>
             )}
           </div>

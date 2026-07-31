@@ -16,6 +16,7 @@ export function MoonMootBanner() {
   const [count, setCount] = useState(0);
   const [mine, setMine] = useState(false);
   const [settings, setSettings] = useState<Record<string, string>>({});
+  const [hidden, setHidden] = useState(true); // 判定まで非表示（チラ見え防止）
 
   const load = useCallback(
     async (uid: string | null) => {
@@ -35,22 +36,39 @@ export function MoonMootBanner() {
       load(u?.id ?? null);
     });
     fetchSettings().then(setSettings);
-  }, [load]);
+    // ×や参加/不参加で消したら、その回はもう出さない
+    try {
+      if (moot) setHidden(localStorage.getItem(`onesea-moot-banner-${moot.dateKey}`) === "1");
+    } catch {
+      setHidden(false);
+    }
+  }, [load, moot]);
 
-  if (!moot) return null;
+  if (!moot || hidden) return null;
   const isNew = moot.kind === "new";
   const title = isNew ? "セカイムラ新月会" : "セカイムラ満月会";
   const today = moot.dday === 0;
 
-  const rsvp = async () => {
-    if (!me) return;
-    await toggleRsvp(me.id, moot.dateKey, moot.kind, mine);
-    load(me.id);
+  const dismiss = () => {
+    try {
+      localStorage.setItem(`onesea-moot-banner-${moot.dateKey}`, "1");
+    } catch {}
+    setHidden(true);
+  };
+
+  const join = async () => {
+    if (me && !mine) await toggleRsvp(me.id, moot.dateKey, moot.kind, false);
+    dismiss();
+  };
+
+  const decline = async () => {
+    if (me && mine) await toggleRsvp(me.id, moot.dateKey, moot.kind, true);
+    dismiss();
   };
 
   return (
     <section
-      className="card"
+      className="card relative"
       style={{
         margin: "0 -16px",
         borderRadius: 0,
@@ -59,7 +77,15 @@ export function MoonMootBanner() {
         background: "linear-gradient(150deg,#0f1a25,#1a2a38)",
       }}
     >
-      <div className="flex items-center gap-3">
+      {/* ×で消せる */}
+      <button
+        onClick={dismiss}
+        aria-label="閉じる"
+        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[11px] font-bold text-[#7a9ab4]"
+      >
+        ✕
+      </button>
+      <div className="flex items-center gap-3 pr-6">
         <span className="text-[32px] leading-none" style={{ filter: isNew ? "none" : "drop-shadow(0 0 10px rgba(255,240,180,.5))" }}>
           {isNew ? "🌑" : "🌕"}
         </span>
@@ -73,20 +99,26 @@ export function MoonMootBanner() {
             <span className="ml-1.5 text-[#5a7a68]">{count}人が集う予定</span>
           </div>
         </div>
-        {me && (
-          <button
-            onClick={rsvp}
-            className="flex-shrink-0 rounded-xl px-3.5 py-2 text-[12px] font-extrabold"
-            style={
-              mine
-                ? { background: "#2a5a3a", color: "#a8d8b8", border: "1px solid #4a9a6a" }
-                : { background: "#d4b96a", color: "#1a2432" }
-            }
-          >
-            {mine ? "✓ 集います" : "集います"}
-          </button>
-        )}
       </div>
+
+      {/* 参加する / 参加しない（押したら消える） */}
+      {me && (
+        <div className="mt-2.5 grid grid-cols-2 gap-2">
+          <button
+            onClick={join}
+            className="rounded-xl py-2.5 text-[13px] font-extrabold"
+            style={{ background: "#d4b96a", color: "#1a2432" }}
+          >
+            {mine ? "✓ 参加します" : "参加する"}
+          </button>
+          <button
+            onClick={decline}
+            className="rounded-xl border border-white/25 py-2.5 text-[13px] font-bold text-[#7a9ab4]"
+          >
+            参加しない
+          </button>
+        </div>
+      )}
 
       {/* 当日はここから入れる */}
       {today && (settings.zoom_url || settings.youtube_url) && (
