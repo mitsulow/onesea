@@ -7,7 +7,18 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
-import { joinVillage, updateVillage, POLICY_LABEL, PREFS, OVERSEAS_AREAS, fetchSettings, Village } from "@/lib/sekai";
+import {
+  joinVillage,
+  updateVillage,
+  POLICY_LABEL,
+  PREFS,
+  OVERSEAS_AREAS,
+  fetchSettings,
+  Village,
+  VillagePostComment,
+  fetchVillagePostComments,
+  addVillagePostComment,
+} from "@/lib/sekai";
 import { CameraIcon } from "@/components/CameraIcon";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
 
@@ -32,6 +43,11 @@ export default function VillagePage() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
+  /* 投稿へのコメント */
+  const [cmts, setCmts] = useState<Record<string, VillagePostComment[]>>({});
+  const [cOpen, setCOpen] = useState<Set<string>>(new Set());
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [cSending, setCSending] = useState<string | null>(null);
   /* 拠点の修正（立ち上げ村長のみ） */
   const [editing, setEditing] = useState(false);
   const [eName, setEName] = useState("");
@@ -92,6 +108,11 @@ export default function VillagePage() {
     setVillage(v ?? null);
     setMembers(m ?? []);
     setPosts(p ?? []);
+    // 各投稿へのコメントも読み込む（フィードと共通のデータ）
+    const cs = await fetchVillagePostComments((p ?? []).map((x: any) => x.id));
+    const map: Record<string, VillagePostComment[]> = {};
+    for (const c of cs) (map[c.post_id] = map[c.post_id] ?? []).push(c);
+    setCmts(map);
     const u = session?.user ?? null;
     setMe(u);
     if (u) setJoined((m ?? []).some((x: any) => x.user_id === u.id));
@@ -100,6 +121,17 @@ export default function VillagePage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const sendCmt = async (postId: string) => {
+    const text = (drafts[postId] ?? "").trim();
+    if (!me || !text || cSending) return;
+    setCSending(postId);
+    await addVillagePostComment(postId, me.id, text);
+    setDrafts((d) => ({ ...d, [postId]: "" }));
+    setCSending(null);
+    const list = await fetchVillagePostComments([postId]);
+    setCmts((m) => ({ ...m, [postId]: list }));
+  };
 
   const submit = async () => {
     if (!me || !body.trim() || sending) return;
@@ -393,6 +425,66 @@ export default function VillagePage() {
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">{p.body}</p>
                 {p.photo_url && <img src={p.photo_url} alt="" loading="lazy" className="mt-1.5 max-h-72 rounded-lg object-cover" />}
+
+                {/* コメント（5件まで表示、以降は折りたたみ） */}
+                {(() => {
+                  const list = cmts[p.id] ?? [];
+                  const open = cOpen.has(p.id);
+                  const shown = open ? list : list.slice(0, 5);
+                  return (
+                    <div className="mt-2">
+                      {shown.map((c: any) => (
+                        <div key={c.id} className="mb-1.5 flex items-start gap-1.5">
+                          {c.profiles?.avatar_url ? (
+                            <img src={c.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-5 w-5 flex-shrink-0 rounded-full object-cover" />
+                          ) : (
+                            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#e8f0e4] text-[10px]">🌿</span>
+                          )}
+                          <div className="min-w-0 flex-1 rounded-lg bg-[#f4f8f2] px-2 py-1">
+                            <span className="mr-1.5 text-[10px] font-bold text-[#5a7a5c]">
+                              {c.profiles?.display_name ?? "むらびと"}
+                            </span>
+                            <span className="break-words text-[12px] leading-relaxed text-[#4a4438]">{c.body}</span>
+                          </div>
+                        </div>
+                      ))}
+                      {list.length > 5 && (
+                        <button
+                          onClick={() =>
+                            setCOpen((s) => {
+                              const n = new Set(s);
+                              if (open) n.delete(p.id);
+                              else n.add(p.id);
+                              return n;
+                            })
+                          }
+                          className="mb-1.5 text-[11px] font-bold underline"
+                          style={{ color: GREEN }}
+                        >
+                          {open ? "たたむ" : `もっと見る（あと${list.length - 5}件）`}
+                        </button>
+                      )}
+                      {me && (
+                        <div className="flex items-end gap-1.5">
+                          <input
+                            value={drafts[p.id] ?? ""}
+                            onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
+                            placeholder="コメントする..."
+                            className="min-w-0 flex-1 rounded-full border border-[#e2eae0] bg-white px-3 py-1.5 text-[12.5px] outline-none focus:border-[#4a8a5c]"
+                          />
+                          <button
+                            onClick={() => sendCmt(p.id)}
+                            disabled={!(drafts[p.id] ?? "").trim() || cSending === p.id}
+                            className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-40"
+                            style={{ background: "#4a8a5c" }}
+                          >
+                            送る
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             ))
           )}
