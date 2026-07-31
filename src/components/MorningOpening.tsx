@@ -602,7 +602,7 @@ export function MorningOpening() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={earthRef}
-        src="/space/earth-blue-marble.webp"
+        src="/space/earth-japan.webp"
         alt=""
         className="absolute left-0 top-0 rounded-full"
         style={{ opacity: 0, willChange: "transform, opacity", boxShadow: "0 0 70px rgba(90,160,255,.4), 0 0 18px rgba(140,200,255,.55)" }}
