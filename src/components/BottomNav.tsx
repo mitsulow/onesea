@@ -73,15 +73,12 @@ export function BottomNav() {
             <span className="mr-0.5 h-3.5 w-px flex-shrink-0 bg-[#c0d4c4]" />
             {(
               [
-                ["/sekai", "🌕 集い"],
-                ["/sekai/lounge", "☕ ラウンジ"],
-                ["/sekai/villages", "⛺ 拠点"],
-                ["/sekai/clubs", "🎌 部活"],
+                ["/sekai", "🏠 ホーム"],
+                ["/sekai/villages", "⛺ 拠点情報"],
+                ["/sekai/clubs", "🎌 部活情報"],
                 ["/sekai/kome", "🌾 米部"],
-                ["/sekai/jinja", "⛩ 神社"],
-                ["/sekai/meister", "🫙 講座"],
-                ["/sekai/tasukete", "🤝 助けて"],
-                ["/sekai/map", "🗾 地図"],
+                ["/sekai/meister", "🫙 マイスター講座"],
+                ["/sekai/tasukete", "🤝 助けて掲示板"],
               ] as const
             ).map(([href, label]) => {
               const active = href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href);

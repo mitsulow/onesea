@@ -51,6 +51,7 @@ import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { moonsOfYear, YOBI } from "@/lib/almanac";
 import { MEISTER_COURSES } from "@/data/meister-courses";
+import { LATEST_MOOT_VIDEO, PAST_MOOT_VIDEOS } from "@/data/moot-videos";
 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -121,13 +122,34 @@ export function useSekaiMe() {
   return { me, myPref, mootCount, refreshMootCount };
 }
 
-/** 各ページ共通の外枠（コンパクトなヒーロー付き） */
+/** 各ページ共通の外枠（コンパクトなヒーロー + 右上にマイページアイコン） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
+  const [avatar, setAvatar] = useState<string | null>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
+    });
+  }, []);
   return (
     <main className="pb-32">
-      <header className="px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
+      <header className="relative px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
         <div className="text-[10px] leading-tight tracking-[3px] text-[#a8cca8]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eae6b8]">セカイムラ</div>
+        <Link href="/my" aria-label="マイページ" className="absolute right-3 top-1/2 -translate-y-1/2">
+          {avatar ? (
+            <img
+              src={avatar}
+              alt=""
+              referrerPolicy="no-referrer"
+              className="h-8 w-8 rounded-full border-2 border-[#d4b96a]/70 object-cover"
+            />
+          ) : (
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#d4b96a]/70 text-base">
+              🌏
+            </span>
+          )}
+        </Link>
       </header>
       <div className="space-y-4 px-4 pt-4">{children}</div>
     </main>
@@ -284,6 +306,55 @@ export function MootsSection({
           )}
           <div className="mt-2 text-[10.5px] leading-relaxed text-[#5a7a68]">
             終わったあとは {myPref} のブレイクアウトへ。話したい人だけ、そのまま地域ラウンジで。
+          </div>
+        </div>
+      )}
+
+      {/* 開催されたら、今回の動画がここに */}
+      {LATEST_MOOT_VIDEO && (
+        <a
+          href={LATEST_MOOT_VIDEO.url ?? "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-2 block overflow-hidden rounded-xl border border-[#4a9a6a]/40 no-underline"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={LATEST_MOOT_VIDEO.thumb} alt="" className="w-full object-cover" />
+          <div className="bg-white/5 px-3 py-2 text-[12.5px] font-extrabold text-[#a8d8b8]">
+            ▶ {LATEST_MOOT_VIDEO.title} — 今回の会の動画
+          </div>
+        </a>
+      )}
+
+      {/* 過去の新月会・満月会 動画（サムネ） */}
+      {PAST_MOOT_VIDEOS.length > 0 && (
+        <div className="mb-2">
+          <div className="mb-1 text-[10px] tracking-[2px] text-[#5a7a68]">過去の新月会・満月会 動画</div>
+          <div className="hide-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
+            {PAST_MOOT_VIDEOS.map((v, i) =>
+              v.url ? (
+                <a
+                  key={i}
+                  href={v.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative w-[104px] flex-shrink-0 overflow-hidden rounded-lg no-underline"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={v.thumb} alt={v.title} className="aspect-video w-full object-cover" />
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-[9px] text-white">
+                      ▶
+                    </span>
+                  </span>
+                </a>
+              ) : (
+                <div key={i} className="w-[104px] flex-shrink-0 overflow-hidden rounded-lg opacity-70">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={v.thumb} alt={v.title} className="aspect-video w-full object-cover" />
+                </div>
+              )
+            )}
           </div>
         </div>
       )}
@@ -714,7 +785,7 @@ export function WelcomeSection({ me, router }: { me: User | null; router: Return
 }
 
 /* ═══ ラウンジ喫茶（常時オープンのビデオ通話）入口 ═══ */
-function CafeBar({ pref }: { pref: string }) {
+export function CafeBar({ pref }: { pref: string }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
@@ -1211,7 +1282,8 @@ export function ClubsSection({ me }: { me: User | null }) {
         <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-          {clubs.map((c) => {
+          {/* 米部は独立ページに昇格したので部活一覧からは外す */}
+          {clubs.filter((c) => !(c.is_official && c.name.includes("米"))).map((c) => {
             const members = c.club_members?.[0]?.count ?? 0;
             const joined = mineIds.has(c.id);
             return (
