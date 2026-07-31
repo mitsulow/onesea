@@ -120,21 +120,19 @@ export function BottomNav() {
                 })}
               </div>
             )}
-            <div className="flex justify-end">
+            <div className="flex justify-start">
               <button
                 onClick={() => setSekaiMenu((v) => !v)}
-                className="pointer-events-auto flex items-center gap-1.5 rounded-full px-3.5 py-2.5 shadow-xl"
+                aria-label="セカイムラのメニュー"
+                className="pointer-events-auto flex h-[46px] w-[46px] flex-col items-center justify-center rounded-full shadow-xl"
                 style={{
                   background: "linear-gradient(150deg,#163522,#1e4530)",
-                  border: "1px solid #4a9a6a66",
+                  border: "1px solid #4a9a6a88",
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/tab-earth.png" alt="" className="h-[17px] w-[17px] object-contain" />
-                <span className="text-[12px] font-extrabold text-[#eae6b8]">
-                  {current ? current[2] : "セカイムラ"}
-                </span>
-                <span className="text-[10px] text-[#8ab89a]">{sekaiMenu ? "▾" : "▴"}</span>
+                <img src="/icons/tab-earth.png" alt="" className="h-[22px] w-[22px] object-contain" />
+                <span className="text-[8px] leading-none text-[#8ab89a]">{sekaiMenu ? "▾" : "▴"}</span>
               </button>
             </div>
           </div>

@@ -178,7 +178,7 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <main className="pb-32">
+    <main className="pb-44">
       <header className="relative z-[60] px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
         <div className="text-[10px] leading-tight tracking-[3px] text-[#a8cca8]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eae6b8]">セカイムラ</div>
