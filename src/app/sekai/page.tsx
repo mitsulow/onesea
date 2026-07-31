@@ -46,7 +46,6 @@ import {
   fetchTasukete,
   addTasukete,
   closeTasukete,
-  sekaiStats,
 } from "@/lib/sekai";
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
@@ -100,7 +99,6 @@ export default function SekaiPage() {
   const [myPref, setMyPref] = useState<string>("東京都");
   const [pref, setPref] = useState<string>("東京都");
   const [travelMode, setTravelMode] = useState(false);
-  const [stats, setStats] = useState({ villagers: 0, villages: 0, clubs: 0, tanbo: 0 });
   const [mootCount, setMootCount] = useState(0);
 
   useEffect(() => {
@@ -117,36 +115,14 @@ export default function SekaiPage() {
         setMootCount(await myMootCount(u.id));
       }
     });
-    sekaiStats().then(setStats);
   }, []);
 
   return (
     <main className="pb-28">
-      {/* ═══ ヒーロー（説明文なし） ═══ */}
-      <header className="px-6 pb-7 pt-10 text-center" style={{ background: DARKGREEN_BG }}>
-        <div className="text-[52px] leading-none">🌏</div>
-        <h1 className="mt-4 text-[24px] font-extrabold leading-snug tracking-[2px] text-[#eaf2e6]">
-          世界は一つの村になる。
-        </h1>
-        <div className="mt-1 text-[30px] font-extrabold tracking-[8px] text-[#eae6b8]">セカイムラ</div>
-        <div className="mt-5 flex items-end justify-center gap-7 text-[#a8cca8]">
-          <div>
-            <div className="num text-[20px] font-extrabold text-[#eaf2e6]">{stats.villagers}</div>
-            <div className="text-[9px] tracking-[2px]">村人</div>
-          </div>
-          <div>
-            <div className="num text-[20px] font-extrabold text-[#eaf2e6]">{stats.villages}</div>
-            <div className="text-[9px] tracking-[2px]">拠点</div>
-          </div>
-          <div>
-            <div className="num text-[20px] font-extrabold text-[#eaf2e6]">{stats.clubs}</div>
-            <div className="text-[9px] tracking-[2px]">部活</div>
-          </div>
-          <div>
-            <div className="num text-[20px] font-extrabold text-[#eaf2e6]">{stats.tanbo}</div>
-            <div className="text-[9px] tracking-[2px]">田んぼ</div>
-          </div>
-        </div>
+      {/* ═══ ヒーロー（コンパクト） ═══ */}
+      <header className="px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
+        <div className="text-[10px] leading-tight tracking-[3px] text-[#a8cca8]">世界は一つの村になる。</div>
+        <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eae6b8]">セカイムラ</div>
       </header>
 
       {/* セクション移動は下タブ（地球マークから枝分かれするサブタブ）に統合 */}
