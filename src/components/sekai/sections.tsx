@@ -541,8 +541,8 @@ export function ActivitySection({ me, router }: { me: User | null; router: Retur
         className="-mx-4 -mt-4 mb-3 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#163522,#1e4530)", borderRadius: "14px 14px 0 0" }}
       >
-        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 各地のセカイムラ いま</div>
-        <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">全国の拠点の活動報告 — 今日、村で何があったか</div>
+        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 各地のセカイムラ情報</div>
+        <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、拠点で何があったか？ 〜</div>
       </div>
 
       {/* 拠点一覧（横スクロールのチップ） */}
