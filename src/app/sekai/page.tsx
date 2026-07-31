@@ -321,6 +321,14 @@ function MootsSection({
               </div>
             )}
           </div>
+          {/* 壇上ルーム（登壇者用・ここがYouTubeに流れる） */}
+          <Link
+            href={`/sekai/cafe/${encodeURIComponent("満月会ステージ")}`}
+            className="mt-2 block rounded-xl border border-[#d4b96a55] py-2.5 text-center text-[12.5px] font-extrabold no-underline"
+            style={{ background: "rgba(212,185,106,.1)", color: "#e8d5a0" }}
+          >
+            🎤 壇上に上がる（登壇者はこちら）
+          </Link>
           {faces.length > 0 && (
             <div className="mt-2.5 flex items-center gap-1.5">
               <div className="flex -space-x-2">
