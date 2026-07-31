@@ -138,7 +138,7 @@ export default function VillagePage() {
               }}
               className="rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]"
             >
-              世話人に連絡
+              立ち上げ村長に連絡する
             </button>
           )}
         </div>

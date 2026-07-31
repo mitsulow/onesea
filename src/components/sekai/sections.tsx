@@ -1109,7 +1109,7 @@ export function VillagesSection({
                 className="rounded-lg border border-[#d8e4da] px-4 py-1.5 text-[12px] font-bold"
                 style={{ color: GREEN }}
               >
-                世話人に連絡する
+                立ち上げ村長に連絡する
               </button>
             ) : (
               <span className="text-[11px] text-[#a0aca0]">いまは募集していません — 別の村か、新しい村を</span>
