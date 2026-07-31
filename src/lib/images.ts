@@ -66,9 +66,10 @@ export async function uploadImagePair(
   userId: string,
   file: File
 ): Promise<ImagePair | null> {
+  // パケ死対策: 本体は960px/品質0.6（拡大表示用）、フィードに流れるサムネは320px/0.55
   const [fullBlob, thumbBlob] = await Promise.all([
-    compressImage(file, 1600, 0.8).catch(() => null),
-    compressImage(file, 400, 0.75).catch(() => null),
+    compressImage(file, 960, 0.6).catch(() => null),
+    compressImage(file, 320, 0.55).catch(() => null),
   ]);
   if (!fullBlob || !thumbBlob) return null;
   const base = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
