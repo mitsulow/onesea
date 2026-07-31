@@ -178,7 +178,7 @@ export function Otohikari() {
 
       {/* 地球儀 + オーバーレイ */}
       <div className="relative" style={{ margin: "8px -18px 0" }}>
-        <OtohikariGlobe spots={spots} mode={mode} />
+        <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
 
         {/* MasterMind接続中 — ヘッドホン + パルス波形 */}
         {connected && (

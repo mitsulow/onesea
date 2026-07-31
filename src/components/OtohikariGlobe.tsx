@@ -17,12 +17,16 @@ export type MapMode = "otohikari" | "thunder" | "all";
 export function OtohikariGlobe({
   spots,
   mode = "all",
+  connected = false,
 }: {
   spots: Array<[number, number, number] | null>;
   mode?: MapMode;
+  connected?: boolean;
 }) {
   const modeRef = useRef<MapMode>(mode);
   modeRef.current = mode;
+  const connectedRef = useRef(connected);
+  connectedRef.current = connected;
   const hostRef = useRef<HTMLDivElement>(null);
   const spotsRef = useRef(spots);
   spotsRef.current = spots;
@@ -358,12 +362,17 @@ export function OtohikariGlobe({
     }
     const permLineG = new THREE.BufferGeometry();
     permLineG.setAttribute("position", new THREE.Float32BufferAttribute(permLinePos, 3));
-    earth.add(
-      new THREE.LineSegments(
-        permLineG,
-        new THREE.LineBasicMaterial({ color: 0x8a5aff, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false })
-      )
-    );
+    // 接続中は紫→蛍光水色にゆっくり変化する
+    const gridMat = new THREE.LineBasicMaterial({
+      color: 0x8a5aff,
+      transparent: true,
+      opacity: 0.15,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    earth.add(new THREE.LineSegments(permLineG, gridMat));
+    const GRID_PURPLE = new THREE.Color(0x8a5aff);
+    const GRID_CYAN = new THREE.Color(0x40e8ff);
 
 
     interface GridWave {
@@ -398,7 +407,13 @@ export function OtohikariGlobe({
       group.add(
         new THREE.LineSegments(
           lG,
-          new THREE.LineBasicMaterial({ color: 0xa070ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false })
+          new THREE.LineBasicMaterial({
+            color: connectedRef.current ? 0x40e8ff : 0xa070ff,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          })
         )
       );
       const reflectTris = selected.filter(() => Math.random() < 0.1 + Math.random() * 0.1);
@@ -627,6 +642,10 @@ export function OtohikariGlobe({
       // 表示モード: OTOHIKARI MAP=光柱のみ / sprite&thunder MAP=雷のみ / ALL=両方
       strikePoints.visible = modeRef.current !== "otohikari";
       pillarGroup.visible = modeRef.current !== "thunder";
+      // MasterMind接続中: グリッドが紫→蛍光水色に息づく
+      gridMat.color.lerp(connectedRef.current ? GRID_CYAN : GRID_PURPLE, 0.04);
+      const targetOp = connectedRef.current ? 0.3 + 0.1 * Math.sin(t * 2.2) : 0.15;
+      gridMat.opacity += (targetOp - gridMat.opacity) * 0.06;
       // 光柱: presence の場所が変わったら組み直し、脈動させる
       const spotsKey = JSON.stringify(spotsRef.current);
       if (spotsKey !== builtKey) {
