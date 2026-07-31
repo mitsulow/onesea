@@ -35,10 +35,12 @@ body {
 
 .card {
   background: var(--color-card);
-  border-radius: 18px;
-  padding: 18px;
+  /* 大きいセクションは角丸なし・左右ボーダーなしで画面幅いっぱいに */
+  border-radius: 0;
+  padding: 18px 14px;
   box-shadow: 0 1px 8px rgba(90, 70, 40, 0.07);
-  border: 1px solid var(--color-border-warm);
+  border-top: 1px solid var(--color-border-warm);
+  border-bottom: 1px solid var(--color-border-warm);
 }
 
 .sec {

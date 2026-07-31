@@ -12,6 +12,10 @@ import { LINKS } from "@/lib/config";
 export function BottomNav() {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
+  const [sekaiMenu, setSekaiMenu] = useState(false);
+
+  // ページが変わったらメニューを閉じる
+  useEffect(() => setSekaiMenu(false), [pathname]);
 
   useEffect(() => {
     let stop = false;
@@ -59,47 +63,87 @@ export function BottomNav() {
 
   const inSekai = pathname.startsWith("/sekai");
 
+  const SEKAI_PAGES = [
+    ["/sekai", "🏠", "ホーム"],
+    ["/sekai/villages", "⛺", "拠点情報"],
+    ["/sekai/clubs", "🎌", "部活情報"],
+    ["/sekai/kome", "🌾", "米部"],
+    ["/sekai/meister", "🫙", "マイスター講座"],
+    ["/sekai/tasukete", "🤝", "助けて掲示板"],
+  ] as const;
+  const sekaiActive = (href: string) => (href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href));
+  const current = SEKAI_PAGES.find(([href]) => sekaiActive(href));
+
   return (
+    <>
+      {/* セカイムラ内: フローティングメニュー（地球から開くページ一覧） */}
+      {inSekai && (
+        <>
+          {sekaiMenu && <div className="fixed inset-0 z-40 bg-black/35" onClick={() => setSekaiMenu(false)} />}
+          <div
+            className="pointer-events-none fixed left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 px-3"
+            style={{ bottom: "calc(env(safe-area-inset-bottom) + 62px)" }}
+          >
+            {sekaiMenu && (
+              <div
+                className="pointer-events-auto mb-2 grid grid-cols-3 gap-2 rounded-2xl p-3"
+                style={{
+                  background: "linear-gradient(160deg,#0e2014,#1e4530)",
+                  border: "1px solid #4a9a6a55",
+                  boxShadow: "0 -6px 40px rgba(0,0,0,.45)",
+                }}
+              >
+                {SEKAI_PAGES.map(([href, emoji, label]) => {
+                  const active = sekaiActive(href);
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={() => setSekaiMenu(false)}
+                      className="flex flex-col items-center gap-1 rounded-xl py-3 no-underline"
+                      style={
+                        active
+                          ? { background: "rgba(212,185,106,.16)", border: "1.5px solid #d4b96a" }
+                          : { background: "rgba(255,255,255,.05)", border: "1.5px solid transparent" }
+                      }
+                    >
+                      <span className={active ? "text-[30px]" : "text-[24px]"}>{emoji}</span>
+                      <span
+                        className="text-[10.5px] font-extrabold leading-tight"
+                        style={{ color: active ? "#eae6b8" : "#a8cca8" }}
+                      >
+                        {label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+            <div className="flex justify-end">
+              <button
+                onClick={() => setSekaiMenu((v) => !v)}
+                className="pointer-events-auto flex items-center gap-1.5 rounded-full px-3.5 py-2.5 shadow-xl"
+                style={{
+                  background: "linear-gradient(150deg,#163522,#1e4530)",
+                  border: "1px solid #4a9a6a66",
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/tab-earth.png" alt="" className="h-[17px] w-[17px] object-contain" />
+                <span className="text-[12px] font-extrabold text-[#eae6b8]">
+                  {current ? current[2] : "セカイムラ"}
+                </span>
+                <span className="text-[10px] text-[#8ab89a]">{sekaiMenu ? "▾" : "▴"}</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
     <nav
       className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t border-[#e5dccb] bg-[#fffdf8]/95 backdrop-blur-sm"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      {/* セカイムラのサブタブ（地球タブから枝分かれ） */}
-      {inSekai && (
-        <div className="border-b border-[#dce8dc]" style={{ background: "rgba(238,248,240,.97)" }}>
-          <div className="hide-scrollbar flex items-center gap-1 overflow-x-auto px-2 py-1.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/tab-earth.png" alt="" className="mx-0.5 h-[15px] w-[15px] flex-shrink-0 object-contain opacity-80" />
-            <span className="mr-0.5 h-3.5 w-px flex-shrink-0 bg-[#c0d4c4]" />
-            {(
-              [
-                ["/sekai", "🏠 ホーム"],
-                ["/sekai/villages", "⛺ 拠点情報"],
-                ["/sekai/clubs", "🎌 部活情報"],
-                ["/sekai/kome", "🌾 米部"],
-                ["/sekai/meister", "🫙 マイスター講座"],
-                ["/sekai/tasukete", "🤝 助けて掲示板"],
-              ] as const
-            ).map(([href, label]) => {
-              const active = href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className="flex-shrink-0 rounded-full border px-2.5 py-1 text-[10.5px] font-bold no-underline"
-                  style={
-                    active
-                      ? { background: "#3a7a4c", borderColor: "#3a7a4c", color: "#fff" }
-                      : { background: "#fff", borderColor: "#d0e0d2", color: "#3a7a4c" }
-                  }
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
       <div className="flex h-[54px] items-center justify-around">
         {/* ホーム */}
         <Link href="/" className={itemCls(pathname === "/")}>
@@ -182,5 +226,6 @@ export function BottomNav() {
         </Link>
       </div>
     </nav>
+    </>
   );
 }
