@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { Shop, ShopComment, categoryOf, fetchShop, deleteShop, fetchShopComments, addShopComment, deleteShopComment } from "@/lib/za";
-import { getOrCreateChat } from "@/lib/line";
+import { Shop, ShopComment, categoryOf, fetchShop, deleteShop, fetchShopComments, addShopComment, deleteShopComment, fetchShopsByOwner } from "@/lib/za";
+import { getOrCreateChat, sendMessage } from "@/lib/line";
 
 /** 楽座の詳細 — 「連絡を取る」で出品者と LINE が始まる */
 export default function ShopDetailPage() {
@@ -19,6 +19,12 @@ export default function ShopDetailPage() {
   const [comments, setComments] = useState<ShopComment[]>([]);
   const [cBody, setCBody] = useState("");
   const [cSending, setCSending] = useState(false);
+  /* 物々交換の提案 */
+  const [barterOpen, setBarterOpen] = useState(false);
+  const [myShops, setMyShops] = useState<Shop[] | null>(null);
+  const [offerId, setOfferId] = useState<string | null>(null);
+  const [offerText, setOfferText] = useState("");
+  const [proposing, setProposing] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -26,6 +32,34 @@ export default function ShopDetailPage() {
     fetchShop(params.id).then((s) => setShop(s));
     fetchShopComments(params.id).then(setComments);
   }, [params.id]);
+
+  const openBarter = async () => {
+    setBarterOpen(true);
+    if (me && myShops === null) {
+      const mine = await fetchShopsByOwner(me.id);
+      setMyShops(mine.filter((s) => s.id !== params.id));
+    }
+  };
+
+  const propose = async () => {
+    if (!me || !shop || proposing) return;
+    const offerShop = myShops?.find((s) => s.id === offerId) ?? null;
+    const offer = offerShop ? offerShop.name : offerText.trim();
+    if (!offer) return;
+    setProposing(true);
+    const chatId = await getOrCreateChat(me.id, shop.owner_id);
+    if (chatId) {
+      const lines = [
+        "🔄 物々交換の提案",
+        `「${shop.name}」⇄「${offer}」`,
+      ];
+      if (offerShop) lines.push(`こちらです → https://onesea.vercel.app/za/${offerShop.id}`);
+      lines.push("いかがでしょうか？");
+      await sendMessage(chatId, me.id, lines.join("\n"));
+      router.push(`/line/${chatId}`);
+    }
+    setProposing(false);
+  };
 
   const sendComment = async () => {
     if (!me || !cBody.trim() || cSending) return;
@@ -180,16 +214,118 @@ export default function ShopDetailPage() {
             この楽座を取り下げる
           </button>
         ) : me ? (
-          <button
-            onClick={contact}
-            disabled={contacting}
-            className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
-            style={{ background: "#c94d3a" }}
-          >
-            {contacting ? "ひらいています..." : "💬 連絡を取る（LINEで商談）"}
-          </button>
+          <div className="space-y-2">
+            {shop.accepts_barter && (
+              <button
+                onClick={openBarter}
+                className="w-full rounded-xl border-2 py-3 text-[14px] font-extrabold"
+                style={{ borderColor: "#5a7d4a", color: "#5a7d4a", background: "#f4f8f0" }}
+              >
+                🔄 物々交換を提案する
+              </button>
+            )}
+            <button
+              onClick={contact}
+              disabled={contacting}
+              className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
+              style={{ background: "#c94d3a" }}
+            >
+              {contacting ? "ひらいています..." : "💬 連絡を取る（LINEで商談）"}
+            </button>
+          </div>
         ) : (
           <p className="text-center text-[12px] text-[#a09888]">ログインすると連絡できます</p>
+        )}
+
+        {/* 物々交換の提案ダイアログ */}
+        {barterOpen && shop && (
+          <div
+            className="fixed inset-0 z-[150] flex items-center justify-center px-5"
+            style={{ background: "rgba(20,16,10,0.5)", backdropFilter: "blur(3px)" }}
+            onClick={() => setBarterOpen(false)}
+          >
+            <div
+              className="relative max-h-[80vh] w-full max-w-[420px] overflow-y-auto rounded-2xl bg-[#fffdf8] p-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setBarterOpen(false)}
+                aria-label="閉じる"
+                className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#f0ebe0] text-[13px] font-bold text-[#a09888]"
+              >
+                ✕
+              </button>
+              <div className="text-center text-[15px] font-extrabold text-[#5a7d4a]">🔄 物々交換を提案</div>
+              <div className="mt-0.5 text-center text-[11px] text-[#8a8070]">
+                「{shop.name}」と何を交換しますか？
+              </div>
+
+              {/* 自分の出品から選ぶ */}
+              <div className="mt-3">
+                <div className="mb-1 text-[11px] font-bold text-[#8a7a5a]">あなたの出品から選ぶ</div>
+                {myShops === null ? (
+                  <p className="py-2 text-[12px] text-[#b0a898]">読み込み中...</p>
+                ) : myShops.length === 0 ? (
+                  <p className="py-1 text-[12px] text-[#b0a898]">まだ出品がありません（下の自由入力でどうぞ）</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {myShops.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => {
+                          setOfferId(offerId === s.id ? null : s.id);
+                          setOfferText("");
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left"
+                        style={
+                          offerId === s.id
+                            ? { borderColor: "#5a7d4a", background: "#f0f6ec" }
+                            : { borderColor: "#ede5d8", background: "#fff" }
+                        }
+                      >
+                        {s.image_urls[0] ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={s.image_urls[0]} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
+                        ) : (
+                          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2ede4] text-[16px]">
+                            🎁
+                          </span>
+                        )}
+                        <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#3a3428]">{s.name}</span>
+                        {offerId === s.id && <span className="flex-shrink-0 text-[14px] text-[#5a7d4a]">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 自由入力 */}
+              <div className="mt-3">
+                <div className="mb-1 text-[11px] font-bold text-[#8a7a5a]">出品していない物で提案する</div>
+                <input
+                  value={offerText}
+                  onChange={(e) => {
+                    setOfferText(e.target.value);
+                    if (e.target.value) setOfferId(null);
+                  }}
+                  placeholder="例: 手作り味噌1kg / 畑の野菜 / 3時間の手伝い"
+                  className="w-full rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#5a7d4a]"
+                />
+              </div>
+
+              <button
+                onClick={propose}
+                disabled={proposing || (!offerId && !offerText.trim())}
+                className="mt-3.5 w-full rounded-xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#5a7d4a" }}
+              >
+                {proposing ? "提案しています..." : "この内容で提案する"}
+              </button>
+              <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">
+                相手のLINEに提案が届き、そのままトークで交渉できます
+              </p>
+            </div>
+          </div>
         )}
 
         {/* コメント欄（ツッコミ歓迎） */}
