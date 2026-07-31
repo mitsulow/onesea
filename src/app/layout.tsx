@@ -21,6 +21,12 @@ export const metadata: Metadata = {
     apple: "/icon-192.png",
   },
   manifest: "/manifest.json",
+  // ホーム画面から起動したとき、Safariのアドレスバーを出さず全画面にする
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "OneSea",
+  },
 };
 
 export const viewport: Viewport = {

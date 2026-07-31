@@ -5,12 +5,14 @@ import { CotozuteFeed } from "@/components/CotozuteFeed";
 import { AuthGate } from "@/components/AuthGate";
 import { HeaderBar } from "@/components/HeaderBar";
 import { MorningOpening } from "@/components/MorningOpening";
+import { A2hsPrompt } from "@/components/A2hsPrompt";
 
 
 export default function Home() {
   return (
     <AuthGate>
       <MorningOpening />
+      <A2hsPrompt />
       <main className="pb-10">
         <HeaderBar />
 
