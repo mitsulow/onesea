@@ -1114,6 +1114,16 @@ export function CafeBar({ pref }: { pref: string }) {
           入店する
         </Link>
       </div>
+      {/* 店内の雰囲気（村人待合室） */}
+      <Link href={`/sekai/cafe/${encodeURIComponent(sel)}`} className="block">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/sekai/cafe-photo.webp"
+          alt="村人ラウンジ喫茶"
+          className="mt-2.5 w-full rounded-lg object-cover"
+          style={{ maxHeight: 110, objectPosition: "center 60%" }}
+        />
+      </Link>
       {/* 地域を選ぶ（47都道府県 + 海外） */}
       <select
         value={sel}
