@@ -85,8 +85,8 @@ export function CotozuteFeed() {
               {loadingMore ? "読み込み中..." : `もっと見る${remaining > 0 ? `（あと${remaining}件${hasMore ? "+" : ""}）` : ""}`}
             </button>
           ) : visible >= MAX ? (
-            <p className="mt-2 py-1 text-center text-[10.5px] text-[#c0b8a8]">
-              表示はここまで（端末保護のため最新{MAX}件まで）
+            <p className="mt-2 py-1 text-center text-[11px] tracking-[2px] text-[#c8c0b0]">
+              〜 言の葉は、海へ還りました 🌊 〜
             </p>
           ) : null}
 
