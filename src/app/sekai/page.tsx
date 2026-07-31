@@ -48,6 +48,7 @@ import {
   sekaiStats,
 } from "@/lib/sekai";
 import { SekaiMap } from "@/components/sekai/SekaiMap";
+import { CameraIcon } from "@/components/CameraIcon";
 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -383,11 +384,42 @@ function ActivitySection({ me, router }: { me: User | null; router: ReturnType<t
   const [feed, setFeed] = useState<any[] | null>(null);
   const [villages, setVillages] = useState<Village[]>([]);
   const [sent, setSent] = useState<Set<string>>(new Set());
+  const [myVills, setMyVills] = useState<Village[]>([]);
+  const [writing, setWriting] = useState(false);
+  const [wVillage, setWVillage] = useState("");
+  const [wBody, setWBody] = useState("");
+  const [wPhoto, setWPhoto] = useState<string | null>(null);
+  const [wUploading, setWUploading] = useState(false);
+  const [wSaving, setWSaving] = useState(false);
+
+  const loadFeed = useCallback(() => fetchActivityFeed(10).then((f) => setFeed(f as any[])), []);
 
   useEffect(() => {
-    fetchActivityFeed(10).then((f) => setFeed(f as any[]));
+    loadFeed();
     fetchVillages(null).then(setVillages);
-  }, []);
+  }, [loadFeed]);
+
+  useEffect(() => {
+    if (!me || villages.length === 0) return;
+    myVillageIds(me.id).then((ids) => {
+      const mine = villages.filter((v) => ids.has(v.id));
+      setMyVills(mine);
+      if (mine[0] && !wVillage) setWVillage(mine[0].id);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me, villages]);
+
+  const publish = async () => {
+    if (!me || !wVillage || !wBody.trim() || wSaving) return;
+    setWSaving(true);
+    const supabase = createClient();
+    await supabase.from("village_posts").insert({ village_id: wVillage, user_id: me.id, body: wBody.trim(), photo_url: wPhoto });
+    setWSaving(false);
+    setWriting(false);
+    setWBody("");
+    setWPhoto(null);
+    loadFeed();
+  };
 
   const join = async (post: any) => {
     const owner = post.villages?.created_by;
@@ -483,6 +515,77 @@ function ActivitySection({ me, router }: { me: User | null; router: ReturnType<t
             </div>
           ))}
         </div>
+      )}
+
+      {/* 活動を報告する（自分の村がある人だけ） */}
+      {me && myVills.length > 0 && (
+        writing ? (
+          <div className="mt-3 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
+            <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
+              📣 活動を報告する
+            </div>
+            {myVills.length > 1 && (
+              <select
+                value={wVillage}
+                onChange={(e) => setWVillage(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+              >
+                {myVills.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    ⛺ {v.name}（{v.prefecture}）
+                  </option>
+                ))}
+              </select>
+            )}
+            <textarea
+              value={wBody}
+              onChange={(e) => setWBody(e.target.value)}
+              rows={2}
+              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
+              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
+            />
+            <div className="mb-2 flex items-center gap-2">
+              {wPhoto && <img src={wPhoto} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
+                {wUploading ? "⏳" : <CameraIcon size={16} />}
+                写真
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me) return;
+                    setWUploading(true);
+                    setWPhoto(await uploadImage("post-images", me.id, f));
+                    setWUploading(false);
+                  }}
+                />
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+                やめる
+              </button>
+              <button
+                onClick={publish}
+                disabled={!wBody.trim() || wSaving || wUploading}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#4a8a5c" }}
+              >
+                {wSaving ? "報告中..." : "📣 全国に報告する"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setWriting(true)}
+            className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
+            style={{ borderColor: "#4a8a5c66", color: GREEN }}
+          >
+            📣 うちの村の活動を報告する
+          </button>
+        )
       )}
 
       {/* 拠点を立ち上げる */}
@@ -1267,8 +1370,9 @@ function KomeSection({ me, myPref }: { me: User | null; myPref: string }) {
             />
             <div className="mb-2 flex items-center gap-2">
               {photo && <img src={photo} alt="" className="h-14 w-14 rounded-lg object-cover" />}
-              <label className="cursor-pointer rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
-                {uploading ? "⏳" : "📷 写真"}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
+                {uploading ? "⏳" : <CameraIcon size={16} />}
+                写真
                 <input
                   type="file"
                   accept="image/*"
@@ -1414,8 +1518,9 @@ function JinjaSection({ me, myPref }: { me: User | null; myPref: string }) {
             />
             <div className="mb-2 flex items-center gap-2">
               {photo && <img src={photo} alt="" className="h-14 w-14 rounded-lg object-cover" />}
-              <label className="cursor-pointer rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
-                {uploading ? "⏳" : "📷 写真"}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
+                {uploading ? "⏳" : <CameraIcon size={16} />}
+                写真
                 <input
                   type="file"
                   accept="image/*"

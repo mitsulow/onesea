@@ -10,6 +10,7 @@ import { getOrCreateChat } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
 import { Shop, fetchShopsByOwner, categoryOf } from "@/lib/za";
 import { SnsIcon } from "@/components/SnsIcon";
+import { CameraIcon } from "@/components/CameraIcon";
 import { PostCard } from "@/components/PostCard";
 
 interface FullProfile {
@@ -151,7 +152,14 @@ export default function UserPage() {
               onClick={() => coverInput.current?.click()}
               className="absolute bottom-2.5 right-3 rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm"
             >
-              {busy === "cover" ? "⏳" : "📷 背景を変える"}
+              {busy === "cover" ? (
+                "⏳"
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <CameraIcon size={14} />
+                  背景を変える
+                </span>
+              )}
             </button>
             <input
               ref={coverInput}
@@ -190,7 +198,7 @@ export default function UserPage() {
                 aria-label="アイコンを変える"
                 className="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#c94d3a] text-[12px] text-white shadow"
               >
-                {busy === "avatar" ? "⏳" : "📷"}
+                {busy === "avatar" ? "⏳" : <CameraIcon size={14} />}
               </button>
               <input
                 ref={avatarInput}

@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/cotozute";
 import { ZA_CATEGORIES, uploadShopImage } from "@/lib/za";
+import { CameraIcon } from "@/components/CameraIcon";
 
 /** 楽座を出す（出品フォーム） */
 export default function NewShopPage() {
@@ -115,8 +116,8 @@ export default function NewShopPage() {
                 </div>
               ))}
               {images.length < 4 && (
-                <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-[#d8ccb4] text-2xl text-[#b0a898]">
-                  {uploading ? "⏳" : "📷"}
+                <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-[#d8ccb4] text-[#b0a898]">
+                  {uploading ? <span className="text-2xl">⏳</span> : <CameraIcon size={26} />}
                   <input
                     type="file"
                     accept="image/*"

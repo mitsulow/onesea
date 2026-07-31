@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/images";
 import { joinClub, leaveClub } from "@/lib/sekai";
+import { CameraIcon } from "@/components/CameraIcon";
 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -176,8 +177,9 @@ export default function ClubPage() {
               <div className="mt-1.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {photo && <img src={photo} alt="" className="h-12 w-12 rounded-lg object-cover" />}
-                  <label className="cursor-pointer rounded-lg border border-[#e2eae0] bg-white px-3 py-1.5 text-[11.5px] font-bold" style={{ color: GREEN }}>
-                    {uploading ? "⏳" : "📷 写真"}
+                  <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-1.5 text-[11.5px] font-bold" style={{ color: GREEN }}>
+                    {uploading ? "⏳" : <CameraIcon size={15} />}
+                    写真
                     <input
                       type="file"
                       accept="image/*"
