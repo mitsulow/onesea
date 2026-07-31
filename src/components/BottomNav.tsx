@@ -73,26 +73,33 @@ export function BottomNav() {
             <span className="mr-0.5 h-3.5 w-px flex-shrink-0 bg-[#c0d4c4]" />
             {(
               [
-                ["/sekai#moots", "🌕 集い"],
-                ["/sekai#katsudo", "📣 活動"],
-                ["/sekai#lounge", "☕ ラウンジ"],
-                ["/sekai#villages", "⛺ 拠点"],
-                ["/sekai#clubs", "🎌 部活"],
-                ["/sekai#kome", "🌾 米部"],
-                ["/sekai#jinja", "⛩ 神社"],
-                ["/sekai#meister", "🫙 講座"],
-                ["/sekai#tasukete", "🤝 助けて"],
-                ["/sekai#map", "🗾 地図"],
+                ["/sekai", "🌕 集い"],
+                ["/sekai/lounge", "☕ ラウンジ"],
+                ["/sekai/villages", "⛺ 拠点"],
+                ["/sekai/clubs", "🎌 部活"],
+                ["/sekai/kome", "🌾 米部"],
+                ["/sekai/jinja", "⛩ 神社"],
+                ["/sekai/meister", "🫙 講座"],
+                ["/sekai/tasukete", "🤝 助けて"],
+                ["/sekai/map", "🗾 地図"],
               ] as const
-            ).map(([href, label]) => (
-              <a
-                key={href}
-                href={href}
-                className="flex-shrink-0 rounded-full border border-[#d0e0d2] bg-white px-2.5 py-1 text-[10.5px] font-bold text-[#3a7a4c] no-underline"
-              >
-                {label}
-              </a>
-            ))}
+            ).map(([href, label]) => {
+              const active = href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex-shrink-0 rounded-full border px-2.5 py-1 text-[10.5px] font-bold no-underline"
+                  style={
+                    active
+                      ? { background: "#3a7a4c", borderColor: "#3a7a4c", color: "#fff" }
+                      : { background: "#fff", borderColor: "#d0e0d2", color: "#3a7a4c" }
+                  }
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       )}

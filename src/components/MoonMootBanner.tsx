@@ -114,7 +114,7 @@ export function MoonMootBanner() {
         </div>
       )}
 
-      <Link href="/sekai#moots" className="mt-2 block text-right text-[10.5px] text-[#5a7a68] no-underline">
+      <Link href="/sekai" className="mt-2 block text-right text-[10.5px] text-[#5a7a68] no-underline">
         この先の集い・壇上ルームへ →
       </Link>
     </section>
