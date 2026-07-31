@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/client";
 import type { CotozuteProfile } from "./cotozute";
 
+export type Market = "ichi" | "za";
+
 export interface Shop {
   id: string;
   owner_id: string;
@@ -13,7 +15,17 @@ export interface Shop {
   accepts_barter: boolean;
   accepts_tip: boolean;
   category: string | null;
+  market: Market;
   image_urls: string[];
+  created_at: string;
+  profiles: (CotozuteProfile & { username: string | null }) | null;
+  shop_comments?: Array<{ count: number }>;
+}
+
+export interface ShopComment {
+  id: string;
+  user_id: string;
+  body: string;
   created_at: string;
   profiles: (CotozuteProfile & { username: string | null }) | null;
 }
@@ -32,7 +44,7 @@ export function categoryOf(id: string | null) {
 }
 
 const SHOP_SELECT =
-  "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, image_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url)";
+  "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, image_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
 
 export async function fetchShops(category?: string | null): Promise<Shop[]> {
   const supabase = createClient();
@@ -61,6 +73,28 @@ export async function fetchShop(id: string): Promise<Shop | null> {
 export async function deleteShop(id: string, ownerId: string) {
   const supabase = createClient();
   return supabase.from("shops").delete().eq("id", id).eq("owner_id", ownerId);
+}
+
+/* ---- 商品コメント（ツッコミ歓迎） ---- */
+export async function fetchShopComments(shopId: string): Promise<ShopComment[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("shop_comments")
+    .select("id, user_id, body, created_at, profiles!shop_comments_user_id_fkey(username, display_name, avatar_url)")
+    .eq("shop_id", shopId)
+    .order("created_at", { ascending: true })
+    .limit(100);
+  return (data as unknown as ShopComment[]) ?? [];
+}
+
+export async function addShopComment(shopId: string, userId: string, body: string) {
+  const supabase = createClient();
+  return supabase.from("shop_comments").insert({ shop_id: shopId, user_id: userId, body });
+}
+
+export async function deleteShopComment(id: string, userId: string) {
+  const supabase = createClient();
+  return supabase.from("shop_comments").delete().eq("id", id).eq("user_id", userId);
 }
 
 /** 画像をクライアントで圧縮（長辺1600px・WebP品質0.8）してからアップロード */

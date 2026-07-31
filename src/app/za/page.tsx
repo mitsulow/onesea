@@ -3,20 +3,21 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Shop, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
+import { Shop, Market, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
 import { ZaFeatured } from "@/components/ZaFeatured";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
 
 function priceLabel(s: Shop): string {
-  if (s.is_trial) return "0円〜";
+  if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "物々交換" : "0円";
   if (s.price_jpy != null) return `¥${s.price_jpy.toLocaleString()}`;
-  return "";
+  return "応相談";
 }
 
 /** 楽座 — マーケット一覧（楽市楽座の楽座ページを移植） */
 export default function ZaPage() {
   const [shops, setShops] = useState<Shop[] | null>(null);
   const [category, setCategory] = useState<string | null>(null);
+  const [market, setMarket] = useState<Market>("ichi");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [loggedIn, setLoggedIn] = useState(false);
 
@@ -81,6 +82,30 @@ export default function ZaPage() {
         {/* おすすめのむらびと */}
         <VillagerSuggestions />
 
+        {/* 楽市 / 楽座 の切り替え */}
+        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
+          {(
+            [
+              ["ichi", "楽市", "0円・物々交換"],
+              ["za", "楽座", "有料・プロの商品"],
+            ] as const
+          ).map(([id, label, sub]) => (
+            <button
+              key={id}
+              onClick={() => setMarket(id)}
+              className="rounded-xl py-2 text-center transition-colors"
+              style={
+                market === id
+                  ? { background: "#c94d3a", color: "#fff", boxShadow: "0 2px 8px rgba(201,77,58,.35)" }
+                  : { background: "transparent", color: "#8a8070" }
+              }
+            >
+              <div className="text-[15px] font-extrabold leading-tight tracking-[3px]">{label}</div>
+              <div className="text-[9px] leading-tight opacity-85">{sub}</div>
+            </button>
+          ))}
+        </div>
+
         {/* カテゴリチップ */}
         <div className="hide-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-2">
           <button
@@ -134,25 +159,25 @@ export default function ZaPage() {
           </div>
         </Link>
 
-        {/* 一覧 */}
+        {/* 一覧（楽市/楽座でフィルタ） */}
         {shops === null ? (
           <div className="flex justify-center py-10">
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#c94d3a] border-t-transparent" />
           </div>
-        ) : shops.length === 0 ? (
+        ) : shops.filter((s) => s.market === market).length === 0 ? (
           <div
             className="rounded-2xl border-2 border-dashed px-6 py-10 text-center"
             style={{ borderColor: "#c94d3a40", background: "linear-gradient(135deg,#fdf6e9,#f5e8d5)" }}
           >
             <img src="/rakuichi/logo-emblem.webp" alt="" className="mx-auto h-14 w-14 rounded-full object-cover" />
             <p className="mt-2 text-sm font-bold" style={{ color: "#c94d3a" }}>
-              まだ楽座がありません
+              まだ{market === "ichi" ? "楽市" : "楽座"}がありません
             </p>
-            <p className="mt-1 text-xs text-[#8a8070]">最初の楽座を出して、市場を始めよう</p>
+            <p className="mt-1 text-xs text-[#8a8070]">最初のひとつを出して、市場を始めよう</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {shops.map((shop) => {
+            {shops.filter((s) => s.market === market).map((shop) => {
               const cat = categoryOf(shop.category);
               return (
                 <Link key={shop.id} href={`/za/${shop.id}`} className="block no-underline">
@@ -208,6 +233,11 @@ export default function ZaPage() {
                           {shop.accepts_barter && <span title="物々交換可">🔄</span>}
                           {shop.accepts_tip && <span title="投げ銭可">🪙</span>}
                         </span>
+                        {(shop.shop_comments?.[0]?.count ?? 0) > 0 && (
+                          <span className="num ml-auto flex-shrink-0 text-[10px] font-bold text-[#8a8070]">
+                            💬{shop.shop_comments![0].count}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

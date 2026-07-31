@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/cotozute";
-import { ZA_CATEGORIES, uploadShopImage } from "@/lib/za";
+import { Market, ZA_CATEGORIES, uploadShopImage } from "@/lib/za";
 import { CameraIcon } from "@/components/CameraIcon";
 
 /** 楽座を出す（出品フォーム） */
@@ -15,8 +15,9 @@ export default function NewShopPage() {
   const [me, setMe] = useState<User | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [market, setMarket] = useState<Market>("ichi");
   const [price, setPrice] = useState("");
-  const [isTrial, setIsTrial] = useState(false);
+  const [isTrial, setIsTrial] = useState(true);
   const [barter, setBarter] = useState(false);
   const [tip, setTip] = useState(false);
   const [category, setCategory] = useState<string>("other");
@@ -54,11 +55,12 @@ export default function NewShopPage() {
         owner_id: me.id,
         name: name.trim(),
         description: description.trim() || null,
-        price_jpy: isTrial ? null : price ? Number(price) : null,
-        is_trial: isTrial,
+        price_jpy: market === "ichi" ? null : price ? Number(price) : null,
+        is_trial: market === "ichi" ? isTrial : false,
         accepts_barter: barter,
         accepts_tip: tip,
         category,
+        market,
         image_urls: images,
       })
       .select("id")
@@ -88,6 +90,33 @@ export default function NewShopPage() {
         <p className="px-5 py-10 text-center text-sm text-[#8a8070]">ログインすると出品できます</p>
       ) : (
         <div className="space-y-4 px-4 pt-4">
+          {/* 楽市 or 楽座 */}
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">どちらに出す？</label>
+            <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
+              {(
+                [
+                  ["ichi", "楽市", "0円・物々交換"],
+                  ["za", "楽座", "有料・プロの商品"],
+                ] as const
+              ).map(([id, label, sub]) => (
+                <button
+                  key={id}
+                  onClick={() => setMarket(id)}
+                  className="rounded-xl py-2 text-center"
+                  style={
+                    market === id
+                      ? { background: "#c94d3a", color: "#fff" }
+                      : { background: "transparent", color: "#8a8070" }
+                  }
+                >
+                  <div className="text-[14px] font-extrabold leading-tight tracking-[3px]">{label}</div>
+                  <div className="text-[9px] leading-tight opacity-85">{sub}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">品名・サービス名 *</label>
             <input
@@ -166,31 +195,40 @@ export default function NewShopPage() {
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">受け取り方</label>
             <div className="space-y-2">
-              <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
-                <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="accent-[#c94d3a]" />
-                <span className="text-[13.5px]">🌱 お試し出品（0円〜）</span>
-              </label>
-              {!isTrial && (
-                <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2">
-                  <span className="text-[13.5px]">💴</span>
-                  <input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="価格（円）"
-                    className="num w-full bg-transparent text-[14px] outline-none"
-                  />
-                  <span className="text-[12px] text-[#a09888]">円</span>
-                </div>
+              {market === "ichi" ? (
+                <>
+                  <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                    <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="accent-[#c94d3a]" />
+                    <span className="text-[13.5px]">🌱 0円でゆずる</span>
+                  </label>
+                  <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                    <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
+                    <span className="text-[13.5px]">🔄 物々交換で</span>
+                  </label>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2">
+                    <span className="text-[13.5px]">💴</span>
+                    <input
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="価格（円）"
+                      className="num w-full bg-transparent text-[14px] outline-none"
+                    />
+                    <span className="text-[12px] text-[#a09888]">円</span>
+                  </div>
+                  <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                    <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
+                    <span className="text-[13.5px]">🔄 物々交換もOK</span>
+                  </label>
+                  <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                    <input type="checkbox" checked={tip} onChange={(e) => setTip(e.target.checked)} className="accent-[#c94d3a]" />
+                    <span className="text-[13.5px]">🪙 投げ銭もOK</span>
+                  </label>
+                </>
               )}
-              <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
-                <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
-                <span className="text-[13.5px]">🔄 物々交換もOK</span>
-              </label>
-              <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
-                <input type="checkbox" checked={tip} onChange={(e) => setTip(e.target.checked)} className="accent-[#c94d3a]" />
-                <span className="text-[13.5px]">🪙 投げ銭もOK</span>
-              </label>
             </div>
           </div>
 
@@ -202,7 +240,7 @@ export default function NewShopPage() {
             className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
             style={{ background: "#c94d3a" }}
           >
-            {saving ? "出品中..." : "楽座を出す"}
+            {saving ? "出品中..." : market === "ichi" ? "楽市に出す" : "楽座を出す"}
           </button>
         </div>
       )}

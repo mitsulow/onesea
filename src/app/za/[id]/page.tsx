@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { Shop, categoryOf, fetchShop, deleteShop } from "@/lib/za";
+import { Shop, ShopComment, categoryOf, fetchShop, deleteShop, fetchShopComments, addShopComment, deleteShopComment } from "@/lib/za";
 import { getOrCreateChat } from "@/lib/line";
 
 /** 楽座の詳細 — 「連絡を取る」で出品者と LINE が始まる */
@@ -16,12 +16,25 @@ export default function ShopDetailPage() {
   const [me, setMe] = useState<User | null>(null);
   const [imgIndex, setImgIndex] = useState(0);
   const [contacting, setContacting] = useState(false);
+  const [comments, setComments] = useState<ShopComment[]>([]);
+  const [cBody, setCBody] = useState("");
+  const [cSending, setCSending] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => setMe(session?.user ?? null));
     fetchShop(params.id).then((s) => setShop(s));
+    fetchShopComments(params.id).then(setComments);
   }, [params.id]);
+
+  const sendComment = async () => {
+    if (!me || !cBody.trim() || cSending) return;
+    setCSending(true);
+    await addShopComment(params.id, me.id, cBody.trim());
+    setCBody("");
+    setCSending(false);
+    setComments(await fetchShopComments(params.id));
+  };
 
   const contact = async () => {
     if (!me || !shop || contacting) return;
@@ -105,10 +118,24 @@ export default function ShopDetailPage() {
 
       <div className="space-y-3.5 px-4 pt-4">
         <div>
-          <h1 className="text-xl font-extrabold leading-snug text-[#3a3428]">{shop.name}</h1>
+          <div className="flex items-center gap-2">
+            <span
+              className="flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-[2px] text-white"
+              style={{ background: shop.market === "ichi" ? "#5a7d4a" : "#c94d3a" }}
+            >
+              {shop.market === "ichi" ? "楽市" : "楽座"}
+            </span>
+            <h1 className="min-w-0 text-xl font-extrabold leading-snug text-[#3a3428]">{shop.name}</h1>
+          </div>
           <div className="mt-1 flex items-center gap-2.5">
             <span className="text-xl font-extrabold" style={{ color: "#c94d3a" }}>
-              {shop.is_trial ? "0円〜（お試し）" : shop.price_jpy != null ? `¥${shop.price_jpy.toLocaleString()}` : "応相談"}
+              {shop.market === "ichi"
+                ? shop.is_trial
+                  ? "0円（ゆずります）"
+                  : "物々交換で"
+                : shop.price_jpy != null
+                  ? `¥${shop.price_jpy.toLocaleString()}`
+                  : "応相談"}
             </span>
             <span className="flex gap-1 text-[13px] text-[#8a8070]">
               {shop.accepts_barter && <span>🔄 物々交換OK</span>}
@@ -164,6 +191,80 @@ export default function ShopDetailPage() {
         ) : (
           <p className="text-center text-[12px] text-[#a09888]">ログインすると連絡できます</p>
         )}
+
+        {/* コメント欄（ツッコミ歓迎） */}
+        <div className="rounded-xl border border-[#ede5d8] bg-white p-3">
+          <div className="mb-2 text-[12px] font-extrabold tracking-wider text-[#8a7a5a]">
+            💬 コメント{comments.length > 0 ? `（${comments.length}）` : ""}
+          </div>
+          {comments.length === 0 ? (
+            <p className="pb-1 text-[12px] text-[#b0a898]">まだコメントがありません。ひとこと目をどうぞ</p>
+          ) : (
+            <div className="space-y-2.5">
+              {comments.map((c) => (
+                <div key={c.id} className="flex gap-2">
+                  {c.profiles?.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={c.profiles.avatar_url}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="h-7 w-7 flex-shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#f2ede4] text-[12px]">
+                      🌿
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="truncate text-[11.5px] font-bold text-[#3a3428]">
+                        {c.profiles?.display_name ?? "むらびと"}
+                      </span>
+                      <span className="num flex-shrink-0 text-[9.5px] text-[#c0b8a8]">
+                        {new Date(c.created_at).getMonth() + 1}/{new Date(c.created_at).getDate()}
+                      </span>
+                    </div>
+                    <p className="break-words text-[13px] leading-relaxed text-[#4a4438]">{c.body}</p>
+                    {me?.id === c.user_id && (
+                      <button
+                        onClick={async () => {
+                          await deleteShopComment(c.id, me.id);
+                          setComments(await fetchShopComments(params.id));
+                        }}
+                        className="text-[10px] text-[#c0b8a8] underline"
+                      >
+                        削除
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {me ? (
+            <div className="mt-2.5 flex items-end gap-2">
+              <textarea
+                value={cBody}
+                onChange={(e) => setCBody(e.target.value)}
+                rows={1}
+                maxLength={300}
+                placeholder="ツッコミも歓迎"
+                className="min-h-[38px] flex-1 resize-y rounded-xl border border-[#ede5d8] bg-[#fdfbf6] px-3 py-2 text-[13px] outline-none focus:border-[#c94d3a]"
+              />
+              <button
+                onClick={sendComment}
+                disabled={!cBody.trim() || cSending}
+                className="flex-shrink-0 rounded-xl px-3.5 py-2 text-[12.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#c94d3a" }}
+              >
+                送る
+              </button>
+            </div>
+          ) : (
+            <p className="mt-2 text-[11px] text-[#b0a898]">ログインするとコメントできます</p>
+          )}
+        </div>
       </div>
     </main>
   );
