@@ -51,6 +51,7 @@ import {
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { moonsOfYear, YOBI } from "@/lib/almanac";
+import { MEISTER_COURSES } from "@/data/meister-courses";
 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -1679,6 +1680,44 @@ function MeisterSection({ me }: { me: User | null }) {
           🫙 百姓マイスター
         </span>
         <span className="text-[10px] text-[#a0aca0]">百の仕事ができる人へ</span>
+      </div>
+
+      {/* マイスター講座（動画はこれから追加） */}
+      <div className="mb-3 space-y-1.5">
+        {MEISTER_COURSES.map((c) => (
+          <details key={c.id} className="overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
+            <summary className="flex cursor-pointer items-center gap-2.5 px-3 py-2.5">
+              <span className="text-[20px]">{c.emoji}</span>
+              <span className="min-w-0 flex-1 text-[13px] font-extrabold text-[#2a4a34]">{c.title}</span>
+              <span className="num flex-shrink-0 text-[10px] text-[#a0aca0]">
+                {c.videos.length > 0 ? `${c.videos.length}本` : "準備中"}
+              </span>
+              <span className="flex-shrink-0 text-[10px] text-[#a0aca0]">▾</span>
+            </summary>
+            <div className="border-t border-[#eef2ec] px-3 py-2">
+              {c.videos.length === 0 ? (
+                <p className="py-1 text-[11.5px] text-[#a0aca0]">講座動画は、これからここに増えていきます 🌱</p>
+              ) : (
+                <div className="space-y-1">
+                  {c.videos.map((v, i) => (
+                    <a
+                      key={i}
+                      href={v.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 no-underline active:bg-[#f4f8f0]"
+                    >
+                      <span className="flex h-6 w-9 flex-shrink-0 items-center justify-center rounded bg-[#f00] text-[9px] font-extrabold text-white">
+                        ▶
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-[#3a4438]">{v.title}</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </details>
+        ))}
       </div>
 
       {me && (
