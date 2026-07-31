@@ -280,7 +280,7 @@ export default function CafePage() {
           ◀ セカイムラ
         </Link>
         <div className="text-center">
-          <div className="text-[14px] font-extrabold tracking-[1px] text-[#f0e2c8]">☕ {roomKey ?? pref} 村人待合喫茶</div>
+          <div className="text-[14px] font-extrabold tracking-[1px] text-[#f0e2c8]">☕ {roomKey ?? pref} 村人ラウンジ喫茶</div>
           <div className="text-[9.5px] tracking-[2px] text-[#8a7a60]">常時オープン</div>
         </div>
         <span className="w-16 text-right text-[11px] text-[#8a7a60]">
