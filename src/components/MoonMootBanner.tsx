@@ -66,7 +66,7 @@ export function MoonMootBanner() {
         <div className="min-w-0 flex-1">
           <div className="text-[13.5px] font-extrabold tracking-[2px] text-[#eae6b8]">{title}</div>
           <div className="num mt-0.5 text-[12px] text-[#a8d8b8]">
-            {moot.label}
+            {moot.label} {moot.hour}時〜
             <span className="ml-1.5 font-bold" style={{ color: today ? "#ffd870" : "#7aa88a" }}>
               {today ? "今日！" : moot.dday === 1 ? "明日" : `あと${moot.dday}日`}
             </span>

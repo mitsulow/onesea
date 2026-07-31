@@ -52,27 +52,46 @@ export const MEISTER_SKILLS: string[] = [
 /* ============ 集い（満月会・新月会） ============ */
 export interface Moot {
   kind: "new" | "full";
-  dateKey: string; // YYYY-MM-DD (JST)
+  dateKey: string; // YYYY-MM-DD (JST・開催日)
   label: string;
   dday: number;
+  hour: number; // 開催時刻（新月会13時 / 満月会20時）
+}
+
+/**
+ * 会の開催日時（ms UTC）:
+ * 新月会 = 新月点に向かう最後の13時 / 満月会 = 満月点に向かう最後の20時。
+ * 例: 満月点が8/11 11:00 なら、直前の20時は 8/10 20:00 → 満月会は8/10。
+ */
+export function mootTimeOf(ev: { type: "new" | "full"; time: number }): number {
+  const hour = ev.type === "new" ? 13 : 20;
+  const jst = new Date(ev.time + 9 * 3600000);
+  const cand = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate(), hour) - 9 * 3600000;
+  return cand < ev.time ? cand : cand - 86400000;
 }
 
 export function upcomingMoots(count = 4): Moot[] {
-  const events = nextMoons(count + 1);
+  // 朔望の瞬間より会（前日開催の場合あり）が過去になっていることがあるので多めに取る
+  const events = nextMoons(count + 3);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return events.slice(0, count).map((ev) => {
-    const d = new Date(ev.time + 9 * 3600000);
-    const dateKey = d.toISOString().slice(0, 10);
-    const local = new Date(dateKey + "T00:00:00");
-    const dday = Math.round((local.getTime() - today.getTime()) / 86400000);
-    return {
-      kind: ev.type,
-      dateKey,
-      label: `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
-      dday,
-    };
-  });
+  return events
+    .map((ev) => {
+      const mt = mootTimeOf(ev);
+      const d = new Date(mt + 9 * 3600000);
+      const dateKey = d.toISOString().slice(0, 10);
+      const local = new Date(dateKey + "T00:00:00");
+      const dday = Math.round((local.getTime() - today.getTime()) / 86400000);
+      return {
+        kind: ev.type,
+        dateKey,
+        label: `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
+        dday,
+        hour: ev.type === "new" ? 13 : 20,
+      };
+    })
+    .filter((m) => m.dday >= 0)
+    .slice(0, count);
 }
 
 /** 次のミソカ（晦日）= 次の新月の前日 */

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
@@ -19,6 +19,7 @@ import {
   toggleRsvp,
   myMootCount,
   fetchSettings,
+  mootTimeOf,
   fetchLounge,
   postLounge,
   villagersOf,
@@ -49,6 +50,7 @@ import {
 } from "@/lib/sekai";
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
+import { moonsOfYear, YOBI } from "@/lib/almanac";
 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -266,6 +268,7 @@ function MootsSection({
               </div>
               <div className="num text-[22px] font-extrabold leading-snug text-[#a8d8b8]">
                 {next.label}
+                <span className="ml-1.5 text-[14px]">{next.hour}時〜</span>
                 <span className="ml-2 text-[13px] text-[#7aa88a]">
                   {next.dday === 0 ? "今日！" : next.dday === 1 ? "明日" : `あと${next.dday}日`}
                 </span>
@@ -358,7 +361,7 @@ function MootsSection({
       )}
 
       {/* その先の集い */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 pb-1">
         {moots.slice(1).map((m) => (
           <button
             key={m.dateKey}
@@ -383,7 +386,87 @@ function MootsSection({
           </button>
         ))}
       </div>
+
+      {/* 過去の新月満月会（折りたたみ） */}
+      <details className="mt-3">
+        <summary className="cursor-pointer list-none text-[11.5px] font-bold text-[#7aa88a]">
+          📁 過去の新月満月会 ▾
+        </summary>
+        <MootArchive />
+      </details>
     </section>
+  );
+}
+
+/* ═══ 過去の新月満月会アーカイブ（2021年8月の満月会が第1回・通し番号） ═══ */
+const ARCHIVE_YEARS = [2021, 2022, 2023, 2024, 2025, 2026];
+
+function MootArchive() {
+  const [year, setYear] = useState(new Date().getFullYear());
+
+  const all = useMemo(() => {
+    const list: Array<{ time: number; kind: "new" | "full"; no: number }> = [];
+    const raw: Array<{ time: number; kind: "new" | "full" }> = [];
+    for (const y of ARCHIVE_YEARS) {
+      for (const ev of moonsOfYear(y)) {
+        raw.push({ time: mootTimeOf(ev), kind: ev.type });
+      }
+    }
+    raw.sort((a, b) => a.time - b.time);
+    // 第1回 = 2021年8月以降で最初の満月会
+    const firstIdx = raw.findIndex((m) => m.kind === "full" && m.time >= Date.UTC(2021, 7, 1));
+    let no = 0;
+    for (let i = 0; i < raw.length; i++) {
+      if (i < firstIdx) continue;
+      no++;
+      if (raw[i].time <= Date.now()) list.push({ ...raw[i], no });
+    }
+    return list;
+  }, []);
+
+  const list = all.filter((m) => new Date(m.time + 9 * 3600000).getUTCFullYear() === year);
+
+  return (
+    <div className="mt-2">
+      {/* 年タブ */}
+      <div className="hide-scrollbar flex gap-1.5 overflow-x-auto pb-1">
+        {ARCHIVE_YEARS.map((y) => (
+          <button
+            key={y}
+            onClick={() => setYear(y)}
+            className="num flex-shrink-0 rounded-full border px-3 py-1 text-[11.5px] font-bold"
+            style={
+              year === y
+                ? { background: "#2a5a3a", borderColor: "#4a9a6a", color: "#a8d8b8" }
+                : { background: "rgba(255,255,255,.04)", borderColor: "rgba(255,255,255,.12)", color: "#5a7a68" }
+            }
+          >
+            {y}
+          </button>
+        ))}
+      </div>
+      {/* 一覧 */}
+      {list.length === 0 ? (
+        <p className="py-2 text-[11.5px] text-[#5a7a68]">この年の会はありません</p>
+      ) : (
+        <div className="mt-1 space-y-1">
+          {list.map((m) => {
+            const d = new Date(m.time + 9 * 3600000);
+            return (
+              <div key={m.time} className="flex items-baseline gap-2 rounded-lg bg-white/5 px-2.5 py-1.5">
+                <span className="num w-14 flex-shrink-0 text-[10px] text-[#5a7a68]">第{m.no}回</span>
+                <span className="text-[12px] font-bold" style={{ color: m.kind === "new" ? "#9ab8d8" : "#e8d5a0" }}>
+                  {m.kind === "new" ? "🌑 新月会" : "🌕 満月会"}
+                </span>
+                <span className="num ml-auto flex-shrink-0 text-[11px] text-[#a8d8b8]">
+                  {d.getUTCMonth() + 1}月{d.getUTCDate()}日（{YOBI[d.getUTCDay()]}）{m.kind === "new" ? 13 : 20}時
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

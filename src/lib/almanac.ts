@@ -116,6 +116,23 @@ export interface MoonEvent {
   time: number; // ms UTC
 }
 
+/** ある年の新月・満月をすべて計算（過去の会のアーカイブ用） */
+export function moonsOfYear(year: number): MoonEvent[] {
+  const res: MoonEvent[] = [];
+  let cursor = new Date(year, 0, 1).getTime();
+  const end = new Date(year + 1, 0, 1).getTime();
+  while (cursor < end) {
+    const batch = nextMoons(6, cursor);
+    if (batch.length === 0) break;
+    for (const m of batch) {
+      if (m.time < end) res.push(m);
+    }
+    if (batch[batch.length - 1].time >= end) break;
+    cursor = batch[batch.length - 1].time + 3600000;
+  }
+  return res.filter((m) => m.time >= new Date(year, 0, 1).getTime() && m.time < end);
+}
+
 /** これからの新月・満月（二分法で分単位） */
 export function nextMoons(count: number, fromMs = Date.now()): MoonEvent[] {
   const res: MoonEvent[] = [];
