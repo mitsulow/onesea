@@ -610,21 +610,16 @@ export function ActivitySection({ me }: { me: User | null }) {
                     className="min-w-0 truncate text-[13.5px] font-extrabold no-underline"
                     style={{ color: GREEN }}
                   >
-                    ⛺ {p.villages?.name ?? "セカイムラ"}
+                    ⛺ 拠点「{p.villages?.name ?? "セカイムラ"}
+                    {p.villages?.prefecture ? `（${p.villages.prefecture}）` : ""}」
                   </Link>
                   <span className="num flex-shrink-0 text-[10px] text-[#c0c8c0]">
-                    {p.villages?.prefecture ?? ""} ・ {new Date(p.created_at).getMonth() + 1}/
-                    {new Date(p.created_at).getDate()}
+                    {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                   </span>
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#3a4438]">
                   {p.body}
                 </p>
-                <div className="mt-2 flex items-center gap-1.5">
-                  <AvatarSm p={p.profiles} size={24} />
-                  <span className="text-[10.5px] text-[#a0aca0]">{p.profiles?.display_name ?? "むらびと"}</span>
-                </div>
-
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
                 {(() => {
                   const list = cmts[p.id] ?? [];
