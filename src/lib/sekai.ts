@@ -299,7 +299,7 @@ export async function fetchActivityFeed(limit = 10) {
   const { data } = await supabase
     .from("village_posts")
     .select(
-      "id, body, photo_url, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, created_by), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+      "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, created_by), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
     )
     .order("created_at", { ascending: false })
     .limit(limit);

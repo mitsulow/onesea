@@ -70,6 +70,7 @@ export function BottomNav() {
     ["/sekai/kome", "🌾", "米部"],
     ["/sekai/meister", "🫙", "マイスター講座"],
     ["/sekai/tasukete", "🤝", "助けて掲示板"],
+    ["/sekai/map", "🗾", "セカイムラ地図"],
   ] as const;
   const sekaiActive = (href: string) => (href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href));
   const current = SEKAI_PAGES.find(([href]) => sekaiActive(href));

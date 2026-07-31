@@ -59,7 +59,7 @@ import JP_CITIES_JSON from "@/data/jp-cities.json";
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
-import { moonsOfYear, YOBI } from "@/lib/almanac";
+import { moonsOfYear, YOBI, keyOf } from "@/lib/almanac";
 import { MEISTER_COURSES } from "@/data/meister-courses";
 import { LATEST_MOOT_VIDEO, PAST_MOOT_VIDEOS } from "@/data/moot-videos";
 
@@ -494,6 +494,9 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [villages, setVillages] = useState<Village[]>([]);
   const [myVills, setMyVills] = useState<Village[]>([]);
   const [writing, setWriting] = useState(false);
+  const [wKind, setWKind] = useState<"normal" | "event">("normal");
+  const [wEventAt, setWEventAt] = useState("");
+  const [joinedEv, setJoinedEv] = useState<Set<string>>(new Set());
   const [wVillage, setWVillage] = useState("");
   const [wBody, setWBody] = useState("");
   const [wPhoto, setWPhoto] = useState<string | null>(null);
@@ -513,7 +516,32 @@ export function ActivitySection({ me }: { me: User | null }) {
       (map[c.post_id] = map[c.post_id] ?? []).push(c);
     }
     setCmts(map);
+    // 参加済みイベント（この端末の手帳に入れたもの）
+    try {
+      const j = new Set<string>();
+      for (const p of f) if (localStorage.getItem(`onesea-ev-${p.id}`) === "1") j.add(p.id);
+      setJoinedEv(j);
+    } catch {}
   }, []);
+
+  /** イベントに参加 → 手帳（メモ帳）のその日時にスケジュールを書き込む */
+  const joinEvent = (p: any) => {
+    if (!p.event_at) return;
+    const d = new Date(p.event_at);
+    const key = keyOf(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    try {
+      const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+      const day = memos[key] ?? { note: "", h: {} };
+      day.h = day.h ?? {};
+      const hour = String(d.getHours());
+      const label = `⛺${p.villages?.name ?? "セカイムラ"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
+      day.h[hour] = day.h[hour] ? `${day.h[hour]} / ${label}` : label;
+      memos[key] = day;
+      localStorage.setItem("techo-memos", JSON.stringify(memos));
+      localStorage.setItem(`onesea-ev-${p.id}`, "1");
+    } catch {}
+    setJoinedEv((s) => new Set(s).add(p.id));
+  };
 
   const sendCmt = async (postId: string) => {
     const body = (drafts[postId] ?? "").trim();
@@ -545,7 +573,14 @@ export function ActivitySection({ me }: { me: User | null }) {
     if (!me || !wVillage || !wBody.trim() || wSaving) return;
     setWSaving(true);
     const supabase = createClient();
-    await supabase.from("village_posts").insert({ village_id: wVillage, user_id: me.id, body: wBody.trim(), photo_url: wPhoto });
+    await supabase.from("village_posts").insert({
+      village_id: wVillage,
+      user_id: me.id,
+      body: wBody.trim(),
+      photo_url: wPhoto,
+      kind: wKind,
+      event_at: wKind === "event" && wEventAt ? new Date(wEventAt).toISOString() : null,
+    });
     setWSaving(false);
     setWriting(false);
     setWBody("");
@@ -617,6 +652,31 @@ export function ActivitySection({ me }: { me: User | null }) {
                     {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                   </span>
                 </div>
+                {/* イベント: 日時 + 参加する（押すと自分の手帳に入る） */}
+                {p.kind === "event" && p.event_at && (
+                  <div
+                    className="mt-1.5 flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5"
+                    style={{ background: "#fdf6e4", border: "1px solid #e8d8a8" }}
+                  >
+                    <span className="num min-w-0 text-[12px] font-extrabold text-[#a07820]">
+                      📅{" "}
+                      {(() => {
+                        const d = new Date(p.event_at);
+                        return `${d.getMonth() + 1}月${d.getDate()}日（${YOBI[d.getDay()]}）${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}〜`;
+                      })()}
+                    </span>
+                    {me && (
+                      <button
+                        onClick={() => joinEvent(p)}
+                        disabled={joinedEv.has(p.id)}
+                        className="flex-shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-60"
+                        style={{ background: "#c8a030" }}
+                      >
+                        {joinedEv.has(p.id) ? "✓ 手帳に入れました" : "参加する"}
+                      </button>
+                    )}
+                  </div>
+                )}
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#3a4438]">
                   {p.body}
                 </p>
@@ -701,11 +761,41 @@ export function ActivitySection({ me }: { me: User | null }) {
                 ))}
               </select>
             )}
+            {/* 日々の活動 / イベント投稿 */}
+            <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl bg-white p-1">
+              {(
+                [
+                  ["normal", "📣 日々の活動"],
+                  ["event", "📅 イベント投稿"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => setWKind(id)}
+                  className="rounded-lg py-1.5 text-[12px] font-extrabold"
+                  style={wKind === id ? { background: "#4a8a5c", color: "#fff" } : { background: "transparent", color: "#8a968a" }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {wKind === "event" && (
+              <input
+                type="datetime-local"
+                value={wEventAt}
+                onChange={(e) => setWEventAt(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
+              />
+            )}
             <textarea
               value={wBody}
               onChange={(e) => setWBody(e.target.value)}
               rows={2}
-              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
+              placeholder={
+                wKind === "event"
+                  ? "例: 田植えイベントやります！持ち物は長靴と着替え"
+                  : "例: 今日は田植えをしました / 古民家の床を張り替えました"
+              }
               className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
             />
             <div className="mb-2 flex items-center gap-2">
@@ -733,11 +823,11 @@ export function ActivitySection({ me }: { me: User | null }) {
               </button>
               <button
                 onClick={publish}
-                disabled={!wBody.trim() || wSaving || wUploading}
+                disabled={!wBody.trim() || (wKind === "event" && !wEventAt) || wSaving || wUploading}
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >
-                {wSaving ? "報告中..." : "📣 全国に報告する"}
+                {wSaving ? "投稿中..." : wKind === "event" ? "📅 イベントを投稿する" : "📣 全国に報告する"}
               </button>
             </div>
           </div>
