@@ -103,10 +103,10 @@ export function Otohikari() {
 
   const stat = (label: string, value: React.ReactNode) => (
     <div>
-      <div className="text-[8.5px] tracking-[3px] text-[#7fa08c]">{label}</div>
+      <div className="text-[9px] tracking-[3px] text-[#7fa08c]">{label}</div>
       <div
-        className={`${serif.className} num text-[24px] font-semibold leading-tight text-[#b8f0c8]`}
-        style={{ textShadow: "0 0 14px rgba(140,240,170,.6), 0 2px 8px rgba(0,0,0,.6)" }}
+        className={`${serif.className} num text-[34px] font-bold leading-tight text-[#b8f0c8]`}
+        style={{ textShadow: "0 0 16px rgba(140,240,170,.65), 0 2px 10px rgba(0,0,0,.65)" }}
       >
         {value}
       </div>
@@ -238,7 +238,7 @@ export function Otohikari() {
             "TARGET",
             <>
               {SCHUMANN.hz}
-              <span className="ml-1 text-[13px]">Hz</span>
+              <span className="ml-1 text-[17px]">Hz</span>
             </>
           )}
         </div>
