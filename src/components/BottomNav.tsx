@@ -157,7 +157,7 @@ export function BottomNav() {
                 }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/tab-earth.png" alt="" className="h-[22px] w-[22px] object-contain" />
+                <img src="/icons/cel-earth.png" alt="" className="h-[22px] w-[22px] object-contain" />
                 <span className="text-[8px] leading-none text-[#8ab89a]">{sekaiMenu ? "▾" : "▴"}</span>
               </button>
             </div>
@@ -186,7 +186,7 @@ export function BottomNav() {
           {pathname.startsWith("/mmm") && activeBar}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/icons/tab-sun.png"
+            src="/icons/cel-sun.png"
             alt=""
             className="object-contain transition-transform duration-150 active:scale-125"
             style={{ width: 22, height: 22 }}
@@ -199,7 +199,7 @@ export function BottomNav() {
           {pathname.startsWith("/sekai") && activeBar}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/icons/tab-earth.png"
+            src="/icons/cel-earth.png"
             alt=""
             className={`object-contain transition-transform duration-150 ${pathname.startsWith("/sekai") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
             style={{ width: 22, height: 22 }}
@@ -211,7 +211,7 @@ export function BottomNav() {
         <a href={LINKS.tsukiyoga} className={itemCls(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/icons/tab-moon.png"
+            src="/icons/cel-moon.png"
             alt=""
             className="object-contain transition-transform duration-150 active:scale-125"
             style={{ width: 22, height: 22 }}
