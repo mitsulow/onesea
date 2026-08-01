@@ -201,23 +201,31 @@ export function SchumannAudioPlayer() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [wakeOn]);
 
-  /* ---- シンギング・リン（WebAudio合成・実測シューマン×64Hz） ---- */
-  const ringBell = (ctx: AudioContext, freq: number, when: number, dur = 5.5) => {
+  /* ---- シンギング・リン（WebAudio合成・実測シューマン×64Hz）
+     柔らかいナチュラル版: 音量控えめ / ふわっと立ち上がる / ローパスで角を丸める /
+     わずかにずれた2本の基音で本物のリンのような「うなり」を出す ---- */
+  const ringBell = (ctx: AudioContext, freq: number, when: number, dur = 7) => {
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = Math.min(1400, freq * 3);
+    lp.Q.value = 0.4;
+    lp.connect(ctx.destination);
     const partials: Array<[number, number]> = [
-      [1, 0.5],
-      [2.72, 0.16],
-      [5.41, 0.07],
+      [1, 0.15],
+      [1.004, 0.09], // うなり用（微妙にずらした基音）
+      [2.72, 0.04],
+      [5.41, 0.012],
     ];
     for (const [mult, amp] of partials) {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = "sine";
       o.frequency.value = freq * mult;
-      g.gain.setValueAtTime(0, when);
-      g.gain.linearRampToValueAtTime(amp, when + 0.025);
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(amp, when + 0.18); // 「ビクッ」としない立ち上がり
       g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
       o.connect(g);
-      g.connect(ctx.destination);
+      g.connect(lp);
       o.start(when);
       o.stop(when + dur + 0.1);
     }
