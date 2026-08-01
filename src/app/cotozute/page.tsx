@@ -19,7 +19,8 @@ import { PostCard } from "@/components/PostCard";
  */
 
 const PAGE = 20;
-const HARD_MAX = 500; // 端末保護の上限（ここまで遡れれば十分）
+const WINDOW_MAX = 240; // これを超えたら上から捨てる（X方式: だから無限に潜れる）
+const TRIM = 80; // 一度に上から捨てる件数
 
 export default function CotozutePage() {
   const [me, setMe] = useState<User | null>(null);
@@ -36,6 +37,7 @@ export default function CotozutePage() {
   const loadingRef = useRef(false);
   const postsRef = useRef<CotozutePost[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
 
   /* 初回ロード */
@@ -54,22 +56,34 @@ export default function CotozutePage() {
     });
   }, []);
 
-  /* 無限スクロール（番兵が見えたら次ページ） */
+  /* 無限スクロール（番兵が見えたら次ページ・上限なし） */
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMore) return;
     const cur = postsRef.current;
-    if (cur.length >= HARD_MAX) {
-      setHasMore(false);
-      return;
-    }
+    if (cur.length === 0) return;
     loadingRef.current = true;
     // カーソル式: 新着が割り込んでも続きがズレない
     const more = await fetchPostsBefore(cur[cur.length - 1].created_at, PAGE);
     const seen = new Set(cur.map((p) => p.id));
-    const merged = [...cur, ...more.filter((p) => !seen.has(p.id))];
+    let merged = [...cur, ...more.filter((p) => !seen.has(p.id))];
+
+    // X方式の窓: 一定を超えたら「上から」捨ててメモリ一定 → 無限に潜れる。
+    // 捨てたぶん文書が縮むので、スクロール位置を同じ量だけ引いて画面を静止させる
+    if (merged.length > WINDOW_MAX) {
+      const feed = feedRef.current;
+      const before = feed?.offsetHeight ?? 0;
+      merged = merged.slice(TRIM);
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          const after = feed?.offsetHeight ?? 0;
+          if (before > after) window.scrollBy(0, after - before);
+        })
+      );
+    }
+
     postsRef.current = merged;
     setPosts(merged);
-    setHasMore(more.length === PAGE && merged.length < HARD_MAX);
+    setHasMore(more.length === PAGE);
     loadingRef.current = false;
   }, [hasMore]);
 
@@ -109,7 +123,7 @@ export default function CotozutePage() {
   }, []);
 
   const catchUp = () => {
-    const merged = [...fresh, ...postsRef.current].slice(0, HARD_MAX);
+    const merged = [...fresh, ...postsRef.current].slice(0, WINDOW_MAX);
     postsRef.current = merged;
     setPosts(merged);
     setFresh([]);
@@ -194,15 +208,18 @@ export default function CotozutePage() {
         </div>
       </header>
 
-      {/* 追いつきピル（Xの「N件のポストを表示」） */}
+      {/* 追いつきピル（Xの「新しいポストを表示」— スクロール中でも常に画面上部に浮かぶ） */}
       {fresh.length > 0 && (
-        <div className="pointer-events-none sticky top-[56px] z-40 flex justify-center">
+        <div
+          className="pointer-events-none fixed left-1/2 z-50 -translate-x-1/2 transition-all duration-200"
+          style={{ top: hideBar ? "calc(env(safe-area-inset-top) + 10px)" : "calc(env(safe-area-inset-top) + 58px)" }}
+        >
           <button
             onClick={catchUp}
-            className="pointer-events-auto rounded-full px-4 py-2 text-[12.5px] font-extrabold text-white shadow-lg"
-            style={{ background: "#c94d3a" }}
+            className="pointer-events-auto flex items-center gap-1.5 rounded-full py-2 pl-3 pr-4 text-[13px] font-extrabold text-white shadow-xl active:scale-95"
+            style={{ background: "linear-gradient(135deg,#d4603a,#c94d3a)" }}
           >
-            🌿 新しい言の葉 {fresh.length}件を表示
+            ↑ 新しい言の葉 +{fresh.length}件
           </button>
         </div>
       )}
@@ -221,7 +238,7 @@ export default function CotozutePage() {
       )}
 
       {/* フィード本体 */}
-      <div className="px-4">
+      <div className="px-4" ref={feedRef}>
         {posts === null ? (
           <div className="flex justify-center py-12">
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#c94d3a] border-t-transparent" />
