@@ -124,8 +124,8 @@ export function Otohikari() {
         padding: "0 0 10px",
       }}
     >
-      {/* タイトル: 文字1行分だけの薄い帯 */}
-      <div className="px-3 py-1">
+      {/* タイトル + MAPボタン: 文字1行分の薄い帯（背景は地球儀と同じ色） */}
+      <div className="relative z-30 flex items-center justify-between px-3 py-1" style={{ background: "#050a14" }}>
         <span
           className="text-[15px] font-extrabold tracking-[2px]"
           style={{
@@ -136,46 +136,42 @@ export function Otohikari() {
         >
           ▽MasterMindSystem
         </span>
+        <div className="relative">
+          <button
+            onClick={() => setModeOpen((v) => !v)}
+            className="rounded-full border border-[#2a4a5e] bg-[#0c1c2a]/80 px-2.5 py-0.5 text-[9.5px] font-bold tracking-wider text-[#7ab8d8]"
+          >
+            {current.name} {modeOpen ? "▴" : "▾"}
+          </button>
+          {modeOpen && (
+            <div
+              className="absolute right-0 top-full z-30 mt-1 w-60 overflow-hidden rounded-xl border border-[#2a4a5e] bg-[#0c1c2a]"
+              style={{ boxShadow: "0 8px 30px rgba(0,0,0,.5)" }}
+            >
+              {MAP_MODES.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => pickMode(m.id)}
+                  className="flex w-full items-baseline justify-between gap-2 border-b border-[#16283a] px-3 py-2.5 text-left last:border-0"
+                  style={{ background: m.id === mode ? "#12283a" : "transparent" }}
+                >
+                  <span
+                    className="text-[11px] font-extrabold tracking-wider"
+                    style={{ color: m.id === mode ? "#8ff4ff" : "#7a9ab4" }}
+                  >
+                    {m.name}
+                  </span>
+                  <span className="flex-shrink-0 text-[10px] text-[#5a7a9a]">{m.desc}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 地球儀 + オーバーレイ */}
       <div className="relative">
         <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
-
-        {/* マップモード（右上） */}
-        <div className="pointer-events-none absolute left-3 right-3 top-2 z-20 flex items-start justify-end gap-2">
-          <div className="pointer-events-auto relative">
-            <button
-              onClick={() => setModeOpen((v) => !v)}
-              className="rounded-full border border-[#2a4a5e] bg-[#0c1c2a]/80 px-2.5 py-0.5 text-[9.5px] font-bold tracking-wider text-[#7ab8d8]"
-            >
-              {current.name} {modeOpen ? "▴" : "▾"}
-            </button>
-            {modeOpen && (
-              <div
-                className="absolute right-0 top-full z-30 mt-1 w-60 overflow-hidden rounded-xl border border-[#2a4a5e] bg-[#0c1c2a]"
-                style={{ boxShadow: "0 8px 30px rgba(0,0,0,.5)" }}
-              >
-                {MAP_MODES.map((m) => (
-                  <button
-                    key={m.id}
-                    onClick={() => pickMode(m.id)}
-                    className="flex w-full items-baseline justify-between gap-2 border-b border-[#16283a] px-3 py-2.5 text-left last:border-0"
-                    style={{ background: m.id === mode ? "#12283a" : "transparent" }}
-                  >
-                    <span
-                      className="text-[11px] font-extrabold tracking-wider"
-                      style={{ color: m.id === mode ? "#8ff4ff" : "#7a9ab4" }}
-                    >
-                      {m.name}
-                    </span>
-                    <span className="flex-shrink-0 text-[10px] text-[#5a7a9a]">{m.desc}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
 
         {/* 実測時刻 — セクションの一番下・右端 */}
         {live.updated && (
