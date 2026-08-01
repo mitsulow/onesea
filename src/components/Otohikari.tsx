@@ -106,7 +106,7 @@ export function Otohikari() {
     <div>
       <div className="text-[9px] tracking-[3px] text-[#7fa08c]">{label}</div>
       <div
-        className={`${serif.className} num text-[24px] font-bold leading-tight text-[#b8f0c8]`}
+        className={`${serif.className} num text-[21px] font-bold leading-tight text-[#b8f0c8]`}
         style={{ textShadow: "0 0 16px rgba(140,240,170,.65), 0 2px 10px rgba(0,0,0,.65)" }}
       >
         {value}
