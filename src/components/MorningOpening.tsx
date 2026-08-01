@@ -26,6 +26,9 @@ function span(t: number, a: number, b: number): number {
 
 export function MorningOpening() {
   const [show, setShow] = useState(false);
+  const [dateLine, setDateLine] = useState("");
+  const dateRef = useRef<HTMLDivElement>(null);
+  const msgRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const earthRef = useRef<HTMLImageElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -45,6 +48,9 @@ export function MorningOpening() {
     //   if (localStorage.getItem("onesea-morning-shown") === key) return;
     //   localStorage.setItem("onesea-morning-shown", key);
     // } catch {}
+    const d = new Date();
+    const yobi = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+    setDateLine(`${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${yobi}）`);
     setShow(true);
   }, []);
 
@@ -123,18 +129,23 @@ export function MorningOpening() {
       earth.style.width = `${r * 2}px`;
       earth.style.height = `${r * 2}px`;
 
-      /* メッセージ: 一文字ずつ。OTOHIKARI着地後もしばらく重なって残る */
+      /* 日付 + メッセージ: OTOHIKARI着地後もしばらく重なって残る */
       if (text3Ref.current) {
         const el3 = text3Ref.current;
         const eout3 = easeInOut(span(t, 8000, 9000));
-        const ein3 = easeInOut(span(t, 1200, 2000));
+        const ein3 = easeInOut(span(t, 1000, 1800));
         el3.style.opacity = "1";
         el3.style.transform = `translate(-50%, calc(-50% + ${(1 - ein3) * 16}px))`;
-        const chars = el3.children;
-        for (let ci = 0; ci < chars.length; ci++) {
-          (chars[ci] as HTMLElement).style.opacity = String(
-            span(t, 1200 + ci * 90, 1900 + ci * 90) * (1 - eout3)
-          );
+        if (dateRef.current) {
+          dateRef.current.style.opacity = String(easeInOut(span(t, 1000, 1700)) * (1 - eout3));
+        }
+        if (msgRef.current) {
+          const chars = msgRef.current.children;
+          for (let ci = 0; ci < chars.length; ci++) {
+            (chars[ci] as HTMLElement).style.opacity = String(
+              span(t, 1400 + ci * 90, 2100 + ci * 90) * (1 - eout3)
+            );
+          }
         }
       }
 
@@ -213,13 +224,22 @@ export function MorningOpening() {
         style={{ opacity: 0, willChange: "transform, opacity", filter: "blur(7px)" }}
       />
 
-      {/* 今日の地球を、どう楽しむ？ — 一文字ずつ・着地後もしばらく残る */}
-      <div ref={text3Ref} style={{ ...textBase, top: earthCenterY, fontSize: 21, fontWeight: 700, letterSpacing: 3 }}>
-        {Array.from("今日の地球を、どう楽しむ？").map((c, i) => (
-          <span key={i} style={{ opacity: 0, display: "inline-block" }}>
-            {c}
-          </span>
-        ))}
+      {/* ①日付 ②今日の地球を、どう楽しむ？（行間は詰める）— 着地後もしばらく残る */}
+      <div ref={text3Ref} style={{ ...textBase, top: earthCenterY }}>
+        <div
+          ref={dateRef}
+          className="num"
+          style={{ opacity: 0, fontSize: 15, fontWeight: 600, letterSpacing: 2, lineHeight: 1.3 }}
+        >
+          {dateLine}
+        </div>
+        <div style={{ marginTop: 2, fontSize: 21, fontWeight: 700, letterSpacing: 3, lineHeight: 1.4 }} ref={msgRef}>
+          {Array.from("今日の地球を、どう楽しむ？").map((c, i) => (
+            <span key={i} style={{ opacity: 0, display: "inline-block" }}>
+              {c}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* シネマバー + ビネット */}
