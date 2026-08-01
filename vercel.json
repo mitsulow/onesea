@@ -3,7 +3,7 @@
   "crons": [
     { "path": "/api/push-ddp", "schedule": "36 12 * * *" }
   ],
-  "rewrites": [
-    { "source": "/schumann1", "destination": "/schumann1/index.html" }
+  "redirects": [
+    { "source": "/schumann1", "destination": "/schumann1/index.html", "permanent": false }
   ]
 }

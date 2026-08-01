@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { OtohikariGlobe, MapMode } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
 import { Cormorant_Garamond } from "next/font/google";
@@ -268,12 +267,12 @@ export function Otohikari() {
         </div>
       </details>
       <div className="mt-1 text-center">
-        <Link
-          href="/schumann1"
+        <a
+          href="/schumann1/index.html"
           className="text-[9.5px] text-[#5a7a9a] underline decoration-[#5a7a9a]/50 underline-offset-2"
         >
           実際の値をチェック →
-        </Link>
+        </a>
       </div>
     </section>
   );
