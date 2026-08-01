@@ -70,18 +70,15 @@ export function BottomNav() {
     };
   }, [pathname]);
 
-  const itemCls = (active: boolean) =>
-    `relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline ${
-      active ? "text-[#c94d3a]" : "text-[#b0a898]"
-    }`;
+  const itemCls = (active: boolean) => {
+    void active;
+    return "relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline text-[#8a8070]";
+  };
 
   const label = (text: string, active = false) => (
     <span className={`text-[9px] leading-none ${active ? "font-bold" : "font-medium"}`}>{text}</span>
   );
 
-  const activeBar = (
-    <span className="absolute left-1/2 top-0 h-[3px] w-6 -translate-x-1/2 rounded-b-full bg-[#c94d3a]" />
-  );
 
   const inSekai = pathname.startsWith("/sekai");
 
@@ -172,7 +169,6 @@ export function BottomNav() {
       <div className="flex h-[54px] items-center justify-around">
         {/* ホーム */}
         <Link href="/" className={itemCls(pathname === "/")}>
-          {pathname === "/" && activeBar}
           <span
             className={`text-lg leading-none transition-transform duration-150 ${pathname === "/" ? "-translate-y-0.5 scale-[1.35]" : ""}`}
           >
@@ -183,12 +179,11 @@ export function BottomNav() {
 
         {/* MMM = 太陽（OneSea内のMMMサイトへ） */}
         <Link href="/mmm" className={itemCls(pathname.startsWith("/mmm"))}>
-          {pathname.startsWith("/mmm") && activeBar}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/icons/cel-sun.png"
             alt=""
-            className="object-contain transition-transform duration-150 active:scale-125"
+            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/mmm") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
             style={{ width: 22, height: 22 }}
           />
           {label("MMM", pathname.startsWith("/mmm"))}
@@ -196,7 +191,6 @@ export function BottomNav() {
 
         {/* セカイムラ = 地球 */}
         <Link href="/sekai" className={itemCls(pathname.startsWith("/sekai"))}>
-          {pathname.startsWith("/sekai") && activeBar}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/icons/cel-earth.png"
@@ -221,7 +215,6 @@ export function BottomNav() {
 
         {/* 楽市楽座 = 「楽」 */}
         <Link href="/za" className={itemCls(pathname.startsWith("/za"))}>
-          {pathname.startsWith("/za") && activeBar}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/rakuichi/logo-emblem.webp"
@@ -234,7 +227,6 @@ export function BottomNav() {
 
         {/* LINE */}
         <Link href="/line" className={itemCls(pathname.startsWith("/line"))}>
-          {pathname.startsWith("/line") && activeBar}
           <span
             className={`relative text-lg leading-none transition-transform duration-150 ${pathname.startsWith("/line") ? "-translate-y-0.5 scale-[1.35]" : ""}`}
           >
