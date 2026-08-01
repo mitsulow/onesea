@@ -50,6 +50,18 @@ export async function fetchPostsPage(offset: number, limit = 20): Promise<Cotozu
   return (data as unknown as CotozutePost[]) ?? [];
 }
 
+/** カーソル式の続き読み（新着が割り込んでもズレない・無限スクロール用） */
+export async function fetchPostsBefore(cursor: string, limit = 20): Promise<CotozutePost[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .lt("created_at", cursor)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data as unknown as CotozutePost[]) ?? [];
+}
+
 export async function fetchPosts(username?: string): Promise<CotozutePost[]> {
   const supabase = createClient();
   let q = supabase.from("posts").select(POST_SELECT).order("created_at", { ascending: false }).limit(30);

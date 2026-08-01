@@ -76,11 +76,11 @@ export function PostCard({
       src={pr.avatar_url}
       alt=""
       referrerPolicy="no-referrer"
-      className="h-[34px] w-[34px] rounded-full object-cover"
+      className="h-[38px] w-[38px] rounded-full object-cover"
     />
   ) : (
     <div
-      className="flex h-[34px] w-[34px] items-center justify-center rounded-full text-[15px]"
+      className="flex h-[38px] w-[38px] items-center justify-center rounded-full text-[16px]"
       style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
     >
       🌿
@@ -89,7 +89,12 @@ export function PostCard({
 
   return (
     <div
-      className="flex gap-2.5 border-b border-[#f2ece0] py-2.5"
+      className="flex cursor-pointer gap-3 border-b border-[#f2ece0] py-3 active:bg-[#faf6ec]"
+      onClick={(e) => {
+        // ボタン・リンク・画像以外の空白タップは詳細へ（X同様、行全体が入口）
+        if ((e.target as HTMLElement).closest("button,a,img,textarea,input")) return;
+        router.push(`/post/${post.id}`);
+      }}
       onTouchStart={startPress}
       onTouchEnd={endPress}
       onTouchMove={endPress}
@@ -113,22 +118,22 @@ export function PostCard({
           {pr?.username ? (
             <button
               onClick={() => setMeishi(true)}
-              className="max-w-[45%] truncate text-left text-[13.5px] font-bold text-[#3a3428]"
+              className="max-w-[45%] truncate text-left text-[15px] font-bold text-[#3a3428]"
             >
               {pr.display_name ?? "むらびと"}
             </button>
           ) : (
-            <span className="text-[13.5px] font-bold text-[#3a3428]">むらびと</span>
+            <span className="text-[15px] font-bold text-[#3a3428]">むらびと</span>
           )}
           {pr?.username && (
-            <span className="min-w-0 truncate text-[11.5px] text-[#b8b0a0]">@{pr.username}</span>
+            <span className="min-w-0 truncate text-[12.5px] text-[#b8b0a0]">@{pr.username}</span>
           )}
-          <span className="flex-shrink-0 text-[11.5px] text-[#b8b0a0]">・{relTime(post.created_at)}</span>
+          <span className="flex-shrink-0 text-[12.5px] text-[#b8b0a0]">・{relTime(post.created_at)}</span>
         </div>
         {post.body?.trim() && (
           <p
             onClick={() => router.push(`/post/${post.id}`)}
-            className="cursor-pointer break-words text-[13.5px] leading-relaxed text-[#3a3428]"
+            className="cursor-pointer break-words text-[15px] leading-relaxed text-[#3a3428]"
           >
             {post.body}
           </p>
@@ -142,7 +147,7 @@ export function PostCard({
                   src={post.thumb_urls?.[i] ?? full}
                   alt=""
                   loading="lazy"
-                  className="w-full rounded-lg object-cover"
+                  className="w-full rounded-xl object-cover"
                   style={post.image_urls!.length > 1 ? { aspectRatio: "1" } : { maxHeight: 360 }}
                 />
               </a>
@@ -154,7 +159,7 @@ export function PostCard({
         <div className="mt-1.5 flex max-w-[260px] items-center justify-between">
           <Link
             href={`/post/${post.id}`}
-            className="flex items-center gap-1 py-1 pr-3 text-[12px] text-[#b0a898] no-underline"
+            className="flex items-center gap-1 py-1.5 pr-4 text-[13px] text-[#b0a898] no-underline"
             aria-label="コメント"
           >
             💬 <span className="num">{commentCount > 0 ? commentCount : ""}</span>
@@ -162,7 +167,7 @@ export function PostCard({
           <button
             onClick={onLike}
             disabled={!me}
-            className={`flex items-center gap-1 px-3 py-1 text-[12px] transition-transform active:scale-125 ${isLiked ? "font-bold text-[#e05070]" : "text-[#b0a898]"}`}
+            className={`flex items-center gap-1 px-4 py-1.5 text-[13px] transition-transform active:scale-125 ${isLiked ? "font-bold text-[#e05070]" : "text-[#b0a898]"}`}
             aria-label="いいね"
           >
             {isLiked ? "❤️" : "🤍"} <span className="num">{likeCount > 0 ? likeCount : ""}</span>
@@ -173,13 +178,13 @@ export function PostCard({
               if (navigator.share) navigator.share({ text: post.body ?? "", url }).catch(() => {});
               else navigator.clipboard?.writeText(url);
             }}
-            className="px-3 py-1 text-[12px] text-[#b0a898]"
+            className="px-4 py-1.5 text-[13px] text-[#b0a898]"
             aria-label="シェア"
           >
             ↗
           </button>
           {me?.id === post.user_id && (
-            <button onClick={onDelete} className="py-1 pl-3 text-[11px] text-[#c8beac]" aria-label="削除">
+            <button onClick={onDelete} className="py-1.5 pl-4 text-[11px] text-[#c8beac]" aria-label="削除">
               消す
             </button>
           )}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { CotozutePost, fetchPostsPage, fetchMyLikes } from "@/lib/cotozute";
+import { CotozutePost, fetchPostsPage, fetchPostsBefore, fetchMyLikes } from "@/lib/cotozute";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
 
@@ -31,6 +31,8 @@ export default function CotozutePage() {
   const [composing, setComposing] = useState(false);
   const [pull, setPull] = useState(0); // 引っ張って更新の距離
   const [refreshing, setRefreshing] = useState(false);
+  const [hideBar, setHideBar] = useState(false); // 下スクロールでヘッダーを隠す（X風）
+  const lastY = useRef(0);
   const loadingRef = useRef(false);
   const postsRef = useRef<CotozutePost[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,8 @@ export default function CotozutePage() {
       return;
     }
     loadingRef.current = true;
-    const more = await fetchPostsPage(cur.length, PAGE);
+    // カーソル式: 新着が割り込んでも続きがズレない
+    const more = await fetchPostsBefore(cur[cur.length - 1].created_at, PAGE);
     const seen = new Set(cur.map((p) => p.id));
     const merged = [...cur, ...more.filter((p) => !seen.has(p.id))];
     postsRef.current = merged;
@@ -123,6 +126,19 @@ export default function CotozutePage() {
     window.scrollTo({ top: 0 });
   };
 
+  /* ヘッダーの隠し・出し（下へ読み進むと消え、少しでも上に戻すと現れる） */
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < 60) setHideBar(false);
+      else if (y > lastY.current + 6) setHideBar(true);
+      else if (y < lastY.current - 6) setHideBar(false);
+      lastY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   /* 引っ張って更新（X風。ページ最上部で下に引くとスピナー→更新） */
   useEffect(() => {
     const onStart = (e: TouchEvent) => {
@@ -132,12 +148,12 @@ export default function CotozutePage() {
     const onMove = (e: TouchEvent) => {
       if (touchStartY.current == null || refreshing) return;
       const dy = e.touches[0].clientY - touchStartY.current;
-      if (dy > 0 && window.scrollY <= 0) setPull(Math.min(90, dy * 0.45));
+      if (dy > 0 && window.scrollY <= 0) setPull(Math.min(90, dy * 0.6));
     };
     const onEnd = async () => {
       if (touchStartY.current == null) return;
       touchStartY.current = null;
-      if (pull > 55 && !refreshing) {
+      if (pull > 48 && !refreshing) {
         setRefreshing(true);
         setPull(48);
         const list = await fetchPostsPage(0, PAGE);
@@ -162,7 +178,10 @@ export default function CotozutePage() {
   return (
     <main className="min-h-screen bg-[#fffdf8] pb-20">
       {/* 上部バー（X風: 左アバター・中央ロゴ） */}
-      <header className="sticky top-0 z-40 border-b border-[#f0e9dc] bg-[#fffdf8]/92 backdrop-blur-sm">
+      <header
+        className="sticky top-0 z-40 border-b border-[#f0e9dc] bg-[#fffdf8]/92 backdrop-blur-sm transition-transform duration-200"
+        style={{ transform: hideBar ? "translateY(-110%)" : "none" }}
+      >
         <div className="relative flex h-12 items-center justify-center px-4">
           <Link href="/my" aria-label="マイページ" className="absolute left-3 top-1/2 -translate-y-1/2">
             {avatar ? (
@@ -247,16 +266,27 @@ export default function CotozutePage() {
         </button>
       )}
 
-      {/* 投稿シート */}
+      {/* 投稿画面（X風の全画面・開いた瞬間に書ける） */}
       {composing && (
-        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/45" onClick={() => setComposing(false)}>
+        <div className="fixed inset-0 z-[80] flex justify-center bg-black/30">
           <div
-            className="w-full max-w-[480px] rounded-t-2xl bg-[#fffdf8] px-4 pb-6 pt-3"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}
-            onClick={(e) => e.stopPropagation()}
+            ref={(el) => {
+              // 開いた瞬間にキーボードを出す（X同様）
+              if (el) setTimeout(() => el.querySelector("textarea")?.focus(), 60);
+            }}
+            className="h-full w-full max-w-[480px] overflow-y-auto bg-[#fffdf8]"
+            style={{ paddingTop: "calc(env(safe-area-inset-top) + 4px)" }}
           >
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#e0d5c0]" />
-            <CotozuteComposer onPosted={reload} />
+            <div className="flex items-center justify-between px-4 py-2.5">
+              <button onClick={() => setComposing(false)} className="py-1 pr-3 text-[14px] text-[#8a8070]">
+                キャンセル
+              </button>
+              <span className="text-[13px] font-bold tracking-[2px] text-[#a09888]">言の葉</span>
+              <span className="w-14" />
+            </div>
+            <div className="px-4">
+              <CotozuteComposer onPosted={reload} />
+            </div>
           </div>
         </div>
       )}
