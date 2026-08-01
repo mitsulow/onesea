@@ -40,8 +40,9 @@ export function MorningOpening() {
   const [earthCenterY, setEarthCenterY] = useState(260);
 
   useEffect(() => {
-    // 朝いち仕様: その日はじめて開いた時だけアニメを流す（リロードでは出ない）
-    const today = new Date();
+    // 朝いち仕様: その日はじめて開いた時だけアニメを流す（リロードでは出ない）。
+    // 深夜利用者のため日付の切り替えは AM3:00（0時〜2:59は前日扱い）
+    const today = new Date(Date.now() - 3 * 3600 * 1000);
     const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
     try {
       if (localStorage.getItem("onesea-morning-shown") === key) return;
