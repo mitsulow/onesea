@@ -62,7 +62,8 @@ export function CotozuteFeed() {
 
   return (
     <section className="card" style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}>
-      <div className="sec mb-2.5">💭 Cotozute</div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/cotozute-logo.webp" alt="Cotozute" className="mb-2 h-10 w-auto rounded-xl" />
       <CotozuteComposer onPosted={reload} />
       {posts === null ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>

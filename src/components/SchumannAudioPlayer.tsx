@@ -523,9 +523,13 @@ export function SchumannAudioPlayer() {
       {modeOpen && !program && (
         <div className="mt-2 space-y-1.5 rounded-xl bg-white/25 p-2.5">
           <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="text-[12px] font-extrabold text-white">🧘 瞑想モード</div>
-              <div className="text-[9.5px] leading-snug text-white/80">鈴3打 → シューマン音 → 静寂 → 鈴3打</div>
+            <div className="flex min-w-0 items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/mode-meditation.webp" alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
+              <div className="min-w-0">
+                <div className="text-[12px] font-extrabold text-white">瞑想モード</div>
+                <div className="text-[9.5px] leading-snug text-white/80">鈴3打 → シューマン音 → 静寂 → 鈴3打</div>
+              </div>
             </div>
             <div className="flex flex-shrink-0 gap-1.5">
               <button
@@ -543,9 +547,13 @@ export function SchumannAudioPlayer() {
             </div>
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
-            <div className="min-w-0">
-              <div className="text-[12px] font-extrabold text-white">💡 アイディアモード</div>
-              <div className="text-[9.5px] leading-snug text-white/80">全体からアイディアを降ろします</div>
+            <div className="flex min-w-0 items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/mode-idea.webp" alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
+              <div className="min-w-0">
+                <div className="text-[12px] font-extrabold text-white">アイディアモード</div>
+                <div className="text-[9.5px] leading-snug text-white/80">全体からアイディアを降ろします</div>
+              </div>
             </div>
             <button
               onClick={() => {
@@ -558,9 +566,13 @@ export function SchumannAudioPlayer() {
             </button>
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
-            <div className="min-w-0">
-              <div className="text-[12px] font-extrabold text-white">🌊 シンクロモード</div>
-              <div className="text-[9.5px] leading-snug text-white/80">今日の「やりたいこと」に許可を出す</div>
+            <div className="flex min-w-0 items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/mode-synchro.webp" alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
+              <div className="min-w-0">
+                <div className="text-[12px] font-extrabold text-white">シンクロモード</div>
+                <div className="text-[9.5px] leading-snug text-white/80">今日の「やりたいこと」に許可を出す</div>
+              </div>
             </div>
             <button
               onClick={() => {
