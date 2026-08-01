@@ -418,19 +418,33 @@ export function SchumannAudioPlayer() {
         : "🌊 シンクロモード";
 
   return (
-    <section className="card" style={{ margin: "0 -16px", borderRadius: 0, border: "none", background: "#0abab5" }}>
+    <section
+      className="card"
+      style={{
+        margin: "0 -16px",
+        borderRadius: 0,
+        border: "none",
+        borderTop: "1.5px solid rgba(143,244,255,.85)", // OTOHIKARIと繋がる蛍光水色ライン
+        boxShadow: "inset 0 2px 12px -2px rgba(143,244,255,.5)",
+        background: "#0abab5",
+        padding: "7px 12px 9px",
+      }}
+    >
       {/* タイトル行 */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-baseline gap-1.5">
-          <span className="text-[15px]">⚡</span>
-          <span className="text-[16px] font-extrabold tracking-wide text-white" style={{ textShadow: "0 1px 3px rgba(0,0,0,.15)" }}>
+          <span className="text-[13px]">⚡</span>
+          <span
+            className="text-[14px] font-extrabold tracking-wide text-white"
+            style={{ textShadow: "0 0 8px rgba(143,244,255,.95), 0 0 18px rgba(80,220,255,.55)" }}
+          >
             シューマン音
           </span>
-          <span className="text-[12.5px] text-white/85">（夏至 {SCHUMANN.hz}HZ）</span>
+          <span className="text-[11.5px] text-white/85">（夏至 {SCHUMANN.hz}HZ）</span>
         </div>
         <button
           onClick={() => setShowDlInfo((v) => !v)}
-          className="flex-shrink-0 rounded-full border border-white/60 px-3 py-1 text-[10.5px] font-bold tracking-wider text-white/90"
+          className="flex-shrink-0 rounded-full border border-white/60 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-white/90"
         >
           DL INFO
         </button>
@@ -447,7 +461,7 @@ export function SchumannAudioPlayer() {
       )}
 
       {/* 再生ボタン + 🔁 + モード + シークバー */}
-      <div className="mt-2.5 flex items-center gap-2">
+      <div className="mt-1.5 flex items-center gap-2">
         <button
           onClick={togglePlay}
           disabled={!src || program !== null}
