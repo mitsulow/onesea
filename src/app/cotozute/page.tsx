@@ -238,14 +238,10 @@ export default function CotozutePage() {
               </div>
             ))}
             <div ref={sentinelRef} />
-            {hasMore ? (
+            {hasMore && (
               <div className="flex justify-center py-6">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#e0d5c0] border-t-transparent" />
               </div>
-            ) : (
-              <p className="py-8 text-center text-[11px] tracking-[2px] text-[#c8c0b0]">
-                〜 言の葉は、海へ還りました 🌊 〜
-              </p>
             )}
           </>
         )}
