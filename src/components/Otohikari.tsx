@@ -245,15 +245,31 @@ export function Otohikari() {
         </div>
       </div>
 
-      <div className="num mt-1.5 text-center text-[11px] text-[#8aa8d0]">
-        今のシューマン電磁波 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
-        {needed != null
-          ? `（目標値まで${needed >= 0 ? "＋" : "−"}${Math.abs(needed).toFixed(2)}Hz）`
-          : ""}
-      </div>
-      <div className="mt-0.5 text-center">
+      {/* 今の実測値 — タップで F1〜F4 のグラフを展開 */}
+      <details className="mt-1.5 px-2">
+        <summary className="num cursor-pointer list-none text-center text-[11px] text-[#8aa8d0]">
+          今のシューマン電磁波 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
+          {needed != null
+            ? `（目標値まで${needed >= 0 ? "＋" : "−"}${Math.abs(needed).toFixed(2)}Hz）`
+            : ""}{" "}
+          ▾
+        </summary>
+        <div className="mt-2 space-y-1.5">
+          {(["f1", "f2", "f3", "f4"] as const).map((k) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={k}
+              src={`https://mitsulow.github.io/0Lei/graph_${k}.png?v=${encodeURIComponent(live.updated ?? "")}`}
+              alt={`${k.toUpperCase()} グラフ`}
+              loading="lazy"
+              className="w-full rounded-lg border border-[#1a3048]"
+            />
+          ))}
+        </div>
+      </details>
+      <div className="mt-1 text-center">
         <Link
-          href="/schumann"
+          href="/schumann1"
           className="text-[9.5px] text-[#5a7a9a] underline decoration-[#5a7a9a]/50 underline-offset-2"
         >
           実際の値をチェック →
