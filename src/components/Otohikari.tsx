@@ -128,10 +128,10 @@ export function Otohikari() {
       <div className="relative">
         <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
 
-        {/* タイトル（左上）+ マップモード（右上） */}
-        <div className="pointer-events-none absolute left-3 right-3 top-2 z-20 flex items-center justify-between gap-2">
+        {/* タイトル（左・2行分下げ）+ マップモード（右上） */}
+        <div className="pointer-events-none absolute left-3 right-3 top-2 z-20 flex items-start justify-between gap-2">
           <span
-            className="text-[15px] font-extrabold tracking-[2px]"
+            className="mt-11 text-[15px] font-extrabold tracking-[2px]"
             style={{
               color: "#8ff4ff",
               textShadow:
@@ -173,9 +173,9 @@ export function Otohikari() {
           </div>
         </div>
 
-        {/* 実測時刻 — 地球儀の右下 */}
+        {/* 実測時刻 — セクションの一番下・右端 */}
         {live.updated && (
-          <span className="num pointer-events-none absolute bottom-12 right-3 z-20 text-[9px] text-[#5a7a9a]">
+          <span className="num pointer-events-none absolute bottom-1 right-3 z-20 text-[9px] text-[#5a7a9a]">
             実測 {new Date(live.updated).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} 更新
           </span>
         )}
