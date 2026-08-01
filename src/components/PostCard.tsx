@@ -1,11 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { useRef, useState } from "react";
 import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
 import { MeishiModal } from "./MeishiModal";
+
+/** X風の相対時刻: 今 / N分 / N時間 / N日 / M/D */
+function relTime(iso: string): string {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return "今";
+  if (s < 3600) return `${Math.floor(s / 60)}分`;
+  if (s < 86400) return `${Math.floor(s / 3600)}時間`;
+  if (s < 7 * 86400) return `${Math.floor(s / 86400)}日`;
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
 
 /**
  * 言の葉カード（楽市楽座「情緒」と同じ操作系）:
@@ -22,8 +34,8 @@ export function PostCard({
   liked: boolean;
   onDeleted?: () => void;
 }) {
+  const router = useRouter();
   const pr = post.profiles;
-  const d = new Date(post.created_at);
   const [isLiked, setIsLiked] = useState(liked);
   const [likeCount, setLikeCount] = useState(post.likes?.[0]?.count ?? 0);
   const commentCount = post.comments?.[0]?.count ?? 0;
@@ -96,23 +108,30 @@ export function PostCard({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="flex justify-between gap-2">
+        {/* X風の1行ヘッダー: 名前 @ハンドル ・ 相対時刻 */}
+        <div className="flex min-w-0 items-baseline gap-1">
           {pr?.username ? (
             <button
               onClick={() => setMeishi(true)}
-              className="truncate text-left text-[13px] font-bold text-[#4a4438]"
+              className="max-w-[45%] truncate text-left text-[13.5px] font-bold text-[#3a3428]"
             >
               {pr.display_name ?? "むらびと"}
             </button>
           ) : (
-            <span className="text-[13px] font-bold text-[#4a4438]">むらびと</span>
+            <span className="text-[13.5px] font-bold text-[#3a3428]">むらびと</span>
           )}
-          <span className="num text-[10.5px] text-[#c0b8a8]">
-            {d.getMonth() + 1}/{d.getDate()}
-          </span>
+          {pr?.username && (
+            <span className="min-w-0 truncate text-[11.5px] text-[#b8b0a0]">@{pr.username}</span>
+          )}
+          <span className="flex-shrink-0 text-[11.5px] text-[#b8b0a0]">・{relTime(post.created_at)}</span>
         </div>
         {post.body?.trim() && (
-          <p className="break-words text-[13.5px] leading-relaxed text-[#5a5448]">{post.body}</p>
+          <p
+            onClick={() => router.push(`/post/${post.id}`)}
+            className="cursor-pointer break-words text-[13.5px] leading-relaxed text-[#3a3428]"
+          >
+            {post.body}
+          </p>
         )}
         {post.image_urls && post.image_urls.length > 0 && (
           <div className={`mt-1.5 grid gap-1 ${post.image_urls.length > 1 ? "grid-cols-2" : ""}`}>
@@ -131,24 +150,36 @@ export function PostCard({
           </div>
         )}
         {post.embed && <EmbedCard embed={post.embed} />}
-        <div className="mt-1.5 flex items-center gap-5">
+        {/* X風アクションバー: 均等に散らす（返信・いいね・シェア） */}
+        <div className="mt-1.5 flex max-w-[260px] items-center justify-between">
+          <Link
+            href={`/post/${post.id}`}
+            className="flex items-center gap-1 py-1 pr-3 text-[12px] text-[#b0a898] no-underline"
+            aria-label="コメント"
+          >
+            💬 <span className="num">{commentCount > 0 ? commentCount : ""}</span>
+          </Link>
           <button
             onClick={onLike}
             disabled={!me}
-            className={`flex items-center gap-1 text-[12px] ${isLiked ? "font-bold text-[#e05070]" : "text-[#b0a898]"}`}
+            className={`flex items-center gap-1 px-3 py-1 text-[12px] transition-transform active:scale-125 ${isLiked ? "font-bold text-[#e05070]" : "text-[#b0a898]"}`}
             aria-label="いいね"
           >
-            {isLiked ? "❤️" : "🤍"} {likeCount > 0 ? likeCount : ""}
+            {isLiked ? "❤️" : "🤍"} <span className="num">{likeCount > 0 ? likeCount : ""}</span>
           </button>
-          <Link
-            href={`/post/${post.id}`}
-            className="flex items-center gap-1 text-[12px] text-[#b0a898] no-underline"
-            aria-label="コメント"
+          <button
+            onClick={() => {
+              const url = `https://onesea.vercel.app/post/${post.id}`;
+              if (navigator.share) navigator.share({ text: post.body ?? "", url }).catch(() => {});
+              else navigator.clipboard?.writeText(url);
+            }}
+            className="px-3 py-1 text-[12px] text-[#b0a898]"
+            aria-label="シェア"
           >
-            💬 {commentCount > 0 ? commentCount : ""}
-          </Link>
+            ↗
+          </button>
           {me?.id === post.user_id && (
-            <button onClick={onDelete} className="ml-auto text-[11px] text-[#c8beac]" aria-label="削除">
+            <button onClick={onDelete} className="py-1 pl-3 text-[11px] text-[#c8beac]" aria-label="削除">
               消す
             </button>
           )}

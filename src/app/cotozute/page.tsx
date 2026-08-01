@@ -29,9 +29,12 @@ export default function CotozutePage() {
   const [hasMore, setHasMore] = useState(true);
   const [fresh, setFresh] = useState<CotozutePost[]>([]);
   const [composing, setComposing] = useState(false);
+  const [pull, setPull] = useState(0); // 引っ張って更新の距離
+  const [refreshing, setRefreshing] = useState(false);
   const loadingRef = useRef(false);
   const postsRef = useRef<CotozutePost[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number | null>(null);
 
   /* 初回ロード */
   useEffect(() => {
@@ -80,16 +83,26 @@ export default function CotozutePage() {
     return () => io.disconnect();
   }, [loadMore, posts !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* 30秒ごとに新着チェック → 追いつきピル */
+  /* 新着チェック → 追いつきピル（30秒ごと + アプリに戻ってきた瞬間） */
   useEffect(() => {
-    const t = setInterval(async () => {
+    const check = async () => {
       const newest = postsRef.current[0]?.created_at;
       if (!newest) return;
       const latest = await fetchPostsPage(0, PAGE);
       const ids = new Set(postsRef.current.map((p) => p.id));
       setFresh(latest.filter((p) => p.created_at > newest && !ids.has(p.id)));
-    }, 30000);
-    return () => clearInterval(t);
+    };
+    const t = setInterval(check, 30000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onVis);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onVis);
+    };
   }, []);
 
   const catchUp = () => {
@@ -109,6 +122,42 @@ export default function CotozutePage() {
     setComposing(false);
     window.scrollTo({ top: 0 });
   };
+
+  /* 引っ張って更新（X風。ページ最上部で下に引くとスピナー→更新） */
+  useEffect(() => {
+    const onStart = (e: TouchEvent) => {
+      if (window.scrollY <= 0) touchStartY.current = e.touches[0].clientY;
+      else touchStartY.current = null;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (touchStartY.current == null || refreshing) return;
+      const dy = e.touches[0].clientY - touchStartY.current;
+      if (dy > 0 && window.scrollY <= 0) setPull(Math.min(90, dy * 0.45));
+    };
+    const onEnd = async () => {
+      if (touchStartY.current == null) return;
+      touchStartY.current = null;
+      if (pull > 55 && !refreshing) {
+        setRefreshing(true);
+        setPull(48);
+        const list = await fetchPostsPage(0, PAGE);
+        postsRef.current = list;
+        setPosts(list);
+        setFresh([]);
+        setHasMore(list.length === PAGE);
+        setRefreshing(false);
+      }
+      setPull(0);
+    };
+    window.addEventListener("touchstart", onStart, { passive: true });
+    window.addEventListener("touchmove", onMove, { passive: true });
+    window.addEventListener("touchend", onEnd);
+    return () => {
+      window.removeEventListener("touchstart", onStart);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onEnd);
+    };
+  }, [pull, refreshing]);
 
   return (
     <main className="min-h-screen bg-[#fffdf8] pb-20">
@@ -136,6 +185,19 @@ export default function CotozutePage() {
           >
             🌿 新しい言の葉 {fresh.length}件を表示
           </button>
+        </div>
+      )}
+
+      {/* 引っ張って更新のスピナー */}
+      {(pull > 0 || refreshing) && (
+        <div
+          className="flex items-center justify-center overflow-hidden transition-[height]"
+          style={{ height: refreshing ? 48 : pull }}
+        >
+          <div
+            className={`h-6 w-6 rounded-full border-2 border-[#c94d3a] border-t-transparent ${refreshing ? "animate-spin" : ""}`}
+            style={refreshing ? {} : { transform: `rotate(${pull * 4}deg)`, opacity: Math.min(1, pull / 55) }}
+          />
         </div>
       )}
 
