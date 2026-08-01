@@ -70,7 +70,8 @@ export default function LinePage() {
         className="flex items-center justify-between px-5 pb-3.5 pt-4"
         style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
       >
-        <h1 className="text-lg font-extrabold tracking-[4px] text-[#f0e6c8]">LINE</h1>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/talk-logo.webp" alt="OneSeaTALK" className="h-9 w-auto" />
         <span className="text-[11px] tracking-widest text-[#7a9ab4]">メッセージ</span>
       </header>
 
@@ -100,8 +101,8 @@ export default function LinePage() {
         <div className="grid grid-cols-2 border-b border-[#e8e0d0] bg-[#fffdf8]">
           {(
             [
-              ["dm", "👤 個人", dmUnread],
-              ["group", "👥 グループ", groupUnread],
+              ["dm", "👤 個人TALK", dmUnread],
+              ["group", "👥 グループTALK", groupUnread],
             ] as const
           ).map(([id, label, n]) => (
             <button

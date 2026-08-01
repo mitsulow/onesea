@@ -230,7 +230,7 @@ export default function ShopDetailPage() {
               className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "#c94d3a" }}
             >
-              {contacting ? "ひらいています..." : "💬 連絡を取る（LINEで商談）"}
+              {contacting ? "ひらいています..." : "💬 連絡を取る（TALKで商談）"}
             </button>
           </div>
         ) : (
@@ -322,7 +322,7 @@ export default function ShopDetailPage() {
                 {proposing ? "提案しています..." : "この内容で提案する"}
               </button>
               <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">
-                相手のLINEに提案が届き、そのままトークで交渉できます
+                相手のTALKに提案が届き、そのままトークで交渉できます
               </p>
             </div>
           </div>

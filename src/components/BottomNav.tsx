@@ -8,7 +8,7 @@ import { fetchUnreadTotal } from "@/lib/line";
 import { setBadge, ensureSw } from "@/lib/push";
 import { LINKS } from "@/lib/config";
 
-/** 下部タブ: ホーム / MMM(太陽) / セカイムラ(地球) / ツキヨガ(月) / 楽市楽座(楽) / LINE */
+/** 下部タブ: ホーム / MMM(太陽) / セカイムラ(地球) / ツキヨガ(月) / 楽市楽座(楽) / TALK */
 export function BottomNav() {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
@@ -225,12 +225,18 @@ export function BottomNav() {
           {label("楽市楽座", pathname.startsWith("/za"))}
         </Link>
 
-        {/* LINE */}
+        {/* TALK */}
         <Link href="/line" className={itemCls(pathname.startsWith("/line"))}>
           <span
-            className={`relative text-lg leading-none transition-transform duration-150 ${pathname.startsWith("/line") ? "-translate-y-0.5 scale-[1.35]" : ""}`}
+            className={`relative leading-none transition-transform duration-150 ${pathname.startsWith("/line") ? "-translate-y-0.5 scale-[1.35]" : ""}`}
           >
-            💬
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icons/tab-talk.png"
+              alt=""
+              className="object-contain"
+              style={{ width: 24, height: 20 }}
+            />
             {unread > 0 && (
               <span
                 className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white"
@@ -240,7 +246,7 @@ export function BottomNav() {
               </span>
             )}
           </span>
-          {label("LINE", pathname.startsWith("/line"))}
+          {label("TALK", pathname.startsWith("/line"))}
         </Link>
       </div>
     </nav>

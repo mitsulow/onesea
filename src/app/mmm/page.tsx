@@ -235,7 +235,7 @@ export default function MmmPage() {
                 className="flex-1 rounded-xl py-2.5 text-center text-[13px] font-extrabold text-[#101a28] no-underline"
                 style={{ background: "linear-gradient(135deg,#b8c8ff,#8a9af0)" }}
               >
-                💬 班のグループLINE
+                💬 班のグループTALK
               </Link>
               <button
                 onClick={async () => {
