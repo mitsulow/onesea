@@ -62,7 +62,7 @@ export function VillagerSuggestions() {
               {p.display_name ?? "むらびと"}
             </div>
             <div className="mt-0.5 truncate text-[10px] text-[#a09888]">
-              {p.status_line ?? `@${p.username}`}
+              {p.status_line ?? "よろしくね 🌿"}
             </div>
           </Link>
         ))}

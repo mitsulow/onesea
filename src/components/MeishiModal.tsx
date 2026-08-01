@@ -103,23 +103,15 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                 <div className="truncate text-[17px] font-extrabold text-[#3a3428]">
                   {p.display_name ?? "むらびと"}
                 </div>
-                {p.username && <div className="truncate text-[11px] text-[#b0a890]">@{p.username}</div>}
+                {p.member_no != null && (
+                  <div className="truncate text-[11px] text-[#b0a890]">@Warawer{String(p.member_no).padStart(7, "0")}</div>
+                )}
               </div>
 
-              {/* わらわ〜No. + 地球冒険日数 */}
-              {p.member_no != null && (
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <span
-                    className="num rounded-full px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-[#7a5a10]"
-                    style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
-                  >
-                    わらわ〜No.{String(p.member_no).padStart(7, "0")}
-                  </span>
-                  {p.birthday && (
-                    <span className="num text-[10px] font-bold text-[#a09888]">
-                      🌏 地球冒険 {(Math.floor((Date.now() - new Date(p.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
-                    </span>
-                  )}
+              {/* 地球冒険日数（わらわ〜番号は@Warawerでさりげなく） */}
+              {p.birthday && (
+                <div className="num mt-1.5 text-[10px] font-bold text-[#a09888]">
+                  🌏 地球冒険 {(Math.floor((Date.now() - new Date(p.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
                 </div>
               )}
 
@@ -135,7 +127,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                 <div className="mt-2 min-w-0">
                   {p.life_work && (
                     <div className="line-clamp-2 break-words text-[14px] font-extrabold leading-snug" style={{ color: "#c94d3a" }}>
-                      🌱 {p.life_work}
+                      ❤️ {p.life_work}
                     </div>
                   )}
                   {p.rice_work && (

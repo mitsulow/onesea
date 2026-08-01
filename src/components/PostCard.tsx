@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { useRef, useState } from "react";
-import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
+import { CotozutePost, toggleLike, deletePost, warawer } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
 import { MeishiModal } from "./MeishiModal";
 
@@ -125,8 +125,8 @@ export function PostCard({
           ) : (
             <span className="text-[15px] font-bold text-[#3a3428]">むらびと</span>
           )}
-          {pr?.username && (
-            <span className="min-w-0 truncate text-[12.5px] text-[#b8b0a0]">@{pr.username}</span>
+          {warawer(pr?.member_no) && (
+            <span className="min-w-0 truncate text-[12.5px] text-[#b8b0a0]">{warawer(pr?.member_no)}</span>
           )}
           <span className="flex-shrink-0 text-[12.5px] text-[#b8b0a0]">・{relTime(post.created_at)}</span>
         </div>

@@ -302,7 +302,9 @@ export default function UserPage() {
           <h1 className="text-[21px] font-extrabold leading-snug text-[#3a3428]">
             {profile.display_name ?? "むらびと"}
           </h1>
-          <div className="text-[12px] text-[#a09888]">@{profile.username}</div>
+          {profile.member_no != null && (
+            <div className="text-[12px] text-[#a09888]">@Warawer{String(profile.member_no).padStart(7, "0")}</div>
+          )}
           {/* わらわ〜No.（入会順の永久番号）+ 地球冒険日数 */}
           {profile.member_no != null && (
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -336,11 +338,13 @@ export default function UserPage() {
               <b className="num text-[13.5px] text-[#3a3428]">{stats.posts}</b> 言の葉
             </span>
             <span>
-              🌱 <b className="num text-[13.5px] text-[#3a3428]">{stats.leaves}</b> もらった
+              ❤️ <b className="num text-[13.5px] text-[#3a3428]">{stats.leaves}</b> もらった
             </span>
             {shops.length > 0 && (
               <span>
-                🏮 <b className="num text-[13.5px] text-[#3a3428]">{shops.length}</b> 出品
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[15px] w-[15px] rounded-full object-cover align-[-2px]" />{" "}
+                <b className="num text-[13.5px] text-[#3a3428]">{shops.length}</b> 出品
               </span>
             )}
           </div>
@@ -482,7 +486,7 @@ export default function UserPage() {
         )}
         {profile.wants_to_do && profile.wants_to_do.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]">🌱 やりたいこと</div>
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]">✨ やりたいこと</div>
             <div className="flex flex-wrap gap-1.5">
               {profile.wants_to_do.map((w) => (
                 <span key={w} className="rounded-full bg-[#fdf0ee] px-2.5 py-1 text-[11.5px] font-medium text-[#a05040]">
