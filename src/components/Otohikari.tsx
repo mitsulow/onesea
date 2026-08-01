@@ -121,13 +121,17 @@ export function Otohikari() {
         border: "none",
         borderRadius: 0,
         margin: "0 -16px 0 -16px",
+        padding: "0 0 10px",
       }}
     >
-      <div className="flex items-start justify-between">
-        <div>
-          {/* ヒーロー: MasterMindSystem */}
-          <div
-            className="text-[16px] font-extrabold tracking-[2px]"
+      {/* 地球儀 + すべてのオーバーレイ（タイトルも地球儀に重ねて1セクション化） */}
+      <div className="relative">
+        <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
+
+        {/* タイトル + マップモード（同じ行・地球儀の上） */}
+        <div className="pointer-events-none absolute left-3 right-3 top-2 z-20 flex items-center gap-2">
+          <span
+            className="text-[15px] font-extrabold tracking-[2px]"
             style={{
               color: "#8ff4ff",
               textShadow:
@@ -135,9 +139,8 @@ export function Otohikari() {
             }}
           >
             MasterMindSystem
-          </div>
-          {/* マップモード（選ぶ時だけ展開） */}
-          <div className="relative mt-1">
+          </span>
+          <div className="pointer-events-auto relative">
             <button
               onClick={() => setModeOpen((v) => !v)}
               className="rounded-full border border-[#2a4a5e] bg-[#0c1c2a]/80 px-2.5 py-0.5 text-[9.5px] font-bold tracking-wider text-[#7ab8d8]"
@@ -169,16 +172,13 @@ export function Otohikari() {
             )}
           </div>
         </div>
+
+        {/* 実測時刻 — 地球儀の左下 */}
         {live.updated && (
-          <span className="num text-[9.5px] text-[#5a7a9a]">
+          <span className="num pointer-events-none absolute bottom-12 left-3 z-20 text-[9px] text-[#5a7a9a]">
             実測 {new Date(live.updated).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} 更新
           </span>
         )}
-      </div>
-
-      {/* 地球儀 + オーバーレイ */}
-      <div className="relative" style={{ margin: "8px -18px 0" }}>
-        <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
 
         {/* MasterMind接続中 — ヘッドホン + パルス波形 */}
         {connected && (
@@ -232,10 +232,10 @@ export function Otohikari() {
 
         {/* 集計 — 南半球の下部に重ねる */}
         <div className="pointer-events-none absolute bottom-1 left-0 right-0 flex items-end justify-center gap-8 text-center">
-          {stat("LISTENING NOW", nowCount)}
+          {stat("TUNING", nowCount)}
           {stat("TODAY", todayCount != null ? todayCount.toLocaleString() : "—")}
           {stat(
-            "TARGET SCHUMANN",
+            "TARGET",
             <>
               {SCHUMANN.hz}
               <span className="ml-1 text-[13px]">Hz</span>
