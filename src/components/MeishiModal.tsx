@@ -52,8 +52,11 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[340px] overflow-hidden rounded-2xl bg-[#fffdf8] shadow-2xl"
-        style={{ animation: "meishiIn .22s ease-out" }}
+        className="w-full max-w-[340px] overflow-hidden rounded-xl shadow-2xl"
+        style={{
+          animation: "meishiIn .22s ease-out",
+          background: "url(/meishi-washi.webp) center / 100% 100%, #f6ecd8",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`@keyframes meishiIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}`}</style>
@@ -63,33 +66,28 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#c94d3a] border-t-transparent" />
           </div>
         ) : p === null ? (
-          <div className="p-6 text-center text-[13px] text-[#a09888]">この人の名刺は見つかりませんでした</div>
+          <div className="p-6 text-center text-[13px] text-[#8a7a5a]">この人の名刺は見つかりませんでした</div>
         ) : (
           <>
-            {/* カバー */}
-            <div className="relative h-24 overflow-hidden bg-gradient-to-br from-[#c94d3a] via-[#d4a043] to-[#5a7d4a]">
-              {p.cover_url && <img src={p.cover_url} alt="" className="h-full w-full object-cover" />}
+            {/* 和紙の枠内: 閉じる + アバター */}
+            <div className="relative px-6 pt-6">
               <button
                 onClick={onClose}
                 aria-label="閉じる"
-                className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-[13px] text-white"
+                className="absolute right-5 top-5 flex h-7 w-7 items-center justify-center rounded-full bg-[#3a3428]/10 text-[13px] text-[#6a5a40]"
               >
                 ×
               </button>
-            </div>
-
-            {/* アバター（カバーに重なる） */}
-            <div className="relative -mt-9 px-4">
               {p.avatar_url ? (
                 <img
                   src={p.avatar_url}
                   alt=""
                   referrerPolicy="no-referrer"
-                  className="h-[72px] w-[72px] rounded-full border-4 border-[#fffdf8] object-cover"
+                  className="h-[68px] w-[68px] rounded-full border-[3px] border-[#c94d3a]/50 object-cover shadow-sm"
                 />
               ) : (
                 <div
-                  className="flex h-[72px] w-[72px] items-center justify-center rounded-full border-4 border-[#fffdf8] text-[28px]"
+                  className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] border-[#c94d3a]/50 text-[26px] shadow-sm"
                   style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
                 >
                   🌿
@@ -97,7 +95,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
               )}
             </div>
 
-            <div className="px-4 pb-4 pt-2">
+            <div className="px-6 pb-6 pt-2">
               {/* 名前 + @ */}
               <div className="min-w-0">
                 <div className="truncate text-[17px] font-extrabold text-[#3a3428]">
