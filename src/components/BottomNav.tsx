@@ -8,7 +8,7 @@ import { fetchUnreadTotal } from "@/lib/line";
 import { setBadge, ensureSw } from "@/lib/push";
 import { LINKS } from "@/lib/config";
 
-/** 下部タブ: ホーム / MMM(太陽) / セカイムラ(地球) / ツキヨガ(月) / 楽市楽座(楽) / TALK */
+/** 下部タブ: ホーム / コトヅテ / MMM(太陽) / セカイムラ(地球) / ツキヨガ(月) / 楽市楽座(楽) / TALK */
 export function BottomNav() {
   const pathname = usePathname();
   const [unread, setUnread] = useState(0);
@@ -175,6 +175,16 @@ export function BottomNav() {
             🏠
           </span>
           {label("ホーム", pathname === "/")}
+        </Link>
+
+        {/* コトヅテ = 言の葉フィード */}
+        <Link href="/cotozute" className={itemCls(pathname.startsWith("/cotozute"))}>
+          <span
+            className={`text-lg leading-none transition-transform duration-150 ${pathname.startsWith("/cotozute") ? "-translate-y-0.5 scale-[1.35]" : ""}`}
+          >
+            🌿
+          </span>
+          {label("コトヅテ", pathname.startsWith("/cotozute"))}
         </Link>
 
         {/* MMM = 太陽（OneSea内のMMMサイトへ） */}

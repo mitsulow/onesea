@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
-import { CotozuteFeed } from "@/components/CotozuteFeed";
+import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { PriceBanner } from "@/components/PriceBanner";
 import {
   NEURA_SIZE,
@@ -255,7 +255,7 @@ export default function MmmPage() {
 
       {/* ③ Cotozute */}
       <div className="px-4">
-        <CotozuteFeed />
+        <CotozuteTeaser />
       </div>
     </main>
   );

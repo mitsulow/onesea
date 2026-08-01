@@ -5,10 +5,11 @@ import type { User } from "@supabase/supabase-js";
 import { useRef, useState } from "react";
 import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
+import { MeishiModal } from "./MeishiModal";
 
 /**
  * 言の葉カード（楽市楽座「情緒」と同じ操作系）:
- * アイコンタップ → その人のマイページ / 🌱 いいね / 💬 コメント / 自分の投稿は消せる
+ * アイコンタップ → まず名刺モーダル → マイページ / 🌱 いいね / 💬 コメント / 自分の投稿は消せる
  */
 export function PostCard({
   post,
@@ -27,6 +28,7 @@ export function PostCard({
   const [likeCount, setLikeCount] = useState(post.likes?.[0]?.count ?? 0);
   const commentCount = post.comments?.[0]?.count ?? 0;
   const [gone, setGone] = useState(false);
+  const [meishi, setMeishi] = useState(false);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   if (gone) return null;
 
@@ -83,11 +85,12 @@ export function PostCard({
       onMouseUp={endPress}
       onMouseLeave={endPress}
     >
+      {meishi && pr?.username && <MeishiModal username={pr.username} onClose={() => setMeishi(false)} />}
       <div className="flex-shrink-0">
         {pr?.username ? (
-          <Link href={`/u/${pr.username}`} aria-label={`${pr.display_name ?? ""}のマイページ`}>
+          <button onClick={() => setMeishi(true)} aria-label={`${pr.display_name ?? ""}の名刺を見る`}>
             {avatar}
-          </Link>
+          </button>
         ) : (
           avatar
         )}
@@ -95,9 +98,12 @@ export function PostCard({
       <div className="min-w-0 flex-1">
         <div className="flex justify-between gap-2">
           {pr?.username ? (
-            <Link href={`/u/${pr.username}`} className="text-[13px] font-bold text-[#4a4438] no-underline">
+            <button
+              onClick={() => setMeishi(true)}
+              className="truncate text-left text-[13px] font-bold text-[#4a4438]"
+            >
               {pr.display_name ?? "むらびと"}
-            </Link>
+            </button>
           ) : (
             <span className="text-[13px] font-bold text-[#4a4438]">むらびと</span>
           )}

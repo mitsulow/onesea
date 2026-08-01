@@ -1,7 +1,7 @@
 import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { InoriTecho } from "@/components/InoriTecho";
-import { CotozuteFeed } from "@/components/CotozuteFeed";
+import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { AuthGate } from "@/components/AuthGate";
 import { HeaderBar } from "@/components/HeaderBar";
 import { MorningOpening } from "@/components/MorningOpening";
@@ -28,7 +28,7 @@ export default function Home() {
         </div>
 
         {/* ② Cotozute */}
-        <CotozuteFeed />
+        <CotozuteTeaser />
 
         {/* ③ 祈りの手帳 */}
         <div id="techo" style={{ scrollMarginTop: 40 }}>
