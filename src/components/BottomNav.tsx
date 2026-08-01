@@ -177,13 +177,15 @@ export function BottomNav() {
           {label("ホーム", pathname === "/")}
         </Link>
 
-        {/* コトヅテ = 言の葉フィード */}
+        {/* コトヅテ = 言の葉フィード（Cotozuteロゴの葉っぱ） */}
         <Link href="/cotozute" className={itemCls(pathname.startsWith("/cotozute"))}>
-          <span
-            className={`text-lg leading-none transition-transform duration-150 ${pathname.startsWith("/cotozute") ? "-translate-y-0.5 scale-[1.35]" : ""}`}
-          >
-            🌿
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/icons/tab-cotozute.png"
+            alt=""
+            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/cotozute") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
+            style={{ width: 24, height: 21 }}
+          />
           {label("コトヅテ", pathname.startsWith("/cotozute"))}
         </Link>
 

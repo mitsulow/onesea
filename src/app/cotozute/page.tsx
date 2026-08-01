@@ -197,7 +197,7 @@ export default function CotozutePage() {
         style={{ transform: hideBar ? "translateY(-110%)" : "none" }}
       >
         <div className="relative flex h-12 items-center justify-center px-4">
-          <Link href="/my" aria-label="マイページ" className="absolute left-3 top-1/2 -translate-y-1/2">
+          <Link href="/my" aria-label="マイページ" className="absolute right-3 top-1/2 -translate-y-1/2">
             {avatar ? (
               <img src={avatar} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full object-cover" />
             ) : (
