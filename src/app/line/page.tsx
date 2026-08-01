@@ -80,8 +80,7 @@ export default function LinePage() {
         className="flex items-center justify-between px-5 pb-3.5 pt-4"
         style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/talk-logo.webp" alt="OneSeaTALK" className="h-9 w-auto" />
+        <h1 className="text-lg font-extrabold tracking-[4px] text-[#f0e6c8]">TALK</h1>
         <span className="text-[11px] tracking-widest text-[#7a9ab4]">メッセージ</span>
       </header>
 
