@@ -146,19 +146,107 @@ export async function markRead(chatId: string, myId: string) {
   window.dispatchEvent(new Event("onesea:unreadRefresh"));
 }
 
-/** ナビバッジ用: 個人チャット + グループの未読合計 */
+/** ナビバッジ用: 個人チャット + グループ + 事務局お知らせの未読合計 */
 export async function fetchUnreadTotal(myId: string): Promise<number> {
   const supabase = createClient();
-  const [{ count }, groups] = await Promise.all([
+  const [{ count }, groups, bc] = await Promise.all([
     supabase
       .from("messages")
       .select("id", { count: "exact", head: true })
       .is("read_at", null)
       .neq("sender_id", myId),
     fetchGroups(myId).catch(() => [] as GroupSummary[]),
+    fetchBroadcastSummary(myId).catch(() => null),
   ]);
   const groupUnread = groups.reduce((s, g) => s + g.unread, 0);
-  return (count ?? 0) + groupUnread;
+  return (count ?? 0) + groupUnread + (bc?.unread ?? 0);
+}
+
+/* ============ 事務局からのお知らせ（一斉送信TALK）============ */
+
+export interface BroadcastSummary {
+  lastBody: string | null;
+  lastAt: string | null;
+  unread: number;
+}
+
+export interface BroadcastRow {
+  id: string;
+  sender_id: string;
+  body: string;
+  created_at: string;
+  profiles: (CotozuteProfile & { username: string | null }) | null;
+}
+
+/** 事務局アカウントかどうか */
+export async function isTalkAdmin(myId: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data } = await supabase.from("talk_admins").select("user_id").eq("user_id", myId).maybeSingle();
+  return !!data;
+}
+
+/** お知らせの最新1件と未読数（一覧のピン留め行に使う） */
+export async function fetchBroadcastSummary(myId: string): Promise<BroadcastSummary> {
+  const supabase = createClient();
+  const [{ data: last }, { data: read }] = await Promise.all([
+    supabase
+      .from("broadcast_messages")
+      .select("body, created_at, sender_id")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("broadcast_reads").select("last_read_at").eq("user_id", myId).maybeSingle(),
+  ]);
+  let unread = 0;
+  if (last && last.sender_id !== myId) {
+    let q = supabase
+      .from("broadcast_messages")
+      .select("id", { count: "exact", head: true })
+      .neq("sender_id", myId);
+    if (read?.last_read_at) q = q.gt("created_at", read.last_read_at);
+    const { count } = await q;
+    unread = count ?? 0;
+  }
+  return { lastBody: last?.body ?? null, lastAt: last?.created_at ?? null, unread };
+}
+
+export async function fetchBroadcasts(): Promise<BroadcastRow[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("broadcast_messages")
+    .select("id, sender_id, body, created_at, profiles!broadcast_messages_sender_id_fkey(username, display_name, avatar_url)")
+    .order("created_at", { ascending: true })
+    .limit(200);
+  return (data as unknown as BroadcastRow[]) ?? [];
+}
+
+/** 事務局だけが送れる。全会員へのWeb Pushも発火する */
+export async function sendBroadcast(myId: string, body: string) {
+  const supabase = createClient();
+  const { error } = await supabase.from("broadcast_messages").insert({ sender_id: myId, body });
+  if (!error) {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        fetch("/api/broadcast-push", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ body }),
+        }).catch(() => {});
+      }
+    } catch {}
+  }
+  return { error };
+}
+
+export async function markBroadcastRead(myId: string) {
+  const supabase = createClient();
+  await supabase
+    .from("broadcast_reads")
+    .upsert({ user_id: myId, last_read_at: new Date().toISOString() });
+  window.dispatchEvent(new Event("onesea:unreadRefresh"));
 }
 
 /* ============ グループLINE（村・部活のトークルーム）============ */
@@ -169,6 +257,7 @@ export interface GroupSummary {
   id: string;
   name: string;
   emoji: string;
+  count: number; // メンバー数（LINE風の (6) 表示用）
   lastBody: string | null;
   lastAt: string | null;
   unread: number;
@@ -215,7 +304,10 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   if (groups.length === 0) return [];
 
   const ids = groups.map((g) => g.id);
-  const [{ data: msgs }, { data: reads }] = await Promise.all([
+  const vIds = groups.filter((g) => g.type === "village").map((g) => g.id);
+  const cIds = groups.filter((g) => g.type === "club").map((g) => g.id);
+  const nIds = groups.filter((g) => g.type === "neura").map((g) => g.id);
+  const [{ data: msgs }, { data: reads }, vCnt, cCnt, nCnt] = await Promise.all([
     supabase
       .from("group_messages")
       .select("scope_type, scope_id, sender_id, body, created_at")
@@ -223,7 +315,23 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
       .order("created_at", { ascending: false })
       .limit(400),
     supabase.from("group_reads").select("scope_type, scope_id, last_read_at").eq("user_id", myId),
+    vIds.length ? supabase.from("village_members").select("village_id").in("village_id", vIds) : Promise.resolve({ data: [] }),
+    cIds.length ? supabase.from("club_members").select("club_id").in("club_id", cIds) : Promise.resolve({ data: [] }),
+    nIds.length ? supabase.from("neura_members").select("team_id").in("team_id", nIds) : Promise.resolve({ data: [] }),
   ]);
+  const countBy = new Map<string, number>();
+  for (const r of (vCnt.data ?? []) as Array<{ village_id: string }>) {
+    const k = `village:${r.village_id}`;
+    countBy.set(k, (countBy.get(k) ?? 0) + 1);
+  }
+  for (const r of (cCnt.data ?? []) as Array<{ club_id: string }>) {
+    const k = `club:${r.club_id}`;
+    countBy.set(k, (countBy.get(k) ?? 0) + 1);
+  }
+  for (const r of (nCnt.data ?? []) as Array<{ team_id: string }>) {
+    const k = `neura:${r.team_id}`;
+    countBy.set(k, (countBy.get(k) ?? 0) + 1);
+  }
   const readBy = new Map((reads ?? []).map((r) => [`${r.scope_type}:${r.scope_id}`, r.last_read_at as string]));
   const lastBy = new Map<string, { body: string; created_at: string }>();
   const unreadBy = new Map<string, number>();
@@ -240,6 +348,7 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
       return {
         ...g,
         key: k,
+        count: countBy.get(k) ?? 0,
         lastBody: last?.body ?? null,
         lastAt: last?.created_at ?? null,
         unread: unreadBy.get(k) ?? 0,

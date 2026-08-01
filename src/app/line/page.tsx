@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { ChatSummary, GroupSummary, fetchChats, fetchGroups } from "@/lib/line";
+import { BroadcastSummary, ChatSummary, GroupSummary, fetchBroadcastSummary, fetchChats, fetchGroups } from "@/lib/line";
 import { enablePush, pushEnabled, pushSupported } from "@/lib/push";
 
 function timeLabel(iso: string | null): string {
@@ -26,6 +26,8 @@ export default function LinePage() {
   const [tab, setTab] = useState<"dm" | "group">("dm");
   const [showBell, setShowBell] = useState(false);
   const [bellBusy, setBellBusy] = useState(false);
+  const [bc, setBc] = useState<BroadcastSummary | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -36,6 +38,7 @@ export default function LinePage() {
       if (u) {
         fetchChats(u.id).then(setChats);
         fetchGroups(u.id).then(setGroups);
+        fetchBroadcastSummary(u.id).then(setBc).catch(() => {});
         if (pushSupported()) setShowBell(!(await pushEnabled()));
       }
     });
@@ -57,12 +60,19 @@ export default function LinePage() {
     const t = setInterval(() => {
       fetchChats(me.id).then(setChats);
       fetchGroups(me.id).then(setGroups);
+      fetchBroadcastSummary(me.id).then(setBc).catch(() => {});
     }, 30000);
     return () => clearInterval(t);
   }, [me]);
 
   const dmUnread = (chats ?? []).reduce((s, c) => s + c.unread, 0);
   const groupUnread = (groups ?? []).reduce((s, g) => s + g.unread, 0);
+
+  const q = query.trim().toLowerCase();
+  const shownChats = (chats ?? []).filter(
+    (c) => !q || (c.partner.display_name ?? "").toLowerCase().includes(q)
+  );
+  const shownGroups = (groups ?? []).filter((g) => !q || g.name.toLowerCase().includes(q));
 
   return (
     <main className="pb-20">
@@ -126,6 +136,58 @@ export default function LinePage() {
         </div>
       )}
 
+      {/* 検索（LINE風） */}
+      {me && (
+        <div className="border-b border-[#f0e9dc] bg-[#fffdf8] px-4 py-2">
+          <div className="flex items-center gap-2 rounded-xl bg-[#f0ead9] px-3 py-1.5">
+            <span className="text-[13px] text-[#a09888]">🔍</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="検索"
+              className="w-full bg-transparent text-[13.5px] text-[#3a3428] outline-none placeholder:text-[#b8b0a0]"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 📢 事務局からのお知らせ（最上部ピン留め） */}
+      {me && !q && (
+        <Link
+          href="/line/broadcast"
+          className="flex items-center gap-3 border-b border-[#e8dcc4] bg-[#fffbef] px-4 py-3 no-underline active:bg-[#faf4e0]"
+        >
+          <div
+            className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[20px]"
+            style={{ background: "linear-gradient(140deg,#17384e,#0e1e2e)" }}
+          >
+            📢
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="truncate text-[14.5px] font-bold text-[#3a3428]">
+                事務局からのお知らせ
+                <span className="ml-1.5 rounded bg-[#d4b96a] px-1 py-0.5 text-[8.5px] font-extrabold text-white align-middle">公式</span>
+              </span>
+              <span className="num flex-shrink-0 text-[10.5px] text-[#c0b8a8]">{timeLabel(bc?.lastAt ?? null)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="line-clamp-2 text-[12.5px] leading-snug text-[#a09888]">
+                {bc?.lastBody ?? "OneSeaからの大切なお知らせが届きます"}
+              </span>
+              {(bc?.unread ?? 0) > 0 && (
+                <span
+                  className="flex h-[19px] min-w-[19px] flex-shrink-0 items-center justify-center rounded-full bg-[#e05040] px-1.5 text-[10px] font-bold text-white"
+                  style={{ lineHeight: 1 }}
+                >
+                  {(bc?.unread ?? 0) > 99 ? "99+" : bc?.unread}
+                </span>
+              )}
+            </div>
+          </div>
+        </Link>
+      )}
+
       {!ready ? null : !me ? (
         <p className="px-5 py-10 text-center text-sm text-[#8a8070]">
           <Link href="/" className="text-[#c94d3a] underline">
@@ -158,7 +220,7 @@ export default function LinePage() {
           </div>
         ) : (
           <div>
-            {groups.map((g) => (
+            {shownGroups.map((g) => (
               <Link
                 key={g.key}
                 href={`/line/g/${g.type}/${g.id}`}
@@ -172,11 +234,14 @@ export default function LinePage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="truncate text-[14.5px] font-bold text-[#3a3428]">{g.name}</span>
+                    <span className="truncate text-[14.5px] font-bold text-[#3a3428]">
+                      {g.name}
+                      {g.count > 0 && <span className="num ml-1 font-medium text-[#a09888]">({g.count})</span>}
+                    </span>
                     <span className="num flex-shrink-0 text-[10.5px] text-[#c0b8a8]">{timeLabel(g.lastAt)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="truncate text-[12.5px] text-[#a09888]">
+                    <span className="line-clamp-2 text-[12.5px] leading-snug text-[#a09888]">
                       {g.lastBody ?? "みんなに、ひとこと目をどうぞ"}
                     </span>
                     {g.unread > 0 && (
@@ -208,7 +273,7 @@ export default function LinePage() {
         </div>
       ) : (
         <div>
-          {chats.map((c) => (
+          {shownChats.map((c) => (
             <Link
               key={c.id}
               href={`/line/${c.id}`}
@@ -242,7 +307,7 @@ export default function LinePage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-[12.5px] text-[#a09888]">
+                  <span className="line-clamp-2 text-[12.5px] leading-snug text-[#a09888]">
                     {c.lastBody ?? "トークを始めましょう"}
                   </span>
                   {c.unread > 0 && (

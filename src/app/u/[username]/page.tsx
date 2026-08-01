@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CotozutePost, fetchPosts, fetchMyLikes } from "@/lib/cotozute";
 import { getOrCreateChat } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
-import { Shop, fetchShopsByOwner, categoryOf } from "@/lib/za";
+import { Shop, fetchShopsByOwner, categoryOf, Reco, fetchRecos, addReco, deleteReco } from "@/lib/za";
 import { SnsIcon } from "@/components/SnsIcon";
 import { CameraIcon } from "@/components/CameraIcon";
 import { PostCard } from "@/components/PostCard";
@@ -43,6 +43,12 @@ export default function UserPage() {
   const [bioDraft, setBioDraft] = useState("");
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
   const [shops, setShops] = useState<Shop[]>([]);
+  const [recos, setRecos] = useState<Reco[]>([]);
+  const [recoForm, setRecoForm] = useState(false);
+  const [recoTitle, setRecoTitle] = useState("");
+  const [recoUrl, setRecoUrl] = useState("");
+  const [recoComment, setRecoComment] = useState("");
+  const [recoSaving, setRecoSaving] = useState(false);
   const [masterDdp, setMasterDdp] = useState<string | null>(null);
   const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string; fulfilled_pct: number | null }>>([]);
   const pctTimers = useRef<Record<string, number>>({});
@@ -63,6 +69,7 @@ export default function UserPage() {
     setProfile(prof);
     if (prof) {
       fetchShopsByOwner(prof.id).then(setShops);
+      fetchRecos(prof.id).then(setRecos);
       supabase.from("ddp").select("body").eq("user_id", prof.id).maybeSingle().then(({ data: d }) => setMasterDdp(d?.body ?? null));
       supabase
         .from("daily_ddp")
@@ -476,6 +483,122 @@ export default function UserPage() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* わたしのおススメ（好きな農家さんのお米など外部リンク紹介） */}
+      {(recos.length > 0 || isMe) && (
+        <div className="pt-5">
+          <div className="card">
+            <div className="sec mb-2.5 flex items-center justify-between">
+              <span>⭐ {isMe ? "わたしのおススメ" : "この人のおススメ"}</span>
+              {isMe && !recoForm && (
+                <button
+                  onClick={() => setRecoForm(true)}
+                  className="rounded-full border border-[#e0d5c0] bg-white px-2.5 py-1 text-[11px] font-bold text-[#8a7a5a]"
+                >
+                  ＋ 追加
+                </button>
+              )}
+            </div>
+
+            {isMe && recoForm && (
+              <div className="mb-3 rounded-xl border border-[#e8dcc4] bg-[#fffbf0] p-3">
+                <input
+                  value={recoTitle}
+                  onChange={(e) => setRecoTitle(e.target.value)}
+                  maxLength={40}
+                  placeholder="例: 田中農園の天日干しコシヒカリ"
+                  className="w-full rounded-lg border border-[#e8dcc4] bg-white px-3 py-2 text-[13.5px] outline-none focus:border-[#c94d3a]"
+                />
+                <input
+                  value={recoUrl}
+                  onChange={(e) => setRecoUrl(e.target.value)}
+                  placeholder="リンク（https://...）※任意"
+                  inputMode="url"
+                  className="mt-1.5 w-full rounded-lg border border-[#e8dcc4] bg-white px-3 py-2 text-[12.5px] outline-none focus:border-[#c94d3a]"
+                />
+                <textarea
+                  value={recoComment}
+                  onChange={(e) => setRecoComment(e.target.value)}
+                  maxLength={80}
+                  rows={2}
+                  placeholder="おススメの理由（例: 甘みが違う。うちは10年これ）※任意"
+                  className="mt-1.5 w-full resize-none rounded-lg border border-[#e8dcc4] bg-white px-3 py-2 text-[12.5px] leading-relaxed outline-none focus:border-[#c94d3a]"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => setRecoForm(false)}
+                    className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a09888]"
+                  >
+                    やめる
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!me || !recoTitle.trim() || recoSaving) return;
+                      setRecoSaving(true);
+                      await addReco(me.id, recoTitle, recoUrl, recoComment);
+                      setRecoTitle("");
+                      setRecoUrl("");
+                      setRecoComment("");
+                      setRecoForm(false);
+                      setRecoSaving(false);
+                      setRecos(await fetchRecos(me.id));
+                    }}
+                    disabled={!recoTitle.trim() || recoSaving}
+                    className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40"
+                    style={{ background: "#c94d3a" }}
+                  >
+                    {recoSaving ? "保存中..." : "おススメする"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {recos.length === 0 && isMe && !recoForm ? (
+              <p className="py-1 text-[12px] text-[#b8b0a0]">
+                好きな農家さんのお米など、みんなに紹介したいものを並べられます
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {recos.map((r) => (
+                  <div key={r.id} className="rounded-xl border border-[#ede5d8] bg-[#fffaf0] px-3 py-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13.5px] font-bold leading-snug text-[#3a3428]">{r.title}</div>
+                        {r.comment && (
+                          <div className="mt-0.5 text-[12px] leading-relaxed text-[#8a7a5a]">{r.comment}</div>
+                        )}
+                        {r.url && (
+                          <a
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-block max-w-full truncate rounded-full bg-[#f0e6d2] px-2.5 py-1 text-[11px] font-bold text-[#a05040] no-underline"
+                          >
+                            🔗 見てみる →
+                          </a>
+                        )}
+                      </div>
+                      {isMe && (
+                        <button
+                          onClick={async () => {
+                            if (!me || !confirm("このおススメを削除しますか？")) return;
+                            await deleteReco(r.id, me.id);
+                            setRecos(await fetchRecos(me.id));
+                          }}
+                          aria-label="削除"
+                          className="flex-shrink-0 px-1 text-[13px] text-[#c0b8a8]"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

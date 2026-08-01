@@ -138,3 +138,40 @@ function compressImage(file: File, maxEdge: number, quality: number): Promise<Bl
     img.src = url;
   });
 }
+
+/* ============ わたしのおススメ（外部リンク紹介）============ */
+
+export interface Reco {
+  id: string;
+  user_id: string;
+  title: string;
+  url: string | null;
+  comment: string | null;
+  created_at: string;
+}
+
+export async function fetchRecos(userId: string): Promise<Reco[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("recommendations")
+    .select("id, user_id, title, url, comment, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  return (data as Reco[]) ?? [];
+}
+
+export async function addReco(userId: string, title: string, url: string, comment: string) {
+  const supabase = createClient();
+  return supabase.from("recommendations").insert({
+    user_id: userId,
+    title: title.trim(),
+    url: url.trim() || null,
+    comment: comment.trim() || null,
+  });
+}
+
+export async function deleteReco(id: string, userId: string) {
+  const supabase = createClient();
+  return supabase.from("recommendations").delete().eq("id", id).eq("user_id", userId);
+}
