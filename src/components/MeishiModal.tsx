@@ -52,10 +52,12 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[340px] overflow-hidden rounded-xl shadow-2xl"
+        className="flex w-full max-w-[300px] flex-col overflow-y-auto rounded-xl shadow-2xl"
         style={{
           animation: "meishiIn .22s ease-out",
           background: "url(/meishi-washi.webp) center / 100% 100%, #f6ecd8",
+          aspectRatio: "640 / 1119", // 縦長の名刺（和紙台紙の実寸比）
+          maxHeight: "82vh",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -69,12 +71,12 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
           <div className="p-6 text-center text-[13px] text-[#8a7a5a]">この人の名刺は見つかりませんでした</div>
         ) : (
           <>
-            {/* 和紙の枠内: 閉じる + アバター */}
-            <div className="relative px-6 pt-6">
+            {/* 和紙の枠内: 閉じる + アバター（朱線の内側に収める） */}
+            <div className="relative px-8 pt-9">
               <button
                 onClick={onClose}
                 aria-label="閉じる"
-                className="absolute right-5 top-5 flex h-7 w-7 items-center justify-center rounded-full bg-[#3a3428]/10 text-[13px] text-[#6a5a40]"
+                className="absolute right-8 top-8 flex h-7 w-7 items-center justify-center rounded-full bg-[#3a3428]/10 text-[13px] text-[#6a5a40]"
               >
                 ×
               </button>
@@ -95,7 +97,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
               )}
             </div>
 
-            <div className="px-6 pb-6 pt-2">
+            <div className="flex min-h-0 flex-1 flex-col px-8 pb-9 pt-2">
               {/* 名前 + @ */}
               <div className="min-w-0">
                 <div className="truncate text-[17px] font-extrabold text-[#3a3428]">
@@ -169,15 +171,15 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                 </div>
               )}
 
-              {/* マイページへ */}
+              {/* マイページへ（縦長カードの下端・朱線の内側） */}
               {p.username && (
                 <button
                   onClick={() => {
                     onClose();
                     router.push(`/u/${p.username}`);
                   }}
-                  className="mt-3.5 w-full rounded-xl py-2.5 text-[13.5px] font-extrabold text-white shadow-sm"
-                  style={{ background: "#c94d3a" }}
+                  className="mt-auto w-full rounded-xl py-2.5 pt-2.5 text-[13.5px] font-extrabold text-white shadow-sm"
+                  style={{ background: "#c94d3a", marginTop: "auto" }}
                 >
                   マイページを見る →
                 </button>
