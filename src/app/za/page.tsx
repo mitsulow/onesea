@@ -189,9 +189,9 @@ export default function ZaPage() {
                   >
                     <div className="absolute left-0 right-0 top-0 z-10 h-[3px]" style={{ background: "#c94d3a" }} />
                     <div className="relative aspect-square overflow-hidden bg-[#f2ede4]">
-                      {shop.image_urls[0] ? (
+                      {(shop.thumb_urls?.[0] ?? shop.image_urls[0]) ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
+                        <img src={shop.thumb_urls?.[0] ?? shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
                       ) : (
                         <div
                           className="flex h-full w-full items-center justify-center"

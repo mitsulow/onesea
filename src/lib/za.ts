@@ -17,6 +17,7 @@ export interface Shop {
   category: string | null;
   market: Market;
   image_urls: string[];
+  thumb_urls: string[] | null;
   created_at: string;
   profiles: (CotozuteProfile & { username: string | null }) | null;
   shop_comments?: Array<{ count: number }>;
@@ -44,7 +45,7 @@ export function categoryOf(id: string | null) {
 }
 
 const SHOP_SELECT =
-  "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, image_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
+  "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
 
 export async function fetchShops(category?: string | null): Promise<Shop[]> {
   const supabase = createClient();
@@ -97,17 +98,27 @@ export async function deleteShopComment(id: string, userId: string) {
   return supabase.from("shop_comments").delete().eq("id", id).eq("user_id", userId);
 }
 
-/** 画像をクライアントで圧縮（長辺1600px・WebP品質0.8）してからアップロード */
-export async function uploadShopImage(userId: string, file: File): Promise<string | null> {
-  const compressed = await compressImage(file, 1600, 0.8);
+/** 商品写真の2枚方式: 一覧サムネ400px + 詳細用1280px（パケ死対策・Cotozuteと同じ思想） */
+export async function uploadShopImage(
+  userId: string,
+  file: File
+): Promise<{ full: string; thumb: string } | null> {
   const supabase = createClient();
-  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-  const { error } = await supabase.storage.from("shop-images").upload(path, compressed, {
-    contentType: "image/webp",
-    upsert: false,
-  });
-  if (error) return null;
-  return supabase.storage.from("shop-images").getPublicUrl(path).data.publicUrl;
+  const [fullBlob, thumbBlob] = await Promise.all([
+    compressImage(file, 1280, 0.75).catch(() => null),
+    compressImage(file, 400, 0.6).catch(() => null),
+  ]);
+  if (!fullBlob || !thumbBlob) return null;
+  const base = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const [r1, r2] = await Promise.all([
+    supabase.storage.from("shop-images").upload(`${base}.webp`, fullBlob, { contentType: "image/webp", upsert: false }),
+    supabase.storage.from("shop-images").upload(`${base}-t.webp`, thumbBlob, { contentType: "image/webp", upsert: false }),
+  ]);
+  if (r1.error || r2.error) return null;
+  return {
+    full: supabase.storage.from("shop-images").getPublicUrl(`${base}.webp`).data.publicUrl,
+    thumb: supabase.storage.from("shop-images").getPublicUrl(`${base}-t.webp`).data.publicUrl,
+  };
 }
 
 function compressImage(file: File, maxEdge: number, quality: number): Promise<Blob> {

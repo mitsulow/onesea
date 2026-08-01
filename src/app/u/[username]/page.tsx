@@ -28,6 +28,8 @@ interface FullProfile {
   skills: string[] | null;
   wants_to_do: string[] | null;
   sns: Record<string, string> | null;
+  member_no: number | null;
+  created_at: string | null;
 }
 
 /** むらびとのマイページ（楽市楽座の名刺スタイル: カバー画像 + 重なるアバター） */
@@ -49,6 +51,7 @@ export default function UserPage() {
   const [recoUrl, setRecoUrl] = useState("");
   const [recoComment, setRecoComment] = useState("");
   const [recoSaving, setRecoSaving] = useState(false);
+  const [stats, setStats] = useState<{ posts: number; leaves: number } | null>(null);
   const [masterDdp, setMasterDdp] = useState<string | null>(null);
   const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string; fulfilled_pct: number | null }>>([]);
   const pctTimers = useRef<Record<string, number>>({});
@@ -62,7 +65,7 @@ export default function UserPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns")
+      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at")
       .eq("username", username)
       .maybeSingle();
     const prof = (data as FullProfile) ?? null;
@@ -70,6 +73,23 @@ export default function UserPage() {
     if (prof) {
       fetchShopsByOwner(prof.id).then(setShops);
       fetchRecos(prof.id).then(setRecos);
+      // 実績カウント（言の葉数・もらった🌱）
+      (async () => {
+        const { count: pc } = await supabase
+          .from("posts")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", prof.id);
+        const { data: pids } = await supabase.from("posts").select("id").eq("user_id", prof.id).limit(1000);
+        let leaves = 0;
+        if (pids && pids.length > 0) {
+          const { count: lc } = await supabase
+            .from("likes")
+            .select("post_id", { count: "exact", head: true })
+            .in("post_id", pids.map((r) => r.id));
+          leaves = lc ?? 0;
+        }
+        setStats({ posts: pc ?? 0, leaves });
+      })();
       supabase.from("ddp").select("body").eq("user_id", prof.id).maybeSingle().then(({ data: d }) => setMasterDdp(d?.body ?? null));
       supabase
         .from("daily_ddp")
@@ -282,6 +302,22 @@ export default function UserPage() {
             {profile.display_name ?? "むらびと"}
           </h1>
           <div className="text-[12px] text-[#a09888]">@{profile.username}</div>
+          {/* わらわ〜No.（入会順の永久番号）+ 地球冒険日数 */}
+          {profile.member_no != null && (
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <span
+                className="num rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-[#7a5a10]"
+                style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
+              >
+                わらわ〜No.{String(profile.member_no).padStart(7, "0")}
+              </span>
+              {profile.created_at && (
+                <span className="num text-[11px] font-bold text-[#a09888]">
+                  🌏 地球冒険 {Math.max(1, Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000) + 1)}日目
+                </span>
+              )}
+            </div>
+          )}
           {profile.status_line && (
             <div className="mt-0.5 text-[13px] font-medium text-[#5a5448]">{profile.status_line}</div>
           )}
@@ -291,6 +327,23 @@ export default function UserPage() {
             </div>
           )}
         </div>
+
+        {/* 実績（X風の数字ストリップ） */}
+        {stats && (
+          <div className="mt-2 flex items-center gap-4 text-[12px] text-[#a09888]">
+            <span>
+              <b className="num text-[13.5px] text-[#3a3428]">{stats.posts}</b> 言の葉
+            </span>
+            <span>
+              🌱 <b className="num text-[13.5px] text-[#3a3428]">{stats.leaves}</b> もらった
+            </span>
+            {shops.length > 0 && (
+              <span>
+                🏮 <b className="num text-[13.5px] text-[#3a3428]">{shops.length}</b> 出品
+              </span>
+            )}
+          </div>
+        )}
 
         {/* DDP（端的な夢） */}
         {masterDdp && (
@@ -455,9 +508,9 @@ export default function UserPage() {
                     >
                       <div className="absolute left-0 right-0 top-0 z-10 h-[3px]" style={{ background: "#c94d3a" }} />
                       <div className="relative aspect-square overflow-hidden bg-[#f2ede4]">
-                        {shop.image_urls[0] ? (
+                        {(shop.thumb_urls?.[0] ?? shop.image_urls[0]) ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
+                          <img src={shop.thumb_urls?.[0] ?? shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
                         ) : (
                           <div
                             className="flex h-full w-full items-center justify-center"

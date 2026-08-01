@@ -21,7 +21,7 @@ export default function NewShopPage() {
   const [barter, setBarter] = useState(false);
   const [tip, setTip] = useState(false);
   const [category, setCategory] = useState<string>("other");
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<Array<{ full: string; thumb: string }>>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -34,12 +34,12 @@ export default function NewShopPage() {
   const onFiles = async (files: FileList | null) => {
     if (!me || !files || uploading) return;
     setUploading(true);
-    const urls: string[] = [];
+    const pairs: Array<{ full: string; thumb: string }> = [];
     for (const f of Array.from(files).slice(0, 4 - images.length)) {
-      const url = await uploadShopImage(me.id, f);
-      if (url) urls.push(url);
+      const pair = await uploadShopImage(me.id, f);
+      if (pair) pairs.push(pair);
     }
-    setImages((prev) => [...prev, ...urls].slice(0, 4));
+    setImages((prev) => [...prev, ...pairs].slice(0, 4));
     setUploading(false);
   };
 
@@ -61,7 +61,8 @@ export default function NewShopPage() {
         accepts_tip: tip,
         category,
         market,
-        image_urls: images,
+        image_urls: images.map((i) => i.full),
+        thumb_urls: images.map((i) => i.thumb),
       })
       .select("id")
       .single();
@@ -131,10 +132,10 @@ export default function NewShopPage() {
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">写真（4枚まで）</label>
             <div className="flex flex-wrap gap-2">
-              {images.map((url, i) => (
-                <div key={url} className="relative">
+              {images.map((pair, i) => (
+                <div key={pair.full} className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="h-20 w-20 rounded-lg object-cover" />
+                  <img src={pair.thumb} alt="" className="h-20 w-20 rounded-lg object-cover" />
                   <button
                     onClick={() => setImages(images.filter((_, j) => j !== i))}
                     className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[10px] text-white"
