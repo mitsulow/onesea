@@ -30,7 +30,7 @@ export const LINKS = {
   sekaimura: "https://sekaimura-gold.vercel.app",
   mmm: "https://mastermindmembers.net",
   // 同一ドメイン内のコピー（PWAの×バー回避）。素材は0Leiから読む
-  tsukiyoga: "/tsukiyoga",
+  tsukiyoga: "/tsukiyoga-v7/index.html",
   rakuza: "https://rakuza-ten.vercel.app",
   rakuzaMyPage: "https://rakuza-ten.vercel.app/my",
   rakuzaCotozute: "https://rakuza-ten.vercel.app/posts",

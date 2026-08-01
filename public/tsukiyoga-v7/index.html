@@ -12014,7 +12014,7 @@ const COASTLINES = [
       // フッター URL
       ctx.fillStyle = TSUKIYOGA_YELLOW;
       ctx.font = '22px "Cinzel", serif';
-      ctx.fillText('mitsulow.github.io/0Lei/tsukiyoga_v7.html', W/2, H - 50);
+      ctx.fillText('onesea.vercel.app/tsukiyoga-v7', W/2, H - 50);
     });
   }
 
@@ -12221,7 +12221,7 @@ const COASTLINES = [
   }
 
   // ===== 招待リンク (友達追加) / QR コード =====
-  const TSUKIYOGA_BASE_URL = 'https://mitsulow.github.io/0Lei/tsukiyoga_v7.html';
+  const TSUKIYOGA_BASE_URL = 'https://onesea.vercel.app/tsukiyoga-v7/index.html';
   function buildInviteUrl(person) {
     // 人物データを URL パラメータにエンコード (名前|生年月日|時刻|場所)
     const [yy, mm, dd] = (person.birthDate || '1990-01-01').split('-');
@@ -13051,7 +13051,7 @@ const COASTLINES = [
         const shareData = {
           files: [file],
           title: 'ツキヨガ占い',
-          text: '私のツキヨガカード🌙\nあなたも占ってみる:\nhttps://mitsulow.github.io/0Lei/tsukiyoga_v7.html'
+          text: '私のツキヨガカード🌙\nあなたも占ってみる:\nhttps://onesea.vercel.app/tsukiyoga-v7/index.html'
         };
         if (navigator.canShare && navigator.canShare(shareData)) {
           await navigator.share(shareData);
@@ -13059,7 +13059,7 @@ const COASTLINES = [
           await navigator.share({
             title: 'ツキヨガ占い',
             text: shareData.text,
-            url: 'https://mitsulow.github.io/0Lei/tsukiyoga_v7.html'
+            url: 'https://onesea.vercel.app/tsukiyoga-v7/index.html'
           });
         } else {
           alert('お使いの環境では画像シェアができません。「画像を保存」を使って LINE に手動で送ってください。');
@@ -13083,7 +13083,7 @@ const COASTLINES = [
     const moonName = (heroMoon && heroMoon.textContent || '').replace(/\s/g, '').replace('産まれの','').replace('生まれの','');
     return `🌙 ツキヨガ占い で 占 っ て み た ら…\n\n私 は『${typeName}』で し た！\n月齢 ${ageStr} ${moonName} 生 ま れ\n\nあ な た も 占 っ て み る 👇\n#ツキヨガ占い #月占い`;
   }
-  const TSUKIYOGA_URL = 'https://mitsulow.github.io/0Lei/tsukiyoga_v7.html';
+  const TSUKIYOGA_URL = 'https://onesea.vercel.app/tsukiyoga-v7/index.html';
   document.addEventListener('DOMContentLoaded', () => {
     // X (Twitter) シェア
     const xBtn = document.getElementById('uranaiShareXBtn');

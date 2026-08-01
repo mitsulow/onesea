@@ -211,17 +211,17 @@ export function BottomNav() {
           {label("セカイムラ", pathname.startsWith("/sekai"))}
         </Link>
 
-        {/* ツキヨガ = 月 */}
-        <Link href={LINKS.tsukiyoga} className={itemCls(pathname.startsWith("/tsukiyoga"))}>
+        {/* ツキヨガ = 月（v7完全内蔵版へ直行。静的HTMLなので<a>で開く） */}
+        <a href={LINKS.tsukiyoga} className={itemCls(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/icons/cel-moon.png"
             alt=""
-            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/tsukiyoga") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
+            className="object-contain transition-transform duration-150 active:scale-125"
             style={{ width: 22, height: 22 }}
           />
-          {label("ツキヨガ", pathname.startsWith("/tsukiyoga"))}
-        </Link>
+          {label("ツキヨガ")}
+        </a>
 
         {/* 楽市楽座 = 「楽」 */}
         <Link href="/za" className={itemCls(pathname.startsWith("/za"))}>
