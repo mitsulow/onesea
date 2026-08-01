@@ -202,16 +202,16 @@ export function BottomNav() {
         </Link>
 
         {/* ツキヨガ = 月 */}
-        <a href={LINKS.tsukiyoga} className={itemCls(false)}>
+        <Link href={LINKS.tsukiyoga} className={itemCls(pathname.startsWith("/tsukiyoga"))}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/icons/cel-moon.png"
             alt=""
-            className="object-contain transition-transform duration-150 active:scale-125"
+            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/tsukiyoga") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
             style={{ width: 22, height: 22 }}
           />
-          {label("ツキヨガ")}
-        </a>
+          {label("ツキヨガ", pathname.startsWith("/tsukiyoga"))}
+        </Link>
 
         {/* 楽市楽座 = 「楽」 */}
         <Link href="/za" className={itemCls(pathname.startsWith("/za"))}>
