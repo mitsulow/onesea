@@ -124,22 +124,26 @@ export function Otohikari() {
         padding: "0 0 10px",
       }}
     >
-      {/* 地球儀 + すべてのオーバーレイ（タイトルも地球儀に重ねて1セクション化） */}
+      {/* タイトル: 文字1行分だけの薄い帯 */}
+      <div className="px-3 py-1">
+        <span
+          className="text-[15px] font-extrabold tracking-[2px]"
+          style={{
+            color: "#8ff4ff",
+            textShadow:
+              "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
+          }}
+        >
+          ▽MasterMindSystem
+        </span>
+      </div>
+
+      {/* 地球儀 + オーバーレイ */}
       <div className="relative">
         <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
 
-        {/* タイトル（左・2行分下げ）+ マップモード（右上） */}
-        <div className="pointer-events-none absolute left-3 right-3 top-2 z-20 flex items-start justify-between gap-2">
-          <span
-            className="mt-[22px] text-[15px] font-extrabold tracking-[2px]"
-            style={{
-              color: "#8ff4ff",
-              textShadow:
-                "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
-            }}
-          >
-            ▽MasterMindSystem
-          </span>
+        {/* マップモード（右上） */}
+        <div className="pointer-events-none absolute left-3 right-3 top-2 z-20 flex items-start justify-end gap-2">
           <div className="pointer-events-auto relative">
             <button
               onClick={() => setModeOpen((v) => !v)}
