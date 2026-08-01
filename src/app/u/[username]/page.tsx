@@ -728,7 +728,11 @@ export default function UserPage() {
       {ideas.length > 0 && (
         <div className="pt-5">
           <div className="card">
-            <div className="sec mb-3">💡 アイディア一覧</div>
+            <div className="sec mb-3 flex items-center gap-1.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/mode-idea.webp" alt="" className="h-[22px] w-[22px] rounded-md object-contain" />
+              <span>アイディアメモ</span>
+            </div>
             <div className="space-y-2">
               {(ideasOpen ? ideas : ideas.slice(0, 5)).map((i) => {
                 const dt = new Date(i.created_at);
