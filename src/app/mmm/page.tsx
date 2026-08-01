@@ -109,10 +109,8 @@ export default function MmmPage() {
 
       {/* ① OTOHIKARI MAP + ② シューマン音 */}
       <div className="px-4">
-        <div className="-mx-4">
-          <Otohikari />
-          <SchumannAudioPlayer />
-        </div>
+        <Otohikari />
+        <SchumannAudioPlayer />
       </div>
 
       {/* ⑤ わたしのDDP */}
@@ -257,9 +255,7 @@ export default function MmmPage() {
 
       {/* ③ Cotozute */}
       <div className="px-4">
-        <div className="-mx-4">
-          <CotozuteFeed />
-        </div>
+        <CotozuteFeed />
       </div>
     </main>
   );
