@@ -29,7 +29,8 @@ export const AUDIO = {
 export const LINKS = {
   sekaimura: "https://sekaimura-gold.vercel.app",
   mmm: "https://mastermindmembers.net",
-  tsukiyoga: "https://mitsulow.github.io/0Lei/tsukiyoga_v7.html",
+  // 同一ドメイン内のコピー（PWAの×バー回避）。素材は0Leiから読む
+  tsukiyoga: "/tsukiyoga/index.html",
   rakuza: "https://rakuza-ten.vercel.app",
   rakuzaMyPage: "https://rakuza-ten.vercel.app/my",
   rakuzaCotozute: "https://rakuza-ten.vercel.app/posts",

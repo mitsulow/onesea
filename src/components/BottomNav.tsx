@@ -207,7 +207,7 @@ export function BottomNav() {
         </Link>
 
         {/* ツキヨガ = 月 */}
-        <a href={LINKS.tsukiyoga} target="_blank" rel="noopener noreferrer" className={itemCls(false)}>
+        <a href={LINKS.tsukiyoga} className={itemCls(false)}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/icons/tab-moon.png"
