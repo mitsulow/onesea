@@ -397,6 +397,11 @@ export function SchumannAudioPlayer() {
   }, []);
 
   const togglePlay = () => {
+    // プログラム中は ▶(❚❚/■) でとっさに中止できる
+    if (program) {
+      cancelProgram();
+      return;
+    }
     const a = audioRef.current;
     if (!a || !src) return;
     if (playing) a.pause();
@@ -432,7 +437,7 @@ export function SchumannAudioPlayer() {
     >
       {/* タイトル行 */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-baseline gap-1.5">
+        <div className="flex min-w-0 items-baseline">
           <span className="text-[13px]">⚡</span>
           <span
             className="text-[14px] font-extrabold tracking-wide text-white"
@@ -440,7 +445,7 @@ export function SchumannAudioPlayer() {
           >
             シューマン音
           </span>
-          <span className="text-[11.5px] text-white/85">（夏至 {SCHUMANN.hz}HZ）</span>
+          <span className="ml-1.5 text-[11.5px] text-white/85">（夏至 {SCHUMANN.hz}HZ）</span>
         </div>
         <button
           onClick={() => setShowDlInfo((v) => !v)}
@@ -464,12 +469,12 @@ export function SchumannAudioPlayer() {
       <div className="mt-1.5 flex items-center gap-2">
         <button
           onClick={togglePlay}
-          disabled={!src || program !== null}
-          aria-label={playing ? "一時停止" : "再生"}
+          disabled={!src}
+          aria-label={program ? "モードを中止" : playing ? "一時停止" : "再生"}
           className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[11px] text-white shadow disabled:opacity-40"
           style={{ background: "linear-gradient(140deg,#a070ff,#8a5aff)" }}
         >
-          {playing ? "❚❚" : "▶"}
+          {playing ? "❚❚" : program ? "■" : "▶"}
         </button>
         <button
           onClick={() => setLoop((v) => !v)}
@@ -582,9 +587,10 @@ export function SchumannAudioPlayer() {
           </div>
           <button
             onClick={cancelProgram}
-            className="flex-shrink-0 rounded-lg border border-white/50 px-3 py-1.5 text-[11px] font-bold text-white/90"
+            className="flex-shrink-0 rounded-xl px-4 py-2 text-[13px] font-extrabold text-white shadow"
+            style={{ background: "#e05040" }}
           >
-            中止
+            ■ 中止
           </button>
         </div>
       )}
