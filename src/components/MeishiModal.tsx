@@ -27,6 +27,7 @@ interface MeishiProfile {
   skills: string[] | null;
   member_no: number | null;
   created_at: string | null;
+  birthday: string | null;
 }
 
 export function MeishiModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -37,7 +38,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
     const supabase = createClient();
     supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, status_line, prefecture, city, rice_work, life_work, skills, member_no, created_at")
+      .select("id, username, display_name, avatar_url, cover_url, status_line, prefecture, city, rice_work, life_work, skills, member_no, created_at, birthday")
       .eq("username", username)
       .maybeSingle()
       .then(({ data }) => setP((data as MeishiProfile) ?? null));
@@ -114,9 +115,9 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                   >
                     わらわ〜No.{String(p.member_no).padStart(7, "0")}
                   </span>
-                  {p.created_at && (
+                  {p.birthday && (
                     <span className="num text-[10px] font-bold text-[#a09888]">
-                      🌏 地球冒険 {Math.max(1, Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000) + 1)}日目
+                      🌏 地球冒険 {(Math.floor((Date.now() - new Date(p.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
                     </span>
                   )}
                 </div>

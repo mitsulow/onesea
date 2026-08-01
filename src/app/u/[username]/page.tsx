@@ -30,6 +30,7 @@ interface FullProfile {
   sns: Record<string, string> | null;
   member_no: number | null;
   created_at: string | null;
+  birthday: string | null;
 }
 
 /** むらびとのマイページ（楽市楽座の名刺スタイル: カバー画像 + 重なるアバター） */
@@ -65,7 +66,7 @@ export default function UserPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at")
+      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at, birthday")
       .eq("username", username)
       .maybeSingle();
     const prof = (data as FullProfile) ?? null;
@@ -311,9 +312,9 @@ export default function UserPage() {
               >
                 わらわ〜No.{String(profile.member_no).padStart(7, "0")}
               </span>
-              {profile.created_at && (
+              {profile.birthday && (
                 <span className="num text-[11px] font-bold text-[#a09888]">
-                  🌏 地球冒険 {Math.max(1, Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000) + 1)}日目
+                  🌏 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
                 </span>
               )}
             </div>
@@ -445,7 +446,7 @@ export default function UserPage() {
                 className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ede5d8] bg-white"
                 aria-label={platform}
               >
-                <SnsIcon platform={platform} size={17} />
+                <SnsIcon platform={platform} size={22} />
               </a>
             ))}
           </div>
@@ -496,7 +497,7 @@ export default function UserPage() {
       {shops.length > 0 && (
         <div className="pt-5">
           <div className="card">
-            <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>{isMe ? "あなたの楽座" : "この人の楽座"}</span></div>
+            <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>楽市出品一覧</span></div>
             <div className="grid grid-cols-2 gap-3">
               {shops.map((shop) => {
                 const cat = categoryOf(shop.category);
@@ -659,7 +660,7 @@ export default function UserPage() {
       {/* 言の葉 */}
       <div className="pt-5">
         <div className="card">
-          <div className="sec mb-2">💭 {isMe ? "あなたの言の葉" : "この人の言の葉"}</div>
+          <div className="sec mb-2">💭 {isMe ? "過去のコトヅテ" : "この人の過去のコトヅテ"}</div>
           {posts === null ? (
             <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>
           ) : posts.length === 0 ? (

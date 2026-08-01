@@ -6,13 +6,18 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/cotozute";
+import { SnsIcon } from "@/components/SnsIcon";
 
 const SNS_FIELDS = [
   { id: "instagram", label: "Instagram", placeholder: "https://instagram.com/..." },
   { id: "x", label: "X", placeholder: "https://x.com/..." },
   { id: "youtube", label: "YouTube", placeholder: "https://youtube.com/@..." },
   { id: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@..." },
+  { id: "facebook", label: "Facebook", placeholder: "https://facebook.com/..." },
+  { id: "threads", label: "Threads", placeholder: "https://threads.net/@..." },
+  { id: "line", label: "LINE公式", placeholder: "https://lin.ee/..." },
   { id: "note", label: "note", placeholder: "https://note.com/..." },
+  { id: "ameblo", label: "アメブロ", placeholder: "https://ameblo.jp/..." },
   { id: "website", label: "ウェブサイト", placeholder: "https://..." },
 ] as const;
 
@@ -31,6 +36,7 @@ export default function ProfileSettingsPage() {
   const [skills, setSkills] = useState("");
   const [wants, setWants] = useState("");
   const [sns, setSns] = useState<Record<string, string>>({});
+  const [birthday, setBirthday] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -44,7 +50,7 @@ export default function ProfileSettingsPage() {
       setUsername(prof.username);
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, status_line, bio, prefecture, city, rice_work, life_work, skills, wants_to_do, sns")
+        .select("display_name, status_line, bio, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, birthday")
         .eq("id", u.id)
         .single();
       if (data) {
@@ -58,6 +64,7 @@ export default function ProfileSettingsPage() {
         setSkills((data.skills ?? []).join("、"));
         setWants((data.wants_to_do ?? []).join("、"));
         setSns((data.sns as Record<string, string>) ?? {});
+        setBirthday((data.birthday as string) ?? "");
       }
     });
   }, []);
@@ -88,8 +95,13 @@ export default function ProfileSettingsPage() {
         skills: toArr(skills),
         wants_to_do: toArr(wants),
         sns: Object.keys(snsClean).length ? snsClean : null,
+        birthday: birthday || null,
       })
       .eq("id", me.id);
+    // 誕生日はツキヨガ等が読む private_profiles にも同期
+    if (birthday) {
+      await supabase.from("private_profiles").upsert({ user_id: me.id, birth_date: birthday });
+    }
     setSaving(false);
     if (error) {
       setMessage(`保存できませんでした: ${error.message}`);
@@ -156,6 +168,16 @@ export default function ProfileSettingsPage() {
             {field("都道府県", prefecture, setPrefecture, "例: 沖縄県")}
             {field("市町村", city, setCity, "例: 那覇市")}
           </div>
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生日</label>
+            <input
+              type="date"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
+              className="w-full rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] outline-none focus:border-[#c94d3a]"
+            />
+            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">名刺の「地球冒険◯日目」（生まれてから何日目）に使われます</p>
+          </div>
           {field("ライスワーク", riceWork, setRiceWork, "いまの仕事")}
           {field("ライフワーク", lifeWork, setLifeWork, "本当にやりたいこと")}
           {field("スキル", skills, setSkills, "例: 料理、デザイン、大工", "「、」区切りで12個まで")}
@@ -166,7 +188,10 @@ export default function ProfileSettingsPage() {
             <div className="space-y-2">
               {SNS_FIELDS.map((f) => (
                 <div key={f.id} className="flex items-center gap-2">
-                  <span className="w-20 flex-shrink-0 text-[11.5px] text-[#8a8070]">{f.label}</span>
+                  <span className="flex w-24 flex-shrink-0 items-center gap-1.5 text-[11px] text-[#8a8070]">
+                    <SnsIcon platform={f.id} size={18} />
+                    {f.label}
+                  </span>
                   <input
                     value={sns[f.id] ?? ""}
                     onChange={(e) => setSns({ ...sns, [f.id]: e.target.value })}
