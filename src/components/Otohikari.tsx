@@ -131,14 +131,14 @@ export function Otohikari() {
         {/* タイトル（左・2行分下げ）+ マップモード（右上） */}
         <div className="pointer-events-none absolute left-3 right-3 top-2 z-20 flex items-start justify-between gap-2">
           <span
-            className="mt-11 text-[15px] font-extrabold tracking-[2px]"
+            className="mt-[22px] text-[15px] font-extrabold tracking-[2px]"
             style={{
               color: "#8ff4ff",
               textShadow:
                 "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
             }}
           >
-            MasterMindSystem
+            ▽MasterMindSystem
           </span>
           <div className="pointer-events-auto relative">
             <button
