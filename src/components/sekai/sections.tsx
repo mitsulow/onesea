@@ -14,7 +14,6 @@ import {
   upcomingMoots,
   nextMisoka,
   fetchMootData,
-  mootFaces,
   toggleRsvp,
   myMootCount,
   fetchSettings,
@@ -52,6 +51,8 @@ import {
   VillagePostComment,
   fetchVillagePostComments,
   addVillagePostComment,
+  writeMootToTecho,
+  removeMootFromTecho,
 } from "@/lib/sekai";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
 
@@ -250,11 +251,11 @@ export function MootsSection({
   mootCount: number;
   onRsvped: () => void;
 }) {
-  const [moots] = useState<Moot[]>(() => upcomingMoots(4));
+  void myPref;
+  const [moots] = useState<Moot[]>(() => upcomingMoots(1));
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<Record<string, string>>({});
-  const [faces, setFaces] = useState<any[]>([]);
 
   const load = useCallback(async () => {
     const r = await fetchMootData(
@@ -270,124 +271,87 @@ export function MootsSection({
     fetchSettings().then(setSettings);
   }, [load]);
 
-  useEffect(() => {
-    if (moots[0]) mootFaces(moots[0].dateKey).then(setFaces);
-  }, [moots, mine]);
-
   const next = moots[0];
+  const joined = next ? mine.has(next.dateKey) : false;
+  const today = next?.dday === 0;
+
+  const rsvp = async () => {
+    if (!me || !next) return;
+    await toggleRsvp(me.id, next.dateKey, next.kind, joined);
+    // 参加します → 手帳のその日時に自動でスケジュール（取消で消える）
+    if (joined) removeMootFromTecho(next);
+    else writeMootToTecho(next);
+    await load();
+    onRsvped();
+  };
 
   return (
-    <section id="moots" className="card" style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "1px solid #2a4a3a", scrollMarginTop: 56 }}>
-      <div className="mb-2 flex items-baseline justify-between">
-        <span className="text-[13px] font-extrabold tracking-[2px] text-[#7aa88a]">
-          {moots[0]?.kind === "new" ? "🌑 セカイムラ新月会" : "🌕 セカイムラ満月会"}
+    <section
+      id="moots"
+      className="card"
+      style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "none", padding: "10px 8px 12px", scrollMarginTop: 56 }}
+    >
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <span className="text-[13.5px] font-extrabold tracking-[1px] text-[#7aa88a]">
+          📺 セカイムラオンライン満月会・新月会
         </span>
-        {me && (
-          <span className="text-[10px] text-[#5a7a68]">
-            あなたの参加 {mootCount}回
-          </span>
-        )}
+        {me && <span className="text-[10px] text-[#5a7a68]">あなたの参加 {mootCount}回</span>}
       </div>
 
-      {/* 次の集い（大きく） */}
+      {/* テレビ画面（当日はここにZoomの導線が出る） */}
       {next && (
-        <div className="mb-2 rounded-xl border border-[#4a9a6a]/40 bg-white/5 p-3.5">
-          <div className="flex items-center gap-3.5">
-            <div className="text-[40px]">{next.kind === "new" ? "🌑" : "🌕"}</div>
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] tracking-[2px] text-[#7aa88a]">
-                次の{next.kind === "new" ? "新月会（昼）" : "満月会（夜）"}
-              </div>
-              <div className="num text-[22px] font-extrabold leading-snug text-[#a8d8b8]">
-                {next.label}
-                <span className="ml-1.5 text-[14px]">{next.hour}時〜</span>
-                <span className="ml-2 text-[13px] text-[#7aa88a]">
-                  {next.dday === 0 ? "今日！" : next.dday === 1 ? "明日" : `あと${next.dday}日`}
-                </span>
-              </div>
-              <div className="num text-[11px] text-[#5a7a68]">{counts.get(next.dateKey) ?? 0}人が集う予定</div>
+        <div className="relative overflow-hidden rounded-xl border border-[#2a4a3a]">
+          <img src="/sekai/zoom-tv.webp" alt="" className="w-full object-cover" />
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(180deg, rgba(8,16,24,.6) 0%, rgba(8,16,24,.05) 45%, rgba(8,16,24,.74) 100%)" }}
+          />
+          {/* 案内文 */}
+          <div className="absolute left-0 right-0 top-2.5 px-3 text-center">
+            <div className="text-[14px] font-extrabold leading-snug text-white" style={{ textShadow: "0 2px 10px rgba(0,0,0,.85)" }}>
+              次のセカイムラ{next.kind === "new" ? "新月会" : "満月会"}は
+              <span className="num"> {next.label}{next.hour}時〜 </span>です
             </div>
-            {me && (
+            <div className="num mt-0.5 text-[10.5px] text-[#b8d8c8]" style={{ textShadow: "0 1px 6px rgba(0,0,0,.85)" }}>
+              {today ? "今日！" : next.dday === 1 ? "明日" : `あと${next.dday}日`} ・ {counts.get(next.dateKey) ?? 0}人が参加予定
+            </div>
+          </div>
+          {/* ボタン */}
+          <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-center gap-2">
+            {today && settings.zoom_url ? (
+              <>
+                <a
+                  href={settings.zoom_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 rounded-xl bg-[#2d8cff] py-2.5 text-center text-[13.5px] font-extrabold text-white no-underline"
+                >
+                  Zoomで参加する
+                </a>
+                {settings.youtube_url && (
+                  <a
+                    href={settings.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 rounded-xl bg-[#f00] py-2.5 text-center text-[13.5px] font-extrabold text-white no-underline"
+                  >
+                    YouTubeで視聴
+                  </a>
+                )}
+              </>
+            ) : me ? (
               <button
-                onClick={async () => {
-                  await toggleRsvp(me.id, next.dateKey, next.kind, mine.has(next.dateKey));
-                  await load();
-                  onRsvped();
-                }}
-                className="flex-shrink-0 rounded-xl px-4 py-2.5 text-[13px] font-extrabold"
+                onClick={rsvp}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold"
                 style={
-                  mine.has(next.dateKey)
-                    ? { background: "#2a5a3a", color: "#a8d8b8", border: "1px solid #4a9a6a" }
+                  joined
+                    ? { background: "rgba(42,90,58,.92)", color: "#a8d8b8", border: "1px solid #4a9a6a" }
                     : { background: "#d4b96a", color: "#1a2432" }
                 }
               >
-                {mine.has(next.dateKey) ? "✓ 参加します" : "参加する"}
+                {joined ? "✓ 参加します（タップで取消）" : "参加します"}
               </button>
-            )}
-          </div>
-          {/* 参加導線 */}
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {settings.zoom_url ? (
-              <a
-                href={settings.zoom_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl bg-[#2d8cff] py-2.5 text-center text-[13px] font-extrabold text-white no-underline"
-              >
-                Zoom で参加
-              </a>
-            ) : (
-              <div className="rounded-xl border border-white/15 py-2.5 text-center text-[11.5px] text-[#5a7a68]">
-                Zoom 準備中
-              </div>
-            )}
-            {settings.youtube_url ? (
-              <a
-                href={settings.youtube_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl bg-[#f00] py-2.5 text-center text-[13px] font-extrabold text-white no-underline"
-              >
-                YouTube で視聴
-              </a>
-            ) : (
-              <div className="rounded-xl border border-white/15 py-2.5 text-center text-[11.5px] text-[#5a7a68]">
-                YouTube 準備中
-              </div>
-            )}
-          </div>
-          {/* 壇上ルーム（登壇者用・ここがYouTubeに流れる） */}
-          <Link
-            href={`/sekai/cafe/${encodeURIComponent("満月会ステージ")}`}
-            className="mt-2 block rounded-xl border border-[#d4b96a55] py-2.5 text-center text-[12.5px] font-extrabold no-underline"
-            style={{ background: "rgba(212,185,106,.1)", color: "#e8d5a0" }}
-          >
-            🎤 壇上に上がる（登壇者はこちら）
-          </Link>
-          {faces.length > 0 && (
-            <div className="mt-2.5 flex items-center gap-1.5">
-              <div className="flex -space-x-2">
-                {faces.slice(0, 8).map((f, i) =>
-                  f.avatar_url ? (
-                    <img
-                      key={i}
-                      src={f.avatar_url}
-                      alt=""
-                      referrerPolicy="no-referrer"
-                      className="h-7 w-7 rounded-full border-2 border-[#1a2a38] object-cover"
-                    />
-                  ) : (
-                    <span key={i} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#1a2a38] bg-[#2a4a3a] text-[12px]">
-                      🌿
-                    </span>
-                  )
-                )}
-              </div>
-              <span className="text-[10.5px] text-[#7aa88a]">この顔ぶれと集います</span>
-            </div>
-          )}
-          <div className="mt-2 text-[10.5px] leading-relaxed text-[#5a7a68]">
-            終わったあとは {myPref} のブレイクアウトへ。話したい人だけ、そのまま地域ラウンジで。
+            ) : null}
           </div>
         </div>
       )}
@@ -398,7 +362,7 @@ export function MootsSection({
           href={LATEST_MOOT_VIDEO.url ?? "#"}
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-2 block overflow-hidden rounded-xl border border-[#4a9a6a]/40 no-underline"
+          className="mb-2 mt-2 block overflow-hidden rounded-xl border border-[#4a9a6a]/40 no-underline"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={LATEST_MOOT_VIDEO.thumb} alt="" className="w-full object-cover" />
@@ -410,7 +374,7 @@ export function MootsSection({
 
       {/* 過去の新月会・満月会 動画（サムネ） */}
       {PAST_MOOT_VIDEOS.length > 0 && (
-        <div className="mb-2">
+        <div className="mb-1 mt-2 px-1">
           <div className="mb-1 text-[10px] tracking-[2px] text-[#5a7a68]">過去の新月会・満月会 動画</div>
           <div className="hide-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
             {PAST_MOOT_VIDEOS.map((v, i) =>
@@ -441,35 +405,8 @@ export function MootsSection({
         </div>
       )}
 
-      {/* その先の集い */}
-      <div className="grid grid-cols-3 gap-2 pb-1">
-        {moots.slice(1).map((m) => (
-          <button
-            key={m.dateKey}
-            onClick={async () => {
-              if (!me) return;
-              await toggleRsvp(me.id, m.dateKey, m.kind, mine.has(m.dateKey));
-              await load();
-              onRsvped();
-            }}
-            className="rounded-xl border py-2 text-center"
-            style={
-              mine.has(m.dateKey)
-                ? { background: "#2a5a3a", borderColor: "#4a9a6a" }
-                : { background: "rgba(255,255,255,.04)", borderColor: "rgba(255,255,255,.12)" }
-            }
-          >
-            <div className="text-[18px]">{m.kind === "new" ? "🌑" : "🌕"}</div>
-            <div className="num text-[12px] font-bold text-[#a8d8b8]">{m.label}</div>
-            <div className="num text-[9.5px] text-[#5a7a68]">
-              {counts.get(m.dateKey) ?? 0}人{mine.has(m.dateKey) ? " ✓" : ""}
-            </div>
-          </button>
-        ))}
-      </div>
-
       {/* 過去の新月満月会（折りたたみ） */}
-      <details className="mt-3">
+      <details className="mt-2 px-1">
         <summary className="cursor-pointer list-none text-[11.5px] font-bold text-[#7aa88a]">
           📁 過去の新月満月会 ▾
         </summary>

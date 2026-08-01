@@ -106,6 +106,42 @@ export function nextMisoka(): { dateKey: string; label: string; dday: number } {
   return { dateKey, label: `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`, dday };
 }
 
+/* ---- 会の予定を手帳（端末のメモ帳）に書き込む/消す ---- */
+export function mootTechoLabel(m: { kind: "new" | "full" }): string {
+  return m.kind === "new" ? "🌑セカイムラ新月会" : "🌕セカイムラ満月会";
+}
+
+export function writeMootToTecho(m: Moot) {
+  try {
+    const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+    const day = memos[m.dateKey] ?? { note: "", h: {} };
+    day.h = day.h ?? {};
+    const hr = String(m.hour);
+    const label = mootTechoLabel(m);
+    const cur = String(day.h[hr] ?? "");
+    if (!cur.split("\n").includes(label)) day.h[hr] = cur ? `${cur}\n${label}` : label;
+    memos[m.dateKey] = day;
+    localStorage.setItem("techo-memos", JSON.stringify(memos));
+  } catch {}
+}
+
+export function removeMootFromTecho(m: Moot) {
+  try {
+    const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+    const day = memos[m.dateKey];
+    const hr = String(m.hour);
+    if (day?.h?.[hr]) {
+      const label = mootTechoLabel(m);
+      const lines = String(day.h[hr]).split("\n").filter((l: string) => l !== label);
+      if (lines.length) day.h[hr] = lines.join("\n");
+      else delete day.h[hr];
+      if (!day.note && Object.keys(day.h ?? {}).length === 0) delete memos[m.dateKey];
+      else memos[m.dateKey] = day;
+      localStorage.setItem("techo-memos", JSON.stringify(memos));
+    }
+  } catch {}
+}
+
 export async function fetchMootData(dates: string[], userId: string | null) {
   const supabase = createClient();
   const { data } = await supabase.from("moot_rsvps").select("moot_date, user_id").in("moot_date", dates);

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { Moot, upcomingMoots, fetchMootData, toggleRsvp, fetchSettings } from "@/lib/sekai";
+import { Moot, upcomingMoots, fetchMootData, toggleRsvp, fetchSettings, writeMootToTecho, removeMootFromTecho } from "@/lib/sekai";
 
 /**
  * トップに出す「セカイムラ満月会 / セカイムラ新月会」セクション。
@@ -58,11 +58,13 @@ export function MoonMootBanner() {
 
   const join = async () => {
     if (me && !mine) await toggleRsvp(me.id, moot.dateKey, moot.kind, false);
+    writeMootToTecho(moot); // 手帳のその日時に自動でスケジュール
     dismiss();
   };
 
   const decline = async () => {
     if (me && mine) await toggleRsvp(me.id, moot.dateKey, moot.kind, true);
+    removeMootFromTecho(moot);
     dismiss();
   };
 
