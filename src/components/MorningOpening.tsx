@@ -40,14 +40,13 @@ export function MorningOpening() {
   const [earthCenterY, setEarthCenterY] = useState(260);
 
   useEffect(() => {
-    // チェック期間中はリロードのたびに毎回表示。
-    // 本番運用に戻すときは下のコメントを解除（その日最初の1回だけになる）
-    // const today = new Date();
-    // const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
-    // try {
-    //   if (localStorage.getItem("onesea-morning-shown") === key) return;
-    //   localStorage.setItem("onesea-morning-shown", key);
-    // } catch {}
+    // 朝いち仕様: その日はじめて開いた時だけアニメを流す（リロードでは出ない）
+    const today = new Date();
+    const key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+    try {
+      if (localStorage.getItem("onesea-morning-shown") === key) return;
+      localStorage.setItem("onesea-morning-shown", key);
+    } catch {}
     const d = new Date();
     const yobi = ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
     setDateLine(`${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${yobi}）`);
