@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -42,7 +43,9 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
       .then(({ data }) => setP((data as MeishiProfile) ?? null));
   }, [username]);
 
-  return (
+  // 投稿カードの content-visibility 内に閉じ込められないよう body 直下へポータル描画
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <div
       className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 px-6"
       onClick={onClose}
@@ -184,6 +187,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
