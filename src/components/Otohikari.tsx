@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { OtohikariGlobe, MapMode } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
-import { Cormorant_Garamond } from "next/font/google";
+import { Cinzel } from "next/font/google";
 
-const serif = Cormorant_Garamond({ subsets: ["latin"], weight: ["600", "700"] });
+// MMM本家と同じ数字フォント（Cinzel）
+const serif = Cinzel({ subsets: ["latin"], weight: ["700"] });
 
 interface SchumannLive {
   f1hz: number | null;
