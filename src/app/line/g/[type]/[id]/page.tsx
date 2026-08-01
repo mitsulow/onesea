@@ -37,7 +37,15 @@ export default function GroupChatPage() {
       setMe(u);
       meRef.current = u;
       if (!u) return;
-      if (type === "village") {
+      if (type === "neura") {
+        const [{ data: t }, { count }] = await Promise.all([
+          supabase.from("neura_teams").select("prefecture, city").eq("id", id).maybeSingle(),
+          supabase.from("neura_members").select("user_id", { count: "exact", head: true }).eq("team_id", id),
+        ]);
+        setName(`ニューラ班（${t?.city ?? t?.prefecture ?? ""}）`);
+        setEmoji("🧠");
+        setMemberCount(count ?? null);
+      } else if (type === "village") {
         const [{ data: v }, { count }] = await Promise.all([
           supabase.from("villages").select("name").eq("id", id).maybeSingle(),
           supabase.from("village_members").select("user_id", { count: "exact", head: true }).eq("village_id", id),
@@ -92,12 +100,14 @@ export default function GroupChatPage() {
           <div className="truncate text-[15px] font-bold leading-tight text-[#f0e6c8]">{name}</div>
           {memberCount != null && <div className="num text-[10px] text-[#7a9ab4]">{memberCount}人のグループ</div>}
         </div>
-        <Link
-          href={type === "village" ? `/sekai/village/${id}` : `/sekai/club/${id}`}
-          className="flex-shrink-0 text-[11px] text-[#7a9ab4] no-underline"
-        >
-          詳細 →
-        </Link>
+        {type !== "neura" && (
+          <Link
+            href={type === "village" ? `/sekai/village/${id}` : `/sekai/club/${id}`}
+            className="flex-shrink-0 text-[11px] text-[#7a9ab4] no-underline"
+          >
+            詳細 →
+          </Link>
+        )}
       </header>
 
       {/* メッセージ */}

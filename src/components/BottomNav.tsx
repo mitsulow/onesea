@@ -181,8 +181,9 @@ export function BottomNav() {
           {label("ホーム", pathname === "/")}
         </Link>
 
-        {/* MMM = 太陽 */}
-        <a href={LINKS.mmm} target="_blank" rel="noopener noreferrer" className={itemCls(false)}>
+        {/* MMM = 太陽（OneSea内のMMMサイトへ） */}
+        <Link href="/mmm" className={itemCls(pathname.startsWith("/mmm"))}>
+          {pathname.startsWith("/mmm") && activeBar}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/icons/tab-sun.png"
@@ -190,8 +191,8 @@ export function BottomNav() {
             className="object-contain transition-transform duration-150 active:scale-125"
             style={{ width: 22, height: 22 }}
           />
-          {label("MMM")}
-        </a>
+          {label("MMM", pathname.startsWith("/mmm"))}
+        </Link>
 
         {/* セカイムラ = 地球 */}
         <Link href="/sekai" className={itemCls(pathname.startsWith("/sekai"))}>

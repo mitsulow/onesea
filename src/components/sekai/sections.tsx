@@ -80,6 +80,7 @@ export function linkify(text: string): React.ReactNode[] {
 }
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
+import { PriceBanner } from "@/components/PriceBanner";
 import { moonsOfYear, YOBI, keyOf } from "@/lib/almanac";
 import { MEISTER_COURSES } from "@/data/meister-courses";
 import { LATEST_MOOT_VIDEO, PAST_MOOT_VIDEOS } from "@/data/moot-videos";
@@ -233,6 +234,7 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
           </>
         )}
       </header>
+      <PriceBanner service="セカイムラ" price="月額3,000円" color="#7ad8a8" />
       {/* セクションは縦も隙間なしで繋げる */}
       <div>{children}</div>
     </main>

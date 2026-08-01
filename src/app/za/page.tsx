@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Shop, Market, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
 import { ZaFeatured } from "@/components/ZaFeatured";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
+import { PriceBanner } from "@/components/PriceBanner";
 
 function priceLabel(s: Shop): string {
   if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "物々交換" : "0円";
@@ -74,6 +75,7 @@ export default function ZaPage() {
           </span>
         </div>
       </header>
+      <PriceBanner service="楽市楽座" price="月額4,000円で座を出せる" color="#e8a060" />
 
       <div className="space-y-3 pt-3">
         {/* 本日のパワープッシュ楽座 */}
