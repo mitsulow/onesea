@@ -709,9 +709,7 @@ function BottomSheet({
                     onClick={(e) => {
                       if ((e.target as HTMLElement).closest("[data-ev]")) return;
                       if (isEd) return;
-                      if (hNote) setEditH(h); // 既存の走り書きは従来のインライン編集
-                      else
-                        setEvEdit({ id: "", sh: h, sm: 0, eh: Math.min(23, h + 1), em: h === 23 ? 59 : 0, text: "", color: "green" });
+                      setEditH(h); // タップ=その場で直接書く（第一の入力方法・緑メモ）
                     }}
                     className="flex cursor-pointer"
                     style={{
@@ -767,6 +765,20 @@ function BottomSheet({
                           </span>
                         </div>
                       ))}
+                      {/* 右端: 時間指定式（◯時◯分〜+色ペン）の入口 */}
+                      {!isEd && (
+                        <button
+                          data-ev
+                          onClick={() =>
+                            setEvEdit({ id: "", sh: h, sm: 0, eh: Math.min(23, h + 1), em: h === 23 ? 59 : 0, text: "", color: "green" })
+                          }
+                          aria-label="時間を指定して予定を入れる"
+                          className="absolute right-1 top-1/2 z-[3] flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[12px]"
+                          style={{ color: "#c8c2b4" }}
+                        >
+                          ⏱
+                        </button>
+                      )}
                       {isEd ? (
                         <textarea
                           ref={inputRef}
@@ -778,7 +790,7 @@ function BottomSheet({
                           className="w-full resize-none bg-transparent px-2 py-1 text-xs leading-relaxed text-[#333] outline-none"
                         />
                       ) : (
-                        <div className="w-full px-2 py-1" style={{ paddingLeft: passers.length ? 2 + passers.length * 6 + 6 : 8 }}>
+                        <div className="w-full py-1 pl-2 pr-8" style={{ paddingLeft: passers.length ? 2 + passers.length * 6 + 6 : 8 }}>
                           {starters.map((ev) => (
                             <button
                               key={ev.id}
