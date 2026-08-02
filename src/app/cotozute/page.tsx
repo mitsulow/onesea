@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CotozutePost, fetchPostsPage, fetchPostsBefore, fetchMyLikes } from "@/lib/cotozute";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
+import { AvatarMenu } from "@/components/AvatarMenu";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -197,13 +198,9 @@ export default function CotozutePage() {
         style={{ transform: hideBar ? "translateY(-110%)" : "none" }}
       >
         <div className="relative flex h-12 items-center justify-center px-4">
-          <Link href="/my" aria-label="マイページ" className="absolute right-3 top-1/2 -translate-y-1/2">
-            {avatar ? (
-              <img src={avatar} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full object-cover" />
-            ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ead9] text-[15px]">🌿</span>
-            )}
-          </Link>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2">
+            <AvatarMenu ring="#c8beac" />
+          </span>
           <img src="/cotozute-logo.webp" alt="Cotozute" className="h-8 w-auto rounded-lg" />
         </div>
       </header>

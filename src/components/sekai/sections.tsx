@@ -81,6 +81,7 @@ export function linkify(text: string): React.ReactNode[] {
 import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { PriceBanner } from "@/components/PriceBanner";
+import { AvatarMenu } from "@/components/AvatarMenu";
 import { moonsOfYear, YOBI, keyOf } from "@/lib/almanac";
 import { MEISTER_COURSES } from "@/data/meister-courses";
 import { LATEST_MOOT_VIDEO, PAST_MOOT_VIDEOS } from "@/data/moot-videos";
@@ -164,75 +165,14 @@ export function useSekaiMe() {
 
 /** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
-  const [avatar, setAvatar] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
-    });
-  }, []);
-
-  const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
-
   return (
     <main className="pb-44">
       <header className="relative z-[60] px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
         <div className="text-[10px] leading-tight tracking-[3px] text-[#a8cca8]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eae6b8]">セカイムラ</div>
-        <button
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="メニュー"
-          className="absolute right-3 top-1/2 -translate-y-1/2"
-        >
-          {avatar ? (
-            <img
-              src={avatar}
-              alt=""
-              referrerPolicy="no-referrer"
-              className="h-8 w-8 rounded-full border-2 border-[#d4b96a]/70 object-cover"
-            />
-          ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#d4b96a]/70 text-base">
-              🌏
-            </span>
-          )}
-        </button>
-
-        {menuOpen && (
-          <>
-            <div className="fixed inset-0 z-[70]" onClick={() => setMenuOpen(false)} />
-            <div
-              className="absolute right-3 top-full z-[80] mt-1.5 w-44 overflow-hidden rounded-xl border border-[#ede5d8] bg-white text-left"
-              style={{ boxShadow: "0 8px 30px rgba(0,0,0,0.18)" }}
-            >
-              <Link
-                href="/my"
-                onClick={() => setMenuOpen(false)}
-                className="block border-b border-[#f2ece0] px-4 py-3 text-[14px] font-medium text-[#3a3428] no-underline active:bg-[#faf4ea]"
-              >
-                🪪 マイページ
-              </Link>
-              <Link
-                href="/#techo"
-                onClick={() => setMenuOpen(false)}
-                className="block border-b border-[#f2ece0] px-4 py-3 text-[14px] font-medium text-[#3a3428] no-underline active:bg-[#faf4ea]"
-              >
-                📖 手帳
-              </Link>
-              <button
-                onClick={logout}
-                className="block w-full px-4 py-3 text-left text-[14px] font-medium text-[#a05040] active:bg-[#faf4ea]"
-              >
-                ログアウト
-              </button>
-            </div>
-          </>
-        )}
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-left">
+          <AvatarMenu />
+        </span>
       </header>
       <PriceBanner service="セカイムラ" price="月額3,000円" color="#7ad8a8" />
       {/* セクションは縦も隙間なしで繋げる */}

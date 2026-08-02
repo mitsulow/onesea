@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AvatarMenu } from "@/components/AvatarMenu";
 import { createClient } from "@/lib/supabase/client";
 import { Shop, Market, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
 import { ZaFeatured } from "@/components/ZaFeatured";
@@ -43,21 +44,9 @@ export default function ZaPage() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/rakuichi/logo-edo.webp" alt="楽市楽座" className="h-[92px] w-full object-cover" />
         {loggedIn ? (
-          <Link href="/my" aria-label="マイページ" className="absolute right-3 top-2.5">
-            {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={avatar}
-                alt=""
-                referrerPolicy="no-referrer"
-                className="h-8 w-8 rounded-full border-2 border-white/80 object-cover shadow"
-              />
-            ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white/80 bg-black/20 text-base shadow">
-                🌊
-              </span>
-            )}
-          </Link>
+          <span className="absolute right-3 top-2.5">
+            <AvatarMenu />
+          </span>
         ) : (
           <Link
             href="/"

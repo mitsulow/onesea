@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { PriceBanner } from "@/components/PriceBanner";
+import { AvatarMenu } from "@/components/AvatarMenu";
 import { moonOf, nextMoons, todayKey, YOBI, type MoonEvent } from "@/lib/almanac";
 
 /* eslint-disable @next/next/no-img-element */
@@ -80,13 +81,9 @@ export default function TsukiyogaPage() {
             ツキヨガ
           </span>
         </div>
-        <Link href="/my" aria-label="マイページ" className="absolute right-3 top-1/2 -translate-y-1/2">
-          {avatar ? (
-            <img src={avatar} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full border-2 border-[#f0e0a8]/60 object-cover" />
-          ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#f0e0a8]/60 text-base">🌙</span>
-          )}
-        </Link>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2">
+          <AvatarMenu ring="#f0e0a8" />
+        </span>
       </header>
       <PriceBanner service="ツキヨガ" price="月額5,000円" color="#f0e0a8" />
 

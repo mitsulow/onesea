@@ -8,6 +8,7 @@ import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { PriceBanner } from "@/components/PriceBanner";
+import { AvatarMenu } from "@/components/AvatarMenu";
 import {
   NEURA_SIZE,
   NeuraTeam,
@@ -97,13 +98,9 @@ export default function MmmPage() {
             MasterMindMembers
           </div>
         </div>
-        <Link href="/my" aria-label="マイページ" className="absolute right-3 top-1/2 -translate-y-1/2">
-          {avatar ? (
-            <img src={avatar} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full border-2 border-[#7de0a0]/60 object-cover" />
-          ) : (
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#7de0a0]/60 text-base">☀️</span>
-          )}
-        </Link>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2">
+          <AvatarMenu ring="#7de0a0" />
+        </span>
       </header>
       <PriceBanner service="MasterMindMembers" price="年会費39,600円" color="#7de0a0" />
 

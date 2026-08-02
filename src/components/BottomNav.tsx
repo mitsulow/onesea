@@ -3,20 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { fetchUnreadTotal } from "@/lib/line";
-import { setBadge, ensureSw } from "@/lib/push";
-import { LINKS } from "@/lib/config";
 
-/** 下部タブ: ホーム / コトヅテ / MMM(太陽) / セカイムラ(地球) / ツキヨガ(月) / 楽市楽座(楽) / TALK */
+/**
+ * 下部タブ = 「いま居るサービスの専用タブ」方式。
+ * サービス間の行き来は右上アバターの AvatarMenu が担う。
+ * いまはセカイムラ専用タブのみ（MMM等は専用ページが増えたら追加）。
+ */
 export function BottomNav() {
   const pathname = usePathname();
-  const [unread, setUnread] = useState(0);
-  const [sekaiMenu, setSekaiMenu] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
-
-  // ページが変わったらメニューを閉じる
-  useEffect(() => setSekaiMenu(false), [pathname]);
 
   // iOS: キーボードが開くと fixed バーが画面の途中に浮くため、文字入力中はタブを隠す
   useEffect(() => {
@@ -39,229 +34,54 @@ export function BottomNav() {
     };
   }, []);
 
-  useEffect(() => {
-    let stop = false;
-    let userId: string | null = null;
-    const supabase = createClient();
-
-    ensureSw(); // プッシュ受信用SWを常に登録しておく
-
-    const refresh = async () => {
-      if (stop || !userId) return;
-      const n = await fetchUnreadTotal(userId);
-      if (!stop) {
-        setUnread(n);
-        setBadge(n); // ホーム画面アイコンの「③」も同期
-      }
-    };
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      userId = session?.user?.id ?? null;
-      refresh();
-    });
-    const t = setInterval(refresh, 30000);
-    window.addEventListener("focus", refresh);
-    window.addEventListener("onesea:unreadRefresh", refresh);
-    return () => {
-      stop = true;
-      clearInterval(t);
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("onesea:unreadRefresh", refresh);
-    };
-  }, [pathname]);
-
-  const itemCls = (active: boolean) => {
-    void active;
-    return "relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline text-[#8a8070]";
-  };
-
-  const label = (text: string, active = false) => (
-    <span className={`text-[9px] leading-none ${active ? "font-bold" : "font-medium"}`}>{text}</span>
-  );
-
-
-  const inSekai = pathname.startsWith("/sekai");
-
   const SEKAI_PAGES = [
     ["/sekai", "🏠", "ホーム"],
-    ["/sekai/villages", "⛺", "拠点情報"],
-    ["/sekai/clubs", "🎌", "部活情報"],
+    ["/sekai/villages", "⛺", "拠点"],
+    ["/sekai/clubs", "🎌", "部活"],
     ["/sekai/kome", "🌾", "米部"],
-    ["/sekai/meister", "🫙", "マイスター講座"],
-    ["/sekai/tasukete", "🤝", "助けて掲示板"],
-    ["/sekai/map", "🗾", "セカイムラ地図"],
+    ["/sekai/meister", "🫙", "講座"],
+    ["/sekai/tasukete", "🤝", "助けて"],
+    ["/sekai/map", "🗾", "地図"],
   ] as const;
-  const sekaiActive = (href: string) => (href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href));
-  const current = SEKAI_PAGES.find(([href]) => sekaiActive(href));
-  void current;
 
-  // 文字入力中（キーボード表示中）はバーを出さない
   if (kbOpen) return null;
+  if (!pathname.startsWith("/sekai")) return null;
+
+  const sekaiActive = (href: string) => (href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href));
 
   return (
-    <>
-      {/* セカイムラ内: フローティングメニュー（地球から開くページ一覧） */}
-      {inSekai && (
-        <>
-          {sekaiMenu && <div className="fixed inset-0 z-40 bg-black/35" onClick={() => setSekaiMenu(false)} />}
-          <div
-            className="pointer-events-none fixed left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 px-3"
-            style={{ bottom: "calc(env(safe-area-inset-bottom) + 62px)" }}
-          >
-            {sekaiMenu && (
-              <div
-                className="pointer-events-auto mb-2 grid grid-cols-3 gap-2 rounded-2xl p-3"
-                style={{
-                  background: "linear-gradient(160deg,#0e2014,#1e4530)",
-                  border: "1px solid #4a9a6a55",
-                  boxShadow: "0 -6px 40px rgba(0,0,0,.45)",
-                }}
-              >
-                {SEKAI_PAGES.map(([href, emoji, label]) => {
-                  const active = sekaiActive(href);
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={() => setSekaiMenu(false)}
-                      className="flex flex-col items-center gap-1 rounded-xl py-3 no-underline"
-                      style={
-                        active
-                          ? { background: "rgba(212,185,106,.16)", border: "1.5px solid #d4b96a" }
-                          : { background: "rgba(255,255,255,.05)", border: "1.5px solid transparent" }
-                      }
-                    >
-                      <span className={active ? "text-[30px]" : "text-[24px]"}>{emoji}</span>
-                      <span
-                        className="text-[10.5px] font-extrabold leading-tight"
-                        style={{ color: active ? "#eae6b8" : "#a8cca8" }}
-                      >
-                        {label}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-            <div className="flex justify-start">
-              <button
-                onClick={() => setSekaiMenu((v) => !v)}
-                aria-label="セカイムラのメニュー"
-                className="pointer-events-auto flex h-[46px] w-[46px] flex-col items-center justify-center rounded-full shadow-xl"
-                style={{
-                  background: "linear-gradient(150deg,#163522,#1e4530)",
-                  border: "1px solid #4a9a6a88",
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/cel-earth.png" alt="" className="h-[22px] w-[22px] object-contain" />
-                <span className="text-[8px] leading-none text-[#8ab89a]">{sekaiMenu ? "▾" : "▴"}</span>
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
     <nav
-      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t border-[#e5dccb] bg-[#fffdf8]/95 backdrop-blur-sm"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t border-[#2a4a35]"
+      style={{
+        background: "linear-gradient(160deg,#0e2014f2,#1e4530f2)",
+        backdropFilter: "blur(6px)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
     >
       <div className="flex h-[54px] items-center justify-around">
-        {/* ホーム */}
-        <Link href="/" className={itemCls(pathname === "/")}>
-          <span
-            className={`text-lg leading-none transition-transform duration-150 ${pathname === "/" ? "-translate-y-0.5 scale-[1.35]" : ""}`}
-          >
-            🏠
-          </span>
-          {label("ホーム", pathname === "/")}
-        </Link>
-
-        {/* コトヅテ = 言の葉フィード（Cotozuteロゴの葉っぱ） */}
-        <Link href="/cotozute" className={itemCls(pathname.startsWith("/cotozute"))}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/tab-cotozute.png"
-            alt=""
-            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/cotozute") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
-            style={{ width: 24, height: 21 }}
-          />
-          {label("コトヅテ", pathname.startsWith("/cotozute"))}
-        </Link>
-
-        {/* MMM = 太陽（OneSea内のMMMサイトへ） */}
-        <Link href="/mmm" className={itemCls(pathname.startsWith("/mmm"))}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/cel-sun.png"
-            alt=""
-            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/mmm") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
-            style={{ width: 22, height: 22 }}
-          />
-          {label("MMM", pathname.startsWith("/mmm"))}
-        </Link>
-
-        {/* セカイムラ = 地球 */}
-        <Link href="/sekai" className={itemCls(pathname.startsWith("/sekai"))}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/cel-earth.png"
-            alt=""
-            className={`object-contain transition-transform duration-150 ${pathname.startsWith("/sekai") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
-            style={{ width: 22, height: 22 }}
-          />
-          {label("セカイムラ", pathname.startsWith("/sekai"))}
-        </Link>
-
-        {/* ツキヨガ = 月（v7完全内蔵版へ直行。静的HTMLなので<a>で開く） */}
-        <a href={LINKS.tsukiyoga} className={itemCls(false)}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icons/cel-moon.png"
-            alt=""
-            className="object-contain transition-transform duration-150 active:scale-125"
-            style={{ width: 22, height: 22 }}
-          />
-          {label("ツキヨガ")}
-        </a>
-
-        {/* 楽市楽座 = 「楽」 */}
-        <Link href="/za" className={itemCls(pathname.startsWith("/za"))}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/rakuichi/logo-emblem.webp"
-            alt=""
-            className={`rounded-full object-cover transition-transform duration-150 ${pathname.startsWith("/za") ? "-translate-y-0.5 scale-[1.35]" : "active:scale-125"}`}
-            style={{ width: 21, height: 21 }}
-          />
-          {label("楽市楽座", pathname.startsWith("/za"))}
-        </Link>
-
-        {/* TALK */}
-        <Link href="/line" className={itemCls(pathname.startsWith("/line"))}>
-          <span
-            className={`relative leading-none transition-transform duration-150 ${pathname.startsWith("/line") ? "-translate-y-0.5 scale-[1.35]" : ""}`}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/icons/tab-talk.png"
-              alt=""
-              className="object-contain"
-              style={{ width: 24, height: 20 }}
-            />
-            {unread > 0 && (
+        {SEKAI_PAGES.map(([href, emoji, label]) => {
+          const active = sekaiActive(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className="relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline"
+            >
               <span
-                className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white"
-                style={{ lineHeight: 1 }}
+                className={`text-lg leading-none transition-transform duration-150 ${active ? "-translate-y-0.5 scale-[1.3]" : ""}`}
               >
-                {unread > 99 ? "99+" : unread}
+                {emoji}
               </span>
-            )}
-          </span>
-          {label("TALK", pathname.startsWith("/line"))}
-        </Link>
+              <span
+                className={`text-[9px] leading-none ${active ? "font-bold" : "font-medium"}`}
+                style={{ color: active ? "#eae6b8" : "#8ab89a" }}
+              >
+                {label}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </nav>
-    </>
   );
 }

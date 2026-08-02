@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { BroadcastSummary, ChatSummary, GroupSummary, fetchBroadcastSummary, fetchChats, fetchGroups } from "@/lib/line";
 import { enablePush, pushEnabled, pushSupported } from "@/lib/push";
+import { AvatarMenu } from "@/components/AvatarMenu";
 
 function timeLabel(iso: string | null): string {
   if (!iso) return "";
@@ -81,7 +82,7 @@ export default function LinePage() {
         style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
       >
         <h1 className="text-lg font-extrabold tracking-[4px] text-[#f0e6c8]">TALK</h1>
-        <span className="text-[11px] tracking-widest text-[#7a9ab4]">メッセージ</span>
+        <AvatarMenu />
       </header>
 
       {me && showBell && (
