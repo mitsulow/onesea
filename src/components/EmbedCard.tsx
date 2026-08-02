@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -34,6 +34,53 @@ function getYouTubeId(url: string): string | null {
 function getTweetId(url: string): string | null {
   const match = url.match(/(?:twitter|x)\.com\/[^/]+\/status\/(\d+)/);
   return match ? match[1] : null;
+}
+
+const IG_HEADER = 54; // 埋め込み上部（アバター+名前）の高さ
+const IG_FOOTER = 102; // 下部（♡💬↗ボタン列+リンク行）の高さ
+
+/** Instagramのメディア部分だけを見せる埋め込み */
+function InstagramMediaOnly({ igId }: { igId: string }) {
+  const frameRef = useRef<HTMLIFrameElement>(null);
+  const [h, setH] = useState<number | null>(null); // iframe全体の実寸
+
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (!e.origin.includes("instagram.com")) return;
+      if (e.source !== frameRef.current?.contentWindow) return;
+      try {
+        const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+        const height = d?.details?.height ?? d?.height;
+        if (typeof height === "number" && height > 200) setH(height);
+      } catch {}
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  // 実寸が届いたらヘッダーと下ボタン列を切り落とし、届くまでは全体表示
+  const cropped = h != null && h > IG_HEADER + IG_FOOTER + 120;
+  return (
+    <div
+      className="relative mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]"
+      style={{ height: cropped ? h! - IG_HEADER - IG_FOOTER : 560 }}
+    >
+      <iframe
+        ref={frameRef}
+        src={`https://www.instagram.com/p/${igId}/embed/`}
+        className="absolute w-full"
+        style={{
+          height: h ?? 560,
+          border: "none",
+          top: cropped ? -IG_HEADER : 0,
+        }}
+        scrolling="no"
+        loading="lazy"
+        allowFullScreen
+        title="Instagram post"
+      />
+    </div>
+  );
 }
 
 /**
@@ -92,22 +139,12 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
     );
   }
 
-  /* Instagram: iframe自体がサムネ+▶を出すので最初から表示（動画は押すまで再生されない）。
-     loading=lazy で「画面に近づいた枠だけ」読む=フィード全体は重くならない */
+  /* Instagram: メディア部分だけ表示。
+     埋め込みiframeはpostMessageで実寸の高さを教えてくるので、
+     それを受けてヘッダー(54px)と下のボタン列(約102px)を枠外にはみ出させて隠す。
+     動画はiframe内の▶を押すまで再生されない。loading=lazyで画面に近い枠だけ読込 */
   if (igId) {
-    return (
-      <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]">
-        <iframe
-          src={`https://www.instagram.com/p/${igId}/embed/captioned/`}
-          className="w-full"
-          style={{ height: "560px", border: "none" }}
-          scrolling="no"
-          loading="lazy"
-          allowFullScreen
-          title="Instagram post"
-        />
-      </div>
-    );
+    return <InstagramMediaOnly igId={igId} />;
   }
 
   /* X: タップするまでiframeを読まない */
