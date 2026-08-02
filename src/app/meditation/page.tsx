@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { SCHUMANN_DATA_URL } from "@/lib/config";
 import {
+  BRAIN_MODES,
   MED_DEFAULTS,
   type MedConfig,
   type MedSession,
@@ -21,6 +22,15 @@ import {
   startMedSession,
   TEXTBOOK_MODES,
 } from "@/lib/meditationAudio";
+
+/** 各モードの幻の基音の説明（帯域） */
+const MODE_NOTES: Record<string, string> = {
+  γ: "基音≈41.6Hz・最小整数比 6:11:16:21:31",
+  β: "基音≈20.8Hz・22:32:33:47:62",
+  α: "基音≈10.4Hz・44:64:65:84:94",
+  θ: "基音≈7.83Hz(F1)・85:86:112:125:164",
+  δ: "基音≈1.3Hz・352:512:517:672:752",
+};
 
 // v2: 初期値を大きく変えたため保存キーを更新（古い設定を引き継がない）
 const CFG_KEY = "onesea-med-cfg2";
@@ -143,6 +153,31 @@ export default function MeditationPage() {
               スピーカーでは左右の音が混ざり、効果が完全に消えます。
             </div>
           </div>
+          {/* 脳波モード選択（指定なし=毎回ランダム） */}
+          <div className="mb-3 rounded-2xl bg-white/5 p-3">
+            <div className="mb-2 text-[11.5px] font-bold text-white/70">脳波モード（幻の基音の帯域）</div>
+            <div className="flex gap-1.5">
+              {["random", ...BRAIN_MODES].map((m) => (
+                <button
+                  key={m}
+                  onClick={() => patchCfg({ brainMode: m })}
+                  className="flex-1 rounded-xl border py-2.5 text-[15px] font-extrabold"
+                  style={
+                    cfg.brainMode === m
+                      ? { background: "#d4b96a", borderColor: "#d4b96a", color: "#0b1020" }
+                      : { background: "transparent", borderColor: "rgba(255,255,255,.18)", color: "rgba(255,255,255,.65)" }
+                  }
+                >
+                  {m === "random" ? "🎲" : m}
+                </button>
+              ))}
+            </div>
+            <div className="mt-1.5 text-[9.5px] leading-relaxed text-white/40">
+              {cfg.brainMode === "random"
+                ? "🎲 = おまかせ（毎回どれかが選ばれる。どれだったかは再生中に表示）"
+                : MODE_NOTES[cfg.brainMode]}
+            </div>
+          </div>
           <button
             onClick={begin}
             className="w-full rounded-2xl py-4 text-[16px] font-extrabold text-[#0b1020]"
@@ -176,6 +211,11 @@ export default function MeditationPage() {
               {fmt(sec ? sec.end - now : 0)}
             </div>
             <div className="mt-1 text-[10.5px] text-white/45">次の切り替えまで ・ 全体 {fmt(Math.max(0, total - now))}</div>
+            {tl && (
+              <div className="mt-1.5 text-[11px] font-bold" style={{ color: "#e8dcae" }}>
+                {tl.mode}モード ・ 幻の基音 {tl.baseHz.toFixed(2)}Hz
+              </div>
+            )}
           </div>
 
           {/* セッション全体の帯グラフ */}
@@ -264,32 +304,6 @@ export default function MeditationPage() {
       {showCfg && !session && (
         <div className="mt-4 space-y-2 rounded-2xl bg-white/5 p-3 text-[12px]">
           <div className="mb-1 font-extrabold text-white/80">設定（次のセッションから反映）</div>
-          {/* 音の構成 */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-white/65">音の構成</span>
-            <div className="flex gap-1.5">
-              {[
-                { v: 3, label: "6:11:16:21:31" },
-                { v: 1, label: "22:32:33:47:62" },
-              ].map((o) => (
-                <button
-                  key={o.v}
-                  onClick={() => patchCfg({ voiceSet: o.v })}
-                  className="num rounded-lg border px-2 py-1 text-[10.5px] font-bold"
-                  style={
-                    cfg.voiceSet === o.v
-                      ? { background: "#d4b96a", borderColor: "#d4b96a", color: "#0b1020" }
-                      : { background: "transparent", borderColor: "rgba(255,255,255,.2)", color: "rgba(255,255,255,.6)" }
-                  }
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="-mt-1 text-[9.5px] leading-relaxed text-white/35">
-            6:11:16:21:31 = 32×F1〜F4+φ⁸×F4（基音2×F3・最小整数比） / 22:32:33:47:62 = F3基音のφ⁸型
-          </div>
           {(
             [
               ["dwell", "滞在時間（秒）", 30, 900, 10],

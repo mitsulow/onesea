@@ -42,7 +42,7 @@ export interface MedConfig {
   gapJitter: number; // 間隔のばらつき（±割合）
   dwell: number; // 滞在時間 秒
   master: number; // 全体の音量
-  voiceSet: number; // 音の構成: 1 = 22:32:33:47:62(F3基音) / 3 = 6:11:16:21:31(2×F3基音)
+  brainMode: string; // 脳波モード: "γ"|"β"|"α"|"θ"|"δ"|"random"（幻の基音が各帯域に入る）
   justOn: boolean; // 純正律スナップ（オフ=実測値×32/φ⁸の生の値）
   echoMix: number; // φエコーの量（0でオフ）
   isoDepth: number; // 同相AM補強（8Hzの脈が「ブツブツ」に聞こえたため初期値0）
@@ -66,7 +66,7 @@ export const MED_DEFAULTS: MedConfig = {
   dwell: 180,
   // 鐘より小さく「遠くでなんとなく聞こえている」程度が瞑想中の正解
   master: 0.05,
-  voiceSet: 3,
+  brainMode: "random",
   justOn: true,
   echoMix: 0.18,
   isoDepth: 0,
@@ -143,40 +143,95 @@ export interface VoiceSpec {
   deco?: boolean; // 1kHz超の飾り（バイノーラル非成立）
 }
 
-/**
- * 5音の定義。modes = 実測シューマンF1〜F4。
- *
- * 純正律スナップ（justOn）: 実測F3を基音に 22/32/33/47/62 倍。
- *   22×F3 = 32×F2（シューマンの11:16比そのまま）
- *   32×F3 = 32×F3
- *   33×F3 ≈ φ⁸×F2（+2.2%）
- *   47×F3 ≈ φ⁸×F3（φ⁸=46.9787…、誤差0.05%）
- *   62×F3 ≈ φ⁸×F4（+0.55%）
- * 差音もすべてF3の整数倍になり、5音がひとつの立体に融合する。
- * 隣り合う 32/33 倍の差はちょうど1×F3 = 実測F3そのものの音響ビートとして鳴る。
+/* ---------------- 脳波5モード ----------------
+ * 5音の整数比の選び方で「幻の基音」（全音の最大公約数。脳がミッシング・
+ * ファンダメンタルとして再構成する、鳴っていない芯）が変わる。
+ * その基音がちょうど脳波の5帯域に1つずつ収まる:
+ *   γ: 6:11:16:21:31     基音 2×F3 ≈41.6Hz（最小整数比・融合が最も強い）
+ *   β: 22:32:33:47:62    基音 F3   ≈20.8Hz（32:33の差音=F3の明滅つき）
+ *   α: 44:64:65:84:94    基音 F3/2 ≈10.4Hz
+ *   θ: 85:86:112:125:164 基音 F1   ≈7.83Hz（85:86の差音=F1そのもの）
+ *   δ: 352:512:517:672:752 基音 F3/16 ≈1.3Hz（スナップ誤差ほぼゼロ）
+ * どのモードも音の材料はシューマンF1〜F4 × 32倍/φ⁸倍だけ（φ⁸≈47=ルーカス数L₈）。
  */
-export function buildVoices(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): VoiceSpec[] {
-  const f3 = modes[2];
-  // 構成1: F3基音 22:32:33:47:62（φ⁸×F2を含む・32:33の差音=F3の明滅つき）
-  const set1: Array<{ name: string; n: number; base: number; raw: number }> = [
-    { name: "32×F2", n: 22, base: f3, raw: modes[1] * MULT32 },
-    { name: "32×F3", n: 32, base: f3, raw: modes[2] * MULT32 },
-    { name: "φ⁸×F2", n: 33, base: f3, raw: modes[1] * MULT_PHI8 },
-    { name: "φ⁸×F3", n: 47, base: f3, raw: modes[2] * MULT_PHI8 },
-    { name: "φ⁸×F4", n: 62, base: f3, raw: modes[3] * MULT_PHI8 },
-  ];
-  // 構成3: 2×F3基音 6:11:16:21:31（最小の整数比=純正律の融合力が最も強い）
-  const set3: Array<{ name: string; n: number; base: number; raw: number }> = [
-    { name: "32×F1", n: 6, base: f3 * 2, raw: modes[0] * MULT32 },
-    { name: "32×F2", n: 11, base: f3 * 2, raw: modes[1] * MULT32 },
-    { name: "32×F3", n: 16, base: f3 * 2, raw: modes[2] * MULT32 },
-    { name: "32×F4", n: 21, base: f3 * 2, raw: modes[3] * MULT32 },
-    { name: "φ⁸×F4", n: 31, base: f3 * 2, raw: modes[3] * MULT_PHI8 },
-  ];
-  const defs = cfg.voiceSet === 3 ? set3 : set1;
-  const ref = cfg.justOn ? defs[0].n * defs[0].base : defs[0].raw; // 最低音を音量の基準に
+
+export type BrainMode = "γ" | "β" | "α" | "θ" | "δ";
+export const BRAIN_MODES: BrainMode[] = ["γ", "β", "α", "θ", "δ"];
+
+interface VoiceDef {
+  name: string;
+  n: number; // 整数倍
+  raw: number; // スナップ無しの生の周波数
+}
+
+function modeDefs(mode: BrainMode, m: number[]): { base: number; defs: VoiceDef[] } {
+  const t32 = (i: number) => m[i] * MULT32;
+  const tp8 = (i: number) => m[i] * MULT_PHI8;
+  switch (mode) {
+    case "γ":
+      return {
+        base: m[2] * 2,
+        defs: [
+          { name: "32×F1", n: 6, raw: t32(0) },
+          { name: "32×F2", n: 11, raw: t32(1) },
+          { name: "32×F3", n: 16, raw: t32(2) },
+          { name: "32×F4", n: 21, raw: t32(3) },
+          { name: "φ⁸×F4", n: 31, raw: tp8(3) },
+        ],
+      };
+    case "β":
+      return {
+        base: m[2],
+        defs: [
+          { name: "32×F2", n: 22, raw: t32(1) },
+          { name: "32×F3", n: 32, raw: t32(2) },
+          { name: "φ⁸×F2", n: 33, raw: tp8(1) },
+          { name: "φ⁸×F3", n: 47, raw: tp8(2) },
+          { name: "φ⁸×F4", n: 62, raw: tp8(3) },
+        ],
+      };
+    case "α":
+      return {
+        base: m[2] / 2,
+        defs: [
+          { name: "32×F2", n: 44, raw: t32(1) },
+          { name: "32×F3", n: 64, raw: t32(2) },
+          { name: "φ⁸×F2", n: 65, raw: tp8(1) },
+          { name: "32×F4", n: 84, raw: t32(3) },
+          { name: "φ⁸×F3", n: 94, raw: tp8(2) },
+        ],
+      };
+    case "θ":
+      return {
+        base: m[0],
+        defs: [
+          { name: "32×F3", n: 85, raw: t32(2) },
+          { name: "φ⁸×F2", n: 86, raw: tp8(1) },
+          { name: "32×F4", n: 112, raw: t32(3) },
+          { name: "φ⁸×F3", n: 125, raw: tp8(2) },
+          { name: "φ⁸×F4", n: 164, raw: tp8(3) },
+        ],
+      };
+    case "δ":
+      return {
+        base: m[2] / 16,
+        defs: [
+          { name: "32×F2", n: 352, raw: t32(1) },
+          { name: "32×F3", n: 512, raw: t32(2) },
+          { name: "φ⁸×F2", n: 517, raw: tp8(1) },
+          { name: "32×F4", n: 672, raw: t32(3) },
+          { name: "φ⁸×F3", n: 752, raw: tp8(2) },
+        ],
+      };
+  }
+}
+
+/** 5音の定義。modes = 実測シューマンF1〜F4 */
+export function buildVoices(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES, mode: BrainMode = "β"): VoiceSpec[] {
+  const { base, defs } = modeDefs(mode, modes);
+  const ref = cfg.justOn ? defs[0].n * base : defs[0].raw; // 最低音を音量の基準に
   return defs.map((d, ix) => {
-    const freq = cfg.justOn ? d.n * d.base : d.raw;
+    const freq = cfg.justOn ? d.n * base : d.raw;
     const vol =
       Math.pow(PHI, -ix / 2) * // 低域から 1 : 1/√φ : 1/φ : … の緩やかな傾斜
       Math.pow(ref / freq, cfg.hfExp) *
@@ -213,6 +268,8 @@ export interface MedTimeline {
   bellsAt: number; // 終わりの鐘・1打目の相対秒
   total: number;
   cfg: MedConfig;
+  mode: BrainMode; // 実際に選ばれた脳波モード（randomの場合ここで確定）
+  baseHz: number; // 幻の基音（全音の最大公約数）
 }
 
 function shuffled(n: number): number[] {
@@ -232,7 +289,12 @@ const jitter = (base: number, pct: number) => base * (1 + (Math.random() * 2 - 1
  * PAN1・PAN2・退場はそれぞれ別のランダム順（同じ順だと巻き戻しに聞こえる）。
  */
 export function buildTimeline(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): MedTimeline {
-  const voices = buildVoices(cfg, modes);
+  // 脳波モードの確定: 指定が無ければ毎回ランダムに1つ引く
+  const mode: BrainMode = (BRAIN_MODES as string[]).includes(cfg.brainMode)
+    ? (cfg.brainMode as BrainMode)
+    : BRAIN_MODES[Math.floor(Math.random() * BRAIN_MODES.length)];
+  const voices = buildVoices(cfg, modes, mode);
+  const baseHz = modeDefs(mode, modes).base;
   const n = voices.length;
 
   const enterOrder = voices
@@ -280,6 +342,8 @@ export function buildTimeline(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES):
   return {
     cfg,
     total,
+    mode,
+    baseHz,
     bellsAt,
     sections: [
       { name: "登場", side: "右脳優位", start: 0, end: s1End },

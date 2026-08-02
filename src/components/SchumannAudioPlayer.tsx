@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { AUDIO, SCHUMANN, SCHUMANN_DATA_URL } from "@/lib/config";
 import {
+  BRAIN_MODES,
   MED_DEFAULTS,
   buildTimeline,
   fetchMeasuredModes,
@@ -53,7 +54,8 @@ export function SchumannAudioPlayer() {
   /* モード（瞑想/アイディア/シンクロ） */
   const [modeOpen, setModeOpen] = useState(false);
   const [introKind, setIntroKind] = useState<Exclude<ProgramKind, "meditation"> | null>(null);
-  const [program, setProgram] = useState<{ kind: ProgramKind; course?: number } | null>(null);
+  const [program, setProgram] = useState<{ kind: ProgramKind; course?: number; mode?: string } | null>(null);
+  const [medPick, setMedPick] = useState<string>("random"); // 脳波モード（🎲=おまかせ）
   const programRef = useRef(program);
   programRef.current = program;
   const [phase, setPhase] = useState("");
@@ -248,7 +250,7 @@ export function SchumannAudioPlayer() {
     setModeOpen(false);
     setLoop(false);
     a.loop = false;
-    setProgram({ kind, course });
+    setProgram({ kind, course, mode: medPick });
     wakeOn();
 
     if (kind === "meditation") {
@@ -291,11 +293,12 @@ export function SchumannAudioPlayer() {
         const saved = localStorage.getItem("onesea-med-cfg2");
         if (saved) Object.assign(cfg, JSON.parse(saved));
       } catch {}
+      cfg.brainMode = p.mode ?? "random"; // 10分+γ のように選ばれていればそれ、無指定はランダム
       // エンジンの固定部（登場+PAN×2+鐘+退場）を差し引いて滞在時間を決める
       const fixedLen = buildTimeline({ ...cfg, dwell: 0 }, liveModes.current ?? undefined).total;
       cfg.dwell = Math.max(40, Math.round((total - track - fixedLen) / 2.6));
       const tl = buildTimeline(cfg, liveModes.current ?? undefined);
-      setPhase("不思議な音 — 遠くの気配に身をゆだねる");
+      setPhase(`不思議な音（${tl.mode}モード・基音${tl.baseHz.toFixed(1)}Hz）— 遠くの気配に身をゆだねる`);
       try {
         medRef.current = startMedSession(cfg, tl);
       } catch {}
@@ -501,6 +504,24 @@ export function SchumannAudioPlayer() {
                 30分
               </button>
             </div>
+          </div>
+          {/* 脳波モード: 🎲=おまかせ（毎回ランダム）。10分+γ のように分数と組み合わせる */}
+          <div className="flex items-center gap-1.5 pl-12">
+            <span className="text-[9.5px] font-bold text-white/60">脳波:</span>
+            {["random", ...BRAIN_MODES].map((m) => (
+              <button
+                key={m}
+                onClick={() => setMedPick(m)}
+                className="h-7 min-w-7 rounded-lg border px-1.5 text-[12.5px] font-extrabold leading-none"
+                style={
+                  medPick === m
+                    ? { background: "#fff", borderColor: "#fff", color: "#0a8a84" }
+                    : { background: "rgba(255,255,255,.12)", borderColor: "rgba(255,255,255,.25)", color: "rgba(255,255,255,.85)" }
+                }
+              >
+                {m === "random" ? "🎲" : m}
+              </button>
+            ))}
           </div>
           <a
             href="/meditation"
