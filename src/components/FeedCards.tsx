@@ -58,6 +58,13 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
             {mura.profiles?.display_name && <span className="ml-1.5">{mura.profiles.display_name}</span>}
           </div>
         </div>
+        {/* 右上: ムラビトの投稿バッジ（塗りつぶし） */}
+        <span
+          className="flex-shrink-0 self-start rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white"
+          style={{ background: "#4a8a5c" }}
+        >
+          ムラビトの投稿
+        </span>
       </div>
 
       {mura.kind === "event" && mura.event_at && (
@@ -95,7 +102,7 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
           onClick={() => v && router.push(`/sekai/village/${v.id}`)}
           className="w-full py-1 text-center text-[12.5px] font-bold text-[#4a8a5c]"
         >
-          🏡 この拠点を見る →
+          拠点のページへ
         </button>
       </div>
     </div>
