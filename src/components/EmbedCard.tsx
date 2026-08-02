@@ -124,7 +124,19 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
         {embed.image ? (
           <img src={embed.image} alt="" loading="lazy" className="h-44 w-full object-cover" />
         ) : (
-          <div className="flex h-24 items-center justify-center text-[26px]">{igId ? "📷" : "🐦"}</div>
+          <div
+            className="flex h-32 flex-col items-center justify-center gap-1.5"
+            style={{
+              background: igId
+                ? "linear-gradient(45deg,#f9ce34,#ee2a7b 50%,#6228d7)"
+                : "#0f1419",
+            }}
+          >
+            <span className="text-[34px] drop-shadow">{igId ? "📷" : "𝕏"}</span>
+            <span className="text-[11px] font-extrabold tracking-wider text-white/90">
+              {igId ? "Instagram の投稿" : "X のポスト"}
+            </span>
+          </div>
         )}
         <div className="flex items-center justify-between gap-2 p-2.5">
           <div className="min-w-0">

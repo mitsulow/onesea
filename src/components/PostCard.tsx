@@ -39,6 +39,10 @@ export function PostCard({
 }) {
   const router = useRouter();
   const pr = post.profiles;
+  // 埋め込みカードが出る場合、本文中のURL文字列は重複表示になるので消す
+  const bodyText = post.embed?.url
+    ? (post.body ?? "").split(post.embed.url).join("").replace(/\s+$/g, "").trim()
+    : post.body;
   const [isLiked, setIsLiked] = useState(liked);
   const [likeCount, setLikeCount] = useState(post.likes?.[0]?.count ?? 0);
   const commentCount = post.comments?.[0]?.count ?? 0;
@@ -133,12 +137,12 @@ export function PostCard({
           )}
           <span className="flex-shrink-0 text-[12.5px] text-[#b8b0a0]">・{relTime(post.created_at)}</span>
         </div>
-        {post.body?.trim() && (
+        {bodyText?.trim() && (
           <p
             onClick={() => router.push(`/post/${post.id}`)}
             className="cursor-pointer break-words text-[15px] leading-relaxed text-[#3a3428]"
           >
-            {post.body}
+            {bodyText}
           </p>
         )}
         {post.image_urls && post.image_urls.length > 0 && (
