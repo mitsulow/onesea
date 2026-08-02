@@ -126,7 +126,7 @@ export function ShopStripCard({ shop }: { shop: Shop }) {
       <div className="px-2 py-1.5">
         <div className="line-clamp-2 text-[11.5px] font-bold leading-snug text-[#3a3428]">{shop.name}</div>
         <div className="num mt-0.5 text-[12px] font-extrabold" style={{ color: "#c94d3a" }}>
-          {shop.market === "ichi" ? "0円" : shop.price_jpy != null ? `¥${shop.price_jpy.toLocaleString()}` : ""}
+          {shop.market === "ichi" ? "0円" : shop.price_jpy != null ? `¥${shop.price_jpy.toLocaleString()}` : "値段相談"}
         </div>
       </div>
     </button>

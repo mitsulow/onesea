@@ -12,7 +12,7 @@ import { PriceBanner } from "@/components/PriceBanner";
 function priceLabel(s: Shop): string {
   if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "物々交換" : "0円";
   if (s.price_jpy != null) return `¥${s.price_jpy.toLocaleString()}`;
-  return "応相談";
+  return "値段相談";
 }
 
 /** 楽座 — マーケット一覧（楽市楽座の楽座ページを移植） */

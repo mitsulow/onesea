@@ -169,7 +169,7 @@ export default function ShopDetailPage() {
                   : "物々交換で"
                 : shop.price_jpy != null
                   ? `¥${shop.price_jpy.toLocaleString()}`
-                  : "応相談"}
+                  : "値段相談"}
             </span>
             <span className="flex gap-1 text-[13px] text-[#8a8070]">
               {shop.accepts_barter && <span>🔄 物々交換OK</span>}

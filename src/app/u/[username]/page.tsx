@@ -558,7 +558,7 @@ export default function UserPage() {
                       <div className="px-2 py-1.5">
                         <h3 className="line-clamp-1 text-[12px] font-bold leading-tight text-[#3a3428]">{shop.name}</h3>
                         <span className="text-[11px] font-bold" style={{ color: "#c94d3a" }}>
-                          {shop.is_trial ? "0円〜" : shop.price_jpy != null ? "¥" + shop.price_jpy.toLocaleString() : ""}
+                          {shop.is_trial ? "0円〜" : shop.price_jpy != null ? "¥" + shop.price_jpy.toLocaleString() : "値段相談"}
                         </span>
                       </div>
                     </div>
