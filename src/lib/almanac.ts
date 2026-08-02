@@ -372,3 +372,34 @@ export function kyurekiLabel(dateKey: string): string {
   if (!k.month) return `旧暦${k.day}日`;
   return `旧暦${k.leap ? "閏" : ""}${k.month}月${k.day}日`;
 }
+
+/** その日の月の聖点（つきたち・かたみに・くまなし・ありあけ）の瞬間時刻 */
+export function holyTimeOf(dateKey: string): { name: string; label: string; time: string } | null {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const t0 = Date.UTC(y, m - 1, d - 1, 15, 0, 0); // JST 0:00
+  const t1 = Date.UTC(y, m - 1, d, 15, 0, 0); // JST 24:00
+  const el0 = elongationAt(t0);
+  let el1 = elongationAt(t1);
+  if (el1 < el0) el1 += 360;
+  const DEFS: Array<[number, string, string]> = [
+    [90, "かたみに", "上弦点"],
+    [180, "くまなし", "満月点"],
+    [270, "ありあけ", "下弦点"],
+    [360, "つきたち", "新月点"],
+  ];
+  for (const [target, name, label] of DEFS) {
+    if (el0 < target && target <= el1) {
+      let a = t0;
+      let b = t1;
+      for (let i = 0; i < 26; i++) {
+        const mid = (a + b) / 2;
+        const diff = ((elongationAt(mid) - (target % 360) + 540) % 360) - 180;
+        if (diff < 0) a = mid;
+        else b = mid;
+      }
+      const tm = new Date((a + b) / 2 + 9 * 3600000);
+      return { name, label, time: `${tm.getUTCHours()}時${String(tm.getUTCMinutes()).padStart(2, "0")}分` };
+    }
+  }
+  return null;
+}

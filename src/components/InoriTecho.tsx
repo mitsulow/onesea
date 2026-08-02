@@ -9,6 +9,7 @@ import {
   moonTimesOf,
   moonImageOf,
   kyurekiLabel,
+  holyTimeOf,
   keyOf,
   todayKey,
   YOBI,
@@ -268,9 +269,7 @@ function MonthCal({
   return (
     <div className="min-h-[60vh] bg-white" onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}>
       {/* 金の題字 */}
-      <div className="px-4 py-2.5 text-center" style={{ background: "linear-gradient(135deg,#eef8fa,#ddf0f5)" }}>
-        <div className="text-[9px] tracking-[4px] text-[#8ab0bc]">フシワカレツトキ</div>
-        <div className="text-[18px] font-extrabold tracking-[3px] text-[#1a7a8a]">願い叶い手帳</div>
+      <div className="px-4 pt-1" style={{ background: "#fff" }}>
       </div>
 
       {/* 月ナビ */}
@@ -685,7 +684,14 @@ function BottomSheet({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-1 h-11 w-11" loading="lazy" />
                 <div className="num text-[10.5px] text-[#e8e4f0]">月齢 {moon.age.toFixed(1)}</div>
-                {moon.holy && <div className="mt-[1px] text-[10.5px] font-extrabold text-[#e8c860]">✦{moon.holy}</div>}
+                {(() => {
+                  const ht = holyTimeOf(dk);
+                  return ht ? (
+                    <div className="mt-[1px] text-[10.5px] font-extrabold text-[#e8c860]">
+                      ✦{ht.name}（{ht.label}）{ht.time}
+                    </div>
+                  ) : null;
+                })()}
                 <div className="mt-1 border-t border-[#2a2a35] pt-1 text-[9.5px] leading-relaxed text-[#b8b4c8]">
                   <div className="flex justify-between"><span>月の出</span><span className="num text-white">{mt.rise ?? "—"}</span></div>
                   <div className="flex justify-between"><span>南中</span><span className="num text-white">{mt.transit ?? "—"}</span></div>

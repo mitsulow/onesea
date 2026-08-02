@@ -46,6 +46,7 @@ export function HomeDashboard() {
   const moon = useMemo(() => moonOf(tk), [tk]);
   const [tide, setTide] = useState<TideDay | null>(null);
   const [advDays, setAdvDays] = useState<number | null>(null);
+  const [schumann, setSchumann] = useState<number | null>(null);
 
   /* 次の節分かれつ刻（今日の残り→無ければ明日）へのカウントダウン */
   const target = useMemo(() => {
@@ -83,6 +84,10 @@ export function HomeDashboard() {
   const [plans, setPlans] = useState<Array<{ time: string; text: string; color?: string }>>([]);
   useEffect(() => {
     fetchTideDay(tk).then(setTide);
+    fetch("https://mitsulow.github.io/0Lei/schumann_data.json")
+      .then((r) => r.json())
+      .then((d) => setSchumann(d?.modes?.F1?.hz ?? null))
+      .catch(() => {});
     try {
       const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
       const day = memos[tk];
@@ -128,14 +133,21 @@ export function HomeDashboard() {
 
   return (
     <section className="bg-white" style={{ margin: "0 -16px" }}>
+      {/* ── 願い叶い手帳（水色ヒーロー・「い」だけ小さく） ── */}
+      <div className="py-2 text-center" style={{ background: "linear-gradient(135deg,#eef8fa,#ddf0f5)" }}>
+        <span className="text-[19px] font-extrabold tracking-[3px] text-[#1a7a8a]">
+          願<span style={{ fontSize: "70%" }}>い</span>叶<span style={{ fontSize: "70%" }}>い</span>手帳
+        </span>
+      </div>
+
       {/* ── 日付（ど真ん中・聖点の日は色が差す） ── */}
-      <div className="px-5 pb-1 pt-4 text-center" style={{ borderTop: isShishi ? `3px solid ${accent}` : "none" }}>
+      <div className="px-5 pb-1 pt-3 text-center" style={{ borderTop: isShishi ? `3px solid ${accent}` : "none" }}>
         <div style={{ fontFamily: MINCHO }}>
           <span className="text-[26px] font-bold tracking-wide text-[#2a2622]">
             {y}年{m}月{d}日<span className="ml-1 text-[19px] text-[#8a8070]">（{dow}）</span>
           </span>
         </div>
-        <div className="mt-1 text-[11px] tracking-[1px] text-[#a09880]">
+        <div className="mt-0.5 text-[11.5px] tracking-[1px] text-[#a09880]">
           {kyurekiLabel(tk)}
           {best?.sekki && (
             <span className="ml-2 font-bold" style={{ color: accent }}>
@@ -143,8 +155,11 @@ export function HomeDashboard() {
             </span>
           )}
           {moon.holy && <span className="ml-2 font-bold text-[#c09030]">✦ {moon.holy}</span>}
-          {advDays != null && (
-            <span className="num ml-2 text-[#b8ae98]">🌏 {advDays.toLocaleString()}日目</span>
+        </div>
+        <div className="num mt-0.5 text-[11px] text-[#b0a68e]">
+          {advDays != null && <span>{advDays.toLocaleString()}回目の地球冒険</span>}
+          {schumann != null && (
+            <span className="ml-2 text-[#3a9a94]">⚡ シューマン共振 {schumann.toFixed(2)}Hz</span>
           )}
         </div>
       </div>
@@ -175,7 +190,7 @@ export function HomeDashboard() {
             ) : (
               <div className="flex items-baseline justify-between">
                 <span className="text-[10.5px] tracking-[2px] text-[#a09070]">
-                  ⏳ {left > 12 * 3600000 ? "明日の" : ""}願い叶いタイム{" "}
+                  ⏳ 次のフシワカレツトキまで{" "}
                   <span className="num font-bold" style={{ color: accent }}>{target.e.time}</span>
                 </span>
                 <span className="num text-[13px] text-[#6a5a3a]" style={{ fontFamily: MINCHO }}>
@@ -189,7 +204,7 @@ export function HomeDashboard() {
         </Link>
       )}
 
-      {/* ── 今日のダイジェスト（罫線3列） ── */}
+      {/* ── 今日のダイジェスト（左=潮・中=予定・右=月） ── */}
       <button onClick={openToday} className="mt-3 grid w-full grid-cols-3 border-y border-[#efe9dc] text-left">
         <div className="border-r border-[#efe9dc] px-3.5 py-2.5">
           <div className="text-[9px] tracking-[2px] text-[#8ea8c0]">潮 {tide ? `・${tide.port}` : ""}</div>
@@ -207,19 +222,6 @@ export function HomeDashboard() {
           </div>
         </div>
         <div className="border-r border-[#efe9dc] px-3.5 py-2.5">
-          <div className="text-[9px] tracking-[2px] text-[#a89860]">月</div>
-          <div className="mt-1 flex items-center gap-2">
-            <img src={moonImageOf(moon.age)} alt="" className="h-8 w-8" loading="lazy" />
-            <div className="num text-[10.5px] leading-snug text-[#6a604a]">
-              <div>月齢 {moon.age.toFixed(1)}</div>
-            </div>
-          </div>
-          <div className="mt-1 space-y-[2px] text-[10px] text-[#8a8068]">
-            <div className="flex justify-between"><span>出</span><span className="num">{mt.rise ?? "—"}</span></div>
-            <div className="flex justify-between"><span>入</span><span className="num">{mt.set ?? "—"}</span></div>
-          </div>
-        </div>
-        <div className="px-3.5 py-2.5">
           <div className="text-[9px] tracking-[2px] text-[#7ba05b]">予定</div>
           <div className="mt-1 space-y-[3px]">
             {plans.length ? (
@@ -232,6 +234,19 @@ export function HomeDashboard() {
             ) : (
               <div className="text-[10px] leading-relaxed text-[#c0b8a8]">まだ予定なし<br />タップして書く</div>
             )}
+          </div>
+        </div>
+        <div className="px-3.5 py-2.5">
+          <div className="text-[9px] tracking-[2px] text-[#a89860]">月</div>
+          <div className="mt-1 flex items-center gap-2">
+            <img src={moonImageOf(moon.age)} alt="" className="h-8 w-8" loading="lazy" />
+            <div className="num text-[10.5px] leading-snug text-[#6a604a]">
+              <div>月齢 {moon.age.toFixed(1)}</div>
+            </div>
+          </div>
+          <div className="mt-1 space-y-[2px] text-[10px] text-[#8a8068]">
+            <div className="flex justify-between"><span>出</span><span className="num">{mt.rise ?? "—"}</span></div>
+            <div className="flex justify-between"><span>入</span><span className="num">{mt.set ?? "—"}</span></div>
           </div>
         </div>
       </button>
@@ -250,6 +265,16 @@ export function ServiceDock() {
   const dragging = useRef<{ a0: number; base: number } | null>(null);
   const movedRef = useRef(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false); // 指が来たら軌道が開く
+  const closeTimer = useRef<number | null>(null);
+  const touchWake = () => {
+    setOpen(true);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+  };
+  const touchSleep = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpen(false), 2200);
+  };
 
   useEffect(() => {
     let stop = false;
@@ -307,9 +332,9 @@ export function ServiceDock() {
   };
 
   const W = 340; // 論理サイズ（実際はvwに合わせて縮む）
-  const H = 218;
-  const RX = 128;
-  const RY = 64;
+  const H = open ? 212 : 118; // 普段は薄い帯、指が来たら開く
+  const RX = open ? 128 : 118;
+  const RY = open ? 62 : 26;
 
   return (
     <div
@@ -336,8 +361,9 @@ export function ServiceDock() {
       <div
         ref={boxRef}
         className="relative mx-auto touch-none"
-        style={{ width: "100%", maxWidth: W, height: H }}
+        style={{ width: "100%", maxWidth: W, height: H, transition: "height .35s cubic-bezier(0.2,0.8,0.3,1)" }}
         onTouchStart={(e) => {
+          touchWake();
           movedRef.current = false;
           dragging.current = { a0: pointerAngle(e.touches[0].clientX, e.touches[0].clientY), base: angleRef.current };
         }}
@@ -348,10 +374,15 @@ export function ServiceDock() {
           angleRef.current = dragging.current.base + (a - dragging.current.a0);
           setAngle(angleRef.current);
         }}
-        onTouchEnd={() => (dragging.current = null)}
+        onTouchEnd={() => {
+          dragging.current = null;
+          touchSleep();
+        }}
+        onMouseEnter={touchWake}
+        onMouseLeave={touchSleep}
       >
         {/* 軌道の楕円 */}
-        <svg className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" width={RX * 2 + 44} height={RY * 2 + 44} aria-hidden>
+        <svg key={String(open)} className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" width={RX * 2 + 44} height={RY * 2 + 44} aria-hidden style={{ transition: "all .35s" }}>
           <ellipse
             cx={RX + 22}
             cy={RY + 22}
@@ -369,8 +400,8 @@ export function ServiceDock() {
           <img
             src="/icons/tab-home.png"
             alt="OneSea"
-            className="mx-auto h-[46px] w-[36px] object-contain"
-            style={{ filter: "drop-shadow(0 0 14px rgba(212,185,106,.55))" }}
+            className="mx-auto object-contain"
+            style={{ height: open ? 46 : 34, width: open ? 36 : 27, transition: "all .35s", filter: "drop-shadow(0 0 14px rgba(212,185,106,.55))" }}
           />
           <div className="mt-0.5 text-[8px] font-bold tracking-[2px] text-[#d4b96a]/80">OneSea</div>
         </div>
@@ -394,7 +425,7 @@ export function ServiceDock() {
                 transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${sc})`,
                 zIndex: Math.round(depth * 9) + 1,
                 opacity: 0.55 + 0.45 * depth,
-                transition: dragging.current ? "none" : "opacity .2s",
+                transition: dragging.current ? "none" : "transform .35s cubic-bezier(0.2,0.8,0.3,1), opacity .2s",
               }}
               aria-label={m.label}
             >
