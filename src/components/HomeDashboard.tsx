@@ -272,8 +272,6 @@ export function ServiceDock() {
     { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
     { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
     { href: "/line", icon: "💬", label: "TALK", talk: true },
-    { href: "#techo", icon: "📖", label: "手帳", techo: true },
-    { href: "/my", icon: "🪪", label: "マイページ" },
   ];
 
   const idxFromX = (clientX: number): number | null => {

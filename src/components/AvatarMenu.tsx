@@ -136,7 +136,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               <span className="w-[20px] text-center text-[16px]">📖</span> 手帳
             </Link>
             <Link href="/my" onClick={() => setOpen(false)} className={item}>
-              <span className="w-[20px] text-center text-[16px]">🪪</span> マイページ
+              <span className="w-[20px] text-center text-[16px]">🪪</span> マイページ編集
             </Link>
             <Link href="/line" onClick={() => setOpen(false)} className={item}>
               <span className="w-[20px] text-center text-[16px]">💬</span> TALK

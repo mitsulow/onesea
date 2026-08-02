@@ -37,7 +37,7 @@ const MENU_ITEMS: Array<{ href: string; icon: string; label: string; ext?: boole
   { href: "/", icon: "/icons/tab-home.png", label: "ホーム" },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "📖", label: "手帳", ext: true },
-  { href: "/my", icon: "🪪", label: "マイページ" },
+  { href: "/my", icon: "🪪", label: "マイページ編集" },
   { href: "/line", icon: "💬", label: "TALK" },
 ];
 

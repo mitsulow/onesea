@@ -73,7 +73,7 @@ const SERVICES: Service[] = [
     inactive: "#7a6a90",
     tabs: [
       { href: "/tsukiyoga-v7/index.html", icon: "🌕", label: "ツキヨガv7", ext: true },
-      { href: "/my", icon: "🪪", label: "マイページ" },
+      { href: "/my", icon: "🪪", label: "マイページ編集" },
     ],
   },
   {
@@ -94,7 +94,7 @@ const SERVICES: Service[] = [
     inactive: "#a09888",
     tabs: [
       { href: "/za/new", icon: "🏮", label: "出品する" },
-      { href: "/my", icon: "🪪", label: "マイページ" },
+      { href: "/my", icon: "🪪", label: "マイページ編集" },
     ],
   },
   {
@@ -118,7 +118,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/", icon: "/icons/tab-home.png", label: "HOME" },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "📖", label: "手帳", ext: true },
-  { href: "/my", icon: "🪪", label: "マイページ" },
+  { href: "/my", icon: "🪪", label: "マイページ編集" },
   { href: "/line", icon: "💬", label: "TALK", talk: true },
 ];
 
