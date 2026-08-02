@@ -47,7 +47,6 @@ export function HomeDashboard() {
   const [tide, setTide] = useState<TideDay | null>(null);
   const [advDays, setAdvDays] = useState<number | null>(null);
   const [schumann, setSchumann] = useState<number | null>(null);
-  const [streak, setStreak] = useState<number>(1);
 
   /* 次の節分かれつ刻（今日の残り→無ければ明日）へのカウントダウン */
   const target = useMemo(() => {
@@ -84,19 +83,6 @@ export function HomeDashboard() {
   /* 今日の予定（手帳から） */
   const [plans, setPlans] = useState<Array<{ time: string; text: string; color?: string }>>([]);
   useEffect(() => {
-    // 連続で開いた日数（ストリーク）
-    try {
-      const st = JSON.parse(localStorage.getItem("onesea-streak") ?? "null");
-      const yest = (() => {
-        const dt = new Date(y, m - 1, d - 1);
-        return keyOf(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
-      })();
-      let n = 1;
-      if (st?.last === tk) n = st.n;
-      else if (st?.last === yest) n = (st.n ?? 0) + 1;
-      setStreak(n);
-      localStorage.setItem("onesea-streak", JSON.stringify({ last: tk, n }));
-    } catch {}
     fetchTideDay(tk).then(setTide);
     fetch("https://mitsulow.github.io/0Lei/schumann_data.json")
       .then((r) => r.json())
@@ -172,7 +158,6 @@ export function HomeDashboard() {
         </div>
         <div className="num mt-0.5 text-[11px] text-[#b0a68e]">
           {advDays != null && <span>{advDays.toLocaleString()}回目の地球冒険</span>}
-          <span className="ml-2 text-[#c08a3a]">🔥 連続{streak}日</span>
         </div>
       </div>
 

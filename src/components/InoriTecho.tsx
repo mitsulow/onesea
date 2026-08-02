@@ -608,15 +608,16 @@ function BottomSheet({
               className="mb-2 rounded-xl p-3"
               style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fdf3e4", border: `2px solid ${ac}35` }}
             >
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-[10px] tracking-widest text-[#b07a30]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/cel-sun.png" alt="" className="h-[15px] w-[15px] object-contain" />
-                  太陽 — 節分かれつ刻
-                </span>
-                <span className="text-[11px] text-[#bbb]">{best ? `${best.deg}°` : "—"}</span>
+              <div className="relative flex items-center justify-center gap-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/cel-sun.png" alt="" className="h-[16px] w-[16px] object-contain" />
+                <span className="text-[10.5px] tracking-widest text-[#b07a30]">節分かれつ刻</span>
+                <span className="absolute right-0 text-[11px] text-[#ccc]">{best ? `${best.deg}°` : "—"}</span>
               </div>
-              <div className="num text-center text-[32px] font-extrabold leading-tight" style={{ color: ac }}>
+              <div
+                className="num text-center text-[36px] font-extrabold leading-tight"
+                style={{ color: ac, textShadow: `0 0 10px ${ac}88, 0 0 26px ${ac}55` }}
+              >
                 {best ? best.time : "—"}
               </div>
               {best?.sekki && (
@@ -644,10 +645,9 @@ function BottomSheet({
             {/* 潮汐＋月 */}
             <div className="mb-2 grid grid-cols-2 gap-2">
               <div className="rounded-xl border border-[#d8e4f0] bg-[#f4f8fc] p-2.5">
-                <div className="mb-1 flex items-center gap-1 text-[9.5px] text-[#5080b0]">
+                <div className="mb-1 flex items-center gap-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/cel-earth.png" alt="" className="h-[13px] w-[13px] object-contain" />
-                  地球
+                  <img src="/icons/cel-earth.png" alt="" className="h-[15px] w-[15px] object-contain" />
                 </div>
                 <button
                   onClick={async () => {
@@ -676,10 +676,9 @@ function BottomSheet({
                 )}
               </div>
               <div className="rounded-xl border border-[#26262e] p-2.5 text-center" style={{ background: "#000005" }}>
-                <div className="flex items-center justify-end gap-1 text-[9.5px] tracking-wider text-[#c8c0d8]">
-                  月
+                <div className="flex items-center justify-end">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/cel-moon.png" alt="" className="h-[13px] w-[13px] object-contain" />
+                  <img src="/icons/cel-moon.png" alt="" className="h-[15px] w-[15px] object-contain" />
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-1 h-11 w-11" loading="lazy" />
