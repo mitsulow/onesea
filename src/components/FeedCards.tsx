@@ -53,15 +53,12 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[13px] font-bold text-[#2a5a38]">
+          <div className="truncate text-[13.5px] font-extrabold text-[#2a5a38]">
+            {v ? `${v.name}${v.prefecture ? `（${v.prefecture}）` : ""}` : "セカイムラ"}
+          </div>
+          <div className="truncate text-[10.5px] text-[#6a9a78]">
             {mura.profiles?.display_name ?? "むらびと"}
           </div>
-          {v && (
-            <div className="truncate text-[10.5px] text-[#6a9a78]">
-              拠点『{v.name}
-              {v.prefecture ? `（${v.prefecture}）` : ""}』
-            </div>
-          )}
         </div>
         <div className="flex flex-shrink-0 flex-col items-end gap-0.5">
           <span

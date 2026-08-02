@@ -453,6 +453,42 @@ export function ActivitySection({ me }: { me: User | null }) {
   const FEED_PAGE = 10;
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [events, setEvents] = useState<any[]>([]); // これからのイベント（横スクロール）
+  const [rsvps, setRsvps] = useState<Record<string, any[]>>({}); // post_id -> 参加者profiles
+
+  /** これからのイベント + 参加者を取得 */
+  const loadEvents = useCallback(async () => {
+    const supabase = createClient();
+    const { data: evs } = await supabase
+      .from("village_posts")
+      .select(
+        "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+      )
+      .eq("kind", "event")
+      .gte("event_at", new Date().toISOString())
+      .order("event_at", { ascending: true })
+      .limit(12);
+    const list = evs ?? [];
+    setEvents(list);
+    if (list.length) {
+      const { data: rs } = await supabase
+        .from("event_rsvps")
+        .select("post_id, user_id, profiles!event_rsvps_user_id_fkey(username, display_name, avatar_url)")
+        .in("post_id", list.map((e: any) => e.id));
+      const map: Record<string, any[]> = {};
+      for (const r of rs ?? []) (map[r.post_id] = map[r.post_id] ?? []).push(r.profiles);
+      setRsvps(map);
+      if (me) {
+        const mine = new Set((rs ?? []).filter((r: any) => r.user_id === me.id).map((r: any) => r.post_id as string));
+        setJoinedEv((prev) => new Set([...prev, ...mine]));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me]);
+
+  useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
 
   const extrasFor = async (posts: any[]) => {
     const map: Record<string, VillagePostComment[]> = {};
@@ -509,6 +545,10 @@ export function ActivitySection({ me }: { me: User | null }) {
       }
       localStorage.removeItem(`onesea-ev-${p.id}`);
     } catch {}
+    if (me) {
+      const supabase = createClient();
+      supabase.from("event_rsvps").delete().eq("post_id", p.id).eq("user_id", me.id).then(() => loadEvents());
+    }
     setJoinedEv((s) => {
       const n = new Set(s);
       n.delete(p.id);
@@ -532,6 +572,10 @@ export function ActivitySection({ me }: { me: User | null }) {
       localStorage.setItem("techo-memos", JSON.stringify(memos));
       localStorage.setItem(`onesea-ev-${p.id}`, "1");
     } catch {}
+    if (me) {
+      const supabase = createClient();
+      supabase.from("event_rsvps").upsert({ post_id: p.id, user_id: me.id }).then(() => loadEvents());
+    }
     setJoinedEv((s) => new Set(s).add(p.id));
   };
 
@@ -604,6 +648,98 @@ export function ActivitySection({ me }: { me: User | null }) {
         <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 むらびとたより</div>
         <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
       </div>
+
+      {/* 📅 これからのイベント（横スクロール・旧セカイムラ式） */}
+      {events.length > 0 && (
+        <div className="mb-2">
+          <div className="px-3 pb-1 text-[12px] font-extrabold" style={{ color: GREEN }}>
+            📅 イベント
+          </div>
+          <div className="hide-scrollbar flex gap-2.5 overflow-x-auto px-3 pb-1.5">
+            {events.map((p) => {
+              const d = new Date(p.event_at);
+              const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][d.getMonth()];
+              const title = String(p.body ?? "").split("\n")[0];
+              const people = rsvps[p.id] ?? [];
+              const joined = joinedEv.has(p.id);
+              const dday = Math.ceil((d.getTime() - Date.now()) / 86400000);
+              return (
+                <div
+                  key={p.id}
+                  className="w-[230px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#e2eae0] bg-white shadow-sm"
+                >
+                  <div className="relative h-[110px] bg-[#eaf2ea]">
+                    {p.photo_url ? (
+                      <img src={p.photo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <div
+                        className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
+                        style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
+                      >
+                        ⛺ {p.villages?.name ?? "セカイムラ"}
+                      </div>
+                    )}
+                    <span
+                      className="absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[9px] font-extrabold text-white"
+                      style={{ background: "#4a9a5a" }}
+                    >
+                      {p.villages?.name ?? "セカイムラ"}
+                    </span>
+                  </div>
+                  <div className="flex gap-2.5 px-2.5 pt-2">
+                    <div className="flex-shrink-0 text-center">
+                      <div className="text-[10px] font-extrabold leading-none text-[#d04030]">{MON}</div>
+                      <div className="num text-[26px] font-extrabold leading-tight text-[#2a3428]">{d.getDate()}</div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="num text-[13px] font-extrabold text-[#3a4438]">
+                        {d.getMonth() + 1}月{d.getDate()}日{d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}〜
+                      </div>
+                      <div className="mt-0.5 line-clamp-2 text-[12.5px] font-extrabold leading-snug" style={{ color: GREEN }}>
+                        {title}
+                      </div>
+                      <div className="num mt-0.5 text-[10px] text-[#a0aca0]">
+                        {dday <= 0 ? "今日" : `残り${dday}日`}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between px-2.5 pb-2.5 pt-1.5">
+                    <div className="flex items-center">
+                      {people.slice(0, 5).map((pr: any, i: number) => (
+                        <span key={i} style={{ marginLeft: i === 0 ? 0 : -7 }}>
+                          <AvatarSm p={pr} size={24} />
+                        </span>
+                      ))}
+                      {people.length > 5 && (
+                        <span className="num ml-1 text-[10px] font-bold text-[#8a9a8a]">+{people.length - 5}</span>
+                      )}
+                      {people.length === 0 && <span className="text-[10px] text-[#b0bcb0]">参加者募集中</span>}
+                    </div>
+                    {me &&
+                      (joined ? (
+                        <button
+                          onClick={() => cancelEvent(p)}
+                          className="rounded-full border px-2.5 py-1 text-[10.5px] font-bold"
+                          style={{ borderColor: "#4a9a5a", color: GREEN, background: "#fff" }}
+                        >
+                          ✓ 参加中
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => joinEvent(p)}
+                          className="rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white"
+                          style={{ background: GREEN }}
+                        >
+                          参加する
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
       {me && myVills.length === 0 && (
