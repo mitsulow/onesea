@@ -12,6 +12,7 @@ import {
   fetchComments,
   fetchMyLikes,
   addComment,
+  updatePost,
   ensureProfile,
 } from "@/lib/cotozute";
 import { PostCard } from "@/components/PostCard";
@@ -27,6 +28,9 @@ export default function PostDetailPage() {
   const [me, setMe] = useState<User | null>(null);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
 
   const load = useCallback(async () => {
     const [p, c] = await Promise.all([fetchPost(postId), fetchComments(postId)]);
@@ -88,7 +92,53 @@ export default function PostDetailPage() {
 
       <div className="px-4 pt-4">
         <div className="card">
-          <PostCard post={post} me={me} liked={likedSet.has(post.id)} hd />
+          {editing ? (
+            <div className="py-2">
+              <div className="mb-1.5 text-[11px] font-bold text-[#8a7a5a]">✏️ 言の葉を修正</div>
+              <textarea
+                value={editDraft}
+                onChange={(e) => setEditDraft(e.target.value)}
+                rows={4}
+                autoFocus
+                className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[15px] leading-relaxed outline-none focus:border-[#c94d3a]"
+              />
+              <div className="mt-2 flex gap-2">
+                <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a09888]">
+                  やめる
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!me || !editDraft.trim() || editSaving) return;
+                    setEditSaving(true);
+                    await updatePost(post.id, me.id, editDraft.trim());
+                    setEditSaving(false);
+                    setEditing(false);
+                    load();
+                  }}
+                  disabled={!editDraft.trim() || editSaving}
+                  className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                  style={{ background: "#c94d3a" }}
+                >
+                  {editSaving ? "保存中..." : "修正を保存"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <PostCard post={post} me={me} liked={likedSet.has(post.id)} hd />
+              {me?.id === post.user_id && (
+                <button
+                  onClick={() => {
+                    setEditDraft(post.body ?? "");
+                    setEditing(true);
+                  }}
+                  className="mt-2 w-full rounded-xl border border-[#e8dcc4] bg-white py-2 text-[12.5px] font-bold text-[#8a7a5a]"
+                >
+                  ✏️ この言の葉を修正する
+                </button>
+              )}
+            </>
+          )}
 
           {/* コメント */}
           <div className="mt-3">

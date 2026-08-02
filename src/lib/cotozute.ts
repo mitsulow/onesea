@@ -116,6 +116,11 @@ export async function addComment(postId: string, userId: string, body: string) {
   return supabase.from("comments").insert({ post_id: postId, user_id: userId, body });
 }
 
+export async function updatePost(postId: string, userId: string, body: string) {
+  const supabase = createClient();
+  return supabase.from("posts").update({ body }).eq("id", postId).eq("user_id", userId);
+}
+
 export async function deletePost(postId: string, userId: string) {
   const supabase = createClient();
   return supabase.from("posts").delete().eq("id", postId).eq("user_id", userId);
