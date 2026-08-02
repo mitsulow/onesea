@@ -906,7 +906,7 @@ function BottomSheet({
 
       {/* 予定の追加・編集（○時○分〜○時○分・色ペン） */}
       {evEdit && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40" onClick={() => setEvEdit(null)}>
+        <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/40" onClick={() => setEvEdit(null)}>
           <div
             className="w-full max-w-[480px] rounded-t-2xl bg-white px-4 pt-3"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
