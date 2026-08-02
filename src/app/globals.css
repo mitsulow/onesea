@@ -160,3 +160,15 @@ body {
   0%, 100% { transform: scaleY(0.25); }
   50% { transform: scaleY(1); }
 }
+
+/* 横方向の引きずり防止（全ページ共通の根治）
+   はみ出した子要素があってもページ自体は横に動かない */
+html,
+body {
+  overflow-x: clip;
+}
+
+/* 横スクロールのストリップは、端に達してもページへスクロールを連鎖させない */
+.hide-scrollbar {
+  overscroll-behavior-x: contain;
+}

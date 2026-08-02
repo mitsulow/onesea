@@ -38,7 +38,7 @@ export default function ZaPage() {
   }, [category]);
 
   return (
-    <main className="pb-20">
+    <main className="overflow-x-clip pb-20">
       {/* 旧楽市楽座のヒーロー: 鳥居エンブレム + 楽市楽座 + 日本人総フリーランス化計画（朱色で統一） */}
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4">
