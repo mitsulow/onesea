@@ -81,6 +81,37 @@ export async function fetchLatestShops(limit = 10): Promise<Shop[]> {
   return ((data ?? []) as unknown) as Shop[];
 }
 
+/* ---- ストーリーズ（24時間で消える・写真1枚） ---- */
+export interface Story {
+  id: string;
+  user_id: string;
+  image_url: string;
+  created_at: string;
+  profiles: { username: string | null; display_name: string | null; avatar_url: string | null } | null;
+}
+
+export async function fetchStories(): Promise<Story[]> {
+  const supabase = createClient();
+  const since = new Date(Date.now() - 24 * 3600000).toISOString();
+  const { data } = await supabase
+    .from("stories")
+    .select("id, user_id, image_url, created_at, profiles!stories_user_id_fkey(username, display_name, avatar_url)")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(30);
+  return ((data ?? []) as unknown) as Story[];
+}
+
+export async function addStory(userId: string, imageUrl: string) {
+  const supabase = createClient();
+  return supabase.from("stories").insert({ user_id: userId, image_url: imageUrl });
+}
+
+export async function deleteStory(id: string, userId: string) {
+  const supabase = createClient();
+  return supabase.from("stories").delete().eq("id", id).eq("user_id", userId);
+}
+
 /** いいねした人の顔（FB風・投稿ごとに最大3人） */
 export async function fetchLikersFor(
   postIds: string[]

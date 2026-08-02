@@ -5,7 +5,8 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { fetchMyLikes } from "@/lib/cotozute";
-import { FeedItem, feedKey, fetchMixedFeed, fetchLatestShops, fetchLikersFor } from "@/lib/feed";
+import { FeedItem, Story, feedKey, fetchMixedFeed, fetchLatestShops, fetchLikersFor, fetchStories, addStory, deleteStory } from "@/lib/feed";
+import { uploadImage } from "@/lib/images";
 import type { Shop } from "@/lib/za";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
@@ -40,9 +41,9 @@ const MENU_ITEMS: Array<{ href: string; icon: string; label: string; ext?: boole
   { href: "/line", icon: "💬", label: "TALK" },
 ];
 
-/** FB風の太いグレー帯（左右いっぱい） */
+/** 投稿の区切り線（細いティファニーブルー・左右いっぱい） */
 function Band() {
-  return <div className="-mx-4 h-2 bg-[#e9ebee]" />;
+  return <div className="-mx-4 h-[2.5px]" style={{ background: "rgba(10,186,181,.22)" }} />;
 }
 
 export default function CotozutePage() {
@@ -57,6 +58,9 @@ export default function CotozutePage() {
   const [events, setEvents] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [shops, setShops] = useState<Shop[]>([]);
   const [drawer, setDrawer] = useState(false);
+  const [stories, setStoriesList] = useState<Story[]>([]);
+  const [storyView, setStoryView] = useState<number | null>(null); // 表示中のストーリーindex
+  const [storyUploading, setStoryUploading] = useState(false);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const loadingRef = useRef(false);
@@ -92,6 +96,7 @@ export default function CotozutePage() {
       loadLikers(list);
     });
     fetchLatestShops(10).then(setShops);
+    fetchStories().then(setStoriesList);
     supabase
       .from("village_posts")
       .select("id, body, photo_url, event_at, villages!village_posts_village_id_fkey(id, name, prefecture)")
@@ -218,36 +223,63 @@ export default function CotozutePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pull, refreshing]);
 
-  /* イベントストーリー（FB型の縦カード） */
-  const stories = events.length > 0 && (
+  /* ストーリーズ（24時間で消える・写真1枚・FB型） */
+  const postStory = async (f: File | null) => {
+    if (!me || !f || storyUploading) return;
+    setStoryUploading(true);
+    const url = await uploadImage("post-images", me.id, f, 960, 0.72);
+    if (url) {
+      await addStory(me.id, url);
+      setStoriesList(await fetchStories());
+    }
+    setStoryUploading(false);
+  };
+
+  const storiesRow = (
     <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-2.5">
-      {events.map((ev) => {
-        const d = new Date(ev.event_at);
-        const title = String(ev.body ?? "").split("\n")[0];
-        return (
-          <a
-            key={ev.id}
-            href={ev.villages ? `/sekai/village/${ev.villages.id}` : "/sekai"}
-            className="relative h-[168px] w-[106px] flex-shrink-0 overflow-hidden rounded-xl border border-[#e4e6e9] no-underline"
-          >
-            {ev.photo_url ? (
-              <img src={ev.photo_url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+      {/* 一番左: ストーリーズを作成 */}
+      {me && (
+        <label className="relative h-[168px] w-[106px] flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border border-[#e4e6e9] bg-white">
+          <input type="file" accept="image/*" className="hidden" onChange={(e) => postStory(e.target.files?.[0] ?? null)} />
+          <div className="h-[104px] w-full bg-[#f0f2f5]">
+            {myAvatar ? (
+              <img src={myAvatar} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
-              <span className="absolute inset-0" style={{ background: "linear-gradient(160deg,#4a9a5a,#1e4530)" }} />
+              <div className="flex h-full w-full items-center justify-center text-[28px]">🌿</div>
             )}
-            <span className="absolute inset-0" style={{ background: "linear-gradient(180deg,rgba(0,0,0,.05) 40%,rgba(0,0,0,.55))" }} />
-            <span
-              className="num absolute left-0 right-0 top-[38%] text-center text-[21px] font-extrabold text-white"
-              style={{ textShadow: "0 1px 8px rgba(0,0,0,.6)", lineHeight: 1 }}
-            >
-              {d.getMonth() + 1}/{d.getDate()}
-            </span>
-            <span className="absolute bottom-1.5 left-1.5 right-1.5 line-clamp-2 text-[10px] font-bold leading-snug text-white">
-              {title}
-            </span>
-          </a>
-        );
-      })}
+          </div>
+          <span
+            className="absolute left-1/2 top-[104px] flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-white text-[18px] font-extrabold text-white"
+            style={{ background: TIFFANY }}
+          >
+            ＋
+          </span>
+          <div className="px-1 pt-5 text-center text-[10.5px] font-bold leading-snug text-[#1c1e21]">
+            {storyUploading ? "投稿中..." : "ストーリーズを作成"}
+          </div>
+        </label>
+      )}
+      {stories.map((st, i) => (
+        <button
+          key={st.id}
+          onClick={() => setStoryView(i)}
+          className="relative h-[168px] w-[106px] flex-shrink-0 overflow-hidden rounded-xl border border-[#e4e6e9]"
+        >
+          <img src={st.image_url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <span className="absolute inset-0" style={{ background: "linear-gradient(180deg,rgba(0,0,0,.02) 55%,rgba(0,0,0,.5))" }} />
+          {/* 左上の丸アイコン（ティファニーのリング=FBの青リング） */}
+          <span className="absolute left-1.5 top-1.5 h-8 w-8 overflow-hidden rounded-full" style={{ border: `2.5px solid ${TIFFANY}` }}>
+            {st.profiles?.avatar_url ? (
+              <img src={st.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+            ) : (
+              <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[13px]">🌿</span>
+            )}
+          </span>
+          <span className="absolute bottom-1.5 left-1.5 right-1.5 truncate text-left text-[10px] font-bold text-white">
+            {st.profiles?.display_name ?? "むらびと"}
+          </span>
+        </button>
+      ))}
     </div>
   );
 
@@ -454,8 +486,8 @@ export default function CotozutePage() {
           </button>
         </div>
 
-        {/* ストーリー（イベント・FB型縦カード） */}
-        {stories}
+        {/* ストーリーズ（24時間で消える） */}
+        {storiesRow}
         <Band />
 
         {/* フィード */}
@@ -486,6 +518,56 @@ export default function CotozutePage() {
           </>
         )}
       </div>
+
+      {/* ストーリービューア（全画面・タップで次へ） */}
+      {storyView != null && stories[storyView] && (
+        <div
+          className="fixed inset-0 z-[92] flex items-center justify-center bg-black"
+          onClick={() => setStoryView(storyView + 1 < stories.length ? storyView + 1 : null)}
+        >
+          <img src={stories[storyView].image_url} alt="" className="max-h-full w-full object-contain" />
+          <div className="absolute left-3 top-3 flex items-center gap-2" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+            <span className="h-9 w-9 overflow-hidden rounded-full" style={{ border: `2px solid ${TIFFANY}` }}>
+              {stories[storyView].profiles?.avatar_url ? (
+                <img src={stories[storyView].profiles!.avatar_url!} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[14px]">🌿</span>
+              )}
+            </span>
+            <div>
+              <div className="text-[13px] font-bold text-white">{stories[storyView].profiles?.display_name ?? "むらびと"}</div>
+              <div className="text-[10.5px] text-white/70">
+                {Math.max(1, Math.round((Date.now() - new Date(stories[storyView].created_at).getTime()) / 3600000))}時間前
+              </div>
+            </div>
+          </div>
+          {me?.id === stories[storyView].user_id && (
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (!confirm("このストーリーズを削除しますか？")) return;
+                await deleteStory(stories[storyView].id, me.id);
+                setStoryView(null);
+                setStoriesList(await fetchStories());
+              }}
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-white/15 px-4 py-2 text-[12px] font-bold text-white"
+            >
+              削除
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setStoryView(null);
+            }}
+            aria-label="閉じる"
+            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-[16px] text-white"
+            style={{ marginTop: "env(safe-area-inset-top)" }}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* 投稿画面（全画面） */}
       {composing && (

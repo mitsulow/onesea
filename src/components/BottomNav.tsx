@@ -65,19 +65,6 @@ const SERVICES: Service[] = [
     ],
   },
   {
-    match: (p) => p.startsWith("/cotozute") || p.startsWith("/post"),
-    home: "/cotozute",
-    bg: "rgba(255,253,248,.96)",
-    border: "#e5dccb",
-    active: "#c94d3a",
-    inactive: "#a09888",
-    tabs: [
-      { href: "/cotozute/search", icon: "🔍", label: "さがす" },
-      { href: "/cotozute?compose=1", icon: "✏️", label: "とうこう", ext: true },
-      { href: "/icons/tab-cotozute.png|/my", icon: "/icons/tab-cotozute.png", label: "マイページ" },
-    ],
-  },
-  {
     match: (p) => p.startsWith("/tsukiyoga"),
     home: "/tsukiyoga",
     bg: "linear-gradient(160deg,#0a0c18f5,#12142af5)",

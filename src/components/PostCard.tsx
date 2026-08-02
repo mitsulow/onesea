@@ -183,7 +183,11 @@ export function PostCard({
           ))}
         </div>
       )}
-      {post.embed && <EmbedCard embed={post.embed} />}
+      {post.embed && (
+        <div className="-mx-4">
+          <EmbedCard embed={post.embed} />
+        </div>
+      )}
 
       {/* アクション（❤ 数字 / 💬 数字 / シェア） */}
       <div className="mt-2 flex items-center border-t border-[#f0f2f5] pt-1.5">
@@ -194,13 +198,13 @@ export function PostCard({
             isLiked ? "font-bold text-[#e0455a]" : "text-[#65676b]"
           }`}
         >
-          {isLiked ? "❤️" : "🤍"} <span className="num">{likeCount > 0 ? likeCount : "いいね"}</span>
+          {isLiked ? "❤️" : "🤍"} {likeCount > 0 && <span className="num">{likeCount}</span>}
         </button>
         <Link
           href={`/post/${post.id}`}
           className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] text-[#65676b] no-underline"
         >
-          💬 <span className="num">{commentCount > 0 ? commentCount : "コメント"}</span>
+          💬 {commentCount > 0 && <span className="num">{commentCount}</span>}
         </Link>
         <button
           onClick={() => {
@@ -210,7 +214,7 @@ export function PostCard({
           }}
           className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] text-[#65676b]"
         >
-          ↗ シェア
+          ↗
         </button>
       </div>
 
