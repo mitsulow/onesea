@@ -135,6 +135,7 @@ export function BottomNav() {
   const router = useRouter();
   const [kbOpen, setKbOpen] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null); // 押した瞬間に囲いを移すための状態
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
@@ -192,6 +193,18 @@ export function BottomNav() {
     setMenu((v) => !v);
   };
 
+  /** メニュー選択: まず金枠がそこへ移るのを見せてから（一瞬）遷移 */
+  const pick = (m: (typeof MENU)[number]) => {
+    if (picked) return;
+    setPicked(m.href);
+    window.setTimeout(() => {
+      setMenu(false);
+      setPicked(null);
+      if (m.ext) window.location.href = m.href;
+      else router.push(m.href);
+    }, 200);
+  };
+
   return (
     <>
       {/* ホームボタンの折りたたみメニュー */}
@@ -210,16 +223,19 @@ export function BottomNav() {
             }}
           >
             {MENU.map((m) => {
-              const isHere =
-                m.href === "/" ? pathname === "/" : !m.href.startsWith("/#") && pathname.startsWith(m.href.split("?")[0]);
+              const isHere = picked
+                ? picked === m.href // 選択中は押した先だけを囲う
+                : m.href === "/"
+                  ? pathname === "/"
+                  : !m.href.startsWith("/#") && pathname.startsWith(m.href.split("?")[0]);
               const cellStyle = isHere
-                ? { background: "rgba(212,185,106,.16)", border: "1.5px solid #d4b96a" }
-                : { background: "rgba(255,255,255,.07)", border: "1.5px solid transparent" };
+                ? { background: "rgba(212,185,106,.16)", border: "1.5px solid #d4b96a", transition: "all .15s" }
+                : { background: "rgba(255,255,255,.07)", border: "1.5px solid transparent", transition: "all .15s" };
               return m.ext ? (
-                <a
+                <button
                   key={m.href}
-                  href={m.href}
-                  className="flex flex-col items-center gap-1 rounded-xl py-3 no-underline"
+                  onClick={() => pick(m)}
+                  className="flex flex-col items-center gap-1 rounded-xl py-3"
                   style={cellStyle}
                 >
                   {m.icon.startsWith("/") ? (
@@ -237,13 +253,12 @@ export function BottomNav() {
                   <span className="text-[10.5px] font-extrabold" style={{ color: isHere ? "#eae6b8" : "#c8d2e4" }}>
                     {m.label}
                   </span>
-                </a>
+                </button>
               ) : (
-                <Link
+                <button
                   key={m.href}
-                  href={m.href}
-                  onClick={() => setMenu(false)}
-                  className="flex flex-col items-center gap-1 rounded-xl py-3 no-underline"
+                  onClick={() => pick(m)}
+                  className="flex flex-col items-center gap-1 rounded-xl py-3"
                   style={cellStyle}
                 >
                   {m.icon.startsWith("/") ? (
@@ -261,7 +276,7 @@ export function BottomNav() {
                   <span className="text-[10.5px] font-extrabold" style={{ color: isHere ? "#eae6b8" : "#c8d2e4" }}>
                     {m.label}
                   </span>
-                </Link>
+                </button>
               );
             })}
           </div>
