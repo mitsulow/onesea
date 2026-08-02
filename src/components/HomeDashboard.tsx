@@ -47,6 +47,7 @@ export function HomeDashboard() {
   const [tide, setTide] = useState<TideDay | null>(null);
   const [advDays, setAdvDays] = useState<number | null>(null);
   const [schumann, setSchumann] = useState<number | null>(null);
+  const [streak, setStreak] = useState<number>(1);
 
   /* 次の節分かれつ刻（今日の残り→無ければ明日）へのカウントダウン */
   const target = useMemo(() => {
@@ -83,6 +84,19 @@ export function HomeDashboard() {
   /* 今日の予定（手帳から） */
   const [plans, setPlans] = useState<Array<{ time: string; text: string; color?: string }>>([]);
   useEffect(() => {
+    // 連続で開いた日数（ストリーク）
+    try {
+      const st = JSON.parse(localStorage.getItem("onesea-streak") ?? "null");
+      const yest = (() => {
+        const dt = new Date(y, m - 1, d - 1);
+        return keyOf(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+      })();
+      let n = 1;
+      if (st?.last === tk) n = st.n;
+      else if (st?.last === yest) n = (st.n ?? 0) + 1;
+      setStreak(n);
+      localStorage.setItem("onesea-streak", JSON.stringify({ last: tk, n }));
+    } catch {}
     fetchTideDay(tk).then(setTide);
     fetch("https://mitsulow.github.io/0Lei/schumann_data.json")
       .then((r) => r.json())
@@ -134,8 +148,8 @@ export function HomeDashboard() {
   return (
     <section className="bg-white" style={{ margin: "0 -16px" }}>
       {/* ── 願い叶い手帳（水色ヒーロー・「い」だけ小さく） ── */}
-      <div className="py-2 text-center" style={{ background: "linear-gradient(135deg,#eef8fa,#ddf0f5)" }}>
-        <span className="text-[19px] font-extrabold tracking-[3px] text-[#1a7a8a]">
+      <div className="py-1 text-center" style={{ background: "linear-gradient(135deg,#eef8fa,#ddf0f5)" }}>
+        <span className="text-[15.5px] font-extrabold tracking-[3px] text-[#1a7a8a]">
           願<span style={{ fontSize: "70%" }}>い</span>叶<span style={{ fontSize: "70%" }}>い</span>手帳
         </span>
       </div>
@@ -158,11 +172,28 @@ export function HomeDashboard() {
         </div>
         <div className="num mt-0.5 text-[11px] text-[#b0a68e]">
           {advDays != null && <span>{advDays.toLocaleString()}回目の地球冒険</span>}
-          {schumann != null && (
-            <span className="ml-2 text-[#3a9a94]">⚡ シューマン共振 {schumann.toFixed(2)}Hz</span>
-          )}
+          <span className="ml-2 text-[#c08a3a]">🔥 連続{streak}日</span>
         </div>
       </div>
+
+      {/* ── 現在のシューマン共振（大きく・詳細リンク付き） ── */}
+      {schumann != null && (
+        <a
+          href="/schumann1/index.html"
+          className="mx-5 mt-2 flex items-baseline justify-center gap-2 rounded-lg py-1.5 no-underline"
+          style={{ background: "linear-gradient(120deg,#0d2724,#10332e)" }}
+        >
+          <span className="text-[11px] font-bold tracking-[1px] text-[#7ac8b8]">⚡ 現在のシューマン共振</span>
+          <span
+            className="num text-[22px] font-extrabold leading-none"
+            style={{ color: "#35e0b8", textShadow: "0 0 12px rgba(53,224,184,.5)" }}
+          >
+            {schumann.toFixed(2)}
+            <span className="text-[12px]">Hz</span>
+          </span>
+          <span className="text-[10.5px] font-bold text-[#5aa896]">詳しくは→</span>
+        </a>
+      )}
 
       {/* ── 願い叶いタイム カウントダウン ── */}
       {target && (
@@ -188,16 +219,22 @@ export function HomeDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="flex items-baseline justify-between">
-                <span className="text-[10.5px] tracking-[2px] text-[#a09070]">
-                  ⏳ 次のフシワカレツトキまで{" "}
-                  <span className="num font-bold" style={{ color: accent }}>{target.e.time}</span>
-                </span>
-                <span className="num text-[13px] text-[#6a5a3a]" style={{ fontFamily: MINCHO }}>
-                  あと {hrs > 0 && <b>{hrs}<span className="text-[10px]">時間</span></b>}
-                  <b>{mins}<span className="text-[10px]">分</span></b>
-                  <b>{secs}<span className="text-[10px]">秒</span></b>
-                </span>
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[10.5px] tracking-[2px] text-[#a09070]">⏳ 次の叶いタイムまで</span>
+                  <span className="num text-[15px] text-[#6a5a3a]" style={{ fontFamily: MINCHO }}>
+                    {hrs > 0 && <b>{hrs}<span className="text-[10px]">時間</span></b>}
+                    <b>{mins}<span className="text-[10px]">分</span></b>
+                    <b>{secs}<span className="text-[10px]">秒</span></b>
+                  </span>
+                </div>
+                <div className="num mt-0.5 text-right text-[10.5px] text-[#b0a080]">
+                  Next{" "}
+                  {(() => {
+                    const nd = new Date(target.t);
+                    return `${nd.getMonth() + 1}月${nd.getDate()}日 ${nd.getHours()}時${String(nd.getMinutes()).padStart(2, "0")}分`;
+                  })()}
+                </div>
               </div>
             )}
           </div>
