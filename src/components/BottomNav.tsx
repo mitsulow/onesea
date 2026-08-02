@@ -23,6 +23,7 @@ interface Service {
   match: (p: string) => boolean;
   home: string;
   isHome?: (p: string) => boolean;
+  noHome?: boolean; // トップページ用: ホームボタンなし（全サービスタブのみ）
   homeExt?: boolean;
   bg: string;
   border: string;
@@ -123,15 +124,21 @@ const SERVICES: Service[] = [
     ],
   },
   {
+    // OneSeaトップ = みんなが集まる港。ここから全サービスへ出て、また戻ってくる
     match: (p) => p === "/",
     home: "/",
+    noHome: true,
     bg: "rgba(255,253,248,.96)",
     border: "#e5dccb",
     active: "#c94d3a",
     inactive: "#a09888",
     tabs: [
-      { href: "/#techo", icon: "📖", label: "手帳", ext: true },
-      { href: "/my", icon: "🪪", label: "マイページ" },
+      { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
+      { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
+      { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
+      { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
+      { href: "/icons/tab-cotozute.png|/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
+      { href: "/line", icon: "💬", label: "TALK" },
     ],
   },
 ];
@@ -256,7 +263,8 @@ export function BottomNav() {
         style={{ background: svc.bg, borderColor: svc.border, backdropFilter: "blur(6px)", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex h-[54px] items-center justify-around">
-          {/* ホーム（サービスのホームへ + 全サービスメニュー） */}
+          {/* ホーム（サービスのホームへ + 全サービスメニュー）。トップページでは出さない */}
+          {!svc.noHome && (
           <button onClick={onHome} className="relative flex flex-1 flex-col items-center gap-0.5 py-1">
             <span className={`text-lg leading-none transition-transform duration-150 ${atHome ? "-translate-y-0.5 scale-[1.3]" : ""}`}>
               🏠
@@ -265,6 +273,7 @@ export function BottomNav() {
               ホーム <span className="text-[7px]">{menu ? "▾" : "▴"}</span>
             </span>
           </button>
+          )}
 
           {svc.tabs.map((t) => {
             const realHref = t.href.includes("|") ? t.href.split("|")[1] : t.href;
