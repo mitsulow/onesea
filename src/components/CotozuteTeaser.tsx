@@ -32,8 +32,18 @@ export function CotozuteTeaser() {
       style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}
     >
       <Link href="/cotozute" className="no-underline">
-        <span className="mb-2 block text-[21px] font-extrabold tracking-tight" style={{ color: "#0abab5" }}>
-          CotoZute →
+        <span
+          className="mb-2 inline-flex items-center gap-2 rounded-full px-5 py-2"
+          style={{
+            background: "linear-gradient(120deg,#14b8a0,#0a8a84)",
+            boxShadow: "0 4px 16px rgba(10,186,181,.35)",
+          }}
+        >
+          <span className="relative text-[15px] leading-none text-white">
+            ✦<span className="absolute -right-1.5 -top-1 text-[8px]">✦</span>
+          </span>
+          <span className="text-[18px] font-extrabold tracking-tight text-white">CotoZute</span>
+          <span className="text-[17px] font-extrabold text-white">→</span>
         </span>
       </Link>
       {/* 入力ボックス（タップでコトヅテの投稿画面へ） */}

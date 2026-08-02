@@ -46,6 +46,17 @@ function Band() {
   return <div className="-mx-4 h-[2.5px]" style={{ background: "rgba(10,186,181,.22)" }} />;
 }
 
+/** 横スワイプセクション用の二重線（区切りを強調） */
+function BandDouble() {
+  return (
+    <div className="-mx-4">
+      <div className="h-[2.5px]" style={{ background: "rgba(10,186,181,.4)" }} />
+      <div className="h-[3px] bg-white" />
+      <div className="h-[2.5px]" style={{ background: "rgba(10,186,181,.4)" }} />
+    </div>
+  );
+}
+
 export default function CotozutePage() {
   const [me, setMe] = useState<User | null>(null);
   const [myAvatar, setMyAvatar] = useState<string | null>(null);
@@ -480,20 +491,26 @@ export default function CotozutePage() {
       );
       out.push(<Band key={`b-${feedKey(it)}`} />);
       if (i === 2 && eventStrip) {
+        out.pop();
+        out.push(<BandDouble key={`bd-${feedKey(it)}`} />);
         out.push(<div key="ev-strip">{eventStrip}</div>);
-        out.push(<Band key="ev-band" />);
+        out.push(<BandDouble key="ev-band" />);
       }
       if (i === 7 && shopStrip) {
+        out.pop();
+        out.push(<BandDouble key={`bd2-${feedKey(it)}`} />);
         out.push(<div key="shop-strip">{shopStrip}</div>);
-        out.push(<Band key="shop-band" />);
+        out.push(<BandDouble key="shop-band" />);
       }
       if (i === 12) {
+        out.pop();
+        out.push(<BandDouble key={`bd3-${feedKey(it)}`} />);
         out.push(
           <div key="villagers" className="py-2.5">
             <VillagerSuggestions title="✨ おすすめのむらびと" />
           </div>
         );
-        out.push(<Band key="villagers-band" />);
+        out.push(<BandDouble key="villagers-band" />);
       }
     });
     return out;
@@ -513,8 +530,17 @@ export default function CotozutePage() {
           <button onClick={() => setDrawer(true)} aria-label="メニュー" className="text-[22px] leading-none text-[#1c1e21]">
             ☰
           </button>
-          <span className="text-[22px] font-extrabold tracking-tight" style={{ color: TIFFANY }}>
-            CotoZute
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5"
+            style={{
+              background: "linear-gradient(120deg,#14b8a0,#0a8a84)",
+              boxShadow: "0 3px 12px rgba(10,186,181,.35)",
+            }}
+          >
+            <span className="relative text-[13px] leading-none text-white">
+              ✦<span className="absolute -right-1.5 -top-1 text-[7px]">✦</span>
+            </span>
+            <span className="text-[17px] font-extrabold tracking-tight text-white">CotoZute</span>
           </span>
           <span className="ml-auto">
             <AvatarMenu ring="#c8beac" />
