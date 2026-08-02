@@ -595,7 +595,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   };
 
   return (
-    <section id="katsudo" className="card" style={{ scrollMarginTop: 56, border: "none", padding: "0 0 8px" }}>
+    <section id="katsudo" className="card" style={{ scrollMarginTop: 56, border: "none", padding: 0, background: "#f2f8f0" }}>
       {/* 見出し */}
       <div
         className="mb-2 px-4 pb-2.5 pt-3.5"
@@ -604,6 +604,17 @@ export function ActivitySection({ me }: { me: User | null }) {
         <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 むらびとたより</div>
         <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
       </div>
+
+      {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
+      {me && myVills.length === 0 && (
+        <a
+          href="/sekai/villages"
+          className="mx-2 mb-2 block rounded-xl border-2 border-dashed py-3 text-center text-[12.5px] font-bold no-underline"
+          style={{ borderColor: "#4a8a5c66", color: GREEN }}
+        >
+          ⛺ 拠点に入ると、ここから「むらびとたより」を投稿できます →
+        </a>
+      )}
 
       {/* 活動を報告する（自分の村がある人だけ） */}
       {me && myVills.length > 0 && (
@@ -701,7 +712,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             className="mx-2 mb-2 w-[calc(100%-16px)] rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
             style={{ borderColor: "#4a8a5c66", color: GREEN }}
           >
-            📣 うちの村の活動を報告する
+            ✍️ むらびとたよりを投稿する
           </button>
         )
       )}
@@ -870,6 +881,10 @@ export function ActivitySection({ me }: { me: User | null }) {
         </button>
       )}
 
+      {/* おわりの帯（セクションの終わりが一目で分かる） */}
+      <div className="mt-2 px-4 py-1.5 text-center" style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}>
+        <span className="text-[9.5px] tracking-[3px] text-[#8ab89a]">〜 むらびとたより ここまで 〜</span>
+      </div>
     </section>
   );
 }
