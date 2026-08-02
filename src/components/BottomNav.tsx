@@ -105,12 +105,7 @@ const SERVICES: Service[] = [
     border: "#e5dccb",
     active: "#c94d3a",
     inactive: "#a09888",
-    tabs: [
-      { href: "#ddp-sec", icon: "🌊", label: "DDP", ext: true },
-      { href: "#ideas-sec", icon: "💡", label: "アイディア", ext: true },
-      { href: "#recos-sec", icon: "⭐", label: "おススメ", ext: true },
-      { href: "/settings/profile", icon: "⚙️", label: "編集" },
-    ],
+    tabs: [], // マイページはホーム（卵）だけ。編集などはページ内から
   },
 ];
 
