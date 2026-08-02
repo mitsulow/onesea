@@ -127,39 +127,26 @@ export function HomeDashboard() {
 
   return (
     <section className="bg-white" style={{ margin: "0 -16px" }}>
-      {/* ── 日付（聖点の日は色が差す） ── */}
-      <div className="px-5 pb-1 pt-4" style={{ borderTop: isShishi ? `3px solid ${accent}` : "none" }}>
-        <div className="flex items-end justify-between">
-          <div>
-            <div className="flex items-baseline gap-2" style={{ fontFamily: MINCHO }}>
-              <span className="text-[40px] font-bold leading-none tracking-tight text-[#2a2622]">
-                {m}<span className="mx-0.5 text-[22px] text-[#b0a890]">/</span>{d}
-              </span>
-              <span className="text-[16px] text-[#8a8070]">{dow}曜日</span>
-            </div>
-            <div className="mt-1 text-[11px] tracking-[1px] text-[#a09880]">
-              {kyurekiLabel(tk)}
-              {best?.sekki && (
-                <span className="ml-2 font-bold" style={{ color: accent }}>
-                  {best.sekki[0]}
-                </span>
-              )}
-              {moon.holy && <span className="ml-2 font-bold text-[#c09030]">✦ {moon.holy}</span>}
-            </div>
-          </div>
+      {/* ── 日付（ど真ん中・聖点の日は色が差す） ── */}
+      <div className="px-5 pb-1 pt-4 text-center" style={{ borderTop: isShishi ? `3px solid ${accent}` : "none" }}>
+        <div style={{ fontFamily: MINCHO }}>
+          <span className="text-[26px] font-bold tracking-wide text-[#2a2622]">
+            {y}年{m}月{d}日<span className="ml-1 text-[19px] text-[#8a8070]">（{dow}）</span>
+          </span>
+        </div>
+        <div className="mt-1 text-[11px] tracking-[1px] text-[#a09880]">
+          {kyurekiLabel(tk)}
+          {best?.sekki && (
+            <span className="ml-2 font-bold" style={{ color: accent }}>
+              {best.sekki[0]}
+            </span>
+          )}
+          {moon.holy && <span className="ml-2 font-bold text-[#c09030]">✦ {moon.holy}</span>}
           {advDays != null && (
-            <div className="pb-1 text-right">
-              <div className="num text-[10px] leading-tight text-[#b8ae98]">地球冒険</div>
-              <div className="num text-[13px] font-bold leading-tight text-[#8a7a5a]">
-                {advDays.toLocaleString()}<span className="text-[9px]">日目</span>
-              </div>
-            </div>
+            <span className="num ml-2 text-[#b8ae98]">🌏 {advDays.toLocaleString()}日目</span>
           )}
         </div>
       </div>
-
-      {/* ── サービスDock（指で撫でると膨らむ） ── */}
-      <ServiceDock />
 
       {/* ── 願い叶いタイム カウントダウン ── */}
       {target && (
@@ -187,7 +174,8 @@ export function HomeDashboard() {
             ) : (
               <div className="flex items-baseline justify-between">
                 <span className="text-[10.5px] tracking-[2px] text-[#a09070]">
-                  ⏳ 願い叶いタイム <span className="num font-bold" style={{ color: accent }}>{target.e.time}</span>
+                  ⏳ {left > 12 * 3600000 ? "明日の" : ""}願い叶いタイム{" "}
+                  <span className="num font-bold" style={{ color: accent }}>{target.e.time}</span>
                 </span>
                 <span className="num text-[13px] text-[#6a5a3a]" style={{ fontFamily: MINCHO }}>
                   あと {hrs > 0 && <b>{hrs}<span className="text-[10px]">時間</span></b>}
@@ -292,14 +280,14 @@ export function ServiceDock() {
     if (!r) return 1;
     const cx = r.left + ((i + 0.5) * r.width) / ITEMS.length;
     const d = Math.abs(fx - cx);
-    return 1 + 1.15 * Math.exp(-(d * d) / (2 * 52 * 52));
+    return 1 + 1.6 * Math.exp(-(d * d) / (2 * 54 * 54)); // 指下は約2.6倍まで膨らむ
   };
 
   return (
     <div
       ref={rowRef}
-      className="flex items-end justify-between px-4 pb-1 pt-3"
-      style={{ touchAction: "pan-y" }}
+      className="flex items-end justify-between px-4 pb-2 pt-3"
+      style={{ touchAction: "pan-y", background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
       onTouchStart={(e) => setFx(e.touches[0].clientX)}
       onTouchMove={(e) => setFx(e.touches[0].clientX)}
       onTouchEnd={() => setTimeout(() => setFx(null), 120)}
@@ -321,7 +309,7 @@ export function ServiceDock() {
             {/* 拡大中だけ名前が浮かぶ */}
             {big && (
               <span
-                className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2a2622] px-2 py-0.5 text-[8.5px] font-bold text-white"
+                className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[8.5px] font-bold text-[#17384e]"
                 style={{ transform: `translateX(-50%) scale(${1 / sc})`, transformOrigin: "bottom center" }}
               >
                 {m.label}
