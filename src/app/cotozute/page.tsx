@@ -63,6 +63,8 @@ export default function CotozutePage() {
   const [storyUploading, setStoryUploading] = useState(false);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [hideBar, setHideBar] = useState(false);
+  const lastY = useRef(0);
   const loadingRef = useRef(false);
   const itemsRef = useRef<FeedItem[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -189,6 +191,41 @@ export default function CotozutePage() {
     loadLikers(list);
     window.scrollTo({ top: 0 });
   };
+
+  /* 没入: 端末のステータスバー領域まで白に溶かす（FBの秘伝のタレ①） */
+  useEffect(() => {
+    const prevBg = document.body.style.background;
+    document.body.style.background = "#ffffff";
+    let meta = document.querySelector('meta[name="theme-color"]');
+    const created = !meta;
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+    const prevTheme = meta.getAttribute("content");
+    meta.setAttribute("content", "#ffffff");
+    return () => {
+      document.body.style.background = prevBg;
+      if (created) meta?.remove();
+      else if (meta && prevTheme) meta.setAttribute("content", prevTheme);
+    };
+  }, []);
+
+  /* ヘッダーの隠し/出し（FBの秘伝のタレ②）:
+     下に読み進めると完全に消えて投稿が画面上端まで。
+     上に「少しでも」戻すと、あっという間にスッと現れる（上方向は高感度） */
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (y < 56) setHideBar(false);
+      else if (y > lastY.current + 6) setHideBar(true); // 下: 少し鈍く
+      else if (y < lastY.current - 2) setHideBar(false); // 上: 即反応
+      lastY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   /* 引っ張って更新 */
   useEffect(() => {
@@ -383,7 +420,13 @@ export default function CotozutePage() {
   return (
     <main className="min-h-screen bg-white pb-20">
       {/* ヘッダー: ☰ + CotoZute（ティファニーブルー） */}
-      <header className="sticky top-0 z-40 bg-white/97 backdrop-blur-sm">
+      <header
+        className="sticky top-0 z-40 bg-white"
+        style={{
+          transform: hideBar ? "translateY(-110%)" : "translateY(0)",
+          transition: "transform 0.18s cubic-bezier(0.2,0.8,0.3,1)",
+        }}
+      >
         <div className="flex h-12 items-center gap-3 px-4">
           <button onClick={() => setDrawer(true)} aria-label="メニュー" className="text-[22px] leading-none text-[#1c1e21]">
             ☰
