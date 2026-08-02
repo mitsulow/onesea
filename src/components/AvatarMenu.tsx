@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
@@ -16,6 +17,11 @@ import { setBadge, ensureSw } from "@/lib/push";
  * 下タブは「いま居るサービスの専用タブ」に譲る構造（Xのプロフィールメニューと同じ思想）。
  */
 export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
+  const pathname = usePathname();
+  const hereCls = (href: string) =>
+    (href === "/" ? pathname === "/" : !href.startsWith("/#") && pathname.startsWith(href.split("?")[0]))
+      ? " bg-[#fdf6e0] font-bold"
+      : "";
   const [user, setUser] = useState<User | null>(null);
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -113,32 +119,32 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             className="fixed z-[96] max-h-[80vh] w-56 overflow-y-auto rounded-xl border border-[#ede5d8] bg-white"
             style={{ top: anchor.top, right: anchor.right, boxShadow: "0 10px 36px rgba(0,0,0,0.22)" }}
           >
-            <Link href="/mmm" onClick={() => setOpen(false)} className={item}>
+            <Link href="/mmm" onClick={() => setOpen(false)} className={item + hereCls("/mmm")}>
               {icon("/icons/cel-sun.png")} MasterMindMembers
             </Link>
-            <Link href="/sekai" onClick={() => setOpen(false)} className={item}>
+            <Link href="/sekai" onClick={() => setOpen(false)} className={item + hereCls("/sekai")}>
               {icon("/icons/cel-earth.png")} セカイムラ
             </Link>
-            <a href="/tsukiyoga-v7/index.html" className={item}>
+            <a href="/tsukiyoga-v7/index.html" className={item + hereCls("/tsukiyoga-v7")}>
               {icon("/icons/cel-moon.png")} ツキヨガ
             </a>
-            <Link href="/cotozute" onClick={() => setOpen(false)} className={item}>
+            <Link href="/cotozute" onClick={() => setOpen(false)} className={item + hereCls("/cotozute")}>
               {icon("/icons/tab-cotozute.png")} コトヅテ
             </Link>
-            <Link href="/" onClick={() => setOpen(false)} className={item}>
+            <Link href="/" onClick={() => setOpen(false)} className={item + hereCls("/")}>
               {icon("/icons/tab-home.png")} ホーム
             </Link>
-            <Link href="/za" onClick={() => setOpen(false)} className={item}>
+            <Link href="/za" onClick={() => setOpen(false)} className={item + hereCls("/za")}>
               <img src="/rakuichi/logo-emblem.webp" alt="" className="h-[20px] w-[20px] flex-shrink-0 rounded-full object-cover" />
               楽市楽座
             </Link>
-            <Link href="/#techo" onClick={() => setOpen(false)} className={item}>
+            <Link href="/#techo" onClick={() => setOpen(false)} className={item + hereCls("/#techo")}>
               <span className="w-[20px] text-center text-[16px]">📖</span> 手帳
             </Link>
-            <Link href="/my" onClick={() => setOpen(false)} className={item}>
+            <Link href="/my" onClick={() => setOpen(false)} className={item + hereCls("/my")}>
               <span className="w-[20px] text-center text-[16px]">🪪</span> マイページ編集
             </Link>
-            <Link href="/line" onClick={() => setOpen(false)} className={item}>
+            <Link href="/line" onClick={() => setOpen(false)} className={item + hereCls("/line")}>
               <span className="w-[20px] text-center text-[16px]">💬</span> TALK
               {unread > 0 && (
                 <span

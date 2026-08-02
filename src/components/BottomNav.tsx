@@ -203,15 +203,24 @@ export function BottomNav() {
         >
           <div
             className="grid grid-cols-3 gap-2 rounded-2xl p-3"
-            style={{ background: svc.bg, border: `1px solid ${svc.border}`, boxShadow: "0 -6px 40px rgba(0,0,0,.45)" }}
+            style={{
+              background: "linear-gradient(160deg,#0e1e2ef7,#17384ef7)",
+              border: "1px solid #2a3a55",
+              boxShadow: "0 -6px 40px rgba(0,0,0,.45)",
+            }}
           >
-            {MENU.map((m) =>
-              m.ext ? (
+            {MENU.map((m) => {
+              const isHere =
+                m.href === "/" ? pathname === "/" : !m.href.startsWith("/#") && pathname.startsWith(m.href.split("?")[0]);
+              const cellStyle = isHere
+                ? { background: "rgba(212,185,106,.16)", border: "1.5px solid #d4b96a" }
+                : { background: "rgba(255,255,255,.07)", border: "1.5px solid transparent" };
+              return m.ext ? (
                 <a
                   key={m.href}
                   href={m.href}
-                  className="flex flex-col items-center gap-1 rounded-xl bg-white/8 py-3 no-underline"
-                  style={{ background: "rgba(255,255,255,.07)" }}
+                  className="flex flex-col items-center gap-1 rounded-xl py-3 no-underline"
+                  style={cellStyle}
                 >
                   {m.icon.startsWith("/") ? (
                     <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
@@ -225,7 +234,7 @@ export function BottomNav() {
                       )}
                     </span>
                   )}
-                  <span className="text-[10.5px] font-extrabold" style={{ color: svc.active }}>
+                  <span className="text-[10.5px] font-extrabold" style={{ color: isHere ? "#eae6b8" : "#c8d2e4" }}>
                     {m.label}
                   </span>
                 </a>
@@ -235,7 +244,7 @@ export function BottomNav() {
                   href={m.href}
                   onClick={() => setMenu(false)}
                   className="flex flex-col items-center gap-1 rounded-xl py-3 no-underline"
-                  style={{ background: "rgba(255,255,255,.07)" }}
+                  style={cellStyle}
                 >
                   {m.icon.startsWith("/") ? (
                     <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
@@ -249,12 +258,12 @@ export function BottomNav() {
                       )}
                     </span>
                   )}
-                  <span className="text-[10.5px] font-extrabold" style={{ color: svc.active }}>
+                  <span className="text-[10.5px] font-extrabold" style={{ color: isHere ? "#eae6b8" : "#c8d2e4" }}>
                     {m.label}
                   </span>
                 </Link>
-              )
-            )}
+              );
+            })}
           </div>
         </div>
       )}

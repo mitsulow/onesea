@@ -548,13 +548,13 @@ export default function CotozutePage() {
             <div className="px-5 pb-2 pt-5 text-[20px] font-extrabold" style={{ color: TIFFANY }}>
               CotoZute
             </div>
-            {MENU_ITEMS.map((m) =>
-              m.ext ? (
-                <a
-                  key={m.href}
-                  href={m.href}
-                  className="flex items-center gap-3 border-b border-[#f2f3f5] px-5 py-3 text-[14px] font-medium text-[#1c1e21] no-underline"
-                >
+            {MENU_ITEMS.map((m) => {
+              const isHere = m.href === "/cotozute";
+              const rowCls = `flex items-center gap-3 border-b border-[#f2f3f5] px-5 py-3 text-[14px] no-underline ${
+                isHere ? "bg-[#e8f7f6] font-bold text-[#0a8a84]" : "font-medium text-[#1c1e21]"
+              }`;
+              return m.ext ? (
+                <a key={m.href} href={m.href} className={rowCls}>
                   {m.icon.startsWith("/") ? (
                     <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
                   ) : (
@@ -563,12 +563,7 @@ export default function CotozutePage() {
                   {m.label}
                 </a>
               ) : (
-                <Link
-                  key={m.href}
-                  href={m.href}
-                  onClick={() => setDrawer(false)}
-                  className="flex items-center gap-3 border-b border-[#f2f3f5] px-5 py-3 text-[14px] font-medium text-[#1c1e21] no-underline"
-                >
+                <Link key={m.href} href={m.href} onClick={() => setDrawer(false)} className={rowCls}>
                   {m.icon.startsWith("/") ? (
                     <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
                   ) : (
@@ -576,8 +571,8 @@ export default function CotozutePage() {
                   )}
                   {m.label}
                 </Link>
-              )
-            )}
+              );
+            })}
           </div>
         </>
       )}
