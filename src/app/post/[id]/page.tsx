@@ -94,7 +94,7 @@ export default function PostDetailPage() {
         <div className="card">
           {editing ? (
             <div className="py-2">
-              <div className="mb-1.5 text-[11px] font-bold text-[#8a7a5a]">✏️ 言の葉を修正</div>
+              <div className="mb-1.5 text-[11px] font-bold text-[#8a7a5a]">✏️ コトヅテを修正</div>
               <textarea
                 value={editDraft}
                 onChange={(e) => setEditDraft(e.target.value)}
@@ -134,7 +134,7 @@ export default function PostDetailPage() {
                   }}
                   className="mt-2 w-full rounded-xl border border-[#e8dcc4] bg-white py-2 text-[12.5px] font-bold text-[#8a7a5a]"
                 >
-                  ✏️ この言の葉を修正する
+                  ✏️ コトヅテを修正
                 </button>
               )}
             </>
