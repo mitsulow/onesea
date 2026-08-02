@@ -1,5 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
+/* eslint-disable @next/next/no-img-element */
+
 export interface OGPEmbed {
   url: string;
   title?: string;
@@ -32,58 +36,112 @@ function getTweetId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-/** SNS URL を自動で綺麗にリサイズ表示（楽市楽座「情緒」から移植） */
+/**
+ * SNS URL の自動埋め込み — クリック・トゥ・プレイ方式。
+ * 普段はサムネ画像だけ（フィードが軽い）、タップした瞬間その場のiframeで再生。
+ * 動画・画像のデータは各SNSのCDN→視聴者に直接流れ、OneSeaのサーバーは通らない。
+ * 外部サイトへ飛ばさない=無限フィードに吸われず、コトヅテに留まる。
+ */
 export function EmbedCard({ embed }: { embed: OGPEmbed }) {
   const url = embed.url;
+  const [on, setOn] = useState(false);
 
   const igId = getInstagramPostId(url);
-  if (igId) {
-    return (
-      <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]">
-        <iframe
-          src={`https://www.instagram.com/p/${igId}/embed/captioned/`}
-          className="w-full"
-          style={{ height: "560px", border: "none" }}
-          scrolling="no"
-          allowFullScreen
-          title="Instagram post"
-        />
-      </div>
-    );
-  }
-
   const ytId = getYouTubeId(url);
+  const tweetId = getTweetId(url);
+
+  /* YouTube: サムネはYouTube公式CDNの静止画（無料・軽量）→タップでその場再生 */
   if (ytId) {
     return (
       <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8]">
         <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-          <iframe
-            src={`https://www.youtube.com/embed/${ytId}`}
-            className="absolute inset-0 h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title="YouTube video"
-          />
+          {on ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${ytId}?autoplay=1&playsinline=1&rel=0`}
+              className="absolute inset-0 h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title="YouTube video"
+            />
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOn(true);
+              }}
+              className="absolute inset-0 h-full w-full"
+              aria-label="動画を再生"
+            >
+              <img
+                src={`https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`}
+                alt=""
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <span className="absolute inset-0 bg-black/15" />
+              <span
+                className="absolute left-1/2 top-1/2 flex h-12 w-[68px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl text-[20px] text-white shadow-lg"
+                style={{ background: "rgba(200,30,30,.92)" }}
+              >
+                ▶
+              </span>
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
-  const tweetId = getTweetId(url);
-  if (tweetId) {
+  /* Instagram / X: タップするまでiframeを読まない（1枠1MB級のJSを節約） */
+  if (igId || tweetId) {
+    if (on) {
+      return (
+        <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]">
+          <iframe
+            src={
+              igId
+                ? `https://www.instagram.com/p/${igId}/embed/captioned/`
+                : `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light`
+            }
+            className="w-full"
+            style={{ height: "560px", border: "none" }}
+            scrolling="no"
+            allowFullScreen
+            title={igId ? "Instagram post" : "Post"}
+          />
+        </div>
+      );
+    }
     return (
-      <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]">
-        <iframe
-          src={`https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light`}
-          className="w-full"
-          style={{ height: "560px", border: "none" }}
-          scrolling="no"
-          title="Tweet"
-        />
-      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setOn(true);
+        }}
+        className="relative mt-2 block w-full overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2] text-left"
+        aria-label="投稿をここで表示"
+      >
+        {embed.image ? (
+          <img src={embed.image} alt="" loading="lazy" className="h-44 w-full object-cover" />
+        ) : (
+          <div className="flex h-24 items-center justify-center text-[26px]">{igId ? "📷" : "🐦"}</div>
+        )}
+        <div className="flex items-center justify-between gap-2 p-2.5">
+          <div className="min-w-0">
+            {embed.title && (
+              <div className="line-clamp-1 text-xs font-medium text-[#4a4438]">{embed.title}</div>
+            )}
+            <div className="text-[10.5px] text-[#b0a898]">{igId ? "Instagram" : "X"}</div>
+          </div>
+          <span className="flex-shrink-0 rounded-full bg-[#c94d3a] px-3 py-1.5 text-[11px] font-extrabold text-white">
+            ここで見る ▶
+          </span>
+        </div>
+      </button>
     );
   }
 
+  /* その他のリンク: OGPカード */
   return (
     <a
       href={url}
@@ -91,10 +149,7 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
       rel="noopener noreferrer"
       className="mt-2 block overflow-hidden rounded-xl border border-[#ede5d8] no-underline transition-colors hover:bg-[#faf8f2]"
     >
-      {embed.image && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={embed.image} alt="" className="h-36 w-full object-cover" />
-      )}
+      {embed.image && <img src={embed.image} alt="" loading="lazy" className="h-36 w-full object-cover" />}
       <div className="p-2.5">
         <div className="line-clamp-2 text-xs font-medium text-[#4a4438]">{embed.title}</div>
         {embed.description && (
