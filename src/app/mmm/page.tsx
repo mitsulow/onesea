@@ -6,7 +6,6 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
-import { PriceBanner } from "@/components/PriceBanner";
 import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import {
@@ -102,7 +101,6 @@ export default function MmmPage() {
           <AvatarMenu ring="#7de0a0" />
         </span>
       </header>
-      <PriceBanner service="MasterMindMembers" price="年会費39,600円" color="#7de0a0" />
 
       {/* ① OTOHIKARI MAP + ② シューマン音 */}
       <div className="px-4">
