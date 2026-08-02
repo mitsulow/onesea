@@ -233,6 +233,13 @@ export function MootsSection({
       className="card"
       style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "none", padding: "10px 8px 12px", scrollMarginTop: 56 }}
     >
+      <div className="mb-2 flex items-baseline justify-between px-1">
+        <span className="text-[13.5px] font-extrabold tracking-[1px] text-[#7aa88a]">
+          📺 オンライン新月会・満月会
+        </span>
+        {me && <span className="text-[10px] text-[#5a7a68]">あなたの参加 {mootCount}回</span>}
+      </div>
+
       {/* テレビ画面（当日はここにZoomの導線が出る） */}
       {next && (
         <div className="relative overflow-hidden rounded-xl border border-[#2a4a3a]">
