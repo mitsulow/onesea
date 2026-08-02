@@ -550,6 +550,8 @@ function BottomSheet({
   if (tide) {
     for (const [t] of tide.high) tideRows.push(["満", t, "#3070b0"]);
     for (const [t] of tide.low) tideRows.push(["干", t, "#88aacc"]);
+    // 新聞式の「満満干干」ではなく、起こる時間順に並べる
+    tideRows.sort((a, b) => a[1].localeCompare(b[1]));
   }
 
   return (
