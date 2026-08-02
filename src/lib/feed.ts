@@ -52,13 +52,17 @@ export async function fetchMixedFeed(cursor: string | null, limit = 20): Promise
   }
   const [p, m, sh] = await Promise.all([qP, qM, qS]);
 
+  // これからのイベントは上のストーリー欄に出るので、フィードからは除外（重複防止）。
+  // 終わったイベントは記録としてフィードに残る。
+  const nowIso = new Date().toISOString();
+  const muraRows = (((m.data ?? []) as unknown) as MuraPost[]).filter(
+    (x) => !(x.kind === "event" && x.event_at && x.event_at >= nowIso)
+  );
   const items: FeedItem[] = [
     ...(((p.data ?? []) as unknown) as CotozutePost[]).map(
       (post): FeedItem => ({ kind: "coto", at: post.created_at, post })
     ),
-    ...(((m.data ?? []) as unknown) as MuraPost[]).map(
-      (mura): FeedItem => ({ kind: "mura", at: mura.created_at, mura })
-    ),
+    ...muraRows.map((mura): FeedItem => ({ kind: "mura", at: mura.created_at, mura })),
     ...(((sh.data ?? []) as unknown) as Shop[]).map(
       (shop): FeedItem => ({ kind: "shop", at: shop.created_at, shop })
     ),
