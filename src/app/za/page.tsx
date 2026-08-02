@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client";
 import { Shop, Market, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
 import { ZaFeatured } from "@/components/ZaFeatured";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
-import { PriceBanner } from "@/components/PriceBanner";
 
 function priceLabel(s: Shop): string {
   if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "物々交換" : "0円";
@@ -40,31 +39,52 @@ export default function ZaPage() {
 
   return (
     <main className="pb-20">
-      <header className="relative">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/rakuichi/logo-edo.webp" alt="楽市楽座" className="h-[92px] w-full object-cover" />
-        {loggedIn ? (
-          <span className="absolute right-3 top-2.5">
-            <AvatarMenu />
+      {/* 旧楽市楽座のヒーロー: 鳥居エンブレム + 楽市楽座 + 日本人総フリーランス化計画（朱色で統一） */}
+      <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
+        <div className="flex h-14 items-center justify-between px-4">
+          <span className="inline-flex select-none items-center" style={{ color: "#c94d3a", gap: 8 }}>
+            <svg
+              width={40}
+              height={40}
+              viewBox="0 0 100 100"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              style={{ flexShrink: 0 }}
+            >
+              <circle cx="50" cy="50" r="42" strokeWidth="4.5" />
+              <line x1="50" y1="20" x2="50" y2="32" strokeWidth="2.6" />
+              <ellipse cx="44" cy="20" rx="5.5" ry="3" fill="currentColor" stroke="none" transform="rotate(-30 44 20)" />
+              <ellipse cx="56" cy="20" rx="5.5" ry="3" fill="currentColor" stroke="none" transform="rotate(30 56 20)" />
+              <line x1="20" y1="38" x2="80" y2="38" strokeWidth="7" />
+              <line x1="28" y1="50" x2="72" y2="50" strokeWidth="4" />
+              <line x1="34" y1="38" x2="32" y2="80" strokeWidth="5.5" />
+              <line x1="66" y1="38" x2="68" y2="80" strokeWidth="5.5" />
+            </svg>
+            <span className="whitespace-nowrap font-bold" style={{ fontSize: 22, letterSpacing: "0.06em", lineHeight: 1 }}>
+              楽市楽座
+            </span>
+            <span
+              className="whitespace-nowrap font-semibold"
+              style={{ fontSize: 10, letterSpacing: "-0.02em", lineHeight: 1, marginLeft: 2, opacity: 0.85 }}
+            >
+              日本人総フリーランス化計画
+            </span>
           </span>
-        ) : (
-          <Link
-            href="/"
-            className="absolute right-3 top-2.5 rounded-full bg-black/30 px-3 py-1.5 text-[11px] font-bold text-white no-underline"
-          >
-            ログイン
-          </Link>
-        )}
-        <div className="absolute bottom-1.5 right-3 flex flex-col items-end gap-1">
-          <span className="rounded-full bg-black/25 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-white">
-            日本人総フリーランス化計画
-          </span>
-          <span className="rounded-full bg-black/25 px-2.5 py-0.5 text-[10px] font-bold tracking-widest text-white">
-            やりたいことを仕事に
-          </span>
+          {loggedIn ? (
+            <AvatarMenu ring="#c94d3a" />
+          ) : (
+            <Link
+              href="/"
+              className="rounded-full bg-[#c94d3a] px-3 py-1.5 text-[11px] font-bold text-white no-underline"
+            >
+              ログイン
+            </Link>
+          )}
         </div>
       </header>
-      <PriceBanner service="楽市楽座" price="月額4,000円で座を出せる" color="#e8a060" />
 
       <div className="space-y-3 pt-3">
         {/* 本日のパワープッシュ楽座 */}
