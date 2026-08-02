@@ -220,6 +220,7 @@ export interface Village {
   created_by: string | null;
   profiles: P | null;
   village_members: Array<{ count: number }>;
+  cover_url?: string | null;
 }
 
 export interface Club {
@@ -346,7 +347,7 @@ export async function fetchActivityFeed(limit = 10, offset = 0) {
 export async function updateVillage(
   userId: string,
   id: string,
-  v: { name: string; prefecture: string; city: string | null; description: string | null; policy: Village["policy"] }
+  v: { name: string; prefecture: string; city: string | null; description: string | null; policy: Village["policy"]; cover_url?: string | null }
 ) {
   const supabase = createClient();
   return supabase.from("villages").update(v).eq("id", id).eq("created_by", userId);

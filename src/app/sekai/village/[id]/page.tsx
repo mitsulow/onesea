@@ -57,6 +57,8 @@ export default function VillagePage() {
   const [eDesc, setEDesc] = useState("");
   const [ePolicy, setEPolicy] = useState<Village["policy"]>("open");
   const [eSaving, setESaving] = useState(false);
+  const [eCover, setECover] = useState<string | null>(null);
+  const [eCoverUp, setECoverUp] = useState(false);
   const eIsJapan = (PREFS as readonly string[]).includes(ePref);
 
   const openEdit = () => {
@@ -66,6 +68,7 @@ export default function VillagePage() {
     setECity(village.city ?? "");
     setEDesc(village.description ?? "");
     setEPolicy(village.policy ?? "open");
+    setECover(village.cover_url ?? null);
     setEditing(true);
   };
 
@@ -79,6 +82,7 @@ export default function VillagePage() {
       city: eIsJapan ? eCity : null,
       description: eDesc.trim() || null,
       policy: ePolicy,
+      cover_url: eCover,
     });
     setESaving(false);
     setEditing(false);
@@ -169,7 +173,11 @@ export default function VillagePage() {
     <main className="pb-20">
       <header
         className="px-4 pb-5 pt-4 text-center"
-        style={{ background: "linear-gradient(165deg,#0e2014 0%,#163522 55%,#1e4530 100%)" }}
+        style={{
+          background: village.cover_url
+            ? `linear-gradient(165deg, rgba(10,22,14,.72) 0%, rgba(14,32,20,.78) 60%, rgba(20,44,30,.85) 100%), url(${village.cover_url}) center/cover`
+            : "linear-gradient(165deg,#0e2014 0%,#163522 55%,#1e4530 100%)",
+        }}
       >
         <div className="flex items-center justify-between">
           <Link href="/sekai" className="text-[13px] font-bold text-[#a8cca8] no-underline">
@@ -189,7 +197,7 @@ export default function VillagePage() {
             </span>
           </span>
         </div>
-        <div className="mt-3 text-[40px] leading-none">🏡</div>
+        {!village.cover_url && <div className="mt-3 text-[40px] leading-none">🏡</div>}
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{village.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
           {village.prefecture} ・ 村人 {members.length}人 ・ 世話人 {steward?.display_name ?? "—"}
@@ -310,6 +318,30 @@ export default function VillagePage() {
             placeholder="どんな集まりにしたい？"
             className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13px] leading-relaxed outline-none focus:border-[#4a8a5c]"
           />
+          {/* ヘッダー画像 */}
+          <div className="mb-2 flex items-center gap-2">
+            {eCover && <img src={eCover} alt="" className="h-12 w-20 rounded-lg object-cover" />}
+            <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
+              {eCoverUp ? "⏳" : "🖼"} ヘッダー画像を選ぶ
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f || !me) return;
+                  setECoverUp(true);
+                  setECover(await uploadImage("post-images", me.id, f, 1600, 0.75));
+                  setECoverUp(false);
+                }}
+              />
+            </label>
+            {eCover && (
+              <button onClick={() => setECover(null)} className="text-[11px] text-[#c05030]">
+                外す
+              </button>
+            )}
+          </div>
           <select
             value={ePolicy}
             onChange={(e) => setEPolicy(e.target.value as Village["policy"])}
@@ -366,50 +398,10 @@ export default function VillagePage() {
         {/* 囲炉裏 */}
         <section className="card">
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-            🔥 囲炉裏 <span className="text-[10px] font-normal text-[#a0aca0]">この村の掲示板</span>
+            この村の活動
           </div>
-          {me && joined && (
-            <div className="mb-3">
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={2}
-                placeholder="次の集まり・持ち寄り・写真など"
-                className="w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
-              />
-              <div className="mt-1.5 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {photo && <img src={photo} alt="" className="h-12 w-12 rounded-lg object-cover" />}
-                  <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-1.5 text-[11.5px] font-bold" style={{ color: GREEN }}>
-                    {uploading ? "⏳" : <CameraIcon size={15} />}
-                    写真
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const f = e.target.files?.[0];
-                        if (!f || !me) return;
-                        setUploading(true);
-                        setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
-                        setUploading(false);
-                      }}
-                    />
-                  </label>
-                </div>
-                <button
-                  onClick={submit}
-                  disabled={!body.trim() || sending || uploading}
-                  className="rounded-xl px-4 py-2 text-[12.5px] font-extrabold text-white disabled:opacity-40"
-                  style={{ background: "#4a8a5c" }}
-                >
-                  {sending ? "投稿中..." : "投稿する"}
-                </button>
-              </div>
-            </div>
-          )}
           {posts.length === 0 ? (
-            <p className="py-1 text-[12.5px] text-[#a0aca0]">まだ火が入っていません。最初のひとことを 🔥</p>
+            <p className="py-1 text-[12.5px] text-[#a0aca0]">まだ活動の記録がありません。村人日記から投稿すると、ここに並びます</p>
           ) : (
             posts.map((p: any) => (
               <div key={p.id} className="border-b border-[#eef2ec] py-2.5">
