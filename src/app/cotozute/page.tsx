@@ -215,33 +215,9 @@ export default function CotozutePage() {
       </header>
 
       {/* 📅 イベント（インスタのストーリー風・横スクロール） */}
-      {(events.length > 0 || me) && (
+      {events.length > 0 && (
         <div className="border-b border-[#f0e9dc] bg-[#fffdf8] py-2">
           <div className="hide-scrollbar flex gap-3 overflow-x-auto px-3">
-            {/* 先頭: 自分の丸+＋ = イベントを作る（インスタの「ストーリーズを追加」と同じ記号） */}
-            {me && (
-              <a href="/sekai?write=event" className="w-[72px] flex-shrink-0 no-underline">
-                <div className="relative mx-auto h-[64px] w-[64px]">
-                  <div
-                    className="flex h-full w-full items-center justify-center overflow-hidden rounded-full"
-                    style={{ border: "2.5px solid #e0d8c8", padding: 2, background: "#fff" }}
-                  >
-                    {myAvatar ? (
-                      <img src={myAvatar} alt="" referrerPolicy="no-referrer" className="h-full w-full rounded-full object-cover" />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center rounded-full bg-[#f0ead9] text-[20px]">✏️</span>
-                    )}
-                  </div>
-                  <span
-                    className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full text-[14px] font-extrabold text-white"
-                    style={{ background: "#4a9a5a", border: "2px solid #fffdf8" }}
-                  >
-                    ＋
-                  </span>
-                </div>
-                <div className="mt-1 text-center text-[9.5px] font-bold leading-tight text-[#8a8070]">イベント作成</div>
-              </a>
-            )}
             {events.map((ev) => {
               const d = new Date(ev.event_at);
               const title = String(ev.body ?? "").split("\n")[0];
@@ -252,19 +228,24 @@ export default function CotozutePage() {
                   className="w-[72px] flex-shrink-0 no-underline"
                 >
                   <div
-                    className="mx-auto flex h-[64px] w-[64px] items-center justify-center overflow-hidden rounded-full"
-                    style={{ border: "2.5px solid #4a9a5a", padding: 2, background: "#fff" }}
+                    className="relative mx-auto h-[64px] w-[64px] overflow-hidden rounded-full"
+                    style={{ border: "2.5px solid #4a9a5a", background: "#eaf4ec" }}
                   >
                     {ev.photo_url ? (
-                      <img src={ev.photo_url} alt="" loading="lazy" className="h-full w-full rounded-full object-cover" />
+                      <img src={ev.photo_url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                     ) : (
-                      <span className="flex h-full w-full items-center justify-center rounded-full bg-[#eaf4ec] text-[20px]">📅</span>
+                      <span className="absolute inset-0" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }} />
                     )}
+                    <span className="absolute inset-0 bg-black/25" />
+                    {/* 写真の真ん中に大きく日付 */}
+                    <span
+                      className="num absolute inset-0 flex items-center justify-center text-[17px] font-extrabold text-white"
+                      style={{ textShadow: "0 1px 6px rgba(0,0,0,.55)", lineHeight: 1 }}
+                    >
+                      {d.getMonth() + 1}/{d.getDate()}
+                    </span>
                   </div>
-                  <div className="num mt-1 text-center text-[10.5px] font-extrabold leading-none text-[#2a7a48]">
-                    {d.getMonth() + 1}/{d.getDate()}
-                  </div>
-                  <div className="mt-0.5 truncate text-center text-[9.5px] leading-tight text-[#8a8070]">{title}</div>
+                  <div className="mt-1 truncate text-center text-[9.5px] leading-tight text-[#8a8070]">{title}</div>
                 </a>
               );
             })}
@@ -322,7 +303,7 @@ export default function CotozutePage() {
             {items.map((it) => (
               <div
                 key={feedKey(it)}
-                className={it.kind === "coto" ? "border-b border-[#f0e9dc] px-4" : "px-3"}
+                className={it.kind === "shop" ? "px-3" : "border-b border-[#f0e9dc] px-4"}
                 style={{ contentVisibility: "auto", containIntrinsicSize: "auto 120px" }}
               >
                 {it.kind === "coto" ? (

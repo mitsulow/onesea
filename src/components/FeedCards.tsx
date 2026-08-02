@@ -24,63 +24,65 @@ function relTime(iso: string): string {
 
 const PENTAGON = "polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)";
 
-/** ⛺ むらびとたより（セカイムラ発）— 緑の枠・五角形アイコン */
+/** セカイムラ発のたより — 素の行に馴染ませつつ、水色リングの丸アイコン+右上「セカイムラ」で見分ける */
 export function MuraFeedCard({ mura }: { mura: MuraPost }) {
   const router = useRouter();
   const v = mura.villages;
   return (
     <div
       onClick={() => v && router.push(`/sekai/village/${v.id}`)}
-      className="my-2 cursor-pointer rounded-xl border-2 px-3 py-2.5 active:opacity-90"
-      style={{ borderColor: "#4a9a5acc", background: "linear-gradient(150deg,#f2faf0,#fbfdf8)" }}
+      className="flex cursor-pointer gap-3 py-3 active:bg-[#f4faf8]"
     >
-      <div className="flex items-center gap-2">
-        {/* 五角形アイコン */}
+      {/* 丸アイコン（水色の太い線） */}
+      <div className="flex-shrink-0">
         {mura.profiles?.avatar_url ? (
           <img
             src={mura.profiles.avatar_url}
             alt=""
             referrerPolicy="no-referrer"
-            className="h-[36px] w-[36px] flex-shrink-0 object-cover"
-            style={{ clipPath: PENTAGON }}
+            className="h-[38px] w-[38px] rounded-full object-cover"
+            style={{ border: "3px solid #38b6e0" }}
           />
         ) : (
           <span
-            className="flex h-[36px] w-[36px] flex-shrink-0 items-center justify-center bg-[#a8cca8] text-[15px]"
-            style={{ clipPath: PENTAGON }}
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#d8eef8] text-[16px]"
+            style={{ border: "3px solid #38b6e0" }}
           >
             ⛺
           </span>
         )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[13.5px] font-extrabold text-[#2a5a38]">
-            {v ? `${v.name}${v.prefecture ? `（${v.prefecture}）` : ""}` : "セカイムラ"}
-          </div>
-          <div className="truncate text-[10.5px] text-[#6a9a78]">
-            {mura.profiles?.display_name ?? "むらびと"}
-          </div>
-        </div>
-        <div className="flex flex-shrink-0 flex-col items-end gap-0.5">
-          <span
-            className="rounded-full px-2 py-0.5 text-[9px] font-extrabold text-white"
-            style={{ background: "#4a9a5a" }}
-          >
-            ⛺ むらびとたより
-          </span>
-          <span className="text-[10px] text-[#8ab89a]">{relTime(mura.created_at)}</span>
-        </div>
       </div>
-      {mura.kind === "event" && mura.event_at && (
-        <div className="mt-1.5 inline-block rounded-full bg-[#4a9a5a]/15 px-2 py-0.5 text-[10.5px] font-bold text-[#2a7a48]">
-          📅 イベント {new Date(mura.event_at).getMonth() + 1}/{new Date(mura.event_at).getDate()}
+      <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 items-baseline gap-1">
+          <span className="min-w-0 truncate text-[15px] font-bold text-[#2a5a38]">
+            {v ? `${v.name}${v.prefecture ? `（${v.prefecture}）` : ""}` : "セカイムラ"}
+          </span>
+          <span className="flex-shrink-0 text-[12.5px] text-[#b8b0a0]">・{relTime(mura.created_at)}</span>
+          <span className="ml-auto flex-shrink-0 text-[11px] font-extrabold" style={{ color: "#38b6e0" }}>
+            セカイムラ
+          </span>
         </div>
-      )}
-      <p className="mt-1.5 line-clamp-4 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#3a4438]">
-        {mura.body}
-      </p>
-      {mura.photo_url && (
-        <img src={mura.photo_url} alt="" loading="lazy" className="mt-1.5 max-h-52 rounded-lg object-cover" />
-      )}
+        {mura.profiles?.display_name && (
+          <div className="truncate text-[11px] text-[#a8b8a8]">{mura.profiles.display_name}</div>
+        )}
+        {mura.kind === "event" && mura.event_at && (
+          <div className="mt-1 inline-block rounded-full bg-[#38b6e0]/12 px-2 py-0.5 text-[10.5px] font-bold text-[#2078a0]">
+            📅 イベント {new Date(mura.event_at).getMonth() + 1}/{new Date(mura.event_at).getDate()}
+          </div>
+        )}
+        <p className="mt-0.5 whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#3a3428]">
+          {mura.body}
+        </p>
+        {mura.photo_url && (
+          <img
+            src={mura.photo_url}
+            alt=""
+            loading="lazy"
+            className="mt-1.5 w-full rounded-xl object-cover"
+            style={{ maxHeight: 360 }}
+          />
+        )}
+      </div>
     </div>
   );
 }
