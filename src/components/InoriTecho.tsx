@@ -586,10 +586,10 @@ function BottomSheet({
             style={{ paddingTop: "calc(env(safe-area-inset-top) + 10px)", background: "linear-gradient(180deg,#faf7f2,#fff)" }}
           >
             <div>
-              <span className="text-xl font-extrabold text-[#2a2a2a]">
+              <span className="text-[27px] font-extrabold text-[#2a2a2a]">
                 {m}月{d}日
               </span>
-              <span className="ml-1.5 text-sm text-[#999]">（{dow}）</span>
+              <span className="ml-1.5 text-[18px] text-[#999]">（{dow}）</span>
             </div>
             <div className="text-[10px] text-[#b8a888]">{kyurekiLabel(dk)}</div>
             <button
@@ -606,26 +606,23 @@ function BottomSheet({
             {/* 節分かれつ刻（天文計算） */}
             <div
               className="mb-2 rounded-xl p-3"
-              style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fdf3e4", border: `2px solid ${ac}35` }}
+              style={{ background: "#0c1410", border: `2px solid ${ac}55` }}
             >
               <div className="relative flex items-center justify-center gap-1.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/cel-sun.png" alt="" className="h-[16px] w-[16px] object-contain" />
-                <span className="text-[10.5px] tracking-widest text-[#b07a30]">節分かれつ刻</span>
-                <span className="absolute right-0 text-[11px] text-[#ccc]">{best ? `${best.deg}°` : "—"}</span>
+                <span className="text-[10.5px] tracking-widest text-[#c8b88a]">節分かれつ刻</span>
+                <span className="num absolute right-0 text-[11px] text-[#8aa89a]">{best ? `${best.deg}°` : "—"}</span>
               </div>
-              <div className="text-center">
-                <span
-                  className="num inline-block rounded-xl px-4 py-0.5 text-[34px] font-extrabold leading-tight"
-                  style={{
-                    background: "#0c1410",
-                    color: "#3dff8c",
-                    textShadow: "0 0 8px rgba(61,255,140,.9), 0 0 22px rgba(61,255,140,.5)",
-                    letterSpacing: 2,
-                  }}
-                >
-                  {best ? best.time : "—"}
-                </span>
+              <div
+                className="num text-center text-[24px] font-extrabold leading-tight"
+                style={{
+                  color: "#3dff8c",
+                  textShadow: "0 0 8px rgba(61,255,140,.9), 0 0 20px rgba(61,255,140,.5)",
+                  letterSpacing: 2,
+                }}
+              >
+                {best ? best.time : "—"}
               </div>
               {best?.sekki && (
                 <div className="mt-1.5 border-t pt-1.5" style={{ borderColor: `${ac}20` }}>
@@ -633,15 +630,15 @@ function BottomSheet({
                     <span className="text-lg font-extrabold" style={{ color: ac }}>
                       {best.sekki[0]}
                     </span>
-                    <span className="text-xs text-[#999]">{best.sekki[1]}</span>
+                    <span className="text-xs text-[#8a9a8a]">{best.sekki[1]}</span>
                   </div>
-                  <div className="mt-1 text-xs leading-relaxed text-[#555]">{best.sekki[2]}</div>
+                  <div className="mt-1 text-xs leading-relaxed text-[#b8c4b8]">{best.sekki[2]}</div>
                 </div>
               )}
               {best?.kou && (
                 <div className="mt-1.5 border-t border-[#3a9a8a25] pt-1.5">
-                  <div className="text-[14.5px] font-bold text-[#2a7a6a]">{best.kou[0]}</div>
-                  <div className="mt-[1px] text-[11.5px] text-[#5aaa9a]">{best.kou[1]}</div>
+                  <div className="text-[14.5px] font-bold text-[#5ecab4]">{best.kou[0]}</div>
+                  <div className="mt-[1px] text-[11.5px] text-[#7ab8a8]">{best.kou[1]}</div>
                   <div className="mt-1 rounded-lg border-l-[3px] border-[#3a9a8a] bg-[#eef6f4] px-2 py-1.5 text-[11.5px] leading-normal text-[#555]">
                     {best.kou[2]}
                   </div>
