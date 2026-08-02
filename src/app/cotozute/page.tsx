@@ -63,7 +63,9 @@ export default function CotozutePage() {
   const [storyDraft, setStoryDraft] = useState<{ file: File; url: string } | null>(null);
   const [storyText, setStoryText] = useState("");
   const [storyColor, setStoryColor] = useState("#0affd0");
-  const [storyY, setStoryY] = useState(0.5); // 文字の縦位置 0..1
+  const [storyPos, setStoryPos] = useState({ x: 0.5, y: 0.5 }); // 文字位置（自由ドラッグ）
+  const storyBoxRef = useRef<HTMLDivElement>(null);
+  const storySwipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [hideBar, setHideBar] = useState(false);
@@ -267,7 +269,7 @@ export default function CotozutePage() {
   const postStory = (f: File | null) => {
     if (!me || !f || storyUploading) return;
     setStoryText("");
-    setStoryY(0.5);
+    setStoryPos({ x: 0.5, y: 0.5 });
     setStoryDraft({ file: f, url: URL.createObjectURL(f) });
   };
 
@@ -291,18 +293,19 @@ export default function CotozutePage() {
         ctx.font = `900 ${fs}px -apple-system, "Hiragino Sans", sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        const cy = canvas.height * storyY - ((lines.length - 1) * fs * 1.25) / 2;
+        const cx = canvas.width * storyPos.x;
+        const cy = canvas.height * storyPos.y - ((lines.length - 1) * fs * 1.25) / 2;
         lines.forEach((line, i) => {
           const y = cy + i * fs * 1.25;
           // 蛍光ネオン: 色グローを2重 → 白抜き本体
           ctx.shadowColor = storyColor;
           ctx.shadowBlur = fs * 0.55;
           ctx.fillStyle = storyColor;
-          ctx.fillText(line, canvas.width / 2, y);
-          ctx.fillText(line, canvas.width / 2, y);
+          ctx.fillText(line, cx, y);
+          ctx.fillText(line, cx, y);
           ctx.shadowBlur = fs * 0.18;
           ctx.fillStyle = "#ffffff";
-          ctx.fillText(line, canvas.width / 2, y);
+          ctx.fillText(line, cx, y);
         });
       }
       canvas.toBlob(
@@ -619,35 +622,55 @@ export default function CotozutePage() {
       {/* ストーリー作成エディタ（ネオン文字を写真に乗せる） */}
       {storyDraft && (
         <div className="fixed inset-0 z-[93] flex flex-col bg-black" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-          <div className="relative flex-1 overflow-hidden">
+          <div ref={storyBoxRef} className="relative flex-1 overflow-hidden">
             <img src={storyDraft.url} alt="" className="absolute inset-0 h-full w-full object-contain" />
             {storyText.trim() && (
               <div
-                className="pointer-events-none absolute left-0 right-0 whitespace-pre-wrap px-4 text-center font-extrabold"
+                className="absolute cursor-grab touch-none select-none whitespace-pre-wrap text-center font-extrabold"
                 style={{
-                  top: `${storyY * 100}%`,
-                  transform: "translateY(-50%)",
+                  left: `${storyPos.x * 100}%`,
+                  top: `${storyPos.y * 100}%`,
+                  transform: "translate(-50%, -50%)",
                   fontSize: 30,
                   color: "#fff",
                   textShadow: `0 0 6px ${storyColor}, 0 0 18px ${storyColor}, 0 0 34px ${storyColor}`,
                   lineHeight: 1.25,
+                  maxWidth: "92%",
+                }}
+                onTouchMove={(e) => {
+                  const r = storyBoxRef.current?.getBoundingClientRect();
+                  if (!r) return;
+                  const t = e.touches[0];
+                  setStoryPos({
+                    x: Math.min(0.95, Math.max(0.05, (t.clientX - r.left) / r.width)),
+                    y: Math.min(0.92, Math.max(0.08, (t.clientY - r.top) / r.height)),
+                  });
+                }}
+                onMouseDown={(e) => {
+                  const r = storyBoxRef.current?.getBoundingClientRect();
+                  if (!r) return;
+                  const onMove = (ev: MouseEvent) => {
+                    setStoryPos({
+                      x: Math.min(0.95, Math.max(0.05, (ev.clientX - r.left) / r.width)),
+                      y: Math.min(0.92, Math.max(0.08, (ev.clientY - r.top) / r.height)),
+                    });
+                  };
+                  const onUp = () => {
+                    window.removeEventListener("mousemove", onMove);
+                    window.removeEventListener("mouseup", onUp);
+                  };
+                  window.addEventListener("mousemove", onMove);
+                  window.addEventListener("mouseup", onUp);
+                  e.preventDefault();
                 }}
               >
                 {storyText}
               </div>
             )}
-            {/* 縦位置スライダー（右端） */}
             {storyText.trim() && (
-              <input
-                type="range"
-                min={0.12}
-                max={0.88}
-                step={0.01}
-                value={storyY}
-                onChange={(e) => setStoryY(Number(e.target.value))}
-                className="absolute right-[-56px] top-1/2 w-[150px] -rotate-90 accent-white"
-                aria-label="文字の位置"
-              />
+              <div className="pointer-events-none absolute bottom-2 left-0 right-0 text-center text-[10.5px] text-white/50">
+                文字は指でドラッグして好きな場所へ
+              </div>
             )}
           </div>
           <div className="px-4 pb-4 pt-2" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}>
@@ -698,7 +721,25 @@ export default function CotozutePage() {
       {storyView != null && stories[storyView] && (
         <div
           className="fixed inset-0 z-[92] flex items-center justify-center bg-black"
-          onClick={() => setStoryView(storyView + 1 < stories.length ? storyView + 1 : null)}
+          onClick={() => {
+            if (storySwipe.current?.moved) return;
+            setStoryView(storyView + 1 < stories.length ? storyView + 1 : null);
+          }}
+          onTouchStart={(e) => {
+            storySwipe.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, moved: false };
+          }}
+          onTouchMove={(e) => {
+            if (!storySwipe.current) return;
+            if (Math.abs(e.touches[0].clientX - storySwipe.current.x) > 12) storySwipe.current.moved = true;
+          }}
+          onTouchEnd={(e) => {
+            const sw = storySwipe.current;
+            if (!sw) return;
+            const dx = e.changedTouches[0].clientX - sw.x;
+            if (dx < -40) setStoryView(storyView + 1 < stories.length ? storyView + 1 : null); // 左スワイプ→次
+            else if (dx > 40) setStoryView(storyView > 0 ? storyView - 1 : storyView); // 右スワイプ→前
+            setTimeout(() => (storySwipe.current = null), 50);
+          }}
         >
           <img src={stories[storyView].image_url} alt="" className="max-h-full w-full object-contain" />
           <div className="absolute left-3 top-3 flex items-center gap-2" style={{ paddingTop: "env(safe-area-inset-top)" }}>
