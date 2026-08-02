@@ -19,7 +19,8 @@ type ProgramKind = "meditation" | "idea" | "synchro";
 /**
  * MasterMindSystem — シューマン音©（令和八年夏至点）プレイヤー。
  * - 通常再生: ▶ ボタン
- * - 瞑想モード(10/15分): 鈴3打(実測シューマン×64Hz) → シューマン音 → 静寂 → 鈴3打
+ * - 瞑想モード(10/15/30分・トータル制): 間→鈴3打(実測シューマン×64Hz)→間→シューマン音→間→鐘1打
+ *   →静寂(F1〜F4可聴ドローン+ヘミシンクL/R差7.83Hz+黄金比ゆらぎ)→鐘3打。全てAudioClock予約で画面オフ対応
  * - アイディアモード: 1回再生 → 「浮かんだ単語を列挙」ダイアログ → マイページのアイディア一覧へ
  * - シンクロモード: 1回再生 → 「ふと、全体に繋がろう」(今日のDDP)
  * 再生・プログラム中は地球儀に「MasterMindに接続しています」が灯る。
@@ -204,7 +205,7 @@ export function SchumannAudioPlayer() {
   /* ---- シンギング・リン（WebAudio合成・実測シューマン×64Hz）
      柔らかいナチュラル版: 音量控えめ / ふわっと立ち上がる / ローパスで角を丸める /
      わずかにずれた2本の基音で本物のリンのような「うなり」を出す ---- */
-  const ringBell = (ctx: AudioContext, freq: number, when: number, dur = 7) => {
+  const ringBell = (ctx: AudioContext, freq: number, when: number, dur = 12) => {
     const lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
     lp.frequency.value = Math.min(1400, freq * 3);
@@ -231,22 +232,75 @@ export function SchumannAudioPlayer() {
     }
   };
 
+  const ensureBellCtx = useCallback(async (): Promise<AudioContext> => {
+    const AC =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = bellCtx.current && bellCtx.current.state !== "closed" ? bellCtx.current : new AC();
+    bellCtx.current = ctx;
+    await ctx.resume();
+    return ctx;
+  }, []);
+
+  /** 開始の鈴3打: 前に1.5秒の「間」→ 10秒間隔（深呼吸テンポ）で長めに響かせる */
   const playBells = useCallback(async (): Promise<number> => {
     try {
-      const AC =
-        window.AudioContext ??
-        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = bellCtx.current && bellCtx.current.state !== "closed" ? bellCtx.current : new AC();
-      bellCtx.current = ctx;
-      await ctx.resume();
+      const ctx = await ensureBellCtx();
       const freq = (liveF1.current ?? SCHUMANN.hz) * 64;
-      const t0 = ctx.currentTime + 0.15;
-      for (let i = 0; i < 3; i++) ringBell(ctx, freq, t0 + i * 6);
-      return 18;
+      const t0 = ctx.currentTime + 1.5; // 「プツッ」と頭が切れないための間
+      for (let i = 0; i < 3; i++) ringBell(ctx, freq, t0 + i * 10);
+      return 34; // 1.5 + 10 + 10 + 12(余韻)
     } catch {
       return 0;
     }
-  }, []);
+  }, [ensureBellCtx]);
+
+  /** 静寂パートの「不思議な音」— 実測シューマンF1〜F4を可聴域(×16)に移した4音の極薄ドローン。
+      ヘミシンク: 右耳だけ実測F1(≈7.83Hz)ぶん高くして、脳内でシューマン周波数のうなりを作る。
+      黄金比φの累乗周期のLFOで音量をゆらし、ランダムに感じる自然な「ゆらぎ」を出す。 */
+  const startDrone = (ctx: AudioContext, when: number, durSec: number) => {
+    if (durSec < 12) return;
+    const PHI = 1.6180339887;
+    const f1 = liveF1.current ?? SCHUMANN.hz;
+    const modes = [f1, 14.3, 20.8, 27.3]; // シューマン第1〜第4モード
+    const amps = [0.5, 0.3, 0.19, 0.12];
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, when);
+    master.gain.exponentialRampToValueAtTime(0.05, when + 8); // うすーく立ち上がる
+    master.gain.setValueAtTime(0.05, Math.max(when + 8, when + durSec - 6));
+    master.gain.exponentialRampToValueAtTime(0.0001, when + durSec);
+    master.connect(ctx.destination);
+    modes.forEach((f, i) => {
+      ([-1, 1] as const).forEach((side) => {
+        const o = ctx.createOscillator();
+        o.type = "sine";
+        o.frequency.value = f * 16 + (side > 0 ? f1 : 0); // L/Rで出力Hzを変える
+        const g = ctx.createGain();
+        g.gain.value = amps[i];
+        // 黄金比ゆらぎ: φ^i 倍の非整数比周期どうしは決して同期しない=永遠に繰り返さない揺れ
+        const lfo = ctx.createOscillator();
+        lfo.type = "sine";
+        lfo.frequency.value = 0.055 * Math.pow(PHI, i) * (side > 0 ? 1 : 1 / PHI);
+        const lg = ctx.createGain();
+        lg.gain.value = amps[i] * 0.45;
+        lfo.connect(lg);
+        lg.connect(g.gain);
+        let out: AudioNode = g;
+        if (ctx.createStereoPanner) {
+          const pan = ctx.createStereoPanner();
+          pan.pan.value = side * 0.85;
+          g.connect(pan);
+          out = pan;
+        }
+        out.connect(master);
+        o.connect(g);
+        o.start(when);
+        o.stop(when + durSec + 0.5);
+        lfo.start(when);
+        lfo.stop(when + durSec + 0.5);
+      });
+    });
+  };
 
   /* ---- プログラム進行 ---- */
   const after = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
@@ -306,8 +360,9 @@ export function SchumannAudioPlayer() {
 
       setPhase("開始の鈴 — ゆっくり深呼吸");
       const bells = await playBells();
-      startCountdown(bells);
-      after(bells * 1000, () => {
+      startCountdown(bells + 2);
+      after((bells + 2) * 1000, () => {
+        // 鈴の余韻から2秒の「間」を置いてから再生
         stopCountdown();
         setPhase("シューマン音");
         a.currentTime = 0;
@@ -339,16 +394,29 @@ export function SchumannAudioPlayer() {
     if (!p) return;
     if (p.kind === "meditation") {
       const track = dur || SCHUMANN_FALLBACK_SEC;
-      const total = (p.course ?? 10) * 60;
-      const silence = Math.max(30, Math.round(total - track - 36)); // 鈴2回ぶんを引いた静寂
-      setPhase("静寂の瞑想");
-      startCountdown(silence);
-      after(silence * 1000, async () => {
+      const total = (p.course ?? 10) * 60; // 「トータルで」選んだ分数
+      const OPEN = 36; // 開始の鈴34 + 間2
+      const CLOSE = 34; // 終わりの鐘3打
+      const sep = 2; // シューマン音後の「間」
+      const silence = Math.max(40, Math.round(total - OPEN - track - sep - CLOSE));
+      setPhase("静寂の瞑想 — 不思議な音に身をゆだねる");
+      try {
+        // 画面が消えるとJSタイマーは止まるため、鐘もドローンも
+        // AudioContextの時計に「いま全部」予約しておく（音は止まらない）
+        const ctx = await ensureBellCtx();
+        const freq = (liveF1.current ?? SCHUMANN.hz) * 64;
+        const t = ctx.currentTime + sep;
+        ringBell(ctx, freq, t); // 区切りの鐘1打
+        startDrone(ctx, t + 10, silence - 10); // うすい不思議な音
+        for (let i = 0; i < 3; i++) ringBell(ctx, freq, t + silence + i * 10); // 終わりの鐘3打
+      } catch {}
+      startCountdown(sep + silence);
+      after((sep + silence) * 1000, () => {
         stopCountdown();
         setPhase("終わりの鈴");
-        const bells = await playBells();
-        after(bells * 1000, endProgram);
+        startCountdown(CLOSE);
       });
+      after((sep + silence + CLOSE) * 1000, endProgram);
     } else if (p.kind === "idea") {
       endProgram();
       setIdeaBody("");
@@ -528,7 +596,7 @@ export function SchumannAudioPlayer() {
               <img src="/icons/mode-meditation.webp" alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
               <div className="min-w-0">
                 <div className="text-[12px] font-extrabold text-white">瞑想モード</div>
-                <div className="text-[9.5px] leading-snug text-white/80">鈴3打 → シューマン音 → 静寂 → 鈴3打</div>
+                <div className="text-[9.5px] leading-snug text-white/80">鈴3打 → シューマン音 → 不思議な音の静寂 → 鈴3打</div>
               </div>
             </div>
             <div className="flex flex-shrink-0 gap-1.5">
@@ -543,6 +611,12 @@ export function SchumannAudioPlayer() {
                 className="rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
               >
                 15分
+              </button>
+              <button
+                onClick={() => beginProgram("meditation", 30)}
+                className="rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
+              >
+                30分
               </button>
             </div>
           </div>
