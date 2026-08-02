@@ -29,6 +29,7 @@ export function PostCard({
   liked,
   onDeleted,
   hd = false,
+  flush = false,
 }: {
   post: CotozutePost;
   me: User | null;
@@ -36,6 +37,8 @@ export function PostCard({
   onDeleted?: () => void;
   /** 詳細ページなど、大きく見せる場面では本体画質で表示（サムネ拡大のボケ防止） */
   hd?: boolean;
+  /** X風の全幅区切り線モード（外側のラッパーが線を持つので自前の線を消す） */
+  flush?: boolean;
 }) {
   const router = useRouter();
   const pr = post.profiles;
@@ -96,7 +99,7 @@ export function PostCard({
 
   return (
     <div
-      className="flex cursor-pointer gap-3 border-b border-[#f2ece0] py-3 active:bg-[#faf6ec]"
+      className={`flex cursor-pointer gap-3 py-3 active:bg-[#faf6ec] ${flush ? "" : "border-b border-[#f2ece0]"}`}
       onClick={(e) => {
         // ボタン・リンク・画像以外の空白タップは詳細へ（X同様、行全体が入口）
         if ((e.target as HTMLElement).closest("button,a,img,textarea,input")) return;

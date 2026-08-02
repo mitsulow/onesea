@@ -46,25 +46,29 @@ const POST_SELECT =
   "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url, member_no), likes(count), comments(count)";
 
 /** ページ単位で取得（メモリ保護のため一度に全件は読まない） */
-export async function fetchPostsPage(offset: number, limit = 20): Promise<CotozutePost[]> {
+export async function fetchPostsPage(offset: number, limit = 20, photosOnly = false): Promise<CotozutePost[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  let q = supabase
     .from("posts")
     .select(POST_SELECT)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
+  if (photosOnly) q = q.not("image_urls", "is", null);
+  const { data } = await q;
   return (data as unknown as CotozutePost[]) ?? [];
 }
 
 /** カーソル式の続き読み（新着が割り込んでもズレない・無限スクロール用） */
-export async function fetchPostsBefore(cursor: string, limit = 20): Promise<CotozutePost[]> {
+export async function fetchPostsBefore(cursor: string, limit = 20, photosOnly = false): Promise<CotozutePost[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  let q = supabase
     .from("posts")
     .select(POST_SELECT)
     .lt("created_at", cursor)
     .order("created_at", { ascending: false })
     .limit(limit);
+  if (photosOnly) q = q.not("image_urls", "is", null);
+  const { data } = await q;
   return (data as unknown as CotozutePost[]) ?? [];
 }
 

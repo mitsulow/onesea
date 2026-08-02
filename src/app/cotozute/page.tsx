@@ -33,8 +33,9 @@ export default function CotozutePage() {
   const [composing, setComposing] = useState(false);
   const [pull, setPull] = useState(0); // 引っ張って更新の距離
   const [refreshing, setRefreshing] = useState(false);
-  const [hideBar, setHideBar] = useState(false); // 下スクロールでヘッダーを隠す（X風）
-  const lastY = useRef(0);
+  const [mode, setMode] = useState<"all" | "photo">("all"); // X風タブ（みんな/画像）
+  const modeRef = useRef<"all" | "photo">("all");
+  modeRef.current = mode;
   const loadingRef = useRef(false);
   const postsRef = useRef<CotozutePost[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -59,6 +60,20 @@ export default function CotozutePage() {
     if (new URLSearchParams(window.location.search).get("compose")) setComposing(true);
   }, []);
 
+  /* タブ切り替え（みんな/画像）でフィードを引き直す */
+  const switchMode = (m: "all" | "photo") => {
+    if (m === mode) return;
+    setMode(m);
+    setPosts(null);
+    setFresh([]);
+    fetchPostsPage(0, PAGE, m === "photo").then((list) => {
+      setPosts(list);
+      postsRef.current = list;
+      setHasMore(list.length === PAGE);
+      window.scrollTo({ top: 0 });
+    });
+  };
+
   /* 無限スクロール（番兵が見えたら次ページ・上限なし） */
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMore) return;
@@ -66,7 +81,7 @@ export default function CotozutePage() {
     if (cur.length === 0) return;
     loadingRef.current = true;
     // カーソル式: 新着が割り込んでも続きがズレない
-    const more = await fetchPostsBefore(cur[cur.length - 1].created_at, PAGE);
+    const more = await fetchPostsBefore(cur[cur.length - 1].created_at, PAGE, modeRef.current === "photo");
     const seen = new Set(cur.map((p) => p.id));
     let merged = [...cur, ...more.filter((p) => !seen.has(p.id))];
 
@@ -108,7 +123,7 @@ export default function CotozutePage() {
     const check = async () => {
       const newest = postsRef.current[0]?.created_at;
       if (!newest) return;
-      const latest = await fetchPostsPage(0, PAGE);
+      const latest = await fetchPostsPage(0, PAGE, modeRef.current === "photo");
       const ids = new Set(postsRef.current.map((p) => p.id));
       setFresh(latest.filter((p) => p.created_at > newest && !ids.has(p.id)));
     };
@@ -134,7 +149,7 @@ export default function CotozutePage() {
   };
 
   const reload = async () => {
-    const list = await fetchPostsPage(0, PAGE);
+    const list = await fetchPostsPage(0, PAGE, modeRef.current === "photo");
     postsRef.current = list;
     setPosts(list);
     setFresh([]);
@@ -142,19 +157,6 @@ export default function CotozutePage() {
     setComposing(false);
     window.scrollTo({ top: 0 });
   };
-
-  /* ヘッダーの隠し・出し（下へ読み進むと消え、少しでも上に戻すと現れる） */
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (y < 60) setHideBar(false);
-      else if (y > lastY.current + 6) setHideBar(true);
-      else if (y < lastY.current - 6) setHideBar(false);
-      lastY.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   /* 引っ張って更新（X風。ページ最上部で下に引くとスピナー→更新） */
   useEffect(() => {
@@ -173,7 +175,7 @@ export default function CotozutePage() {
       if (pull > 48 && !refreshing) {
         setRefreshing(true);
         setPull(48);
-        const list = await fetchPostsPage(0, PAGE);
+        const list = await fetchPostsPage(0, PAGE, modeRef.current === "photo");
         postsRef.current = list;
         setPosts(list);
         setFresh([]);
@@ -194,24 +196,53 @@ export default function CotozutePage() {
 
   return (
     <main className="min-h-screen bg-[#fffdf8] pb-20">
-      {/* 上部バー（X風: 左アバター・中央ロゴ） */}
-      <header
-        className="sticky top-0 z-40 border-b border-[#f0e9dc] bg-[#fffdf8]/92 backdrop-blur-sm transition-transform duration-200"
-        style={{ transform: hideBar ? "translateY(-110%)" : "none" }}
-      >
-        <div className="relative flex h-12 items-center justify-center px-4">
+      {/* 上部バー（固定・X風・テキストブランド） */}
+      <header className="sticky top-0 z-40 border-b border-[#f0e9dc] bg-[#fffdf8]/95 backdrop-blur-sm">
+        <div className="relative flex h-12 flex-col items-center justify-center px-4">
           <span className="absolute right-3 top-1/2 -translate-y-1/2">
             <AvatarMenu ring="#c8beac" />
           </span>
-          <img src="/cotozute-logo.webp" alt="Cotozute" className="h-8 w-auto rounded-lg" />
+          <div className="text-[8.5px] font-bold tracking-[3px] text-[#b8b0a0]">幸せを切り取ろう</div>
+          <div
+            className="text-[17px] font-extrabold leading-tight tracking-[1px]"
+            style={{
+              background: "linear-gradient(120deg,#14b8a0,#0a8a84)",
+              WebkitBackgroundClip: "text",
+              backgroundClip: "text",
+              color: "transparent",
+            }}
+          >
+            CotoTsute
+          </div>
+        </div>
+        {/* X風タブ（赤い下線） */}
+        <div className="grid grid-cols-2">
+          {(
+            [
+              ["all", "みんな"],
+              ["photo", "画像"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => switchMode(id)}
+              className="relative py-2.5 text-[13.5px]"
+              style={{ color: mode === id ? "#3a3428" : "#a09888", fontWeight: mode === id ? 800 : 500 }}
+            >
+              {label}
+              {mode === id && (
+                <span className="absolute bottom-0 left-1/2 h-[3.5px] w-12 -translate-x-1/2 rounded-t-full bg-[#c94d3a]" />
+              )}
+            </button>
+          ))}
         </div>
       </header>
 
       {/* 追いつきピル（Xの「新しいポストを表示」— スクロール中でも常に画面上部に浮かぶ） */}
       {fresh.length > 0 && (
         <div
-          className="pointer-events-none fixed left-1/2 z-50 -translate-x-1/2 transition-all duration-200"
-          style={{ top: hideBar ? "calc(env(safe-area-inset-top) + 10px)" : "calc(env(safe-area-inset-top) + 58px)" }}
+          className="pointer-events-none fixed left-1/2 z-50 -translate-x-1/2"
+          style={{ top: "calc(env(safe-area-inset-top) + 104px)" }}
         >
           <button
             onClick={catchUp}
@@ -236,21 +267,34 @@ export default function CotozutePage() {
         </div>
       )}
 
-      {/* フィード本体 */}
-      <div className="px-4" ref={feedRef}>
+      {/* フィード本体（区切り線は画面端まで=X流） */}
+      <div ref={feedRef}>
         {posts === null ? (
-          <div className="flex justify-center py-12">
-            <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#c94d3a] border-t-transparent" />
+          <div>
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-3 border-b border-[#f2ece0] px-4 py-3">
+                <div className="h-[38px] w-[38px] animate-pulse rounded-full bg-[#efe8d8]" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="h-3 w-1/3 animate-pulse rounded bg-[#efe8d8]" />
+                  <div className="h-3 w-5/6 animate-pulse rounded bg-[#f4efe2]" />
+                  <div className="h-3 w-2/3 animate-pulse rounded bg-[#f4efe2]" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : posts.length === 0 ? (
           <p className="py-12 text-center text-[13px] text-[#b8b0a0]">
-            まだ言の葉がありません。最初のひとことをどうぞ 🌿
+            {mode === "photo" ? "画像つきの言の葉はまだありません 📷" : "まだ言の葉がありません。最初のひとことをどうぞ 🌿"}
           </p>
         ) : (
           <>
             {posts.map((p) => (
-              <div key={p.id} style={{ contentVisibility: "auto", containIntrinsicSize: "auto 120px" }}>
-                <PostCard post={p} me={me} liked={likedSet.has(p.id)} onDeleted={reload} />
+              <div
+                key={p.id}
+                className="border-b border-[#f0e9dc] px-4"
+                style={{ contentVisibility: "auto", containIntrinsicSize: "auto 120px" }}
+              >
+                <PostCard post={p} me={me} liked={likedSet.has(p.id)} onDeleted={reload} flush />
               </div>
             ))}
             <div ref={sentinelRef} />
