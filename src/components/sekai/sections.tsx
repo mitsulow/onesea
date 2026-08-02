@@ -762,25 +762,26 @@ export function ActivitySection({ me }: { me: User | null }) {
         <div className="space-y-2.5">
           {feed.map((p) => (
             <div key={p.id} className="overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
-              {p.photo_url && (
-                <Link href={`/sekai/village/${p.villages?.id}`} className="block">
-                  <img src={p.photo_url} alt="" className="max-h-52 w-full object-cover" />
-                </Link>
-              )}
               <div className="p-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <Link
-                    href={`/sekai/village/${p.villages?.id}`}
-                    className="min-w-0 truncate text-[13.5px] font-extrabold no-underline"
-                    style={{ color: GREEN }}
-                  >
-                    ⛺ 拠点『{p.villages?.name ?? "セカイムラ"}
-                    {p.villages?.prefecture ? `（${p.villages.prefecture}）` : ""}』
-                  </Link>
-                  <span className="num flex-shrink-0 text-[10px] text-[#c0c8c0]">
-                    {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
-                  </span>
-                </div>
+                {/* ヘッダー: 誰（どの拠点）が投稿したか → 本文 → 写真 の順 */}
+                <Link
+                  href={`/sekai/village/${p.villages?.id}`}
+                  className="flex items-center gap-2.5 no-underline"
+                >
+                  <AvatarSm p={p.profiles} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <div className="min-w-0 truncate text-[14.5px] font-extrabold" style={{ color: GREEN }}>
+                      {p.villages?.name ?? "セカイムラ"}
+                      <span className="ml-1 text-[11.5px] font-bold text-[#9ab3a0]">
+                        {p.villages?.prefecture ? `@${p.villages.prefecture}` : ""}
+                      </span>
+                    </div>
+                    <div className="num text-[10.5px] text-[#b0bcb0]">
+                      {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
+                      {p.profiles?.display_name ? ` ・ ${p.profiles.display_name}` : ""}
+                    </div>
+                  </div>
+                </Link>
                 {/* イベント: 日時 + 参加する（押すと自分の手帳に入る） */}
                 {p.kind === "event" && p.event_at && (
                   <div
@@ -814,9 +815,12 @@ export function ActivitySection({ me }: { me: User | null }) {
                       ))}
                   </div>
                 )}
-                <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#3a4438]">
+                <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#3a4438]">
                   {linkify(String(p.body ?? ""))}
                 </p>
+                {p.photo_url && (
+                  <img src={p.photo_url} alt="" loading="lazy" className="mt-2 max-h-64 rounded-lg object-cover" />
+                )}
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
                 {(() => {
                   const list = cmts[p.id] ?? [];
