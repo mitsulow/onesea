@@ -175,8 +175,8 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
         </span>
       </header>
       <PriceBanner service="セカイムラ" price="月額3,000円" color="#7ad8a8" />
-      {/* セクションは縦も隙間なしで繋げる */}
-      <div>{children}</div>
+      {/* セクション同士は地色の隙間で区切る（どこからどこまでが1つか分かるように） */}
+      <div className="space-y-2.5" style={{ background: "#e8e4d8" }}>{children}</div>
     </main>
   );
 }
@@ -714,7 +714,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           >
             <div className="flex items-center gap-2.5">
               <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec] text-[16px]">✍️</span>
-              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">今日、村で何があった？（タップして書く）</span>
+              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">今日、村で何があった？</span>
               <span
                 className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
                 style={{ background: GREEN }}

@@ -18,8 +18,8 @@ export default function SekaiHomePage() {
   const { me, myPref, mootCount, refreshMootCount } = useSekaiMe();
   return (
     <SekaiShell>
-      <ActivitySection me={me} />
       <MootsSection me={me} myPref={myPref} mootCount={mootCount} onRsvped={refreshMootCount} />
+      <ActivitySection me={me} />
       <WelcomeSection me={me} myPref={myPref} router={router} />
       <CafeBar pref={myPref} />
     </SekaiShell>
