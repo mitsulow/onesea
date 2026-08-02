@@ -84,10 +84,14 @@ export function HomeDashboard() {
   const [plans, setPlans] = useState<Array<{ time: string; text: string; color?: string }>>([]);
   useEffect(() => {
     fetchTideDay(tk).then(setTide);
-    fetch("https://mitsulow.github.io/0Lei/schumann_data.json")
-      .then((r) => r.json())
-      .then((d) => setSchumann(d?.modes?.F1?.hz ?? null))
-      .catch(() => {});
+    // キャッシュを避けて常に最新の実測値を取る（10分ごとに更新）
+    const loadSchumann = () =>
+      fetch(`https://mitsulow.github.io/0Lei/schumann_data.json?t=${Date.now()}`, { cache: "no-store" })
+        .then((r) => r.json())
+        .then((d) => setSchumann(d?.modes?.F1?.hz ?? null))
+        .catch(() => {});
+    loadSchumann();
+    const schT = setInterval(loadSchumann, 10 * 60000);
     try {
       const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
       const day = memos[tk];
@@ -112,6 +116,7 @@ export function HomeDashboard() {
         setAdvDays(Math.floor((Date.now() - new Date(prof.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1);
       }
     });
+    return () => clearInterval(schT);
   }, [tk]);
 
   const openToday = () => window.dispatchEvent(new Event("onesea:openToday"));
