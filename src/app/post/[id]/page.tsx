@@ -88,7 +88,7 @@ export default function PostDetailPage() {
 
       <div className="px-4 pt-4">
         <div className="card">
-          <PostCard post={post} me={me} liked={likedSet.has(post.id)} />
+          <PostCard post={post} me={me} liked={likedSet.has(post.id)} hd />
 
           {/* コメント */}
           <div className="mt-3">

@@ -66,10 +66,11 @@ export async function uploadImagePair(
   userId: string,
   file: File
 ): Promise<ImagePair | null> {
-  // パケ死対策: 本体は960px/品質0.6（拡大表示用）、フィードに流れるサムネは320px/0.55
+  // パケ死対策と鮮明さの両立: 本体960px/0.6、サムネは640px/0.68
+  // （320pxはスマホの実解像度で引き伸ばされて不鮮明→むしろ本体タップを誘発していた）
   const [fullBlob, thumbBlob] = await Promise.all([
     compressImage(file, 960, 0.6).catch(() => null),
-    compressImage(file, 320, 0.55).catch(() => null),
+    compressImage(file, 640, 0.68).catch(() => null),
   ]);
   if (!fullBlob || !thumbBlob) return null;
   const base = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

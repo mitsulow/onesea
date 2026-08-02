@@ -28,11 +28,14 @@ export function PostCard({
   me,
   liked,
   onDeleted,
+  hd = false,
 }: {
   post: CotozutePost;
   me: User | null;
   liked: boolean;
   onDeleted?: () => void;
+  /** 詳細ページなど、大きく見せる場面では本体画質で表示（サムネ拡大のボケ防止） */
+  hd?: boolean;
 }) {
   const router = useRouter();
   const pr = post.profiles;
@@ -144,7 +147,7 @@ export function PostCard({
               <a key={i} href={full} target="_blank" rel="noopener noreferrer">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={post.thumb_urls?.[i] ?? full}
+                  src={hd ? full : post.thumb_urls?.[i] ?? full}
                   alt=""
                   loading="lazy"
                   className="w-full rounded-xl object-cover"
