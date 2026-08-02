@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,7 @@ import { PostCard } from "@/components/PostCard";
 /** 言の葉の詳細 — 文を寄せる（コメント） */
 export default function PostDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const postId = params.id;
   const [post, setPost] = useState<CotozutePost | null | undefined>(undefined);
   const [comments, setComments] = useState<CotozuteComment[]>([]);
@@ -78,9 +79,9 @@ export default function PostDetailPage() {
         className="flex items-center justify-between px-5 pb-3.5 pt-4"
         style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
       >
-        <Link href="/" className="text-[13px] font-bold text-[#d4b96a] no-underline">
+        <button onClick={() => router.back()} className="text-[13px] font-bold text-[#d4b96a]">
           ◀ もどる
-        </Link>
+        </button>
         <span className="text-[11px] tracking-widest text-[#7a9ab4]">言の葉</span>
         <span className="w-12" />
       </header>
