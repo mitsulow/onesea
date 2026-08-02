@@ -633,12 +633,12 @@ function BottomSheet({
             </div>
 
             {/* 潮汐＋月 */}
-            <div className="mb-2 grid gap-2" style={{ gridTemplateColumns: "1.15fr 1fr" }}>
+            <div className="mb-2 grid grid-cols-2 gap-2">
               <div className="rounded-xl border border-[#d8e4f0] bg-[#f4f8fc] p-2.5">
                 <div className="mb-1 flex items-center gap-1 text-[9.5px] text-[#5080b0]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/icons/cel-earth.png" alt="" className="h-[13px] w-[13px] object-contain" />
-                  地球 — 潮の満ち引き
+                  地球
                 </div>
                 <button
                   onClick={async () => {
@@ -668,7 +668,7 @@ function BottomSheet({
               </div>
               <div className="rounded-xl border border-[#26262e] p-2.5 text-center" style={{ background: "#000005" }}>
                 <div className="flex items-center justify-end gap-1 text-[9.5px] tracking-wider text-[#c8c0d8]">
-                  月 — 満ち欠け
+                  月
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/icons/cel-moon.png" alt="" className="h-[13px] w-[13px] object-contain" />
                 </div>
