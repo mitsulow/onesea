@@ -55,6 +55,8 @@ export default function CotozutePage() {
       postsRef.current = list;
       setHasMore(list.length === PAGE);
     });
+    // 下タブ「とうこう」(?compose=1) から来たら投稿画面を開く
+    if (new URLSearchParams(window.location.search).get("compose")) setComposing(true);
   }, []);
 
   /* 無限スクロール（番兵が見えたら次ページ・上限なし） */

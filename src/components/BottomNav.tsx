@@ -1,19 +1,169 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+/* eslint-disable @next/next/no-img-element */
+
 /**
- * 下部タブ = 「いま居るサービスの専用タブ」方式。
- * サービス間の行き来は右上アバターの AvatarMenu が担う。
- * いまはセカイムラ専用タブのみ（MMM等は専用ページが増えたら追加）。
+ * 下部タブ = 「いま居るサービス専用」のタブ。
+ * 一番左のホームボタンは「そのサービスのホームへ飛ぶ + 全サービスの折りたたみメニュー」。
+ * サービス間の行き来はこのメニュー（と右上アバター）が担う。
  */
+
+interface Tab {
+  href: string;
+  icon: string; // 絵文字 or 画像パス（/で始まると画像）
+  label: string;
+  ext?: boolean; // 静的HTML・クエリ付き等、フルロードで開く
+}
+
+interface Service {
+  match: (p: string) => boolean;
+  home: string;
+  homeExt?: boolean;
+  bg: string;
+  border: string;
+  active: string;
+  inactive: string;
+  tabs: Tab[];
+}
+
+const SERVICES: Service[] = [
+  {
+    match: (p) => p.startsWith("/sekai"),
+    home: "/sekai",
+    bg: "linear-gradient(160deg,#0e2014f2,#1e4530f2)",
+    border: "#2a4a35",
+    active: "#eae6b8",
+    inactive: "#8ab89a",
+    tabs: [
+      { href: "/sekai/villages", icon: "⛺", label: "拠点" },
+      { href: "/sekai/clubs", icon: "🎌", label: "部活" },
+      { href: "/sekai/kome", icon: "🌾", label: "米部" },
+      { href: "/sekai/meister", icon: "🫙", label: "講座" },
+      { href: "/sekai/tasukete", icon: "🤝", label: "助けて" },
+      { href: "/sekai/map", icon: "🗾", label: "地図" },
+    ],
+  },
+  {
+    match: (p) => p.startsWith("/mmm"),
+    home: "/mmm",
+    bg: "linear-gradient(160deg,#0a1410f5,#12251af5)",
+    border: "#1e4530",
+    active: "#7de0a0",
+    inactive: "#4a7a5a",
+    tabs: [
+      { href: "/mmm/neura", icon: "🧠", label: "ニューラFIVE" },
+      { href: "/schumann1/index.html", icon: "⚡", label: "シューマン共振", ext: true },
+      { href: "/mmm/ddp", icon: "🌊", label: "DDP設定" },
+    ],
+  },
+  {
+    match: (p) => p.startsWith("/cotozute") || p.startsWith("/post"),
+    home: "/cotozute",
+    bg: "rgba(255,253,248,.96)",
+    border: "#e5dccb",
+    active: "#c94d3a",
+    inactive: "#a09888",
+    tabs: [
+      { href: "/cotozute/search", icon: "🔍", label: "さがす" },
+      { href: "/cotozute?compose=1", icon: "✏️", label: "とうこう", ext: true },
+      { href: "/icons/tab-cotozute.png|/my", icon: "/icons/tab-cotozute.png", label: "マイページ" },
+    ],
+  },
+  {
+    match: (p) => p.startsWith("/tsukiyoga"),
+    home: "/tsukiyoga",
+    bg: "linear-gradient(160deg,#0a0c18f5,#12142af5)",
+    border: "#2a2a45",
+    active: "#f0e0a8",
+    inactive: "#7a6a90",
+    tabs: [
+      { href: "/tsukiyoga-v7/index.html", icon: "🌕", label: "ツキヨガv7", ext: true },
+      { href: "/my", icon: "🪪", label: "マイページ" },
+    ],
+  },
+  {
+    match: (p) => p.startsWith("/line"),
+    home: "/line",
+    bg: "linear-gradient(160deg,#0e1e2ef5,#17384ef5)",
+    border: "#274a63",
+    active: "#f0e6c8",
+    inactive: "#7a9ab4",
+    tabs: [{ href: "/line/broadcast", icon: "📢", label: "お知らせ" }],
+  },
+  {
+    match: (p) => p.startsWith("/za"),
+    home: "/za",
+    bg: "rgba(255,253,248,.96)",
+    border: "#e5dccb",
+    active: "#c94d3a",
+    inactive: "#a09888",
+    tabs: [
+      { href: "/za/new", icon: "🏮", label: "出品する" },
+      { href: "/my", icon: "🪪", label: "マイページ" },
+    ],
+  },
+  {
+    match: (p) => p.startsWith("/u/") || p === "/my" || p.startsWith("/settings"),
+    home: "/my",
+    bg: "rgba(255,253,248,.96)",
+    border: "#e5dccb",
+    active: "#c94d3a",
+    inactive: "#a09888",
+    tabs: [
+      { href: "#ddp-sec", icon: "🌊", label: "DDP", ext: true },
+      { href: "#ideas-sec", icon: "💡", label: "アイディア", ext: true },
+      { href: "#recos-sec", icon: "⭐", label: "おススメ", ext: true },
+      { href: "/settings/profile", icon: "⚙️", label: "編集" },
+    ],
+  },
+  {
+    match: (p) => p === "/",
+    home: "/",
+    bg: "rgba(255,253,248,.96)",
+    border: "#e5dccb",
+    active: "#c94d3a",
+    inactive: "#a09888",
+    tabs: [
+      { href: "/#techo", icon: "📖", label: "手帳", ext: true },
+      { href: "/my", icon: "🪪", label: "マイページ" },
+    ],
+  },
+];
+
+/** ホームボタンの折りたたみメニュー（全サービス一覧） */
+const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean }> = [
+  { href: "/", icon: "🏠", label: "OneSea" },
+  { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
+  { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
+  { href: "/tsukiyoga", icon: "/icons/cel-moon.png", label: "ツキヨガ" },
+  { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
+  { href: "/line", icon: "💬", label: "TALK" },
+  { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
+  { href: "/#techo", icon: "📖", label: "手帳", ext: true },
+  { href: "/my", icon: "🪪", label: "マイページ" },
+];
+
+function TabIcon({ icon, active }: { icon: string; active: boolean }) {
+  const cls = `transition-transform duration-150 ${active ? "-translate-y-0.5 scale-[1.3]" : ""}`;
+  if (icon.startsWith("/")) {
+    return <img src={icon} alt="" className={`object-contain ${cls}`} style={{ width: 21, height: 19 }} />;
+  }
+  return <span className={`text-lg leading-none ${cls}`}>{icon}</span>;
+}
+
 export function BottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [kbOpen, setKbOpen] = useState(false);
+  const [menu, setMenu] = useState(false);
 
-  // iOS: キーボードが開くと fixed バーが画面の途中に浮くため、文字入力中はタブを隠す
+  useEffect(() => setMenu(false), [pathname]);
+
+  // iOS: キーボードが開くと fixed バーが浮くため、文字入力中は隠す
   useEffect(() => {
     const isField = (el: EventTarget | null) =>
       el instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName);
@@ -34,54 +184,109 @@ export function BottomNav() {
     };
   }, []);
 
-  const SEKAI_PAGES = [
-    ["/sekai", "🏠", "ホーム"],
-    ["/sekai/villages", "⛺", "拠点"],
-    ["/sekai/clubs", "🎌", "部活"],
-    ["/sekai/kome", "🌾", "米部"],
-    ["/sekai/meister", "🫙", "講座"],
-    ["/sekai/tasukete", "🤝", "助けて"],
-    ["/sekai/map", "🗾", "地図"],
-  ] as const;
+  const svc = SERVICES.find((s) => s.match(pathname));
+  if (kbOpen || !svc) return null;
 
-  if (kbOpen) return null;
-  if (!pathname.startsWith("/sekai")) return null;
+  const isActive = (href: string) =>
+    href !== svc.home && !href.startsWith("#") && pathname.startsWith(href.split("?")[0].split("|").pop() ?? href);
+  const atHome = pathname === svc.home;
 
-  const sekaiActive = (href: string) => (href === "/sekai" ? pathname === "/sekai" : pathname.startsWith(href));
+  const onHome = () => {
+    if (!atHome) router.push(svc.home);
+    setMenu((v) => !v);
+  };
 
   return (
-    <nav
-      className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t border-[#2a4a35]"
-      style={{
-        background: "linear-gradient(160deg,#0e2014f2,#1e4530f2)",
-        backdropFilter: "blur(6px)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
-    >
-      <div className="flex h-[54px] items-center justify-around">
-        {SEKAI_PAGES.map(([href, emoji, label]) => {
-          const active = sekaiActive(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              className="relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline"
-            >
-              <span
-                className={`text-lg leading-none transition-transform duration-150 ${active ? "-translate-y-0.5 scale-[1.3]" : ""}`}
-              >
-                {emoji}
-              </span>
-              <span
-                className={`text-[9px] leading-none ${active ? "font-bold" : "font-medium"}`}
-                style={{ color: active ? "#eae6b8" : "#8ab89a" }}
-              >
-                {label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      {/* ホームボタンの折りたたみメニュー */}
+      {menu && <div className="fixed inset-0 z-40 bg-black/35" onClick={() => setMenu(false)} />}
+      {menu && (
+        <div
+          className="fixed left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 px-3"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 62px)" }}
+        >
+          <div
+            className="grid grid-cols-3 gap-2 rounded-2xl p-3"
+            style={{ background: svc.bg, border: `1px solid ${svc.border}`, boxShadow: "0 -6px 40px rgba(0,0,0,.45)" }}
+          >
+            {MENU.map((m) =>
+              m.ext ? (
+                <a
+                  key={m.href}
+                  href={m.href}
+                  className="flex flex-col items-center gap-1 rounded-xl bg-white/8 py-3 no-underline"
+                  style={{ background: "rgba(255,255,255,.07)" }}
+                >
+                  {m.icon.startsWith("/") ? (
+                    <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
+                  ) : (
+                    <span className="text-[24px] leading-none">{m.icon}</span>
+                  )}
+                  <span className="text-[10.5px] font-extrabold" style={{ color: svc.active }}>
+                    {m.label}
+                  </span>
+                </a>
+              ) : (
+                <Link
+                  key={m.href}
+                  href={m.href}
+                  onClick={() => setMenu(false)}
+                  className="flex flex-col items-center gap-1 rounded-xl py-3 no-underline"
+                  style={{ background: "rgba(255,255,255,.07)" }}
+                >
+                  {m.icon.startsWith("/") ? (
+                    <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
+                  ) : (
+                    <span className="text-[24px] leading-none">{m.icon}</span>
+                  )}
+                  <span className="text-[10.5px] font-extrabold" style={{ color: svc.active }}>
+                    {m.label}
+                  </span>
+                </Link>
+              )
+            )}
+          </div>
+        </div>
+      )}
+
+      <nav
+        className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t"
+        style={{ background: svc.bg, borderColor: svc.border, backdropFilter: "blur(6px)", paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <div className="flex h-[54px] items-center justify-around">
+          {/* ホーム（サービスのホームへ + 全サービスメニュー） */}
+          <button onClick={onHome} className="relative flex flex-1 flex-col items-center gap-0.5 py-1">
+            <span className={`text-lg leading-none transition-transform duration-150 ${atHome ? "-translate-y-0.5 scale-[1.3]" : ""}`}>
+              🏠
+            </span>
+            <span className={`flex items-center gap-0.5 text-[9px] leading-none ${atHome ? "font-bold" : "font-medium"}`} style={{ color: atHome ? svc.active : svc.inactive }}>
+              ホーム <span className="text-[7px]">{menu ? "▾" : "▴"}</span>
+            </span>
+          </button>
+
+          {svc.tabs.map((t) => {
+            const realHref = t.href.includes("|") ? t.href.split("|")[1] : t.href;
+            const active = isActive(t.href);
+            const inner = (
+              <>
+                <TabIcon icon={t.icon} active={active} />
+                <span className={`text-[9px] leading-none ${active ? "font-bold" : "font-medium"}`} style={{ color: active ? svc.active : svc.inactive }}>
+                  {t.label}
+                </span>
+              </>
+            );
+            return t.ext ? (
+              <a key={t.href} href={realHref} className="relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline">
+                {inner}
+              </a>
+            ) : (
+              <Link key={t.href} href={realHref} className="relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline">
+                {inner}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }

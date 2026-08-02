@@ -110,9 +110,9 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <Link href="/sekai" onClick={() => setOpen(false)} className={item}>
               {icon("/icons/cel-earth.png")} セカイムラ
             </Link>
-            <a href="/tsukiyoga-v7/index.html" className={item}>
+            <Link href="/tsukiyoga" onClick={() => setOpen(false)} className={item}>
               {icon("/icons/cel-moon.png")} ツキヨガ
-            </a>
+            </Link>
             <Link href="/za" onClick={() => setOpen(false)} className={item}>
               <img src="/rakuichi/logo-emblem.webp" alt="" className="h-[20px] w-[20px] flex-shrink-0 rounded-full object-cover" />
               楽市楽座

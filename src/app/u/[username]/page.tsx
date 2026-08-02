@@ -353,6 +353,7 @@ export default function UserPage() {
         {/* DDP（端的な夢） */}
         {masterDdp && (
           <div
+            id="ddp-sec"
             className="mt-2.5 rounded-xl px-3.5 py-2.5"
             style={{ background: "linear-gradient(135deg,#e6f7f6,#fdfbf4)", border: "1px solid #0abab544" }}
           >
@@ -547,7 +548,7 @@ export default function UserPage() {
 
       {/* わたしのおススメ（好きな農家さんのお米など外部リンク紹介） */}
       {(recos.length > 0 || isMe) && (
-        <div className="pt-5">
+        <div className="pt-5" id="recos-sec" style={{ scrollMarginTop: 20 }}>
           <div className="card">
             <div className="sec mb-2.5 flex items-center justify-between">
               <span>⭐ {isMe ? "わたしのおススメ" : "この人のおススメ"}</span>
@@ -731,7 +732,7 @@ export default function UserPage() {
 
       {/* アイディア一覧（本人にだけ見える） */}
       {ideas.length > 0 && (
-        <div className="pt-5">
+        <div className="pt-5" id="ideas-sec" style={{ scrollMarginTop: 20 }}>
           <div className="card">
             <div className="sec mb-3 flex items-center gap-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
