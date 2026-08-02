@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   bestOfComputed,
@@ -238,10 +239,12 @@ export function HomeDashboard() {
   );
 }
 
-/* ═══ サービスDock — 指が来たアイコンだけ、Mac Dockのようにめっちゃ大きくなる ═══ */
+/* ═══ サービスDock — 指を置くと中央に大きなプレビューが浮かぶスポットライト式。
+   指をスライドして選び、離した場所のアプリが開く（大きな的なので押しやすい） ═══ */
 export function ServiceDock() {
+  const router = useRouter();
   const [unread, setUnread] = useState(0);
-  const [fx, setFx] = useState<number | null>(null);
+  const [active, setActive] = useState<number | null>(null);
   const rowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -273,82 +276,107 @@ export function ServiceDock() {
     { href: "/my", icon: "🪪", label: "マイページ" },
   ];
 
-  /* 指の位置からガウス分布で拡大率を出す（本家Dockの物理） */
-  const scaleFor = (i: number) => {
-    if (fx == null) return 1;
+  const idxFromX = (clientX: number): number | null => {
     const r = rowRef.current?.getBoundingClientRect();
-    if (!r) return 1;
-    const cx = r.left + ((i + 0.5) * r.width) / ITEMS.length;
-    const d = Math.abs(fx - cx);
-    return 1 + 1.6 * Math.exp(-(d * d) / (2 * 54 * 54)); // 指下は約2.6倍まで膨らむ
+    if (!r) return null;
+    const i = Math.floor(((clientX - r.left) / r.width) * ITEMS.length);
+    return i >= 0 && i < ITEMS.length ? i : null;
+  };
+
+  const go = (i: number) => {
+    const m = ITEMS[i];
+    if (m.techo) {
+      window.dispatchEvent(new Event("onesea:openToday"));
+      return;
+    }
+    if (m.ext) window.location.href = m.href;
+    else router.push(m.href);
   };
 
   return (
     <div
-      ref={rowRef}
-      className="relative z-[70] flex items-start justify-between px-4 pb-2 pt-2"
-      style={{ touchAction: "pan-y", background: "linear-gradient(160deg,#0e1e2e,#17384e)", overflow: "visible" }}
-      onTouchStart={(e) => setFx(e.touches[0].clientX)}
-      onTouchMove={(e) => setFx(e.touches[0].clientX)}
-      onTouchEnd={() => setTimeout(() => setFx(null), 120)}
-      onMouseMove={(e) => setFx(e.clientX)}
-      onMouseLeave={() => setFx(null)}
+      className="relative z-[70]"
+      style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
     >
-      {ITEMS.map((m, i) => {
-        const sc = scaleFor(i);
-        const big = sc > 1.6;
-        const inner = (
-          <span
-            className="relative block"
+      <div
+        ref={rowRef}
+        className="flex items-center justify-between px-4 pb-2.5 pt-2.5"
+        style={{ touchAction: "none" }}
+        onTouchStart={(e) => setActive(idxFromX(e.touches[0].clientX))}
+        onTouchMove={(e) => setActive(idxFromX(e.touches[0].clientX))}
+        onTouchEnd={(e) => {
+          e.preventDefault(); // 合成クリックの二重発火を防ぐ
+          if (active != null) go(active);
+          setActive(null);
+        }}
+        onMouseMove={(e) => setActive(idxFromX(e.clientX))}
+        onMouseLeave={() => setActive(null)}
+        onClick={(e) => {
+          const i = idxFromX(e.clientX);
+          if (i != null) go(i);
+          e.preventDefault();
+        }}
+      >
+        {ITEMS.map((m, i) => {
+          const on = active === i;
+          return (
+            <span
+              key={m.href}
+              className="relative block"
+              style={{
+                transform: on ? "scale(1.28)" : "scale(1)",
+                opacity: active != null && !on ? 0.45 : 1,
+                transition: "transform 120ms ease-out, opacity 120ms ease-out",
+              }}
+            >
+              {m.icon.startsWith("/") ? (
+                <img src={m.icon} alt={m.label} className="h-[34px] w-[34px] rounded-full object-contain" />
+              ) : (
+                <span className="block text-[28px] leading-[34px]">{m.icon}</span>
+              )}
+              {m.talk && unread > 0 && (
+                <span
+                  className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[8.5px] font-bold text-white"
+                  style={{ lineHeight: 1 }}
+                >
+                  {unread > 99 ? "99" : unread}
+                </span>
+              )}
+            </span>
+          );
+        })}
+      </div>
+
+      {/* スポットライト: 選択中のアプリが中央に大きく浮かび、名前が上に重なる */}
+      {active != null && (
+        <div
+          className="pointer-events-none absolute left-1/2 top-[calc(100%-6px)] z-20 -translate-x-1/2"
+          style={{ animation: "dockPop 140ms ease-out" }}
+        >
+          <style>{`@keyframes dockPop{from{opacity:0;transform:translateX(-50%) scale(.7)}to{opacity:1;transform:translateX(-50%) scale(1)}}`}</style>
+          <div
+            className="relative flex h-[104px] w-[104px] items-center justify-center rounded-3xl"
             style={{
-              transform: `scale(${sc})`,
-              transformOrigin: "top center",
-              transition: fx != null ? "transform 60ms linear" : "transform 260ms cubic-bezier(0.2,0.8,0.3,1)",
-              position: "relative",
-              zIndex: sc > 1.05 ? 10 : 1,
+              background: "linear-gradient(160deg,#16263a,#1e3450)",
+              border: "1px solid rgba(255,255,255,.18)",
+              boxShadow: "0 14px 44px rgba(0,0,0,.5)",
             }}
           >
-            {/* 拡大中だけ名前が浮かぶ */}
-            {big && (
-              <span
-                className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[8.5px] font-bold text-[#17384e] shadow-md"
-                style={{ transform: `translateX(-50%) scale(${1 / sc})`, transformOrigin: "top center" }}
-              >
-                {m.label}
-              </span>
-            )}
-            {m.icon.startsWith("/") ? (
-              <img src={m.icon} alt={m.label} className="h-[34px] w-[34px] rounded-full object-contain" />
+            {ITEMS[active].icon.startsWith("/") ? (
+              <img src={ITEMS[active].icon} alt="" className="h-[68px] w-[68px] rounded-full object-contain" />
             ) : (
-              <span className="block text-[28px] leading-[34px]">{m.icon}</span>
+              <span className="text-[58px] leading-none">{ITEMS[active].icon}</span>
             )}
-            {m.talk && unread > 0 && (
-              <span
-                className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[8.5px] font-bold text-white"
-                style={{ lineHeight: 1 }}
-              >
-                {unread > 99 ? "99" : unread}
-              </span>
-            )}
-          </span>
-        );
-        if (m.techo) {
-          return (
-            <button key={m.href} onClick={() => window.dispatchEvent(new Event("onesea:openToday"))} aria-label={m.label}>
-              {inner}
-            </button>
-          );
-        }
-        return m.ext ? (
-          <a key={m.href} href={m.href} aria-label={m.label}>
-            {inner}
-          </a>
-        ) : (
-          <Link key={m.href} href={m.href} aria-label={m.label}>
-            {inner}
-          </Link>
-        );
-      })}
+            {/* 名前がアイコンの上に重なる */}
+            <span
+              className="absolute bottom-2 left-0 right-0 text-center text-[13px] font-extrabold text-white"
+              style={{ textShadow: "0 1px 6px rgba(0,0,0,.9), 0 0 14px rgba(0,0,0,.7)" }}
+            >
+              {ITEMS[active].label}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
