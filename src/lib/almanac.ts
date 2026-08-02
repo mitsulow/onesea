@@ -266,3 +266,66 @@ export function keyOf(y: number, m1: number, d: number): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${y}-${p(m1)}-${p(d)}`;
 }
+
+/* ---- 月の位置（低精度Meeus・誤差数分）と月の出・南中・月の入り ---- */
+const D2R = Math.PI / 180;
+
+function moonEqOf(msUtc: number): { ra: number; dec: number } {
+  const d = msUtc / 86400000 - 10957.5; // J2000からの日数
+  const L = (218.316 + 13.176396 * d) * D2R;
+  const M = (134.963 + 13.064993 * d) * D2R;
+  const F = (93.272 + 13.22935 * d) * D2R;
+  const lon = L + 6.289 * D2R * Math.sin(M);
+  const lat = 5.128 * D2R * Math.sin(F);
+  const e = 23.4397 * D2R;
+  const ra = Math.atan2(Math.sin(lon) * Math.cos(e) - Math.tan(lat) * Math.sin(e), Math.cos(lon));
+  const dec = Math.asin(Math.sin(lat) * Math.cos(e) + Math.cos(lat) * Math.sin(e) * Math.sin(lon));
+  return { ra, dec };
+}
+
+function moonAltAt(msUtc: number, latDeg: number, lonDeg: number): number {
+  const d = msUtc / 86400000 - 10957.5;
+  const { ra, dec } = moonEqOf(msUtc);
+  const gmst = (280.16 + 360.9856235 * d) * D2R;
+  const H = gmst + lonDeg * D2R - ra;
+  const la = latDeg * D2R;
+  return Math.asin(Math.sin(la) * Math.sin(dec) + Math.cos(la) * Math.cos(dec) * Math.cos(H));
+}
+
+export interface MoonTimes {
+  rise: string | null;
+  transit: string | null;
+  set: string | null;
+}
+
+/** その日（JST）の月の出・南中・月の入り。位置は緯度経度（既定は東京） */
+export function moonTimesOf(dateKey: string, latDeg = 35.68, lonDeg = 139.76): MoonTimes {
+  const [y, m, dd] = dateKey.split("-").map(Number);
+  const start = Date.UTC(y, m - 1, dd) - 9 * 3600000; // JST 0:00
+  const h0 = 0.125 * D2R; // 出没の基準高度（視差-屈折の相殺で約+0.125°）
+  const step = 5 * 60000;
+  let rise: number | null = null;
+  let set: number | null = null;
+  let maxAlt = -10;
+  let maxT = start;
+  let prev = moonAltAt(start, latDeg, lonDeg) - h0;
+  for (let t = start + step; t <= start + 24 * 3600000; t += step) {
+    const alt = moonAltAt(t, latDeg, lonDeg) - h0;
+    if (prev < 0 && alt >= 0 && rise === null) rise = t - step / 2;
+    if (prev >= 0 && alt < 0 && set === null) set = t - step / 2;
+    if (alt > maxAlt) {
+      maxAlt = alt;
+      maxT = t;
+    }
+    prev = alt;
+  }
+  const fmt = (t: number | null) =>
+    t === null ? null : new Date(t + 9 * 3600000).toISOString().slice(11, 16);
+  return { rise: fmt(rise), transit: maxAlt > 0 ? fmt(maxT) : null, set: fmt(set) };
+}
+
+/** 月齢→NASA月画像（/icons/moon/moon_01〜30.png・約3KB） */
+export function moonImageOf(age: number): string {
+  const idx = Math.min(29, Math.max(0, Math.round(age)));
+  return `/icons/moon/moon_${String(idx + 1).padStart(2, "0")}.png`;
+}

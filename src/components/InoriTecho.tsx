@@ -6,6 +6,8 @@ import {
   eventsOfComputed,
   bestOfComputed,
   moonOf,
+  moonTimesOf,
+  moonImageOf,
   keyOf,
   todayKey,
   YOBI,
@@ -38,11 +40,32 @@ for (let y = 2025, m = 11; y < 2028; ) {
   if (y === 2027 && m === 0 && MONTHS.length > 25) break;
 }
 
+export interface TechoEv {
+  id: string;
+  sh: number; // 開始 時
+  sm: number; // 開始 分
+  eh: number; // 終了 時
+  em: number; // 終了 分
+  text: string;
+  color: string; // ペンID
+}
+
 interface DayMemo {
   note: string;
   h: Record<string, string>;
+  ev?: TechoEv[];
 }
 type Memos = Record<string, DayMemo>;
+
+/** 色ペン（仕事は赤・遊びは青…） */
+export const PENS = [
+  { id: "red", c: "#d04030", label: "仕事" },
+  { id: "blue", c: "#3070c0", label: "遊び" },
+  { id: "green", c: "#4a9a5a", label: "暮らし" },
+  { id: "gold", c: "#c09030", label: "大事" },
+  { id: "gray", c: "#707070", label: "その他" },
+] as const;
+export const penColor = (id: string) => PENS.find((x) => x.id === id)?.c ?? "#4a9a5a";
 
 function loadMemos(): Memos {
   try {
@@ -67,6 +90,19 @@ export function InoriTecho() {
   useEffect(() => {
     setMemos(loadMemos());
   }, []);
+
+  const saveEvents = (k: string, evs: TechoEv[]) => {
+    setMemos((prev) => {
+      const day = prev[k] ?? { note: "", h: {} };
+      const next: Memos = { ...prev, [k]: { ...day, ev: evs } };
+      const dd = next[k];
+      if (!dd.note && Object.keys(dd.h ?? {}).length === 0 && (dd.ev ?? []).length === 0) delete next[k];
+      try {
+        localStorage.setItem("techo-memos", JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const saveMemo = (k: string, field: string, val: string) => {
     setMemos((prev) => {
@@ -93,6 +129,7 @@ export function InoriTecho() {
       {sheetKey && (
         <BottomSheet
           dk={sheetKey}
+          onSaveEv={saveEvents}
           memos={memos}
           onSave={saveMemo}
           onClose={() => setSheetKey(null)}
@@ -363,12 +400,14 @@ function BottomSheet({
   dk,
   memos,
   onSave,
+  onSaveEv,
   onClose,
   onShift,
 }: {
   dk: string;
   memos: Memos;
   onSave: (k: string, field: string, val: string) => void;
+  onSaveEv: (k: string, evs: TechoEv[]) => void;
   onClose: () => void;
   onShift: (off: number) => void;
 }) {
@@ -384,7 +423,18 @@ function BottomSheet({
   const [editH, setEditH] = useState<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [tide, setTide] = useState<TideDay | null>(null);
+  const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
   const [expanded, setExpanded] = useState(false);
+  const dayEvs: TechoEv[] = dayMemo.ev ?? [];
+  // 月の出・南中・月の入り（現在位置キャッシュがあればその場所で）
+  const mt = (() => {
+    try {
+      const pos = JSON.parse(localStorage.getItem("onesea-pos") ?? "null");
+      return moonTimesOf(dk, pos?.lat ?? 35.68, pos?.lon ?? 139.76);
+    } catch {
+      return moonTimesOf(dk);
+    }
+  })();
   const [sheetY, setSheetY] = useState(0);
   const [draggingSheet, setDraggingSheet] = useState(false);
   const dragStart = useRef(0);
@@ -561,7 +611,7 @@ function BottomSheet({
           })}
         </div>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}>
           {/* 日付ヘッダー */}
           <div className="flex items-baseline justify-between px-4 pb-1.5 pt-2.5">
             <div>
@@ -633,9 +683,15 @@ function BottomSheet({
               </div>
               <div className="rounded-xl border border-[#e4dcc8] bg-[#faf8f4] p-2.5 text-center">
                 <div className="text-[9.5px] text-[#a09060]">🌙 月</div>
-                <div className="text-2xl leading-snug">{moon.emoji}</div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-0.5 h-9 w-9" loading="lazy" />
                 <div className="num text-[10.5px] text-[#7a6a4a]">月齢 {moon.age.toFixed(1)}</div>
                 {moon.holy && <div className="mt-[1px] text-[10.5px] font-extrabold text-[#c09030]">✦{moon.holy}</div>}
+                <div className="mt-1 border-t border-[#eee4d0] pt-1 text-[9.5px] leading-relaxed text-[#8a7a5a]">
+                  <div className="flex justify-between"><span>月の出</span><span className="num">{mt.rise ?? "—"}</span></div>
+                  <div className="flex justify-between"><span>南中</span><span className="num">{mt.transit ?? "—"}</span></div>
+                  <div className="flex justify-between"><span>月の入</span><span className="num">{mt.set ?? "—"}</span></div>
+                </div>
               </div>
             </div>
 
@@ -663,15 +719,22 @@ function BottomSheet({
                     return th === h ? { lb, min: tm, color: c } : null;
                   })
                   .filter(Boolean) as Array<{ lb: string; min: number; color: string }>;
+                const evsHere = dayEvs.filter((ev) => ev.sh <= h && (ev.eh > h || (ev.eh === h && ev.em > 0) || ev.eh === ev.sh));
+                const starters = evsHere.filter((ev) => ev.sh === h);
+                const passers = evsHere.filter((ev) => ev.sh !== h);
                 return (
                   <div
                     key={h}
-                    onClick={() => {
-                      if (!isEd) setEditH(h);
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).closest("[data-ev]")) return;
+                      if (isEd) return;
+                      if (hNote) setEditH(h); // 既存の走り書きは従来のインライン編集
+                      else
+                        setEvEdit({ id: "", sh: h, sm: 0, eh: Math.min(23, h + 1), em: h === 23 ? 59 : 0, text: "", color: "green" });
                     }}
-                    className="flex cursor-text"
+                    className="flex cursor-pointer"
                     style={{
-                      minHeight: hNote || isEd ? 40 : 28,
+                      minHeight: hNote || isEd || starters.length ? 40 : 28,
                       borderBottom: h < 23 ? "1px solid #f2efea" : "none",
                       background: isNode ? "#fff8ee" : isEd ? "#fafdf8" : "#fff",
                     }}
@@ -683,6 +746,16 @@ function BottomSheet({
                       {h}:00
                     </div>
                     <div className="relative flex flex-1 items-center">
+                      {/* 時間範囲の継続バー（開始時以外の時間帯） */}
+                      {passers.map((ev, i) => (
+                        <div
+                          key={ev.id}
+                          data-ev
+                          onClick={() => setEvEdit(ev)}
+                          className="absolute bottom-0 top-0 w-[4px] cursor-pointer rounded"
+                          style={{ left: 1 + i * 6, background: penColor(ev.color), opacity: 0.55 }}
+                        />
+                      ))}
                       {hNote && !isEd && (
                         <div className="absolute bottom-1 left-0 top-1 w-[3px] rounded bg-[#7ba05b]" />
                       )}
@@ -724,11 +797,29 @@ function BottomSheet({
                           className="w-full resize-none bg-transparent px-2 py-1 text-xs leading-relaxed text-[#333] outline-none"
                         />
                       ) : (
-                        <div
-                          className="w-full whitespace-pre-wrap px-2 py-1 text-xs leading-relaxed"
-                          style={{ color: hNote ? "#333" : "transparent", minHeight: 17 }}
-                        >
-                          {hNote || "."}
+                        <div className="w-full px-2 py-1" style={{ paddingLeft: passers.length ? 2 + passers.length * 6 + 6 : 8 }}>
+                          {starters.map((ev) => (
+                            <button
+                              key={ev.id}
+                              data-ev
+                              onClick={() => setEvEdit(ev)}
+                              className="mb-0.5 block w-full rounded-md px-1.5 py-0.5 text-left text-[11px] leading-snug"
+                              style={{
+                                background: penColor(ev.color) + "18",
+                                borderLeft: `3px solid ${penColor(ev.color)}`,
+                                color: "#333",
+                              }}
+                            >
+                              <span className="num font-bold" style={{ color: penColor(ev.color) }}>
+                                {String(ev.sh).padStart(2, "0")}:{String(ev.sm).padStart(2, "0")}〜{String(ev.eh).padStart(2, "0")}:{String(ev.em).padStart(2, "0")}
+                              </span>{" "}
+                              {ev.text}
+                            </button>
+                          ))}
+                          {hNote && (
+                            <div className="whitespace-pre-wrap text-xs leading-relaxed text-[#333]">{hNote}</div>
+                          )}
+                          {!hNote && starters.length === 0 && <div className="text-xs" style={{ color: "transparent", minHeight: 17 }}>.</div>}
                         </div>
                       )}
                     </div>
@@ -739,6 +830,121 @@ function BottomSheet({
           </div>
         </div>
       </div>
+
+      {/* 予定の追加・編集（○時○分〜○時○分・色ペン） */}
+      {evEdit && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40" onClick={() => setEvEdit(null)}>
+          <div
+            className="w-full max-w-[480px] rounded-t-2xl bg-white px-4 pt-3"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#ddd]" />
+            <input
+              value={evEdit.text}
+              onChange={(e) => setEvEdit({ ...evEdit, text: e.target.value })}
+              placeholder="予定の内容..."
+              autoFocus={!evEdit.id}
+              className="w-full rounded-xl border border-[#e4e0d8] bg-[#fdfcfa] px-3 py-2.5 text-[14px] outline-none focus:border-[#c94d3a]"
+            />
+            <div className="mt-2.5 flex items-center gap-1.5 text-[13px] text-[#555]">
+              <select
+                value={evEdit.sh}
+                onChange={(e) => setEvEdit({ ...evEdit, sh: Number(e.target.value) })}
+                className="rounded-lg border border-[#e4e0d8] bg-white px-1.5 py-1.5"
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{i}時</option>
+                ))}
+              </select>
+              <select
+                value={evEdit.sm}
+                onChange={(e) => setEvEdit({ ...evEdit, sm: Number(e.target.value) })}
+                className="rounded-lg border border-[#e4e0d8] bg-white px-1.5 py-1.5"
+              >
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((v) => (
+                  <option key={v} value={v}>{String(v).padStart(2, "0")}分</option>
+                ))}
+              </select>
+              <span className="text-[#999]">〜</span>
+              <select
+                value={evEdit.eh}
+                onChange={(e) => setEvEdit({ ...evEdit, eh: Number(e.target.value) })}
+                className="rounded-lg border border-[#e4e0d8] bg-white px-1.5 py-1.5"
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{i}時</option>
+                ))}
+              </select>
+              <select
+                value={evEdit.em}
+                onChange={(e) => setEvEdit({ ...evEdit, em: Number(e.target.value) })}
+                className="rounded-lg border border-[#e4e0d8] bg-white px-1.5 py-1.5"
+              >
+                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((v) => (
+                  <option key={v} value={v}>{String(v).padStart(2, "0")}分</option>
+                ))}
+              </select>
+            </div>
+            {/* 色ペン */}
+            <div className="mt-2.5 flex items-center gap-2.5">
+              {PENS.map((pn) => (
+                <button
+                  key={pn.id}
+                  onClick={() => setEvEdit({ ...evEdit, color: pn.id })}
+                  className="flex flex-col items-center gap-0.5"
+                >
+                  <span
+                    className="h-7 w-7 rounded-full"
+                    style={{
+                      background: pn.c,
+                      border: evEdit.color === pn.id ? "3px solid #333" : "3px solid transparent",
+                    }}
+                  />
+                  <span className="text-[9px] text-[#888]">{pn.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 flex gap-2">
+              {evEdit.id && (
+                <button
+                  onClick={() => {
+                    onSaveEv(dk, dayEvs.filter((x) => x.id !== evEdit.id));
+                    setEvEdit(null);
+                  }}
+                  className="rounded-xl border border-[#eee] px-3.5 py-2.5 text-[12.5px] font-bold text-[#c05030]"
+                >
+                  削除
+                </button>
+              )}
+              <button onClick={() => setEvEdit(null)} className="rounded-xl px-3 py-2.5 text-[12.5px] font-bold text-[#999]">
+                やめる
+              </button>
+              <button
+                onClick={() => {
+                  if (!evEdit.text.trim()) return;
+                  const norm = { ...evEdit, text: evEdit.text.trim() };
+                  if (norm.eh < norm.sh || (norm.eh === norm.sh && norm.em <= norm.sm)) {
+                    norm.eh = norm.sh;
+                    norm.em = Math.min(59, norm.sm + 30);
+                  }
+                  const evs = norm.id
+                    ? dayEvs.map((x) => (x.id === norm.id ? norm : x))
+                    : [...dayEvs, { ...norm, id: String(Date.now()) + Math.random().toString(36).slice(2, 6) }];
+                  evs.sort((a, b) => a.sh * 60 + a.sm - (b.sh * 60 + b.sm));
+                  onSaveEv(dk, evs);
+                  setEvEdit(null);
+                }}
+                disabled={!evEdit.text.trim()}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#c94d3a" }}
+              >
+                保存する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
