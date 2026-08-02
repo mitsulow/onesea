@@ -609,8 +609,8 @@ export function ActivitySection({ me }: { me: User | null }) {
       {me && myVills.length === 0 && (
         <a
           href="/sekai/villages"
-          className="mx-2 mb-2 block rounded-xl border-2 border-dashed py-3 text-center text-[12.5px] font-bold no-underline"
-          style={{ borderColor: "#4a8a5c66", color: GREEN }}
+          className="mx-2 mb-2 block rounded-2xl border bg-white px-3.5 py-3 text-center text-[12.5px] font-bold no-underline shadow-sm"
+          style={{ borderColor: "#c8dccb", color: GREEN }}
         >
           ⛺ 拠点に入ると、ここから「むらびとたより」を投稿できます →
         </a>
@@ -709,10 +709,19 @@ export function ActivitySection({ me }: { me: User | null }) {
         ) : (
           <button
             onClick={() => setWriting(true)}
-            className="mx-2 mb-2 w-[calc(100%-16px)] rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
-            style={{ borderColor: "#4a8a5c66", color: GREEN }}
+            className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
+            style={{ borderColor: "#c8dccb" }}
           >
-            ✍️ むらびとたよりを投稿する
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec] text-[16px]">✍️</span>
+              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">今日、村で何があった？（タップして書く）</span>
+              <span
+                className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
+                style={{ background: GREEN }}
+              >
+                投稿
+              </span>
+            </div>
           </button>
         )
       )}
