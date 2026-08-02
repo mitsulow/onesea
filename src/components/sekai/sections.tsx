@@ -231,7 +231,7 @@ export function MootsSection({
     <section
       id="moots"
       className="card"
-      style={{ background: "#fff", border: "none", padding: "10px 8px 12px", scrollMarginTop: 56 }}
+      style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "none", padding: "10px 8px 12px", scrollMarginTop: 56 }}
     >
       {/* テレビ画面（当日はここにZoomの導線が出る） */}
       {next && (
@@ -298,8 +298,8 @@ export function MootsSection({
                   className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold"
                   style={
                     joined
-                      ? { background: "rgba(20,28,38,.45)", color: "#c8d0d8", border: "1px solid #3a4a58" }
-                      : { background: "rgba(20,28,38,.8)", color: "#fff", border: "1.5px solid #5a6a78" }
+                      ? { background: "rgba(20,28,38,.55)", color: "#8a9aa8", border: "1px solid #3a4a58" }
+                      : { background: "rgba(20,28,38,.85)", color: "#d8e0e8", border: "1.5px solid #5a6a78" }
                   }
                 >
                   参加しない
@@ -318,13 +318,13 @@ export function MootsSection({
         {futureOpen ? "▾" : "▸"} 今後の新月会・満月会
       </button>
       {futureOpen && (
-        <div className="rounded-xl bg-[#f2f7f2] px-3 py-2">
+        <div className="rounded-xl bg-white/5 px-3 py-2">
           {moots.slice(1, 11).map((m) => (
-            <div key={m.dateKey} className="flex items-baseline justify-between border-b border-[#e4ece4] py-1.5 last:border-0">
-              <span className="text-[12px] font-bold text-[#2a5a38]">
+            <div key={m.dateKey} className="flex items-baseline justify-between border-b border-white/5 py-1.5 last:border-0">
+              <span className="text-[12px] font-bold text-[#a8c8b0]">
                 第{mootNoOf(m.dateKey) ?? "—"}回セカイムラ{m.kind === "new" ? "新月会" : "満月会"}
               </span>
-              <span className="num flex-shrink-0 text-[11.5px] text-[#6a8a70]">
+              <span className="num flex-shrink-0 text-[11.5px] text-[#7a9a88]">
                 {m.label} {m.hour}時
               </span>
             </div>
@@ -342,7 +342,7 @@ export function MootsSection({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={LATEST_MOOT_VIDEO.thumb} alt="" className="w-full object-cover" />
-          <div className="bg-[#f2f7f2] px-3 py-2 text-[12.5px] font-extrabold text-[#2a5a38]">
+          <div className="bg-white/5 px-3 py-2 text-[12.5px] font-extrabold text-[#a8d8b8]">
             ▶ {LATEST_MOOT_VIDEO.title} — 今回の会の動画
           </div>
         </a>
@@ -351,7 +351,7 @@ export function MootsSection({
       {/* 過去の新月会・満月会 動画（サムネ） */}
       {PAST_MOOT_VIDEOS.length > 0 && (
         <div className="mb-1 mt-2 px-1">
-          <div className="mb-1 text-[10px] tracking-[2px] text-[#7a9a80]">過去の新月会・満月会 動画</div>
+          <div className="mb-1 text-[10px] tracking-[2px] text-[#5a7a68]">過去の新月会・満月会 動画</div>
           <div className="hide-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
             {PAST_MOOT_VIDEOS.map((v, i) =>
               v.url ? (
@@ -383,7 +383,7 @@ export function MootsSection({
 
       {/* 過去の新月満月会（折りたたみ） */}
       <details className="mt-2 px-1">
-        <summary className="cursor-pointer list-none text-[11.5px] font-bold text-[#4a8a5c]">
+        <summary className="cursor-pointer list-none text-[11.5px] font-bold text-[#7aa88a]">
           📁 過去の新月満月会 ▾
         </summary>
         <MootArchive />
