@@ -286,8 +286,8 @@ export function ServiceDock() {
   return (
     <div
       ref={rowRef}
-      className="flex items-end justify-between px-4 pb-2 pt-3"
-      style={{ touchAction: "pan-y", background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
+      className="relative z-[70] flex items-start justify-between px-4 pb-2 pt-2"
+      style={{ touchAction: "pan-y", background: "linear-gradient(160deg,#0e1e2e,#17384e)", overflow: "visible" }}
       onTouchStart={(e) => setFx(e.touches[0].clientX)}
       onTouchMove={(e) => setFx(e.touches[0].clientX)}
       onTouchEnd={() => setTimeout(() => setFx(null), 120)}
@@ -301,16 +301,18 @@ export function ServiceDock() {
           <span
             className="relative block"
             style={{
-              transform: `translateY(${-(sc - 1) * 13}px) scale(${sc})`,
-              transformOrigin: "bottom center",
+              transform: `scale(${sc})`,
+              transformOrigin: "top center",
               transition: fx != null ? "transform 60ms linear" : "transform 260ms cubic-bezier(0.2,0.8,0.3,1)",
+              position: "relative",
+              zIndex: sc > 1.05 ? 10 : 1,
             }}
           >
             {/* 拡大中だけ名前が浮かぶ */}
             {big && (
               <span
-                className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[8.5px] font-bold text-[#17384e]"
-                style={{ transform: `translateX(-50%) scale(${1 / sc})`, transformOrigin: "bottom center" }}
+                className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-2 py-0.5 text-[8.5px] font-bold text-[#17384e] shadow-md"
+                style={{ transform: `translateX(-50%) scale(${1 / sc})`, transformOrigin: "top center" }}
               >
                 {m.label}
               </span>
