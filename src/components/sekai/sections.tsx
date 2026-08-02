@@ -167,9 +167,9 @@ export function useSekaiMe() {
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="pb-44">
-      <header className="relative z-[60] px-6 py-2 text-center" style={{ background: "linear-gradient(150deg,#5ab8e0,#2e88c0)" }}>
-        <div className="text-[10px] leading-tight tracking-[3px] text-[#dff2fb]">世界は一つの村になる。</div>
-        <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-white">セカイムラ</div>
+      <header className="relative z-[60] border-b border-[#eee] bg-white px-6 py-2 text-center">
+        <div className="text-[10px] leading-tight tracking-[3px] text-[#8aa898]">世界は一つの村になる。</div>
+        <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#2a5a38]">セカイムラ</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-left">
           <AvatarMenu />
         </span>
@@ -243,10 +243,10 @@ export function MootsSection({
           />
           {/* 案内パネル（30%の半透明地に文字を重ねる） */}
           <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2.5 text-center" style={{ background: "rgba(8,16,24,.24)" }}>
-            <div className="text-[19px] font-extrabold leading-snug text-white" style={{ textShadow: "0 2px 12px rgba(0,0,0,.9)" }}>
+            <div className="text-[23px] font-extrabold leading-snug text-white" style={{ textShadow: "0 2px 12px rgba(0,0,0,.9)" }}>
               第{mootNoOf(next.dateKey) ?? "—"}回セカイムラ{next.kind === "new" ? "新月会" : "満月会"}
             </div>
-            <div className="num mt-0.5 text-[13px] font-bold text-[#e8f4ec]" style={{ textShadow: "0 1px 8px rgba(0,0,0,.9)" }}>
+            <div className="num mt-1 text-[16px] font-extrabold text-[#eef8f0]" style={{ textShadow: "0 1px 8px rgba(0,0,0,.9)" }}>
               {next.label}（{today ? "今日" : next.dday === 1 ? "明日" : `あと${next.dday}日`}）{next.hour}:00〜
             </div>
             <div className="num mt-0.5 text-[10.5px] text-[#b8d8c8]" style={{ textShadow: "0 1px 6px rgba(0,0,0,.85)" }}>
