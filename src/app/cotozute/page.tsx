@@ -1,46 +1,51 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { CotozutePost, fetchPostsPage, fetchPostsBefore, fetchMyLikes } from "@/lib/cotozute";
+import { FeedItem, feedKey, fetchMixedFeed } from "@/lib/feed";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
+import { MuraFeedCard, ShopFeedCard } from "@/components/FeedCards";
 import { AvatarMenu } from "@/components/AvatarMenu";
 
 /* eslint-disable @next/next/no-img-element */
 
 /**
- * Cotozute専用ページ — 上から下まで言の葉だけの無限フィード（Xの操作系を移植）。
- * ・下スクロールで20件ずつ自動継ぎ足し（IntersectionObserver）
- * ・30秒ごとに新着を数えて「🌿 新しい言の葉」ピルで追いつき
- * ・右下の浮遊ボタンで投稿シート
- * ・content-visibility で画面外カードの描画コストをゼロに（端末保護）
+ * Cotozute統合フィード — 3つの媒体がひとつの無限スクロールに混ざる。
+ * ① 言の葉（素の行）② ⛺むらびとたより（緑枠・五角形アイコン）③ 🏮楽市楽座（朱枠・商品カード）
+ * X流: 固定ヘッダー+タブ / カーソル無限スクロール / 窓方式でメモリ一定 / 追いつきピル / 引っ張って更新
  */
 
 const PAGE = 20;
-const WINDOW_MAX = 240; // これを超えたら上から捨てる（X方式: だから無限に潜れる）
-const TRIM = 80; // 一度に上から捨てる件数
+const WINDOW_MAX = 240;
+const TRIM = 80;
+
+const cotoItem = (post: CotozutePost): FeedItem => ({ kind: "coto", at: post.created_at, post });
 
 export default function CotozutePage() {
   const [me, setMe] = useState<User | null>(null);
-  const [avatar, setAvatar] = useState<string | null>(null);
-  const [posts, setPosts] = useState<CotozutePost[] | null>(null);
+  const [items, setItems] = useState<FeedItem[] | null>(null);
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [hasMore, setHasMore] = useState(true);
-  const [fresh, setFresh] = useState<CotozutePost[]>([]);
+  const [fresh, setFresh] = useState<FeedItem[]>([]);
   const [composing, setComposing] = useState(false);
-  const [pull, setPull] = useState(0); // 引っ張って更新の距離
+  const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [mode, setMode] = useState<"all" | "photo">("all"); // X風タブ（みんな/画像）
+  const [mode, setMode] = useState<"all" | "photo">("all");
   const modeRef = useRef<"all" | "photo">("all");
   modeRef.current = mode;
   const loadingRef = useRef(false);
-  const postsRef = useRef<CotozutePost[]>([]);
+  const itemsRef = useRef<FeedItem[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
+
+  const fetchHead = useCallback(async (m: "all" | "photo"): Promise<FeedItem[]> => {
+    if (m === "photo") return (await fetchPostsPage(0, PAGE, true)).map(cotoItem);
+    return fetchMixedFeed(null, PAGE);
+  }, []);
 
   /* 初回ロード */
   useEffect(() => {
@@ -48,45 +53,45 @@ export default function CotozutePage() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
       setMe(u);
-      setAvatar((u?.user_metadata?.avatar_url as string) ?? null);
       if (u) setLikedSet(await fetchMyLikes(u.id));
     });
-    fetchPostsPage(0, PAGE).then((list) => {
-      setPosts(list);
-      postsRef.current = list;
-      setHasMore(list.length === PAGE);
+    fetchMixedFeed(null, PAGE).then((list) => {
+      setItems(list);
+      itemsRef.current = list;
+      setHasMore(list.length > 0);
     });
-    // 下タブ「とうこう」(?compose=1) から来たら投稿画面を開く
     if (new URLSearchParams(window.location.search).get("compose")) setComposing(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* タブ切り替え（みんな/画像）でフィードを引き直す */
+  /* タブ切り替え */
   const switchMode = (m: "all" | "photo") => {
     if (m === mode) return;
     setMode(m);
-    setPosts(null);
+    setItems(null);
     setFresh([]);
-    fetchPostsPage(0, PAGE, m === "photo").then((list) => {
-      setPosts(list);
-      postsRef.current = list;
-      setHasMore(list.length === PAGE);
+    fetchHead(m).then((list) => {
+      setItems(list);
+      itemsRef.current = list;
+      setHasMore(list.length > 0);
       window.scrollTo({ top: 0 });
     });
   };
 
-  /* 無限スクロール（番兵が見えたら次ページ・上限なし） */
+  /* 無限スクロール（カーソル式・窓方式） */
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMore) return;
-    const cur = postsRef.current;
+    const cur = itemsRef.current;
     if (cur.length === 0) return;
     loadingRef.current = true;
-    // カーソル式: 新着が割り込んでも続きがズレない
-    const more = await fetchPostsBefore(cur[cur.length - 1].created_at, PAGE, modeRef.current === "photo");
-    const seen = new Set(cur.map((p) => p.id));
-    let merged = [...cur, ...more.filter((p) => !seen.has(p.id))];
+    const cursor = cur[cur.length - 1].at;
+    const more =
+      modeRef.current === "photo"
+        ? (await fetchPostsBefore(cursor, PAGE, true)).map(cotoItem)
+        : await fetchMixedFeed(cursor, PAGE);
+    const seen = new Set(cur.map(feedKey));
+    let merged = [...cur, ...more.filter((it) => !seen.has(feedKey(it)))];
 
-    // X方式の窓: 一定を超えたら「上から」捨ててメモリ一定 → 無限に潜れる。
-    // 捨てたぶん文書が縮むので、スクロール位置を同じ量だけ引いて画面を静止させる
     if (merged.length > WINDOW_MAX) {
       const feed = feedRef.current;
       const before = feed?.offsetHeight ?? 0;
@@ -99,9 +104,9 @@ export default function CotozutePage() {
       );
     }
 
-    postsRef.current = merged;
-    setPosts(merged);
-    setHasMore(more.length === PAGE);
+    itemsRef.current = merged;
+    setItems(merged);
+    setHasMore(more.length > 0);
     loadingRef.current = false;
   }, [hasMore]);
 
@@ -112,20 +117,20 @@ export default function CotozutePage() {
       (entries) => {
         if (entries[0].isIntersecting) loadMore();
       },
-      { rootMargin: "600px" } // 画面の1つ先で先読み
+      { rootMargin: "600px" }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [loadMore, posts !== null]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadMore, items !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* 新着チェック → 追いつきピル（30秒ごと + アプリに戻ってきた瞬間） */
+  /* 新着チェック → 追いつきピル */
   useEffect(() => {
     const check = async () => {
-      const newest = postsRef.current[0]?.created_at;
+      const newest = itemsRef.current[0]?.at;
       if (!newest) return;
-      const latest = await fetchPostsPage(0, PAGE, modeRef.current === "photo");
-      const ids = new Set(postsRef.current.map((p) => p.id));
-      setFresh(latest.filter((p) => p.created_at > newest && !ids.has(p.id)));
+      const latest = await fetchHead(modeRef.current);
+      const ids = new Set(itemsRef.current.map(feedKey));
+      setFresh(latest.filter((it) => it.at > newest && !ids.has(feedKey(it))));
     };
     const t = setInterval(check, 30000);
     const onVis = () => {
@@ -138,27 +143,27 @@ export default function CotozutePage() {
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("focus", onVis);
     };
-  }, []);
+  }, [fetchHead]);
 
   const catchUp = () => {
-    const merged = [...fresh, ...postsRef.current].slice(0, WINDOW_MAX);
-    postsRef.current = merged;
-    setPosts(merged);
+    const merged = [...fresh, ...itemsRef.current].slice(0, WINDOW_MAX);
+    itemsRef.current = merged;
+    setItems(merged);
     setFresh([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const reload = async () => {
-    const list = await fetchPostsPage(0, PAGE, modeRef.current === "photo");
-    postsRef.current = list;
-    setPosts(list);
+    const list = await fetchHead(modeRef.current);
+    itemsRef.current = list;
+    setItems(list);
     setFresh([]);
-    setHasMore(list.length === PAGE);
+    setHasMore(list.length > 0);
     setComposing(false);
     window.scrollTo({ top: 0 });
   };
 
-  /* 引っ張って更新（X風。ページ最上部で下に引くとスピナー→更新） */
+  /* 引っ張って更新 */
   useEffect(() => {
     const onStart = (e: TouchEvent) => {
       if (window.scrollY <= 0) touchStartY.current = e.touches[0].clientY;
@@ -175,11 +180,7 @@ export default function CotozutePage() {
       if (pull > 48 && !refreshing) {
         setRefreshing(true);
         setPull(48);
-        const list = await fetchPostsPage(0, PAGE, modeRef.current === "photo");
-        postsRef.current = list;
-        setPosts(list);
-        setFresh([]);
-        setHasMore(list.length === PAGE);
+        await reload();
         setRefreshing(false);
       }
       setPull(0);
@@ -192,6 +193,7 @@ export default function CotozutePage() {
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("touchend", onEnd);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pull, refreshing]);
 
   return (
@@ -215,7 +217,7 @@ export default function CotozutePage() {
             Cotozute
           </div>
         </div>
-        {/* X風タブ（赤い下線） */}
+        {/* X風タブ */}
         <div className="grid grid-cols-2">
           {(
             [
@@ -238,7 +240,7 @@ export default function CotozutePage() {
         </div>
       </header>
 
-      {/* 追いつきピル（Xの「新しいポストを表示」— スクロール中でも常に画面上部に浮かぶ） */}
+      {/* 追いつきピル */}
       {fresh.length > 0 && (
         <div
           className="pointer-events-none fixed left-1/2 z-50 -translate-x-1/2"
@@ -249,17 +251,14 @@ export default function CotozutePage() {
             className="pointer-events-auto flex items-center gap-1.5 rounded-full py-2 pl-3 pr-4 text-[13px] font-extrabold text-white shadow-xl active:scale-95"
             style={{ background: "linear-gradient(135deg,#d4603a,#c94d3a)" }}
           >
-            ↑ 新しい言の葉 +{fresh.length}件
+            ↑ 新しいたより +{fresh.length}件
           </button>
         </div>
       )}
 
       {/* 引っ張って更新のスピナー */}
       {(pull > 0 || refreshing) && (
-        <div
-          className="flex items-center justify-center overflow-hidden transition-[height]"
-          style={{ height: refreshing ? 48 : pull }}
-        >
+        <div className="flex items-center justify-center overflow-hidden transition-[height]" style={{ height: refreshing ? 48 : pull }}>
           <div
             className={`h-6 w-6 rounded-full border-2 border-[#c94d3a] border-t-transparent ${refreshing ? "animate-spin" : ""}`}
             style={refreshing ? {} : { transform: `rotate(${pull * 4}deg)`, opacity: Math.min(1, pull / 55) }}
@@ -267,9 +266,9 @@ export default function CotozutePage() {
         </div>
       )}
 
-      {/* フィード本体（区切り線は画面端まで=X流） */}
+      {/* フィード本体（3媒体ミックス・区切り線は画面端まで） */}
       <div ref={feedRef}>
-        {posts === null ? (
+        {items === null ? (
           <div>
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="flex gap-3 border-b border-[#f2ece0] px-4 py-3">
@@ -282,19 +281,25 @@ export default function CotozutePage() {
               </div>
             ))}
           </div>
-        ) : posts.length === 0 ? (
+        ) : items.length === 0 ? (
           <p className="py-12 text-center text-[13px] text-[#b8b0a0]">
             {mode === "photo" ? "画像つきの言の葉はまだありません 📷" : "まだ言の葉がありません。最初のひとことをどうぞ 🌿"}
           </p>
         ) : (
           <>
-            {posts.map((p) => (
+            {items.map((it) => (
               <div
-                key={p.id}
-                className="border-b border-[#f0e9dc] px-4"
+                key={feedKey(it)}
+                className={it.kind === "coto" ? "border-b border-[#f0e9dc] px-4" : "px-3"}
                 style={{ contentVisibility: "auto", containIntrinsicSize: "auto 120px" }}
               >
-                <PostCard post={p} me={me} liked={likedSet.has(p.id)} onDeleted={reload} flush />
+                {it.kind === "coto" ? (
+                  <PostCard post={it.post} me={me} liked={likedSet.has(it.post.id)} onDeleted={reload} flush />
+                ) : it.kind === "mura" ? (
+                  <MuraFeedCard mura={it.mura} />
+                ) : (
+                  <ShopFeedCard shop={it.shop} />
+                )}
               </div>
             ))}
             <div ref={sentinelRef} />
@@ -307,7 +312,7 @@ export default function CotozutePage() {
         )}
       </div>
 
-      {/* 右下の浮遊投稿ボタン（X風） */}
+      {/* 右下の浮遊投稿ボタン */}
       {me && !composing && (
         <button
           onClick={() => setComposing(true)}
@@ -322,12 +327,11 @@ export default function CotozutePage() {
         </button>
       )}
 
-      {/* 投稿画面（X風の全画面・開いた瞬間に書ける） */}
+      {/* 投稿画面（X風の全画面） */}
       {composing && (
         <div className="fixed inset-0 z-[80] flex justify-center bg-black/30">
           <div
             ref={(el) => {
-              // 開いた瞬間にキーボードを出す（X同様）
               if (el) setTimeout(() => el.querySelector("textarea")?.focus(), 60);
             }}
             className="h-full w-full max-w-[480px] overflow-y-auto bg-[#fffdf8]"

@@ -601,7 +601,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         className="mb-2 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}
       >
-        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 各県のセカイムラ情報</div>
+        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 むらびとたより</div>
         <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
       </div>
 
