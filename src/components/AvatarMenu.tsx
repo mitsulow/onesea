@@ -102,14 +102,6 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             🌊
           </span>
         )}
-        {unread > 0 && (
-          <span
-            className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white"
-            style={{ lineHeight: 1 }}
-          >
-            {unread > 99 ? "99+" : unread}
-          </span>
-        )}
       </button>
 
       {open &&
@@ -121,9 +113,6 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             className="fixed z-[96] max-h-[80vh] w-56 overflow-y-auto rounded-xl border border-[#ede5d8] bg-white"
             style={{ top: anchor.top, right: anchor.right, boxShadow: "0 10px 36px rgba(0,0,0,0.22)" }}
           >
-            <Link href="/" onClick={() => setOpen(false)} className={item}>
-              {icon("/icons/tab-home.png")} ホーム
-            </Link>
             <Link href="/mmm" onClick={() => setOpen(false)} className={item}>
               {icon("/icons/cel-sun.png")} MasterMindMembers
             </Link>
@@ -133,9 +122,21 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <a href="/tsukiyoga-v7/index.html" className={item}>
               {icon("/icons/cel-moon.png")} ツキヨガ
             </a>
+            <Link href="/cotozute" onClick={() => setOpen(false)} className={item}>
+              {icon("/icons/tab-cotozute.png")} コトヅテ
+            </Link>
+            <Link href="/" onClick={() => setOpen(false)} className={item}>
+              {icon("/icons/tab-home.png")} ホーム
+            </Link>
             <Link href="/za" onClick={() => setOpen(false)} className={item}>
               <img src="/rakuichi/logo-emblem.webp" alt="" className="h-[20px] w-[20px] flex-shrink-0 rounded-full object-cover" />
               楽市楽座
+            </Link>
+            <Link href="/#techo" onClick={() => setOpen(false)} className={item}>
+              <span className="w-[20px] text-center text-[16px]">📖</span> 手帳
+            </Link>
+            <Link href="/my" onClick={() => setOpen(false)} className={item}>
+              <span className="w-[20px] text-center text-[16px]">🪪</span> マイページ
             </Link>
             <Link href="/line" onClick={() => setOpen(false)} className={item}>
               <span className="w-[20px] text-center text-[16px]">💬</span> TALK
@@ -147,15 +148,6 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
                   {unread > 99 ? "99+" : unread}
                 </span>
               )}
-            </Link>
-            <Link href="/cotozute" onClick={() => setOpen(false)} className={item}>
-              {icon("/icons/tab-cotozute.png")} コトヅテ
-            </Link>
-            <Link href="/#techo" onClick={() => setOpen(false)} className={item}>
-              <span className="w-[20px] text-center text-[16px]">📖</span> 手帳
-            </Link>
-            <Link href="/my" onClick={() => setOpen(false)} className={item}>
-              <span className="w-[20px] text-center text-[16px]">🪪</span> マイページ
             </Link>
             <button onClick={logout} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13.5px] font-medium text-[#a05040] active:bg-[#faf4ea]">
               <span className="w-[20px] text-center text-[16px]">👋</span> ログアウト

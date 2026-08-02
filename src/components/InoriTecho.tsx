@@ -109,6 +109,16 @@ export function InoriTecho() {
     setMemos(loadMemos());
   }, []);
 
+  // ダッシュボードや手帳アイコンから「今日」を直接開く
+  useEffect(() => {
+    const f = () => {
+      setMemos(loadMemos());
+      setSheetKey(todayK);
+    };
+    window.addEventListener("onesea:openToday", f);
+    return () => window.removeEventListener("onesea:openToday", f);
+  }, [todayK]);
+
   const saveEvents = (k: string, evs: TechoEv[]) => {
     setMemos((prev) => {
       const day = prev[k] ?? { note: "", h: {} };

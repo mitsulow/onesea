@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { fetchUnreadTotal } from "@/lib/line";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -123,37 +125,19 @@ const SERVICES: Service[] = [
       { href: "/settings/profile", icon: "⚙️", label: "編集" },
     ],
   },
-  {
-    // OneSeaトップ = みんなが集まる港。ここから全サービスへ出て、また戻ってくる
-    match: (p) => p === "/",
-    home: "/",
-    noHome: true,
-    bg: "rgba(255,253,248,.96)",
-    border: "#e5dccb",
-    active: "#c94d3a",
-    inactive: "#a09888",
-    tabs: [
-      { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
-      { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
-      { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
-      { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
-      { href: "/icons/tab-cotozute.png|/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
-      { href: "/line", icon: "💬", label: "TALK" },
-    ],
-  },
 ];
 
 /** ホームボタンの折りたたみメニュー（全サービス一覧） */
-const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean }> = [
-  { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
+const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; talk?: boolean }> = [
   { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
-  { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
-  { href: "/line", icon: "💬", label: "TALK" },
   { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
+  { href: "/", icon: "/icons/tab-home.png", label: "HOME" },
+  { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "📖", label: "手帳", ext: true },
   { href: "/my", icon: "🪪", label: "マイページ" },
+  { href: "/line", icon: "💬", label: "TALK", talk: true },
 ];
 
 function TabIcon({ icon, active }: { icon: string; active: boolean }) {
@@ -169,6 +153,27 @@ export function BottomNav() {
   const router = useRouter();
   const [kbOpen, setKbOpen] = useState(false);
   const [menu, setMenu] = useState(false);
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    let stop = false;
+    const supabase = createClient();
+    const run = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      if (!uid || stop) return;
+      const n = await fetchUnreadTotal(uid);
+      if (!stop) setUnread(n);
+    };
+    run();
+    const t = setInterval(run, 30000);
+    window.addEventListener("onesea:unreadRefresh", run);
+    return () => {
+      stop = true;
+      clearInterval(t);
+      window.removeEventListener("onesea:unreadRefresh", run);
+    };
+  }, [pathname]);
 
   useEffect(() => setMenu(false), [pathname]);
 
@@ -229,7 +234,14 @@ export function BottomNav() {
                   {m.icon.startsWith("/") ? (
                     <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
                   ) : (
-                    <span className="text-[24px] leading-none">{m.icon}</span>
+                    <span className="relative text-[24px] leading-none">
+                      {m.icon}
+                      {m.talk && unread > 0 && (
+                        <span className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white" style={{ lineHeight: 1 }}>
+                          {unread > 99 ? "99+" : unread}
+                        </span>
+                      )}
+                    </span>
                   )}
                   <span className="text-[10.5px] font-extrabold" style={{ color: svc.active }}>
                     {m.label}
@@ -246,7 +258,14 @@ export function BottomNav() {
                   {m.icon.startsWith("/") ? (
                     <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
                   ) : (
-                    <span className="text-[24px] leading-none">{m.icon}</span>
+                    <span className="relative text-[24px] leading-none">
+                      {m.icon}
+                      {m.talk && unread > 0 && (
+                        <span className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white" style={{ lineHeight: 1 }}>
+                          {unread > 99 ? "99+" : unread}
+                        </span>
+                      )}
+                    </span>
                   )}
                   <span className="text-[10.5px] font-extrabold" style={{ color: svc.active }}>
                     {m.label}
