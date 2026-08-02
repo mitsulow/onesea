@@ -16,6 +16,7 @@ import { setBadge, ensureSw } from "@/lib/push";
  */
 export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   const [user, setUser] = useState<User | null>(null);
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
 
@@ -35,10 +36,15 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
       }
     };
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       userId = session?.user?.id ?? null;
       refresh();
+      // マイページで変えた写真（profiles.avatar_url）を優先表示
+      if (userId) {
+        const { data: prof } = await supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle();
+        if (prof?.avatar_url) setProfileAvatar(prof.avatar_url);
+      }
     });
     const t = setInterval(refresh, 30000);
     window.addEventListener("focus", refresh);
@@ -57,7 +63,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
     window.location.href = "/";
   };
 
-  const avatar = (user?.user_metadata?.avatar_url as string) ?? null;
+  const avatar = profileAvatar ?? (user?.user_metadata?.avatar_url as string) ?? null;
 
   const item =
     "flex items-center gap-2.5 border-b border-[#f2ece0] px-4 py-2.5 text-[13.5px] font-medium text-[#3a3428] no-underline active:bg-[#faf4ea]";
