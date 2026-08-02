@@ -264,6 +264,32 @@ export default function MeditationPage() {
       {showCfg && !session && (
         <div className="mt-4 space-y-2 rounded-2xl bg-white/5 p-3 text-[12px]">
           <div className="mb-1 font-extrabold text-white/80">設定（次のセッションから反映）</div>
+          {/* 音の構成 */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-white/65">音の構成</span>
+            <div className="flex gap-1.5">
+              {[
+                { v: 3, label: "6:11:16:21:31" },
+                { v: 1, label: "22:32:33:47:62" },
+              ].map((o) => (
+                <button
+                  key={o.v}
+                  onClick={() => patchCfg({ voiceSet: o.v })}
+                  className="num rounded-lg border px-2 py-1 text-[10.5px] font-bold"
+                  style={
+                    cfg.voiceSet === o.v
+                      ? { background: "#d4b96a", borderColor: "#d4b96a", color: "#0b1020" }
+                      : { background: "transparent", borderColor: "rgba(255,255,255,.2)", color: "rgba(255,255,255,.6)" }
+                  }
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="-mt-1 text-[9.5px] leading-relaxed text-white/35">
+            6:11:16:21:31 = 32×F1〜F4+φ⁸×F4（基音2×F3・最小整数比） / 22:32:33:47:62 = F3基音のφ⁸型
+          </div>
           {(
             [
               ["dwell", "滞在時間（秒）", 30, 900, 10],

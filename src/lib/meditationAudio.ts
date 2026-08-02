@@ -42,7 +42,8 @@ export interface MedConfig {
   gapJitter: number; // 間隔のばらつき（±割合）
   dwell: number; // 滞在時間 秒
   master: number; // 全体の音量
-  justOn: boolean; // 純正律スナップ（実測F3の 22/32/33/47/62 倍へ）
+  voiceSet: number; // 音の構成: 1 = 22:32:33:47:62(F3基音) / 3 = 6:11:16:21:31(2×F3基音)
+  justOn: boolean; // 純正律スナップ（オフ=実測値×32/φ⁸の生の値）
   echoMix: number; // φエコーの量（0でオフ）
   isoDepth: number; // 同相AM補強（8Hzの脈が「ブツブツ」に聞こえたため初期値0）
   breathDepth: number; // 呼吸スウェルの深さ（0でオフ）
@@ -65,6 +66,7 @@ export const MED_DEFAULTS: MedConfig = {
   dwell: 180,
   // 鐘より小さく「遠くでなんとなく聞こえている」程度が瞑想中の正解
   master: 0.05,
+  voiceSet: 3,
   justOn: true,
   echoMix: 0.18,
   isoDepth: 0,
@@ -155,16 +157,26 @@ export interface VoiceSpec {
  */
 export function buildVoices(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): VoiceSpec[] {
   const f3 = modes[2];
-  const defs: Array<{ name: string; n: number; raw: number }> = [
-    { name: "32×F2", n: 22, raw: modes[1] * MULT32 },
-    { name: "32×F3", n: 32, raw: modes[2] * MULT32 },
-    { name: "φ⁸×F2", n: 33, raw: modes[1] * MULT_PHI8 },
-    { name: "φ⁸×F3", n: 47, raw: modes[2] * MULT_PHI8 },
-    { name: "φ⁸×F4", n: 62, raw: modes[3] * MULT_PHI8 },
+  // 構成1: F3基音 22:32:33:47:62（φ⁸×F2を含む・32:33の差音=F3の明滅つき）
+  const set1: Array<{ name: string; n: number; base: number; raw: number }> = [
+    { name: "32×F2", n: 22, base: f3, raw: modes[1] * MULT32 },
+    { name: "32×F3", n: 32, base: f3, raw: modes[2] * MULT32 },
+    { name: "φ⁸×F2", n: 33, base: f3, raw: modes[1] * MULT_PHI8 },
+    { name: "φ⁸×F3", n: 47, base: f3, raw: modes[2] * MULT_PHI8 },
+    { name: "φ⁸×F4", n: 62, base: f3, raw: modes[3] * MULT_PHI8 },
   ];
-  const ref = cfg.justOn ? 22 * f3 : defs[0].raw; // 最低音を音量の基準に
+  // 構成3: 2×F3基音 6:11:16:21:31（最小の整数比=純正律の融合力が最も強い）
+  const set3: Array<{ name: string; n: number; base: number; raw: number }> = [
+    { name: "32×F1", n: 6, base: f3 * 2, raw: modes[0] * MULT32 },
+    { name: "32×F2", n: 11, base: f3 * 2, raw: modes[1] * MULT32 },
+    { name: "32×F3", n: 16, base: f3 * 2, raw: modes[2] * MULT32 },
+    { name: "32×F4", n: 21, base: f3 * 2, raw: modes[3] * MULT32 },
+    { name: "φ⁸×F4", n: 31, base: f3 * 2, raw: modes[3] * MULT_PHI8 },
+  ];
+  const defs = cfg.voiceSet === 3 ? set3 : set1;
+  const ref = cfg.justOn ? defs[0].n * defs[0].base : defs[0].raw; // 最低音を音量の基準に
   return defs.map((d, ix) => {
-    const freq = cfg.justOn ? d.n * f3 : d.raw;
+    const freq = cfg.justOn ? d.n * d.base : d.raw;
     const vol =
       Math.pow(PHI, -ix / 2) * // 低域から 1 : 1/√φ : 1/φ : … の緩やかな傾斜
       Math.pow(ref / freq, cfg.hfExp) *
@@ -372,8 +384,9 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline, ctxOut?:
   const bellBus = ctx.createGain();
   bellBus.gain.value = 1;
   bellBus.connect(ctx.destination);
-  // 鐘の音高 = 最低音の周波数（純正律なら 22×F3。5音の仲間としてグリッドに乗る）
-  const bellFreq = tl.voices.reduce((m, v) => Math.min(m, v.spec.freq), Infinity);
+  // 鐘の音高 = 最低音（低すぎるときは1オクターブ上げる。どちらも純正律グリッドに乗る）
+  const lowest = tl.voices.reduce((m, v) => Math.min(m, v.spec.freq), Infinity);
+  const bellFreq = lowest < 400 ? lowest * 2 : lowest;
 
   // 始まりの鐘3打: 第1音のフェード開始(1.5s)の0.5秒後に1打目、以後深呼吸テンポ
   if (cfg.openingBell) for (let i = 0; i < 3; i++) ringBell(ctx, bellBus, bellFreq, t0 + 2 + i * BELL_GAP);
