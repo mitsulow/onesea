@@ -22,7 +22,8 @@ import {
   TEXTBOOK_MODES,
 } from "@/lib/meditationAudio";
 
-const CFG_KEY = "onesea-med-cfg";
+// v2: 初期値を大きく変えたため保存キーを更新（古い設定を引き継がない）
+const CFG_KEY = "onesea-med-cfg2";
 
 function fmt(sec: number): string {
   if (!isFinite(sec) || sec < 0) sec = 0;
@@ -147,8 +148,11 @@ export default function MeditationPage() {
             className="w-full rounded-2xl py-4 text-[16px] font-extrabold text-[#0b1020]"
             style={{ background: "linear-gradient(120deg,#e8dcae,#d4b96a)" }}
           >
-            イヤホンを着けた — はじめる（約{fmt(195 + cfg.dwell * 2.6)}）
+            イヤホンを着けた — はじめる（約{fmt(250 + cfg.dwell * 2.6)}）
           </button>
+          <div className="mt-2 text-center text-[10.5px] text-white/40">
+            鐘とともに高い音から現れ、終わりの鐘3打のあと1本ずつ帰っていきます
+          </div>
         </>
       ) : (
         <>
@@ -187,11 +191,13 @@ export default function MeditationPage() {
                       background:
                         s.side === "移行中"
                           ? "rgba(212,185,106,.35)"
-                          : s.name === "登場" || s.name === "退場"
-                            ? "rgba(255,255,255,.10)"
-                            : s.side === "左脳優位"
-                              ? "rgba(129,140,248,.30)"
-                              : "rgba(96,165,250,.22)",
+                          : s.name === "終わりの鐘"
+                            ? "rgba(232,220,174,.5)"
+                            : s.name === "登場" || s.name === "退場"
+                              ? "rgba(255,255,255,.10)"
+                              : s.side === "左脳優位"
+                                ? "rgba(129,140,248,.30)"
+                                : "rgba(96,165,250,.22)",
                     }}
                   />
                 ))}
@@ -266,7 +272,8 @@ export default function MeditationPage() {
               ["basePeriod", "ゆらぎ基準周期（秒）", 30, 300, 10],
               ["breathDepth", "呼吸スウェルの深さ", 0, 0.3, 0.02],
               ["breathPeriod", "呼吸の周期（秒）", 8, 20, 1],
-              ["isoDepth", "同相AM補強の深さ", 0, 0.3, 0.02],
+              ["echoMix", "φエコーの量", 0, 0.4, 0.02],
+              ["isoDepth", "同相AM補強（ブツブツ源・通常0）", 0, 0.3, 0.02],
               ["phi8Coef", "φ⁸層の音量係数", 0, 1, 0.02],
               ["hfExp", "高域を抑える指数", 0, 1, 0.05],
               ["enterGap", "登場の間隔（秒）", 2, 15, 1],
@@ -295,8 +302,20 @@ export default function MeditationPage() {
           ))}
           <label className="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
             <span className="text-white/65">
+              ✧きらめき層（φ¹¹・φ¹²×F1）
+              <span className="block text-[9.5px] text-white/35">ガラス質の高音2本。高い音から現れる導入の主役</span>
+            </span>
+            <input
+              type="checkbox"
+              checked={cfg.sparkleOn}
+              onChange={(e) => patchCfg({ sparkleOn: e.target.checked })}
+              className="h-5 w-5 accent-[#d4b96a]"
+            />
+          </label>
+          <label className="flex items-center justify-between gap-2">
+            <span className="text-white/65">
               φ⁸×F2 を鳴らす
-              <span className="block text-[9.5px] text-white/35">オフで 6.196Hz の副産物ビートが消える</span>
+              <span className="block text-[9.5px] text-white/35">6.196Hzの音響ビート（ブツブツの主犯）が出るため通常オフ</span>
             </span>
             <input
               type="checkbox"

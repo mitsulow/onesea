@@ -4,6 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { AUDIO, SCHUMANN, SCHUMANN_DATA_URL } from "@/lib/config";
+import {
+  MED_DEFAULTS,
+  buildTimeline,
+  fetchMeasuredModes,
+  startMedSession,
+  type MedConfig,
+  type MedSession,
+} from "@/lib/meditationAudio";
 
 const CACHE_NAME = "onesea-audio-v1";
 
@@ -52,8 +60,8 @@ export function SchumannAudioPlayer() {
   const [remain, setRemain] = useState<number | null>(null);
   const timers = useRef<number[]>([]);
   const countdownRef = useRef<number | null>(null);
-  const bellCtx = useRef<AudioContext | null>(null);
-  const liveF1 = useRef<number | null>(null);
+  const medRef = useRef<MedSession | null>(null);
+  const liveModes = useRef<number[] | null>(null);
 
   /* シンクロ(DDP)ダイアログ */
   const [showDdp, setShowDdp] = useState(false);
@@ -73,14 +81,11 @@ export function SchumannAudioPlayer() {
     supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
   }, []);
 
-  /* ---- 実測F1（鈴の周波数 = F1 × 64） ---- */
+  /* ---- 実測シューマンF1〜F4（不思議な音のキャリア + 鐘 = F1×64） ---- */
   useEffect(() => {
-    fetch(SCHUMANN_DATA_URL)
-      .then((r) => r.json())
-      .then((d) => {
-        liveF1.current = d?.modes?.F1?.hz ?? null;
-      })
-      .catch(() => {});
+    fetchMeasuredModes(SCHUMANN_DATA_URL).then((r) => {
+      liveModes.current = r.modes;
+    });
   }, []);
 
   /* ---- 初回アクセスで端末に保存 ---- */
@@ -202,106 +207,6 @@ export function SchumannAudioPlayer() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [wakeOn]);
 
-  /* ---- シンギング・リン（WebAudio合成・実測シューマン×64Hz）
-     柔らかいナチュラル版: 音量控えめ / ふわっと立ち上がる / ローパスで角を丸める /
-     わずかにずれた2本の基音で本物のリンのような「うなり」を出す ---- */
-  const ringBell = (ctx: AudioContext, freq: number, when: number, dur = 12) => {
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = Math.min(1400, freq * 3);
-    lp.Q.value = 0.4;
-    lp.connect(ctx.destination);
-    const partials: Array<[number, number]> = [
-      [1, 0.15],
-      [1.004, 0.09], // うなり用（微妙にずらした基音）
-      [2.72, 0.04],
-      [5.41, 0.012],
-    ];
-    for (const [mult, amp] of partials) {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "sine";
-      o.frequency.value = freq * mult;
-      g.gain.setValueAtTime(0.0001, when);
-      g.gain.exponentialRampToValueAtTime(amp, when + 0.18); // 「ビクッ」としない立ち上がり
-      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-      o.connect(g);
-      g.connect(lp);
-      o.start(when);
-      o.stop(when + dur + 0.1);
-    }
-  };
-
-  const ensureBellCtx = useCallback(async (): Promise<AudioContext> => {
-    const AC =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = bellCtx.current && bellCtx.current.state !== "closed" ? bellCtx.current : new AC();
-    bellCtx.current = ctx;
-    await ctx.resume();
-    return ctx;
-  }, []);
-
-  /** 開始の鈴3打: 前に1.5秒の「間」→ 10秒間隔（深呼吸テンポ）で長めに響かせる */
-  const playBells = useCallback(async (): Promise<number> => {
-    try {
-      const ctx = await ensureBellCtx();
-      const freq = (liveF1.current ?? SCHUMANN.hz) * 64;
-      const t0 = ctx.currentTime + 1.5; // 「プツッ」と頭が切れないための間
-      for (let i = 0; i < 3; i++) ringBell(ctx, freq, t0 + i * 10);
-      return 34; // 1.5 + 10 + 10 + 12(余韻)
-    } catch {
-      return 0;
-    }
-  }, [ensureBellCtx]);
-
-  /** 静寂パートの「不思議な音」— 実測シューマンF1〜F4を可聴域(×16)に移した4音の極薄ドローン。
-      ヘミシンク: 右耳だけ実測F1(≈7.83Hz)ぶん高くして、脳内でシューマン周波数のうなりを作る。
-      黄金比φの累乗周期のLFOで音量をゆらし、ランダムに感じる自然な「ゆらぎ」を出す。 */
-  const startDrone = (ctx: AudioContext, when: number, durSec: number) => {
-    if (durSec < 12) return;
-    const PHI = 1.6180339887;
-    const f1 = liveF1.current ?? SCHUMANN.hz;
-    const modes = [f1, 14.3, 20.8, 27.3]; // シューマン第1〜第4モード
-    const amps = [0.5, 0.3, 0.19, 0.12];
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0.0001, when);
-    master.gain.exponentialRampToValueAtTime(0.05, when + 8); // うすーく立ち上がる
-    master.gain.setValueAtTime(0.05, Math.max(when + 8, when + durSec - 6));
-    master.gain.exponentialRampToValueAtTime(0.0001, when + durSec);
-    master.connect(ctx.destination);
-    modes.forEach((f, i) => {
-      ([-1, 1] as const).forEach((side) => {
-        const o = ctx.createOscillator();
-        o.type = "sine";
-        o.frequency.value = f * 16 + (side > 0 ? f1 : 0); // L/Rで出力Hzを変える
-        const g = ctx.createGain();
-        g.gain.value = amps[i];
-        // 黄金比ゆらぎ: φ^i 倍の非整数比周期どうしは決して同期しない=永遠に繰り返さない揺れ
-        const lfo = ctx.createOscillator();
-        lfo.type = "sine";
-        lfo.frequency.value = 0.055 * Math.pow(PHI, i) * (side > 0 ? 1 : 1 / PHI);
-        const lg = ctx.createGain();
-        lg.gain.value = amps[i] * 0.45;
-        lfo.connect(lg);
-        lg.connect(g.gain);
-        let out: AudioNode = g;
-        if (ctx.createStereoPanner) {
-          const pan = ctx.createStereoPanner();
-          pan.pan.value = side * 0.85;
-          g.connect(pan);
-          out = pan;
-        }
-        out.connect(master);
-        o.connect(g);
-        o.start(when);
-        o.stop(when + durSec + 0.5);
-        lfo.start(when);
-        lfo.stop(when + durSec + 0.5);
-      });
-    });
-  };
-
   /* ---- プログラム進行 ---- */
   const after = (ms: number, fn: () => void) => timers.current.push(window.setTimeout(fn, ms));
 
@@ -324,10 +229,8 @@ export function SchumannAudioPlayer() {
     timers.current.forEach(clearTimeout);
     timers.current = [];
     stopCountdown();
-    try {
-      bellCtx.current?.close();
-    } catch {}
-    bellCtx.current = null;
+    medRef.current?.stop();
+    medRef.current = null;
     wakeOff();
     setProgram(null);
     setPhase("");
@@ -349,25 +252,10 @@ export function SchumannAudioPlayer() {
     wakeOn();
 
     if (kind === "meditation") {
-      // ユーザー操作の中で一度 play→pause して音声をアンロック（iOS対策）
-      suppressRef.current = true;
-      try {
-        await a.play();
-      } catch {}
-      a.pause();
+      // 開始の鈴は廃止: シューマン音がいきなり始まる
+      setPhase("シューマン音");
       a.currentTime = 0;
-      suppressRef.current = false;
-
-      setPhase("開始の鈴 — ゆっくり深呼吸");
-      const bells = await playBells();
-      startCountdown(bells + 2);
-      after((bells + 2) * 1000, () => {
-        // 鈴の余韻から2秒の「間」を置いてから再生
-        stopCountdown();
-        setPhase("シューマン音");
-        a.currentTime = 0;
-        a.play().catch(() => {});
-      });
+      a.play().catch(() => {});
     } else {
       setPhase(kind === "idea" ? "叡智に接続中 — イデアを受け取る" : "ふと、全体に繋がろう");
       a.currentTime = 0;
@@ -393,30 +281,26 @@ export function SchumannAudioPlayer() {
     const p = programRef.current;
     if (!p) return;
     if (p.kind === "meditation") {
+      // シューマン音が終わったら: 鐘1打と同時に「不思議な音」が高い方から現れる。
+      // 進行（滞在/PAN/鳴ったまま終わりの鐘3打 → 1本ずつ退場）はすべて
+      // エンジンが AudioContext の時計に予約済み（画面が消えても音は正しく進む）
       const track = dur || SCHUMANN_FALLBACK_SEC;
       const total = (p.course ?? 10) * 60; // 「トータルで」選んだ分数
-      const OPEN = 36; // 開始の鈴34 + 間2
-      const CLOSE = 34; // 終わりの鐘3打
-      const sep = 2; // シューマン音後の「間」
-      const silence = Math.max(40, Math.round(total - OPEN - track - sep - CLOSE));
-      setPhase("静寂の瞑想 — 不思議な音に身をゆだねる");
+      const cfg: MedConfig = { ...MED_DEFAULTS };
       try {
-        // 画面が消えるとJSタイマーは止まるため、鐘もドローンも
-        // AudioContextの時計に「いま全部」予約しておく（音は止まらない）
-        const ctx = await ensureBellCtx();
-        const freq = (liveF1.current ?? SCHUMANN.hz) * 64;
-        const t = ctx.currentTime + sep;
-        ringBell(ctx, freq, t); // 区切りの鐘1打
-        startDrone(ctx, t + 10, silence - 10); // うすい不思議な音
-        for (let i = 0; i < 3; i++) ringBell(ctx, freq, t + silence + i * 10); // 終わりの鐘3打
+        const saved = localStorage.getItem("onesea-med-cfg2");
+        if (saved) Object.assign(cfg, JSON.parse(saved));
       } catch {}
-      startCountdown(sep + silence);
-      after((sep + silence) * 1000, () => {
-        stopCountdown();
-        setPhase("終わりの鈴");
-        startCountdown(CLOSE);
-      });
-      after((sep + silence + CLOSE) * 1000, endProgram);
+      // エンジンの固定部（登場+PAN×2+鐘+退場）を差し引いて滞在時間を決める
+      const fixedLen = buildTimeline({ ...cfg, dwell: 0 }, liveModes.current ?? undefined).total;
+      cfg.dwell = Math.max(40, Math.round((total - track - fixedLen) / 2.6));
+      const tl = buildTimeline(cfg, liveModes.current ?? undefined);
+      setPhase("不思議な音 — 遠くの気配に身をゆだねる");
+      try {
+        medRef.current = startMedSession(cfg, tl);
+      } catch {}
+      startCountdown(Math.round(tl.total));
+      after(Math.round(tl.total) * 1000 + 1200, endProgram);
     } else if (p.kind === "idea") {
       endProgram();
       setIdeaBody("");
@@ -426,7 +310,7 @@ export function SchumannAudioPlayer() {
       endProgram();
       openDdp();
     }
-  }, [onStopped, dur, playBells, endProgram, openDdp]);
+  }, [onStopped, dur, endProgram, openDdp]);
 
   const saveDdp = useCallback(async () => {
     if (!user || !ddpBody.trim() || ddpSaving) return;
@@ -457,9 +341,7 @@ export function SchumannAudioPlayer() {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
       timers.current.forEach(clearTimeout);
       if (countdownRef.current) clearInterval(countdownRef.current);
-      try {
-        bellCtx.current?.close();
-      } catch {}
+      medRef.current?.stop();
       window.dispatchEvent(new CustomEvent("onesea:mm", { detail: { on: false } }));
     };
   }, []);
@@ -596,7 +478,7 @@ export function SchumannAudioPlayer() {
               <img src="/icons/mode-meditation.webp" alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
               <div className="min-w-0">
                 <div className="text-[12px] font-extrabold text-white">瞑想モード</div>
-                <div className="text-[9.5px] leading-snug text-white/80">鈴3打 → シューマン音 → 不思議な音の静寂 → 鈴3打</div>
+                <div className="text-[9.5px] leading-snug text-white/80">シューマン音 → 鐘 → 不思議な音 → 鐘3打で還る</div>
               </div>
             </div>
             <div className="flex flex-shrink-0 gap-1.5">

@@ -1,7 +1,7 @@
 /**
- * 瞑想モード音響エンジン（仕様書: 瞑想モード音響仕様書.md 準拠）
+ * 瞑想モード音響エンジン（音響仕様書ベース + フェーブル改良）
  *
- * シューマン共振の第1〜第4モードを可聴域(32倍 / φ⁸倍)に上げた8本の正弦波。
+ * シューマン共振の第1〜第4モード（実測値）を可聴域(32倍 / φ⁸倍)に上げた8本の正弦波。
  * 左右の耳に Δf = 8.0219032748 Hz だけ違う周波数を送り、脳幹にその差を
  * 計算させる（バイノーラルビート）。聞こえる音ではなく、この差だけが脳に届く。
  *
@@ -12,15 +12,16 @@
  * - PAN は「沈めて→底で配線切替→浮上」。クロスフェード禁止（モノラルビート発生）
  * - 音響イベントは AudioContext.currentTime 基準で全予約（setTimeout 禁止・画面オフ対応）
  *
- * 仕様書からの改良（音響神経科学的な根拠つき）:
- * 1. 音量ゆらぎの75%を両耳共通に。バイノーラルビートは両耳の音量が揃っているとき
- *    最も深くうなる。左右が独立に±35%揺れると耳間レベル差が開いてうなりが痩せる。
- *    残り25%だけ左右独立に揺らし、有機的な非対称感は保つ
- * 2. 極浅の同相AM（アイソクロニック補強）。脳波の聴性定常応答はバイノーラルより
- *    同相の振幅変調のほうが強い。深さ8%なら「ばっばっば」にはならず、全発振器
- *    同時startのためバイノーラルのうなりと位相も揃った 8.02Hz の二重ドライブになる
- * 3. 呼吸スウェル。全体音量に周期12秒（5呼吸/分＝副交感神経が最大化する帯域）、
- *    吸う4割/吐く6割の非対称な±12%の波を敷き、意識させずに深呼吸へ誘導する
+ * フェーブル改良:
+ * - 音量ゆらぎは両耳共通75% + 独立25%（耳間バランスが保たれ、うなりが痩せない）
+ * - φ⁸×F2 は初期値オフ。32×F3 と 6.196Hz しか離れておらず同じ耳でほぼ100%変調の
+ *   「ばっばっば」が常時鳴る（=ブツブツの正体）。オンにすればシータ帯の副産物が戻る
+ * - ✧きらめき層: φ¹¹×F1 / φ¹²×F1 のごく小さなガラス質の高音2本。1kHz超なので
+ *   バイノーラルは成立しない（音色の飾り）。高い音から登場する導入の主役
+ * - φエコー: 左=φ秒 / 右=φ²秒の残響。耳をまたがない（またぐと Lo/Hi が同じ耳に
+ *   同居してモノラルビートが出る）。音程ゆらぎと干渉してゆっくり動く位相うねりになる
+ * - 進行: 鐘1打と同時に高い音から登場 → 滞在/PAN → 鳴ったまま終わりの鐘3打 →
+ *   3打目のあと1本ずつ退場
  */
 
 export interface MedConfig {
@@ -38,18 +39,21 @@ export interface MedConfig {
   gapJitter: number; // 間隔のばらつき（±割合）
   dwell: number; // 滞在時間 秒
   master: number; // 全体の音量
-  phi8F2On: boolean; // φ⁸×F2 を鳴らすか（32×F3 と 6.196Hz の音響ビートを作る副産物の元）
-  isoDepth: number; // 同相AM補強の深さ（0でオフ）
+  phi8F2On: boolean; // φ⁸×F2 を鳴らすか（6.196Hzのモノラルビート＝ブツブツの元）
+  sparkleOn: boolean; // ✧きらめき層（φ¹¹/φ¹²×F1）
+  echoMix: number; // φエコーの量（0でオフ）
+  isoDepth: number; // 同相AM補強（8Hzの脈が「ブツブツ」に聞こえたため初期値0）
   breathDepth: number; // 呼吸スウェルの深さ（0でオフ）
   breathPeriod: number; // 呼吸スウェルの周期 秒
+  openingBell: boolean; // 開始の鐘1打（MMM統合時はシューマン音の直後に鳴る）
 }
 
 export const MED_DEFAULTS: MedConfig = {
   deltaF: 8.0219032748,
   basePeriod: 120,
   flutterDepth: 0.35,
-  hfExp: 0.25,
-  phi8Coef: 0.62,
+  hfExp: 0.1,
+  phi8Coef: 0.8,
   enterGap: 6,
   enterRise: 12,
   panGap: 5,
@@ -58,13 +62,15 @@ export const MED_DEFAULTS: MedConfig = {
   exitTail: 15,
   gapJitter: 0.35,
   dwell: 180,
-  // 仕様書初期値は 0.16 だが、「開始の鈴より小さく、遠くでなんとなく聞こえている程度」
-  // が瞑想中の正解なので初期値はさらに絞る（設定でいつでも上げられる）
-  master: 0.06,
-  phi8F2On: true,
-  isoDepth: 0.08,
+  // 鐘より小さく「遠くでなんとなく聞こえている」程度が瞑想中の正解
+  master: 0.05,
+  phi8F2On: false,
+  sparkleOn: true,
+  echoMix: 0.18,
+  isoDepth: 0,
   breathDepth: 0.12,
   breathPeriod: 12,
+  openingBell: true,
 };
 
 const PHI = 1.6180339887498949;
@@ -72,6 +78,8 @@ const PHI = 1.6180339887498949;
 export const TEXTBOOK_MODES = [7.83, 14.3, 20.8, 27.3];
 const MULT32 = 32;
 const MULT_PHI8 = Math.pow(PHI, 8); // φの8乗（≈46.98。数値の直書きはしない）
+const BELL_GAP = 10; // 終わりの鐘の間隔（深呼吸テンポ）
+const BELLS_LEN = BELL_GAP * 2 + 4; // 3打目が鳴り始めるまで+少しの間
 
 /** 実測値の妥当範囲（外れ値は棄却。雷や測定機器の不調で外れ値が出る） */
 const MODE_RANGES: Array<[number, number]> = [
@@ -125,17 +133,19 @@ function aWeight(f: number): number {
 }
 
 export interface VoiceSpec {
-  ix: number; // 通し番号 0..7（32×F1..F4, φ⁸×F1..F4）
+  ix: number; // 通し番号（32×F1..F4=0..3, φ⁸×F1..F4=4..7, ✧=8..9）
   name: string;
   freq: number;
   vol: number;
   rate: number; // ゆらぎ速度 R (Hz)
+  deco?: boolean; // 1kHz超の飾り（バイノーラル非成立）
 }
 
-/** 8本の音の定義（音量は仕様書の計算式そのまま）。modes = 実測シューマンF1〜F4 */
+/** 音の定義。modes = 実測シューマンF1〜F4 */
 export function buildVoices(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): VoiceSpec[] {
   const out: VoiceSpec[] = [];
-  const baseAmps = [1, 1 / PHI, 1 / PHI ** 2, 1 / PHI ** 3];
+  // 低域傾斜は 1 : 1/√φ : 1/φ : 1/φ^1.5（1/φ刻みより緩やか=高音が前に出る）
+  const baseAmps = [1, PHI ** -0.5, PHI ** -1, PHI ** -1.5];
   [MULT32, MULT_PHI8].forEach((mult, layer) => {
     modes.forEach((m, mi) => {
       const ix = layer * 4 + mi;
@@ -144,7 +154,7 @@ export function buildVoices(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): V
         baseAmps[mi] *
         (layer === 1 ? cfg.phi8Coef : 1) *
         Math.pow(250 / freq, cfg.hfExp) *
-        (aWeight(250) / aWeight(freq)); // A特性の逆補正（250Hz基準）
+        Math.pow(aWeight(250) / aWeight(freq), 0.6); // A特性逆補正は6割掛け（高音を殺しすぎない）
       out.push({
         ix,
         name: `${layer === 0 ? "32" : "φ⁸"}×F${mi + 1}`,
@@ -154,9 +164,21 @@ export function buildVoices(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): V
       });
     });
   });
-  // φ⁸×F2 は設定でオフにできる（32×F3 665.60Hz と 6.196Hz しか離れておらず、
-  // 同じ耳の中でシータ帯の音響ビートが生まれる。悪くない副産物だが意図したものではない）
-  return cfg.phi8F2On ? out : out.filter((v) => v.ix !== 5);
+  let voices = cfg.phi8F2On ? out : out.filter((v) => v.ix !== 5);
+  if (cfg.sparkleOn) {
+    // ✧きらめき層: φ¹¹×F1 ≈1.6kHz / φ¹²×F1 ≈2.5kHz。ごく小さなガラス質の星
+    [11, 12].forEach((p, k) => {
+      voices = voices.concat({
+        ix: 8 + k,
+        name: `✧φ^${p}`,
+        freq: modes[0] * Math.pow(PHI, p),
+        vol: k === 0 ? 0.1 : 0.055,
+        rate: (1 / cfg.basePeriod) * Math.pow(PHI, (8 + k) / 4),
+        deco: true,
+      });
+    });
+  }
+  return voices;
 }
 
 export interface SectionInfo {
@@ -177,6 +199,7 @@ export interface VoiceTimeline {
 export interface MedTimeline {
   sections: SectionInfo[];
   voices: VoiceTimeline[];
+  bellsAt: number; // 終わりの鐘・1打目の相対秒
   total: number;
   cfg: MedConfig;
 }
@@ -192,17 +215,24 @@ function shuffled(n: number): number[] {
 
 const jitter = (base: number, pct: number) => base * (1 + (Math.random() * 2 - 1) * pct);
 
-/** 進行表を作る。登場・PAN1・PAN2・退場はそれぞれ別のランダム順（同じ順だと巻き戻しに聞こえる） */
+/**
+ * 進行表を作る。
+ * 登場は「高い音から」（順序キーにゆらぎを混ぜたほぼ降順=毎回すこし違う）。
+ * PAN1・PAN2・退場はそれぞれ別のランダム順（同じ順だと巻き戻しに聞こえる）。
+ */
 export function buildTimeline(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): MedTimeline {
   const voices = buildVoices(cfg, modes);
   const n = voices.length;
 
-  const enterOrder = shuffled(n);
+  const enterOrder = voices
+    .map((v, i) => ({ i, key: v.freq * (0.75 + Math.random() * 0.5) }))
+    .sort((a, b) => b.key - a.key)
+    .map((x) => x.i);
   const pan1Order = shuffled(n);
   const pan2Order = shuffled(n);
   const exitOrder = shuffled(n);
 
-  // 登場: 間隔にばらつき（±35%）。1本目は即
+  // 登場: 間隔にばらつき（±35%）。1本目は鐘と同時
   const enterAt = new Array<number>(n);
   let t = 0;
   enterOrder.forEach((vi, k) => {
@@ -223,8 +253,12 @@ export function buildTimeline(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES):
   pan2Order.forEach((vi, k) => (pan2At[vi] = s4End + k * cfg.panGap));
   const s5End = s4End + panLen;
   const s6End = s5End + cfg.dwell * 0.6;
+
+  // 終わりの鐘3打: 不思議な音は鳴ったまま。3打目のあとに1本ずつ退場
+  const bellsAt = s6End;
+  const bellsEnd = s6End + BELLS_LEN;
   const exitAt = new Array<number>(n);
-  t = s6End;
+  t = bellsEnd;
   exitOrder.forEach((vi, k) => {
     if (k > 0) t += jitter(cfg.exitGap, cfg.gapJitter);
     exitAt[vi] = t;
@@ -234,6 +268,7 @@ export function buildTimeline(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES):
   return {
     cfg,
     total,
+    bellsAt,
     sections: [
       { name: "登場", side: "右脳優位", start: 0, end: s1End },
       { name: "滞在", side: "右脳優位", start: s1End, end: s2End },
@@ -241,7 +276,8 @@ export function buildTimeline(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES):
       { name: "滞在", side: "左脳優位", start: s3End, end: s4End },
       { name: "PAN →右脳へ", side: "移行中", start: s4End, end: s5End },
       { name: "滞在", side: "右脳優位", start: s5End, end: s6End },
-      { name: "退場", side: "右脳優位", start: s6End, end: total },
+      { name: "終わりの鐘", side: "右脳優位", start: s6End, end: bellsEnd },
+      { name: "退場", side: "右脳優位", start: bellsEnd, end: total },
     ],
     voices: voices.map((spec, vi) => ({
       spec,
@@ -279,15 +315,48 @@ function dipCurve(n = 96): Float32Array {
   return c;
 }
 
-export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSession {
+/** 柔らかいシンギング・リン（実測シューマンF1×64Hz）。ドローンより大きい独立系統 */
+function ringBell(ctx: AudioContext, dest: AudioNode, freq: number, when: number, dur = 12) {
+  const lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = Math.min(1400, freq * 3);
+  lp.Q.value = 0.4;
+  lp.connect(dest);
+  const partials: Array<[number, number]> = [
+    [1, 0.15],
+    [1.004, 0.09], // うなり用（微妙にずらした基音）
+    [2.72, 0.04],
+    [5.41, 0.012],
+  ];
+  for (const [mult, amp] of partials) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = freq * mult;
+    g.gain.setValueAtTime(0.0001, when);
+    g.gain.exponentialRampToValueAtTime(amp, when + 0.18);
+    g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    o.connect(g);
+    g.connect(lp);
+    o.start(when);
+    o.stop(when + dur + 0.1);
+  }
+}
+
+/**
+ * セッション開始。ctxOut を渡すと既存の AudioContext を使う（MMM統合用）。
+ * 鐘1打（openingBell）→ 高い音から登場 → 滞在/PAN → 鳴ったまま鐘3打 → 1本ずつ退場。
+ */
+export function startMedSession(cfg: MedConfig, timeline?: MedTimeline, ctxOut?: AudioContext): MedSession {
   const tl = timeline ?? buildTimeline(cfg);
   const AC =
     window.AudioContext ??
     (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-  const ctx = new AC();
+  // latencyHint "playback": バッファを大きく取り、スマホでの音切れ（ブツブツ）を防ぐ
+  const ctx = ctxOut ?? new AC({ latencyHint: "playback" });
   ctx.resume();
 
-  const t0 = ctx.currentTime + 0.3;
+  const t0 = ctx.currentTime + 0.35;
   const end = t0 + tl.total;
 
   const merger = ctx.createChannelMerger(2);
@@ -299,27 +368,55 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
   breath.connect(master);
   master.connect(ctx.destination);
 
+  // 鐘は独立系統（ドローンの音量を絞っても鐘はしっかり鳴る）
+  const bellBus = ctx.createGain();
+  bellBus.gain.value = 1;
+  bellBus.connect(ctx.destination);
+  const bellFreq = (tl.voices.find((v) => v.spec.ix === 0)?.spec.freq ?? 250.56) * 2; // = F1×64
+
+  if (cfg.openingBell) ringBell(ctx, bellBus, bellFreq, t0);
+  for (let i = 0; i < 3; i++) ringBell(ctx, bellBus, bellFreq, t0 + tl.bellsAt + i * BELL_GAP);
+
+  // ---- φエコー: 左=φ秒 / 右=φ²秒。同じ耳の中だけで反響（耳をまたぐとモノラルビートが出る）。
+  //      キャリアの音程ゆらぎと干渉し、ゆっくり動く位相うねり（SF的な奥行き）になる ----
+  const busses: GainNode[] = [0, 1].map((lr) => {
+    const bus = ctx.createGain();
+    bus.connect(merger, 0, lr);
+    if (cfg.echoMix > 0) {
+      const dly = ctx.createDelay(5);
+      dly.delayTime.value = lr === 0 ? PHI : PHI * PHI;
+      const fb = ctx.createGain();
+      fb.gain.value = 1 / (PHI * PHI); // ≈0.38
+      const wet = ctx.createGain();
+      wet.gain.value = cfg.echoMix;
+      bus.connect(dly);
+      dly.connect(fb);
+      fb.connect(dly);
+      dly.connect(wet);
+      wet.connect(merger, 0, lr);
+    }
+    return bus;
+  });
+
   // ---- 呼吸スウェル: 周期12秒(5呼吸/分)・吸う4割/吐く6割の非対称波。
   //      音が満ちてくる=吸う、長く引いていく=吐く。全区間ぶんを一度に予約 ----
   if (cfg.breathDepth > 0) {
     const P = cfg.breathPeriod;
     const RISE = 0.4;
-    const sr = 4; // 4点/秒（線形補間で十分なめらか）
+    const sr = 4;
     const n = Math.ceil((tl.total + 2) * sr);
     const curve = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       const ph = (i / sr / P) % 1;
-      const x = ph < RISE ? ph / RISE : 1 - (ph - RISE) / (1 - RISE); // 三角 0→1→0
-      const s = 0.5 - 0.5 * Math.cos(Math.PI * x); // 角を丸める
+      const x = ph < RISE ? ph / RISE : 1 - (ph - RISE) / (1 - RISE);
+      const s = 0.5 - 0.5 * Math.cos(Math.PI * x);
       curve[i] = 1 - cfg.breathDepth + cfg.breathDepth * s;
     }
     breath.gain.setValueAtTime(curve[0], t0 - 0.1);
     breath.gain.setValueCurveAtTime(curve, t0, tl.total + 2);
   }
 
-  // ---- 同相AM補強（アイソクロニック）: 両耳同相・極浅の Δf Hz 振幅変調。
-  //      聴性定常応答はバイノーラルより同相AMのほうが強い。全発振器と同時startなので
-  //      バイノーラルのうなりと位相の揃った 8.02Hz 二重ドライブになる ----
+  // ---- 同相AM補強（初期値0）。8Hzの脈が「ブツブツ」に聞こえたため通常はオフ ----
   if (cfg.isoDepth > 0) {
     const iso = ctx.createOscillator();
     iso.type = "sine";
@@ -332,19 +429,17 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
     iso.stop(end + 1);
   }
 
-  // Δf は1本の信号線から全 Hi 発振器へ配る（将来Δfを時間変化させるときは offset 1箇所を書き換える）
+  // Δf は1本の信号線から全 Hi 発振器へ配る
   const dfSrc = ctx.createConstantSource();
   dfSrc.offset.value = cfg.deltaF;
   dfSrc.start(t0);
   dfSrc.stop(end + 1);
 
-  const stoppables: { stop: (t: number) => void }[] = [dfSrc];
-
   for (const vt of tl.voices) {
     const { spec } = vt;
     const f = spec.freq;
 
-    // ---- キャリア2本（Lo/Hi）。同一時刻 start で全8本のうなり位相が揃う ----
+    // ---- キャリア2本（Lo/Hi）。同一時刻 start で全声部のうなり位相が揃う ----
     const oscLo = ctx.createOscillator();
     oscLo.type = "sine";
     oscLo.frequency.value = f;
@@ -377,10 +472,7 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
     oscLo.connect(gLoL);
     oscLo.connect(gLoR);
 
-    // ---- 音量ゆらぎ ----
-    // 共通成分(75%): R, R·φ, R·φ² を 1 : 1/φ : 1/φ² で合成し、両耳に同じ波を配る。
-    // 無理数比なので二度と同じ形に戻らない。両耳が同じに揺れる＝耳間バランスが
-    // 保たれ、バイノーラルのうなりが痩せない（ここが仕様書からの改良点）
+    // ---- 音量ゆらぎ 共通成分(75%): 両耳に同じ波 → 耳間バランスが保たれうなりが痩せない ----
     const ampSum = 1 + 1 / PHI + 1 / PHI ** 2;
     const commonFlutter: GainNode[] = [];
     [1, PHI, PHI ** 2].forEach((rm, i) => {
@@ -392,16 +484,15 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
       lfo.connect(lg);
       lfo.start(t0);
       lfo.stop(end + 1);
-      stoppables.push(lfo);
       commonFlutter.push(lg);
     });
 
-    // ---- 耳ごとのゲイン（基本音量 + 音量ゆらぎ）と包絡（登場/PAN/退場） ----
+    // ---- 耳ごとのゲイン（基本音量 + ゆらぎ）と包絡（登場/PAN/退場） ----
     const buildEar = (lr: 0 | 1) => {
       const ear = ctx.createGain();
       ear.gain.value = spec.vol;
       commonFlutter.forEach((lg) => lg.connect(ear.gain));
-      // 独立成分(25%): 左右で速度を φ^0.11 ずらした1本だけ。完全同期を避けて有機感を残す
+      // 独立成分(25%): 左右で速度を φ^0.11 ずらした1本。完全同期を避けて有機感を残す
       const lfo = ctx.createOscillator();
       lfo.type = "sine";
       lfo.frequency.value = spec.rate * Math.sqrt(PHI) * (lr === 1 ? Math.pow(PHI, 0.11) : 1);
@@ -411,11 +502,10 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
       lg.connect(ear.gain);
       lfo.start(t0);
       lfo.stop(end + 1);
-      stoppables.push(lfo);
       const env = ctx.createGain();
       env.gain.value = 0.0001;
       ear.connect(env);
-      env.connect(merger, 0, lr);
+      env.connect(busses[lr]);
       return { ear, env };
     };
     const L = buildEar(0);
@@ -429,12 +519,9 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
     for (const env of [L.env, R.env]) {
       const p = env.gain;
       p.setValueAtTime(0.0001, t0);
-      // 登場
       p.setValueCurveAtTime(riseCurve(), t0 + vt.enterAt, cfg.enterRise);
-      // PAN×2: 沈み（往復 panDip*2 秒）
       p.setValueCurveAtTime(dipCurve(), t0 + vt.pan1At, cfg.panDip * 2);
       p.setValueCurveAtTime(dipCurve(), t0 + vt.pan2At, cfg.panDip * 2);
-      // 退場
       p.setValueCurveAtTime(fallCurve(), t0 + vt.exitAt, cfg.exitTail);
     }
     // 配線切替は「くぼみの底」で瞬時に（実質無音なので段差は聞こえない）
@@ -456,7 +543,6 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
     oscLo.stop(end + 1);
     oscHi.stop(end + 1);
     pitchLfo.stop(end + 1);
-    stoppables.push(oscLo, oscHi, pitchLfo);
   }
 
   let stopped = false;
@@ -465,17 +551,19 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
     stopped = true;
     try {
       const now = ctx.currentTime;
-      master.gain.cancelScheduledValues(now);
-      master.gain.setValueAtTime(master.gain.value, now);
-      master.gain.linearRampToValueAtTime(0.0001, now + 0.8);
+      for (const g of [master.gain, bellBus.gain]) {
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(g.value, now);
+        g.linearRampToValueAtTime(0.0001, now + 0.8);
+      }
       window.setTimeout(() => {
         try {
-          ctx.close();
+          if (!ctxOut) ctx.close();
         } catch {}
       }, 1000);
     } catch {
       try {
-        ctx.close();
+        if (!ctxOut) ctx.close();
       } catch {}
     }
   };
