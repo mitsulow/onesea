@@ -92,22 +92,36 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
     );
   }
 
-  /* Instagram / X: タップするまでiframeを読まない（1枠1MB級のJSを節約） */
-  if (igId || tweetId) {
+  /* Instagram: iframe自体がサムネ+▶を出すので最初から表示（動画は押すまで再生されない）。
+     loading=lazy で「画面に近づいた枠だけ」読む=フィード全体は重くならない */
+  if (igId) {
+    return (
+      <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]">
+        <iframe
+          src={`https://www.instagram.com/p/${igId}/embed/captioned/`}
+          className="w-full"
+          style={{ height: "560px", border: "none" }}
+          scrolling="no"
+          loading="lazy"
+          allowFullScreen
+          title="Instagram post"
+        />
+      </div>
+    );
+  }
+
+  /* X: タップするまでiframeを読まない */
+  if (tweetId) {
     if (on) {
       return (
         <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]">
           <iframe
-            src={
-              igId
-                ? `https://www.instagram.com/p/${igId}/embed/captioned/`
-                : `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light`
-            }
+            src={`https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light`}
             className="w-full"
             style={{ height: "560px", border: "none" }}
             scrolling="no"
-            allowFullScreen
-            title={igId ? "Instagram post" : "Post"}
+            loading="lazy"
+            title="Post"
           />
         </div>
       );
