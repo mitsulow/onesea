@@ -747,6 +747,30 @@ export function ActivitySection({ me }: { me: User | null }) {
                 </div>
               );
             })}
+            {/* 一番右: イベントを投稿するカード */}
+            {me && myVills.length > 0 && (
+              <button
+                onClick={() => {
+                  setWriting(true);
+                  setWKind("event");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="flex w-[150px] flex-shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed bg-white py-6"
+                style={{ borderColor: "#4a9a5a" }}
+              >
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-[22px] font-extrabold text-white"
+                  style={{ background: "#4a9a5a" }}
+                >
+                  ＋
+                </span>
+                <span className="px-2 text-center text-[11.5px] font-extrabold leading-snug" style={{ color: GREEN }}>
+                  イベントを
+                  <br />
+                  投稿する
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}
