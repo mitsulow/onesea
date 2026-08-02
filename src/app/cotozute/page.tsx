@@ -64,6 +64,9 @@ export default function CotozutePage() {
   const [storyText, setStoryText] = useState("");
   const [storyColor, setStoryColor] = useState("#0affd0");
   const [storyPos, setStoryPos] = useState({ x: 0.5, y: 0.5 }); // 文字位置（自由ドラッグ）
+  const [storySize, setStorySize] = useState(30); // 文字サイズ（プレビューpx・ピンチで変更）
+  const [storyRot, setStoryRot] = useState(0); // 回転（度・二本指）
+  const storyPinch = useRef<{ d0: number; a0: number; size0: number; rot0: number } | null>(null);
   const storyBoxRef = useRef<HTMLDivElement>(null);
   const storySwipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const [pull, setPull] = useState(0);
@@ -270,6 +273,8 @@ export default function CotozutePage() {
     if (!me || !f || storyUploading) return;
     setStoryText("");
     setStoryPos({ x: 0.5, y: 0.5 });
+    setStorySize(30);
+    setStoryRot(0);
     setStoryDraft({ file: f, url: URL.createObjectURL(f) });
   };
 
@@ -287,26 +292,37 @@ export default function CotozutePage() {
       const ctx = canvas.getContext("2d")!;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const text = storyText.trim();
-      if (text) {
+      const box = storyBoxRef.current?.getBoundingClientRect();
+      if (text && box) {
+        // object-contain のレターボックスを補正して、プレビューと同じ場所・大きさ・角度で焼く
+        const fit = Math.min(box.width / img.width, box.height / img.height);
+        const dispW = img.width * fit;
+        const dispH = img.height * fit;
+        const offX = (box.width - dispW) / 2;
+        const offY = (box.height - dispH) / 2;
+        const xi = Math.min(1, Math.max(0, (storyPos.x * box.width - offX) / dispW));
+        const yi = Math.min(1, Math.max(0, (storyPos.y * box.height - offY) / dispH));
+        const fs = Math.round(storySize * (canvas.width / dispW));
         const lines = text.split("\n");
-        const fs = Math.round(canvas.width * 0.085);
+        ctx.save();
+        ctx.translate(canvas.width * xi, canvas.height * yi);
+        ctx.rotate((storyRot * Math.PI) / 180);
         ctx.font = `900 ${fs}px -apple-system, "Hiragino Sans", sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        const cx = canvas.width * storyPos.x;
-        const cy = canvas.height * storyPos.y - ((lines.length - 1) * fs * 1.25) / 2;
+        const cy0 = -((lines.length - 1) * fs * 1.25) / 2;
         lines.forEach((line, i) => {
-          const y = cy + i * fs * 1.25;
-          // 蛍光ネオン: 色グローを2重 → 白抜き本体
+          const y = cy0 + i * fs * 1.25;
           ctx.shadowColor = storyColor;
           ctx.shadowBlur = fs * 0.55;
           ctx.fillStyle = storyColor;
-          ctx.fillText(line, cx, y);
-          ctx.fillText(line, cx, y);
+          ctx.fillText(line, 0, y);
+          ctx.fillText(line, 0, y);
           ctx.shadowBlur = fs * 0.18;
           ctx.fillStyle = "#ffffff";
-          ctx.fillText(line, cx, y);
+          ctx.fillText(line, 0, y);
         });
+        ctx.restore();
       }
       canvas.toBlob(
         async (blob) => {
@@ -630,14 +646,34 @@ export default function CotozutePage() {
                 style={{
                   left: `${storyPos.x * 100}%`,
                   top: `${storyPos.y * 100}%`,
-                  transform: "translate(-50%, -50%)",
-                  fontSize: 30,
+                  transform: `translate(-50%, -50%) rotate(${storyRot}deg)`,
+                  fontSize: storySize,
                   color: "#fff",
                   textShadow: `0 0 6px ${storyColor}, 0 0 18px ${storyColor}, 0 0 34px ${storyColor}`,
                   lineHeight: 1.25,
-                  maxWidth: "92%",
+                  maxWidth: "150%",
+                }}
+                onTouchStart={(e) => {
+                  if (e.touches.length === 2) {
+                    const [a, b] = [e.touches[0], e.touches[1]];
+                    storyPinch.current = {
+                      d0: Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
+                      a0: Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX),
+                      size0: storySize,
+                      rot0: storyRot,
+                    };
+                  }
                 }}
                 onTouchMove={(e) => {
+                  if (e.touches.length === 2 && storyPinch.current) {
+                    // ピンチ=大きさ / 二本指の回転=角度
+                    const [a, b] = [e.touches[0], e.touches[1]];
+                    const d = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+                    const ang = Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX);
+                    setStorySize(Math.min(90, Math.max(13, storyPinch.current.size0 * (d / storyPinch.current.d0))));
+                    setStoryRot(storyPinch.current.rot0 + ((ang - storyPinch.current.a0) * 180) / Math.PI);
+                    return;
+                  }
                   const r = storyBoxRef.current?.getBoundingClientRect();
                   if (!r) return;
                   const t = e.touches[0];
@@ -645,6 +681,9 @@ export default function CotozutePage() {
                     x: Math.min(0.95, Math.max(0.05, (t.clientX - r.left) / r.width)),
                     y: Math.min(0.92, Math.max(0.08, (t.clientY - r.top) / r.height)),
                   });
+                }}
+                onTouchEnd={(e) => {
+                  if (e.touches.length < 2) storyPinch.current = null;
                 }}
                 onMouseDown={(e) => {
                   const r = storyBoxRef.current?.getBoundingClientRect();
@@ -669,7 +708,7 @@ export default function CotozutePage() {
             )}
             {storyText.trim() && (
               <div className="pointer-events-none absolute bottom-2 left-0 right-0 text-center text-[10.5px] text-white/50">
-                文字は指でドラッグして好きな場所へ
+                1本指で移動 ・ 2本指でひらいて拡大 / ひねって回転
               </div>
             )}
           </div>
