@@ -138,7 +138,7 @@ export function nextMoons(count: number, fromMs = Date.now()): MoonEvent[] {
   const res: MoonEvent[] = [];
   const step = 3600000;
   let prev = elongationAt(fromMs);
-  for (let i = 1; i < 24 * 70 && res.length < count; i++) {
+  for (let i = 1; i < 24 * 240 && res.length < count; i++) { // 約8ヶ月先まで探索（月例会10件分）
     const t = fromMs + i * step;
     const e = elongationAt(t);
     const bisect = (target: number): number => {

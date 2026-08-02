@@ -194,7 +194,8 @@ export function MootsSection({
   onRsvped: () => void;
 }) {
   void myPref;
-  const [moots] = useState<Moot[]>(() => upcomingMoots(1));
+  const [moots] = useState<Moot[]>(() => upcomingMoots(11));
+  const [futureOpen, setFutureOpen] = useState(false);
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -248,14 +249,16 @@ export function MootsSection({
             className="absolute inset-0"
             style={{ background: "linear-gradient(180deg, rgba(8,16,24,.6) 0%, rgba(8,16,24,.05) 45%, rgba(8,16,24,.74) 100%)" }}
           />
-          {/* 案内文 */}
-          <div className="absolute left-0 right-0 top-2.5 px-3 text-center">
-            <div className="text-[14px] font-extrabold leading-snug text-white" style={{ textShadow: "0 2px 10px rgba(0,0,0,.85)" }}>
-              次のセカイムラ{next.kind === "new" ? "新月会" : "満月会"}は
-              <span className="num"> {next.label}{next.hour}時〜 </span>です
+          {/* 案内パネル（30%の半透明地に文字を重ねる） */}
+          <div className="absolute left-3 right-3 top-2.5 rounded-xl px-3 py-2 text-center" style={{ background: "rgba(8,16,24,.3)", backdropFilter: "blur(2px)" }}>
+            <div className="text-[19px] font-extrabold leading-snug text-white" style={{ textShadow: "0 2px 12px rgba(0,0,0,.9)" }}>
+              第{mootNoOf(next.dateKey) ?? "—"}回セカイムラ{next.kind === "new" ? "新月会" : "満月会"}
+            </div>
+            <div className="num mt-0.5 text-[13px] font-bold text-[#e8f4ec]" style={{ textShadow: "0 1px 8px rgba(0,0,0,.9)" }}>
+              {next.label}（{today ? "今日" : next.dday === 1 ? "明日" : `あと${next.dday}日`}）{next.hour}:00〜
             </div>
             <div className="num mt-0.5 text-[10.5px] text-[#b8d8c8]" style={{ textShadow: "0 1px 6px rgba(0,0,0,.85)" }}>
-              {today ? "今日！" : next.dday === 1 ? "明日" : `あと${next.dday}日`} ・ {counts.get(next.dateKey) ?? 0}人が参加予定
+              {counts.get(next.dateKey) ?? 0}人が参加予定
             </div>
           </div>
           {/* ボタン */}
@@ -282,19 +285,58 @@ export function MootsSection({
                 )}
               </>
             ) : me ? (
-              <button
-                onClick={rsvp}
-                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold"
-                style={
-                  joined
-                    ? { background: "rgba(42,90,58,.92)", color: "#a8d8b8", border: "1px solid #4a9a6a" }
-                    : { background: "#d4b96a", color: "#1a2432" }
-                }
-              >
-                {joined ? "✓ 参加します（タップで取消）" : "参加します"}
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    if (!joined) rsvp();
+                  }}
+                  className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold"
+                  style={
+                    joined
+                      ? { background: "rgba(42,90,58,.95)", color: "#a8d8b8", border: "1.5px solid #4a9a6a" }
+                      : { background: "#d4b96a", color: "#1a2432" }
+                  }
+                >
+                  {joined ? "✓ 参加する" : "参加する"}
+                </button>
+                <button
+                  onClick={() => {
+                    if (joined) rsvp();
+                  }}
+                  className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold"
+                  style={
+                    joined
+                      ? { background: "rgba(20,28,38,.55)", color: "#8a9aa8", border: "1px solid #3a4a58" }
+                      : { background: "rgba(20,28,38,.85)", color: "#d8e0e8", border: "1.5px solid #5a6a78" }
+                  }
+                >
+                  参加しない
+                </button>
+              </>
             ) : null}
           </div>
+        </div>
+      )}
+
+      {/* 今後の月例会開催予定（折りたたみ） */}
+      <button
+        onClick={() => setFutureOpen((v) => !v)}
+        className="mt-1.5 w-full py-1 text-center text-[10.5px] font-bold text-[#5a7a68]"
+      >
+        {futureOpen ? "▾" : "▸"} 今後の月例会開催予定
+      </button>
+      {futureOpen && (
+        <div className="rounded-xl bg-white/5 px-3 py-2">
+          {moots.slice(1, 11).map((m) => (
+            <div key={m.dateKey} className="flex items-baseline justify-between border-b border-white/5 py-1.5 last:border-0">
+              <span className="text-[12px] font-bold text-[#a8c8b0]">
+                第{mootNoOf(m.dateKey) ?? "—"}回セカイムラ{m.kind === "new" ? "新月会" : "満月会"}
+              </span>
+              <span className="num flex-shrink-0 text-[11.5px] text-[#7a9a88]">
+                {m.label} {m.hour}時
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
@@ -356,6 +398,29 @@ export function MootsSection({
       </details>
     </section>
   );
+}
+
+
+/* ═══ 月例会の通し番号（2021年8月の満月会 = 第1回。開催日ベース） ═══ */
+const MOOT_NO_YEARS = [2021, 2022, 2023, 2024, 2025, 2026, 2027];
+let MOOT_NO_LIST: Array<{ dateKey: string; kind: "new" | "full"; no: number }> | null = null;
+function mootNoList() {
+  if (MOOT_NO_LIST) return MOOT_NO_LIST;
+  const raw: Array<{ time: number; kind: "new" | "full" }> = [];
+  for (const y of MOOT_NO_YEARS) {
+    for (const ev of moonsOfYear(y)) raw.push({ time: mootTimeOf(ev), kind: ev.type });
+  }
+  raw.sort((a, b) => a.time - b.time);
+  const firstIdx = raw.findIndex((m) => m.kind === "full" && m.time >= Date.UTC(2021, 7, 1));
+  MOOT_NO_LIST = raw.slice(firstIdx).map((m, i) => ({
+    dateKey: new Date(m.time + 9 * 3600000).toISOString().slice(0, 10),
+    kind: m.kind,
+    no: i + 1,
+  }));
+  return MOOT_NO_LIST;
+}
+function mootNoOf(dateKey: string): number | null {
+  return mootNoList().find((m) => m.dateKey === dateKey)?.no ?? null;
 }
 
 /* ═══ 過去の新月満月会アーカイブ（2021年8月の満月会が第1回・通し番号） ═══ */
