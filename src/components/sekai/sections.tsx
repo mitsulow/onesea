@@ -654,8 +654,12 @@ export function ActivitySection({ me }: { me: User | null }) {
   };
 
   return (
-    <section id="katsudo" className="card" style={{ scrollMarginTop: 56, border: "none", padding: 0, background: "#f2f8f0" }}>
-      {/* 見出し */}
+    <section
+      id="katsudo"
+      className="card overflow-hidden"
+      style={{ scrollMarginTop: 56, border: "none", padding: 0, background: "#f2f8f0", borderRadius: "18px 18px 0 0" }}
+    >
+      {/* 見出し（上の角丸でセクションの始まりが分かる） */}
       <div
         className="mb-2 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}
