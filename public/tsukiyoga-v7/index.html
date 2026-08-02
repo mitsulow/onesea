@@ -7485,19 +7485,18 @@
     <span id="oneseaAvatarInner" style="display:flex;width:30px;height:30px;border-radius:50%;border:2px solid rgba(240,224,168,.6);align-items:center;justify-content:center;font-size:15px;overflow:hidden;">🌊</span>
   </button>
 </div>
-<!-- 全サービスメニュー（暦タブ/アバターで開閉） -->
-<div id="oneseaSvcOverlay" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);"></div>
-<div id="oneseaSvcMenu" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 66px);z-index:901;width:calc(100% - 24px);max-width:456px;background:linear-gradient(160deg,#0a0c18f8,#12142af8);border:1px solid #2a2a45;border-radius:18px;padding:12px;box-shadow:0 -6px 40px rgba(0,0,0,.5);">
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-    <a href="/" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">🏠</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">OneSea</span></a>
-    <a href="/mmm" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/icons/cel-sun.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">MMM</span></a>
-    <a href="/sekai" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/icons/cel-earth.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">セカイムラ</span></a>
-    <a href="/za" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/rakuichi/logo-emblem.webp" style="width:26px;height:26px;border-radius:50%;object-fit:cover;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">楽市楽座</span></a>
-    <a href="/line" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">💬</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">TALK</span></a>
-    <a href="/cotozute" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/icons/tab-cotozute.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">コトヅテ</span></a>
-    <a href="/#techo" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">📖</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">手帳</span></a>
-    <a href="/my" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">🪪</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">マイページ</span></a>
-  </div>
+<!-- 全サービスメニュー（OneSeaのAvatarMenuと同じ縦リスト） -->
+<div id="oneseaSvcOverlay" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.35);"></div>
+<div id="oneseaSvcMenu" style="display:none;position:fixed;right:10px;top:48px;z-index:901;width:224px;max-height:80vh;overflow-y:auto;background:#fff;border:1px solid #ede5d8;border-radius:12px;box-shadow:0 10px 36px rgba(0,0,0,.25);">
+  <a href="/" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">🏠</span> ホーム</a>
+  <a href="/mmm" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/cel-sun.png" style="width:20px;height:20px;object-fit:contain;"> MasterMindMembers</a>
+  <a href="/sekai" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/cel-earth.png" style="width:20px;height:20px;object-fit:contain;"> セカイムラ</a>
+  <a href="/za" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/rakuichi/logo-emblem.webp" style="width:20px;height:20px;border-radius:50%;object-fit:cover;"> 楽市楽座</a>
+  <a href="/line" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">💬</span> TALK</a>
+  <a href="/cotozute" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/tab-cotozute.png" style="width:20px;height:20px;object-fit:contain;"> コトヅテ</a>
+  <a href="/#techo" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">📖</span> 手帳</a>
+  <a href="/my" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">🪪</span> マイページ</a>
+  <button id="oneseaLogoutBtn" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:13.5px;color:#a05040;background:none;border:none;text-align:left;cursor:pointer;"><span style="width:20px;text-align:center;font-size:16px;">👋</span> ログアウト</button>
 </div>
 
 
@@ -16928,12 +16927,23 @@ if ('serviceWorker' in navigator) {
 
 <script>
 (function () {
-  // OneSea(同一ドメイン)のSupabaseセッションからGoogleアバターを拝借
+  // OneSea(同一ドメイン)のSupabaseセッションからGoogleアバターを拝借（キー探索+base64対応）
   try {
-    var raw = localStorage.getItem('sb-hpgofjkxqguzgrptchqj-auth-token');
+    var raw = null;
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0) {
+        raw = localStorage.getItem(k);
+        break;
+      }
+    }
     if (raw) {
+      if (raw.indexOf('base64-') === 0) {
+        raw = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'));
+      }
       var tok = JSON.parse(raw);
-      var av = tok && tok.user && tok.user.user_metadata && tok.user.user_metadata.avatar_url;
+      var u = tok && (tok.user || (tok.currentSession && tok.currentSession.user));
+      var av = u && u.user_metadata && (u.user_metadata.avatar_url || u.user_metadata.picture);
       if (av) {
         document.getElementById('oneseaAvatarInner').innerHTML =
           '<img src="' + av + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
@@ -16951,9 +16961,24 @@ if ('serviceWorker' in navigator) {
   ov.addEventListener('click', function () { toggleMenu(false); });
   var btn = document.getElementById('oneseaAvatarBtn');
   if (btn) btn.addEventListener('click', function () { toggleMenu(); });
-  // 暦タブ = ホーム: 暦ビューに切り替えつつ全サービスメニューを開閉
+  var lo = document.getElementById('oneseaLogoutBtn');
+  if (lo) lo.addEventListener('click', function () {
+    try {
+      var kill = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('sb-') === 0) kill.push(k);
+      }
+      kill.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) {}
+    location.href = '/';
+  });
+  // 暦タブ: 1回目はホーム(暦)に戻るだけ。すでに暦に居る時にもう一回押すとメニュー
   var calTab = document.querySelector('.tab-btn[data-view="calendar"]');
-  if (calTab) calTab.addEventListener('click', function () { toggleMenu(); });
+  if (calTab) calTab.addEventListener('click', function () {
+    if (calTab.classList.contains('active')) toggleMenu();
+    else toggleMenu(false);
+  }, true); // capture: v7がactiveを切り替える「前」の状態で判定
 })();
 </script>
 </body>
