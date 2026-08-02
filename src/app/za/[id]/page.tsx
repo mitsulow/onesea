@@ -122,31 +122,47 @@ export default function ShopDetailPage() {
         <span className="w-10" />
       </header>
 
-      {/* 画像 */}
-      <div className="relative aspect-square bg-[#f2ede4]">
-        {shop.image_urls[imgIndex] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={shop.image_urls[imgIndex]} alt={shop.name} className="h-full w-full object-cover" />
-        ) : (
-          <div
-            className="flex h-full w-full items-center justify-center"
-            style={{ background: "linear-gradient(135deg,#c94d3a 0%,#d4a043 50%,#5a7d4a 100%)" }}
-          >
-            <img src="/rakuichi/logo-emblem.webp" alt="" className="h-24 w-24 rounded-full object-cover opacity-90" />
-          </div>
-        )}
-        {shop.image_urls.length > 1 && (
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
-            {shop.image_urls.map((_, i) => (
-              <button
+      {/* 画像（左右スワイプで切替・スクロールスナップ） */}
+      <div className="relative">
+        <div
+          className="hide-scrollbar flex aspect-square snap-x snap-mandatory overflow-x-auto bg-[#f2ede4]"
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const i = Math.round(el.scrollLeft / el.clientWidth);
+            if (i !== imgIndex) setImgIndex(i);
+          }}
+        >
+          {(shop.image_urls.length ? shop.image_urls : [null]).map((url, i) =>
+            url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img key={i} src={url} alt={shop.name} className="h-full w-full flex-shrink-0 snap-center object-cover" />
+            ) : (
+              <div
                 key={i}
-                onClick={() => setImgIndex(i)}
-                aria-label={`画像 ${i + 1}`}
-                className="h-2 w-2 rounded-full"
-                style={{ background: i === imgIndex ? "#c94d3a" : "rgba(255,255,255,.7)" }}
-              />
-            ))}
-          </div>
+                className="flex h-full w-full flex-shrink-0 snap-center items-center justify-center"
+                style={{ background: "linear-gradient(135deg,#c94d3a 0%,#d4a043 50%,#5a7d4a 100%)" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/rakuichi/logo-emblem.webp" alt="" className="h-24 w-24 rounded-full object-cover opacity-90" />
+              </div>
+            )
+          )}
+        </div>
+        {shop.image_urls.length > 1 && (
+          <>
+            <div className="pointer-events-none absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+              {shop.image_urls.map((_, i) => (
+                <span
+                  key={i}
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: i === imgIndex ? "#c94d3a" : "rgba(255,255,255,.75)" }}
+                />
+              ))}
+            </div>
+            <span className="num absolute right-2 top-2 rounded-full bg-black/45 px-2 py-0.5 text-[10.5px] font-bold text-white">
+              {imgIndex + 1}/{shop.image_urls.length}
+            </span>
+          </>
         )}
       </div>
 
