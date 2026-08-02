@@ -606,19 +606,19 @@ function BottomSheet({
             {/* 節分かれつ刻（天文計算） */}
             <div
               className="mb-2 rounded-xl p-3"
-              style={{ background: "#0c1410", border: `2px solid ${ac}55` }}
+              style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fdf3e4", border: `2px solid ${ac}35` }}
             >
               <div className="relative flex items-center justify-center gap-1.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/cel-sun.png" alt="" className="h-[16px] w-[16px] object-contain" />
-                <span className="text-[10.5px] tracking-widest text-[#c8b88a]">節分かれつ刻</span>
-                <span className="num absolute right-0 text-[11px] text-[#8aa89a]">{best ? `${best.deg}°` : "—"}</span>
+                <span className="text-[10.5px] tracking-widest text-[#b07a30]">節分かれつ刻</span>
+                <span className="num absolute right-0 text-[11px] text-[#b8b0a0]">{best ? `${best.deg}°` : "—"}</span>
               </div>
               <div
-                className="num text-center text-[24px] font-extrabold leading-tight"
+                className="num text-center text-[26px] font-extrabold leading-tight"
                 style={{
-                  color: "#3dff8c",
-                  textShadow: "0 0 8px rgba(61,255,140,.9), 0 0 20px rgba(61,255,140,.5)",
+                  color: "#0a9a52",
+                  textShadow: "0 0 6px rgba(20,200,110,.35)",
                   letterSpacing: 2,
                 }}
               >
@@ -630,15 +630,15 @@ function BottomSheet({
                     <span className="text-lg font-extrabold" style={{ color: ac }}>
                       {best.sekki[0]}
                     </span>
-                    <span className="text-xs text-[#8a9a8a]">{best.sekki[1]}</span>
+                    <span className="text-xs text-[#999]">{best.sekki[1]}</span>
                   </div>
-                  <div className="mt-1 text-xs leading-relaxed text-[#b8c4b8]">{best.sekki[2]}</div>
+                  <div className="mt-1 text-xs leading-relaxed text-[#555]">{best.sekki[2]}</div>
                 </div>
               )}
               {best?.kou && (
                 <div className="mt-1.5 border-t border-[#3a9a8a25] pt-1.5">
-                  <div className="text-[14.5px] font-bold text-[#5ecab4]">{best.kou[0]}</div>
-                  <div className="mt-[1px] text-[11.5px] text-[#7ab8a8]">{best.kou[1]}</div>
+                  <div className="text-[14.5px] font-bold text-[#2a7a6a]">{best.kou[0]}</div>
+                  <div className="mt-[1px] text-[11.5px] text-[#5aaa9a]">{best.kou[1]}</div>
                   <div className="mt-1 rounded-lg border-l-[3px] border-[#3a9a8a] bg-[#eef6f4] px-2 py-1.5 text-[11.5px] leading-normal text-[#555]">
                     {best.kou[2]}
                   </div>
