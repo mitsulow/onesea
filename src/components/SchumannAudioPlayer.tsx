@@ -620,6 +620,12 @@ export function SchumannAudioPlayer() {
               </button>
             </div>
           </div>
+          <a
+            href="/meditation"
+            className="block pl-12 text-[10px] font-bold text-white/75 no-underline"
+          >
+            🎧 新・音響エンジン（β）を試す →
+          </a>
           <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
             <div className="flex min-w-0 items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
