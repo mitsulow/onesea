@@ -239,13 +239,17 @@ export function HomeDashboard() {
   );
 }
 
-/* ═══ サービスDock — 指を置くと中央に大きなプレビューが浮かぶスポットライト式。
-   指をスライドして選び、離した場所のアプリが開く（大きな的なので押しやすい） ═══ */
+/* ═══ オービットメニュー — 中心の卵の家（OneSea）の周りを6つのサービスが公転する。
+   傾いた軌道面: 手前に来ると大きく明るく、奥へ回ると小さく暗い。
+   指でなぞると回り、タップした天体が開く。放っておくとゆっくり自転し続ける ═══ */
 export function ServiceDock() {
   const router = useRouter();
   const [unread, setUnread] = useState(0);
-  const [active, setActive] = useState<number | null>(null);
-  const rowRef = useRef<HTMLDivElement>(null);
+  const [angle, setAngle] = useState(-Math.PI / 2);
+  const angleRef = useRef(-Math.PI / 2);
+  const dragging = useRef<{ a0: number; base: number } | null>(null);
+  const movedRef = useRef(false);
+  const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let stop = false;
@@ -265,7 +269,24 @@ export function ServiceDock() {
     };
   }, []);
 
-  const ITEMS: Array<{ href: string; icon: string; label: string; ext?: boolean; talk?: boolean; techo?: boolean }> = [
+  /* ゆっくり公転（ドラッグ中は止まる） */
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = (now - last) / 1000;
+      last = now;
+      if (!dragging.current) {
+        angleRef.current += dt * 0.12; // 1周 約52秒
+        setAngle(angleRef.current);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const ITEMS: Array<{ href: string; icon: string; label: string; ext?: boolean; talk?: boolean }> = [
     { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
     { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
     { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
@@ -274,107 +295,139 @@ export function ServiceDock() {
     { href: "/line", icon: "💬", label: "TALK", talk: true },
   ];
 
-  const idxFromX = (clientX: number): number | null => {
-    const r = rowRef.current?.getBoundingClientRect();
-    if (!r) return null;
-    const i = Math.floor(((clientX - r.left) / r.width) * ITEMS.length);
-    return i >= 0 && i < ITEMS.length ? i : null;
-  };
-
-  const go = (i: number) => {
-    const m = ITEMS[i];
-    if (m.techo) {
-      window.dispatchEvent(new Event("onesea:openToday"));
-      return;
-    }
+  const go = (m: (typeof ITEMS)[number]) => {
     if (m.ext) window.location.href = m.href;
     else router.push(m.href);
   };
 
+  const pointerAngle = (cx: number, cy: number) => {
+    const r = boxRef.current?.getBoundingClientRect();
+    if (!r) return 0;
+    return Math.atan2(cy - (r.top + r.height / 2), cx - (r.left + r.width / 2));
+  };
+
+  const W = 340; // 論理サイズ（実際はvwに合わせて縮む）
+  const H = 218;
+  const RX = 128;
+  const RY = 64;
+
   return (
     <div
-      className="relative z-[70]"
-      style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
+      className="relative z-[70] select-none overflow-hidden"
+      style={{ background: "radial-gradient(120% 140% at 50% 0%, #17384e 0%, #0e1e2e 55%, #0a1420 100%)" }}
     >
+      {/* 星屑 */}
+      <div className="pointer-events-none absolute inset-0 opacity-60" aria-hidden>
+        {[...Array(18)].map((_, i) => (
+          <span
+            key={i}
+            className="absolute rounded-full bg-white"
+            style={{
+              width: i % 5 === 0 ? 2 : 1,
+              height: i % 5 === 0 ? 2 : 1,
+              left: `${(i * 53) % 100}%`,
+              top: `${(i * 37) % 100}%`,
+              opacity: 0.3 + ((i * 29) % 60) / 100,
+            }}
+          />
+        ))}
+      </div>
+
       <div
-        ref={rowRef}
-        className="flex items-center justify-between px-4 pb-2.5 pt-2.5"
-        style={{ touchAction: "none" }}
-        onTouchStart={(e) => setActive(idxFromX(e.touches[0].clientX))}
-        onTouchMove={(e) => setActive(idxFromX(e.touches[0].clientX))}
-        onTouchEnd={(e) => {
-          e.preventDefault(); // 合成クリックの二重発火を防ぐ
-          if (active != null) go(active);
-          setActive(null);
+        ref={boxRef}
+        className="relative mx-auto touch-none"
+        style={{ width: "100%", maxWidth: W, height: H }}
+        onTouchStart={(e) => {
+          movedRef.current = false;
+          dragging.current = { a0: pointerAngle(e.touches[0].clientX, e.touches[0].clientY), base: angleRef.current };
         }}
-        onMouseMove={(e) => setActive(idxFromX(e.clientX))}
-        onMouseLeave={() => setActive(null)}
-        onClick={(e) => {
-          const i = idxFromX(e.clientX);
-          if (i != null) go(i);
-          e.preventDefault();
+        onTouchMove={(e) => {
+          if (!dragging.current) return;
+          movedRef.current = true;
+          const a = pointerAngle(e.touches[0].clientX, e.touches[0].clientY);
+          angleRef.current = dragging.current.base + (a - dragging.current.a0);
+          setAngle(angleRef.current);
         }}
+        onTouchEnd={() => (dragging.current = null)}
       >
+        {/* 軌道の楕円 */}
+        <svg className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" width={RX * 2 + 44} height={RY * 2 + 44} aria-hidden>
+          <ellipse
+            cx={RX + 22}
+            cy={RY + 22}
+            rx={RX}
+            ry={RY}
+            fill="none"
+            stroke="rgba(140,180,220,.22)"
+            strokeWidth="1"
+            strokeDasharray="3 5"
+          />
+        </svg>
+
+        {/* 中心: 卵の家（OneSea） */}
+        <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center">
+          <img
+            src="/icons/tab-home.png"
+            alt="OneSea"
+            className="mx-auto h-[46px] w-[36px] object-contain"
+            style={{ filter: "drop-shadow(0 0 14px rgba(212,185,106,.55))" }}
+          />
+          <div className="mt-0.5 text-[8px] font-bold tracking-[2px] text-[#d4b96a]/80">OneSea</div>
+        </div>
+
+        {/* 公転する6つのサービス */}
         {ITEMS.map((m, i) => {
-          const on = active === i;
+          const a = angle + (i * Math.PI * 2) / ITEMS.length;
+          const x = Math.cos(a) * RX;
+          const y = Math.sin(a) * RY;
+          const depth = (Math.sin(a) + 1) / 2; // 0=奥 1=手前
+          const sc = 0.72 + 0.55 * depth;
           return (
-            <span
+            <button
               key={m.href}
-              className="relative block"
-              style={{
-                transform: on ? "scale(1.28)" : "scale(1)",
-                opacity: active != null && !on ? 0.45 : 1,
-                transition: "transform 120ms ease-out, opacity 120ms ease-out",
+              onClick={() => {
+                if (movedRef.current) return;
+                go(m);
               }}
+              className="absolute left-1/2 top-1/2 text-center"
+              style={{
+                transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${sc})`,
+                zIndex: Math.round(depth * 9) + 1,
+                opacity: 0.55 + 0.45 * depth,
+                transition: dragging.current ? "none" : "opacity .2s",
+              }}
+              aria-label={m.label}
             >
-              {m.icon.startsWith("/") ? (
-                <img src={m.icon} alt={m.label} className="h-[34px] w-[34px] rounded-full object-contain" />
-              ) : (
-                <span className="block text-[28px] leading-[34px]">{m.icon}</span>
-              )}
-              {m.talk && unread > 0 && (
-                <span
-                  className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[8.5px] font-bold text-white"
-                  style={{ lineHeight: 1 }}
-                >
-                  {unread > 99 ? "99" : unread}
-                </span>
-              )}
-            </span>
+              <span className="relative block">
+                {m.icon.startsWith("/") ? (
+                  <img
+                    src={m.icon}
+                    alt=""
+                    className="mx-auto h-[44px] w-[44px] rounded-full object-contain"
+                    style={{ filter: `drop-shadow(0 0 ${6 + depth * 10}px rgba(140,190,255,${0.25 + depth * 0.3}))` }}
+                  />
+                ) : (
+                  <span className="block text-[36px] leading-[44px]">{m.icon}</span>
+                )}
+                {m.talk && unread > 0 && (
+                  <span
+                    className="absolute -right-1 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[9px] font-bold text-white"
+                    style={{ lineHeight: 1 }}
+                  >
+                    {unread > 99 ? "99" : unread}
+                  </span>
+                )}
+              </span>
+              <span
+                className="mt-0.5 block whitespace-nowrap text-[9.5px] font-bold text-[#cfe0f0]"
+                style={{ textShadow: "0 1px 4px rgba(0,0,0,.8)" }}
+              >
+                {m.label}
+              </span>
+            </button>
           );
         })}
       </div>
-
-      {/* スポットライト: 選択中のアプリが中央に大きく浮かび、名前が上に重なる */}
-      {active != null && (
-        <div
-          className="pointer-events-none absolute left-1/2 top-[calc(100%-6px)] z-20 -translate-x-1/2"
-          style={{ animation: "dockPop 140ms ease-out" }}
-        >
-          <style>{`@keyframes dockPop{from{opacity:0;transform:translateX(-50%) scale(.7)}to{opacity:1;transform:translateX(-50%) scale(1)}}`}</style>
-          <div
-            className="relative flex h-[104px] w-[104px] items-center justify-center rounded-3xl"
-            style={{
-              background: "linear-gradient(160deg,#16263a,#1e3450)",
-              border: "1px solid rgba(255,255,255,.18)",
-              boxShadow: "0 14px 44px rgba(0,0,0,.5)",
-            }}
-          >
-            {ITEMS[active].icon.startsWith("/") ? (
-              <img src={ITEMS[active].icon} alt="" className="h-[68px] w-[68px] rounded-full object-contain" />
-            ) : (
-              <span className="text-[58px] leading-none">{ITEMS[active].icon}</span>
-            )}
-            {/* 名前がアイコンの上に重なる */}
-            <span
-              className="absolute bottom-2 left-0 right-0 text-center text-[13px] font-extrabold text-white"
-              style={{ textShadow: "0 1px 6px rgba(0,0,0,.9), 0 0 14px rgba(0,0,0,.7)" }}
-            >
-              {ITEMS[active].label}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
