@@ -74,7 +74,7 @@ export default function TsukiyogaPage() {
   return (
     <main className="pb-24" style={{ background: "linear-gradient(180deg,#0a0c18 0%,#12142a 100%)", minHeight: "100vh" }}>
       {/* ヒーロー（薄い帯） */}
-      <header className="relative flex items-center justify-center px-6 py-2" style={{ background: "#0a0c18" }}>
+      <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a0c18" }}>
         <div className="flex items-center gap-2">
           <img src="/icons/cel-moon.png" alt="" className="h-6 w-6 object-contain" />
           <span className="text-[17px] font-extrabold tracking-[3px]" style={MOON_NEON}>

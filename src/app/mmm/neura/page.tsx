@@ -52,7 +52,7 @@ export default function NeuraPage() {
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "linear-gradient(180deg,#0a1410,#101a28)" }}>
-      <header className="relative flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
+      <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
         <span className="text-[16px] font-extrabold tracking-[3px]" style={{ color: "#a8b8f0", textShadow: "0 0 10px rgba(140,160,255,.6)" }}>
           🧠 ニューラFIVE
         </span>

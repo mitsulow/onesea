@@ -91,7 +91,7 @@ export default function DdpPage() {
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "linear-gradient(180deg,#0a1410,#0f1a25)" }}>
-      <header className="relative flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
+      <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
         <span className="text-[16px] font-extrabold tracking-[3px]" style={GREEN_NEON}>
           🌊 DDP設定
         </span>
