@@ -614,11 +614,18 @@ function BottomSheet({
                 <span className="text-[10.5px] tracking-widest text-[#b07a30]">節分かれつ刻</span>
                 <span className="absolute right-0 text-[11px] text-[#ccc]">{best ? `${best.deg}°` : "—"}</span>
               </div>
-              <div
-                className="num text-center text-[36px] font-extrabold leading-tight"
-                style={{ color: ac, textShadow: `0 0 10px ${ac}88, 0 0 26px ${ac}55` }}
-              >
-                {best ? best.time : "—"}
+              <div className="text-center">
+                <span
+                  className="num inline-block rounded-xl px-4 py-0.5 text-[34px] font-extrabold leading-tight"
+                  style={{
+                    background: "#0c1410",
+                    color: "#3dff8c",
+                    textShadow: "0 0 8px rgba(61,255,140,.9), 0 0 22px rgba(61,255,140,.5)",
+                    letterSpacing: 2,
+                  }}
+                >
+                  {best ? best.time : "—"}
+                </span>
               </div>
               {best?.sekki && (
                 <div className="mt-1.5 border-t pt-1.5" style={{ borderColor: `${ac}20` }}>
