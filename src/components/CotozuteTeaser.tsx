@@ -32,8 +32,9 @@ export function CotozuteTeaser() {
       style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}
     >
       <Link href="/cotozute" className="no-underline">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/cotozute-logo.webp" alt="Cotozute" className="mb-2 h-10 w-auto rounded-xl" />
+        <span className="mb-2 block text-[21px] font-extrabold tracking-tight" style={{ color: "#0abab5" }}>
+          CotoZute →
+        </span>
       </Link>
       {/* 入力ボックス（タップでコトヅテの投稿画面へ） */}
       <Link href="/cotozute?compose=1" className="mb-2 flex items-center gap-2.5 no-underline">
