@@ -151,7 +151,7 @@ export default function MeditationPage() {
             イヤホンを着けた — はじめる（約{fmt(250 + cfg.dwell * 2.6)}）
           </button>
           <div className="mt-2 text-center text-[10.5px] text-white/40">
-            鐘とともに高い音から現れ、終わりの鐘3打のあと1本ずつ帰っていきます
+            第1音とともに始まりの鐘3打。5つの音が高い方から現れ、終わりの鐘3打のあと1本ずつ帰っていきます
           </div>
         </>
       ) : (
@@ -274,7 +274,6 @@ export default function MeditationPage() {
               ["breathPeriod", "呼吸の周期（秒）", 8, 20, 1],
               ["echoMix", "φエコーの量", 0, 0.4, 0.02],
               ["isoDepth", "同相AM補強（ブツブツ源・通常0）", 0, 0.3, 0.02],
-              ["phi8Coef", "φ⁸層の音量係数", 0, 1, 0.02],
               ["hfExp", "高域を抑える指数", 0, 1, 0.05],
               ["enterGap", "登場の間隔（秒）", 2, 15, 1],
               ["enterRise", "立ち上がり（秒）", 4, 30, 1],
@@ -302,25 +301,15 @@ export default function MeditationPage() {
           ))}
           <label className="flex items-center justify-between gap-2 border-t border-white/10 pt-2">
             <span className="text-white/65">
-              ✧きらめき層（φ¹¹・φ¹²×F1）
-              <span className="block text-[9.5px] text-white/35">ガラス質の高音2本。高い音から現れる導入の主役</span>
+              純正律スナップ
+              <span className="block text-[9.5px] text-white/35">
+                5音を実測F3の22/32/33/47/62倍に。差音が全てF3の整数倍になり立体に融合
+              </span>
             </span>
             <input
               type="checkbox"
-              checked={cfg.sparkleOn}
-              onChange={(e) => patchCfg({ sparkleOn: e.target.checked })}
-              className="h-5 w-5 accent-[#d4b96a]"
-            />
-          </label>
-          <label className="flex items-center justify-between gap-2">
-            <span className="text-white/65">
-              φ⁸×F2 を鳴らす
-              <span className="block text-[9.5px] text-white/35">6.196Hzの音響ビート（ブツブツの主犯）が出るため通常オフ</span>
-            </span>
-            <input
-              type="checkbox"
-              checked={cfg.phi8F2On}
-              onChange={(e) => patchCfg({ phi8F2On: e.target.checked })}
+              checked={cfg.justOn}
+              onChange={(e) => patchCfg({ justOn: e.target.checked })}
               className="h-5 w-5 accent-[#d4b96a]"
             />
           </label>

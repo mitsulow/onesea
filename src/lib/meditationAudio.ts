@@ -12,16 +12,20 @@
  * - PAN は「沈めて→底で配線切替→浮上」。クロスフェード禁止（モノラルビート発生）
  * - 音響イベントは AudioContext.currentTime 基準で全予約（setTimeout 禁止・画面オフ対応）
  *
+ * 5音構成（英国の音響研究の教え: 5つの周波数が整数倍の純正律のときだけ立体として浮き上がる）:
+ * - 32×F2 / 32×F3 / φ⁸×F2 / φ⁸×F3 / φ⁸×F4 の5本。F1が居ないのは左右差8.02Hzが担うから
+ * - シューマンのモードは元々ほぼ 11:16:21 の整数比。そこで実測F3を基音に
+ *   22・32・33・47・62 倍へスナップすると純正律が完全成立する（φ⁸≈47は誤差0.05%）
+ *   → 5音の差音もすべてF3の整数倍になり、濁りが消えてひとつに融合する
+ *   → 脳は5つの倍音から「鳴っていない基音」= 実測F3そのもの（≈20.8Hz・可聴域外）を
+ *     幻の芯として再構成する（ミッシング・ファンダメンタル）
+ *
  * フェーブル改良:
  * - 音量ゆらぎは両耳共通75% + 独立25%（耳間バランスが保たれ、うなりが痩せない）
- * - φ⁸×F2 は初期値オフ。32×F3 と 6.196Hz しか離れておらず同じ耳でほぼ100%変調の
- *   「ばっばっば」が常時鳴る（=ブツブツの正体）。オンにすればシータ帯の副産物が戻る
- * - ✧きらめき層: φ¹¹×F1 / φ¹²×F1 のごく小さなガラス質の高音2本。1kHz超なので
- *   バイノーラルは成立しない（音色の飾り）。高い音から登場する導入の主役
  * - φエコー: 左=φ秒 / 右=φ²秒の残響。耳をまたがない（またぐと Lo/Hi が同じ耳に
  *   同居してモノラルビートが出る）。音程ゆらぎと干渉してゆっくり動く位相うねりになる
- * - 進行: 鐘1打と同時に高い音から登場 → 滞在/PAN → 鳴ったまま終わりの鐘3打 →
- *   3打目のあと1本ずつ退場
+ * - 進行: (シューマン音のあと)1.5秒で第1音がフェード開始 → 2秒で始まりの鐘・3打 →
+ *   高い音から登場 → 滞在/PAN → 鳴ったまま終わりの鐘3打 → 3打目のあと1本ずつ退場
  */
 
 export interface MedConfig {
@@ -29,7 +33,6 @@ export interface MedConfig {
   basePeriod: number; // ゆらぎ基準周期 秒
   flutterDepth: number; // ゆらぎの深さ
   hfExp: number; // 高域を抑える指数
-  phi8Coef: number; // φ⁸層の音量係数
   enterGap: number; // 登場の間隔 秒
   enterRise: number; // 登場の立ち上がり 秒
   panGap: number; // PANの間隔 秒
@@ -39,13 +42,12 @@ export interface MedConfig {
   gapJitter: number; // 間隔のばらつき（±割合）
   dwell: number; // 滞在時間 秒
   master: number; // 全体の音量
-  phi8F2On: boolean; // φ⁸×F2 を鳴らすか（6.196Hzのモノラルビート＝ブツブツの元）
-  sparkleOn: boolean; // ✧きらめき層（φ¹¹/φ¹²×F1）
+  justOn: boolean; // 純正律スナップ（実測F3の 22/32/33/47/62 倍へ）
   echoMix: number; // φエコーの量（0でオフ）
   isoDepth: number; // 同相AM補強（8Hzの脈が「ブツブツ」に聞こえたため初期値0）
   breathDepth: number; // 呼吸スウェルの深さ（0でオフ）
   breathPeriod: number; // 呼吸スウェルの周期 秒
-  openingBell: boolean; // 開始の鐘1打（MMM統合時はシューマン音の直後に鳴る）
+  openingBell: boolean; // 始まりの鐘3打（第1音の0.5秒後に1打目）
 }
 
 export const MED_DEFAULTS: MedConfig = {
@@ -53,7 +55,6 @@ export const MED_DEFAULTS: MedConfig = {
   basePeriod: 120,
   flutterDepth: 0.35,
   hfExp: 0.1,
-  phi8Coef: 0.8,
   enterGap: 6,
   enterRise: 12,
   panGap: 5,
@@ -64,8 +65,7 @@ export const MED_DEFAULTS: MedConfig = {
   dwell: 180,
   // 鐘より小さく「遠くでなんとなく聞こえている」程度が瞑想中の正解
   master: 0.05,
-  phi8F2On: false,
-  sparkleOn: true,
+  justOn: true,
   echoMix: 0.18,
   isoDepth: 0,
   breathDepth: 0.12,
@@ -141,44 +141,43 @@ export interface VoiceSpec {
   deco?: boolean; // 1kHz超の飾り（バイノーラル非成立）
 }
 
-/** 音の定義。modes = 実測シューマンF1〜F4 */
+/**
+ * 5音の定義。modes = 実測シューマンF1〜F4。
+ *
+ * 純正律スナップ（justOn）: 実測F3を基音に 22/32/33/47/62 倍。
+ *   22×F3 = 32×F2（シューマンの11:16比そのまま）
+ *   32×F3 = 32×F3
+ *   33×F3 ≈ φ⁸×F2（+2.2%）
+ *   47×F3 ≈ φ⁸×F3（φ⁸=46.9787…、誤差0.05%）
+ *   62×F3 ≈ φ⁸×F4（+0.55%）
+ * 差音もすべてF3の整数倍になり、5音がひとつの立体に融合する。
+ * 隣り合う 32/33 倍の差はちょうど1×F3 = 実測F3そのものの音響ビートとして鳴る。
+ */
 export function buildVoices(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES): VoiceSpec[] {
-  const out: VoiceSpec[] = [];
-  // 低域傾斜は 1 : 1/√φ : 1/φ : 1/φ^1.5（1/φ刻みより緩やか=高音が前に出る）
-  const baseAmps = [1, PHI ** -0.5, PHI ** -1, PHI ** -1.5];
-  [MULT32, MULT_PHI8].forEach((mult, layer) => {
-    modes.forEach((m, mi) => {
-      const ix = layer * 4 + mi;
-      const freq = m * mult;
-      const vol =
-        baseAmps[mi] *
-        (layer === 1 ? cfg.phi8Coef : 1) *
-        Math.pow(250 / freq, cfg.hfExp) *
-        Math.pow(aWeight(250) / aWeight(freq), 0.6); // A特性逆補正は6割掛け（高音を殺しすぎない）
-      out.push({
-        ix,
-        name: `${layer === 0 ? "32" : "φ⁸"}×F${mi + 1}`,
-        freq,
-        vol,
-        rate: (1 / cfg.basePeriod) * Math.pow(PHI, ix / 4),
-      });
-    });
+  const f3 = modes[2];
+  const defs: Array<{ name: string; n: number; raw: number }> = [
+    { name: "32×F2", n: 22, raw: modes[1] * MULT32 },
+    { name: "32×F3", n: 32, raw: modes[2] * MULT32 },
+    { name: "φ⁸×F2", n: 33, raw: modes[1] * MULT_PHI8 },
+    { name: "φ⁸×F3", n: 47, raw: modes[2] * MULT_PHI8 },
+    { name: "φ⁸×F4", n: 62, raw: modes[3] * MULT_PHI8 },
+  ];
+  const ref = cfg.justOn ? 22 * f3 : defs[0].raw; // 最低音を音量の基準に
+  return defs.map((d, ix) => {
+    const freq = cfg.justOn ? d.n * f3 : d.raw;
+    const vol =
+      Math.pow(PHI, -ix / 2) * // 低域から 1 : 1/√φ : 1/φ : … の緩やかな傾斜
+      Math.pow(ref / freq, cfg.hfExp) *
+      Math.pow(aWeight(ref) / aWeight(freq), 0.6); // A特性逆補正は6割掛け（高音を殺しすぎない）
+    return {
+      ix,
+      name: d.name,
+      freq,
+      vol,
+      rate: (1 / cfg.basePeriod) * Math.pow(PHI, ix / 4),
+      deco: freq >= 1000, // 1kHz超はバイノーラル非成立（音色の飾り）
+    };
   });
-  let voices = cfg.phi8F2On ? out : out.filter((v) => v.ix !== 5);
-  if (cfg.sparkleOn) {
-    // ✧きらめき層: φ¹¹×F1 ≈1.6kHz / φ¹²×F1 ≈2.5kHz。ごく小さなガラス質の星
-    [11, 12].forEach((p, k) => {
-      voices = voices.concat({
-        ix: 8 + k,
-        name: `✧φ^${p}`,
-        freq: modes[0] * Math.pow(PHI, p),
-        vol: k === 0 ? 0.1 : 0.055,
-        rate: (1 / cfg.basePeriod) * Math.pow(PHI, (8 + k) / 4),
-        deco: true,
-      });
-    });
-  }
-  return voices;
 }
 
 export interface SectionInfo {
@@ -232,9 +231,10 @@ export function buildTimeline(cfg: MedConfig, modes: number[] = TEXTBOOK_MODES):
   const pan2Order = shuffled(n);
   const exitOrder = shuffled(n);
 
-  // 登場: 間隔にばらつき（±35%）。1本目は鐘と同時
+  // 登場: 1本目は1.5秒からフェード開始（その0.5秒後に始まりの鐘1打目）。
+  // 以降は間隔にばらつき（±35%）
   const enterAt = new Array<number>(n);
-  let t = 0;
+  let t = 1.5;
   enterOrder.forEach((vi, k) => {
     if (k > 0) t += jitter(cfg.enterGap, cfg.gapJitter);
     enterAt[vi] = t;
@@ -372,9 +372,12 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline, ctxOut?:
   const bellBus = ctx.createGain();
   bellBus.gain.value = 1;
   bellBus.connect(ctx.destination);
-  const bellFreq = (tl.voices.find((v) => v.spec.ix === 0)?.spec.freq ?? 250.56) * 2; // = F1×64
+  // 鐘の音高 = 最低音の周波数（純正律なら 22×F3。5音の仲間としてグリッドに乗る）
+  const bellFreq = tl.voices.reduce((m, v) => Math.min(m, v.spec.freq), Infinity);
 
-  if (cfg.openingBell) ringBell(ctx, bellBus, bellFreq, t0);
+  // 始まりの鐘3打: 第1音のフェード開始(1.5s)の0.5秒後に1打目、以後深呼吸テンポ
+  if (cfg.openingBell) for (let i = 0; i < 3; i++) ringBell(ctx, bellBus, bellFreq, t0 + 2 + i * BELL_GAP);
+  // 終わりの鐘3打: 不思議な音は鳴ったまま
   for (let i = 0; i < 3; i++) ringBell(ctx, bellBus, bellFreq, t0 + tl.bellsAt + i * BELL_GAP);
 
   // ---- φエコー: 左=φ秒 / 右=φ²秒。同じ耳の中だけで反響（耳をまたぐとモノラルビートが出る）。
