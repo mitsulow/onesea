@@ -145,7 +145,7 @@ const SERVICES: Service[] = [
 
 /** ホームボタンの折りたたみメニュー（全サービス一覧） */
 const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean }> = [
-  { href: "/", icon: "🏠", label: "OneSea" },
+  { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
@@ -266,9 +266,12 @@ export function BottomNav() {
           {/* ホーム（サービスのホームへ + 全サービスメニュー）。トップページでは出さない */}
           {!svc.noHome && (
           <button onClick={onHome} className="relative flex flex-1 flex-col items-center gap-0.5 py-1">
-            <span className={`text-lg leading-none transition-transform duration-150 ${atHome ? "-translate-y-0.5 scale-[1.3]" : ""}`}>
-              🏠
-            </span>
+            <img
+              src="/icons/tab-home.png"
+              alt=""
+              className={`object-contain transition-transform duration-150 ${atHome ? "-translate-y-0.5 scale-[1.3]" : ""}`}
+              style={{ width: 17, height: 21 }}
+            />
             <span className={`flex items-center gap-0.5 text-[9px] leading-none ${atHome ? "font-bold" : "font-medium"}`} style={{ color: atHome ? svc.active : svc.inactive }}>
               ホーム <span className="text-[7px]">{menu ? "▾" : "▴"}</span>
             </span>

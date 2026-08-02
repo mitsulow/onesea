@@ -122,7 +122,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             style={{ top: anchor.top, right: anchor.right, boxShadow: "0 10px 36px rgba(0,0,0,0.22)" }}
           >
             <Link href="/" onClick={() => setOpen(false)} className={item}>
-              <span className="w-[20px] text-center text-[16px]">🏠</span> ホーム
+              {icon("/icons/tab-home.png")} ホーム
             </Link>
             <Link href="/mmm" onClick={() => setOpen(false)} className={item}>
               {icon("/icons/cel-sun.png")} MasterMindMembers
