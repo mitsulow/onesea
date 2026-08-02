@@ -530,17 +530,8 @@ export default function CotozutePage() {
           <button onClick={() => setDrawer(true)} aria-label="メニュー" className="text-[22px] leading-none text-[#1c1e21]">
             ☰
           </button>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5"
-            style={{
-              background: "linear-gradient(120deg,#14b8a0,#0a8a84)",
-              boxShadow: "0 3px 12px rgba(10,186,181,.35)",
-            }}
-          >
-            <span className="relative text-[13px] leading-none text-white">
-              ✦<span className="absolute -right-1.5 -top-1 text-[7px]">✦</span>
-            </span>
-            <span className="text-[17px] font-extrabold tracking-tight text-white">CotoZute</span>
+          <span className="text-[22px] font-extrabold tracking-tight" style={{ color: TIFFANY }}>
+            CotoZute →
           </span>
           <span className="ml-auto">
             <AvatarMenu ring="#c8beac" />
