@@ -15,7 +15,7 @@ import {
   SHISHI_COLOR,
   SHISHI_BG,
 } from "@/lib/almanac";
-import { TideDay, fetchTideDay } from "@/lib/tide";
+import { TideDay, Port, fetchTideDay, listPorts, setChosenPort } from "@/lib/tide";
 
 /**
  * 祈りの手帳 v2（InoriTechoV2.jsx を移植）。
@@ -67,6 +67,23 @@ export const PENS = [
   { id: "gray", c: "#707070", label: "その他" },
 ] as const;
 export const penColor = (id: string) => PENS.find((x) => x.id === id)?.c ?? "#4a9a5a";
+
+/** ペンのタグ名（ユーザーが自由に変えられる。localStorage保存） */
+export function loadPenLabels(): Record<string, string> {
+  const base: Record<string, string> = {};
+  for (const pn of PENS) base[pn.id] = pn.label;
+  try {
+    const v = JSON.parse(localStorage.getItem("techo-pens") ?? "{}");
+    return { ...base, ...v };
+  } catch {
+    return base;
+  }
+}
+export function savePenLabels(labels: Record<string, string>) {
+  try {
+    localStorage.setItem("techo-pens", JSON.stringify(labels));
+  } catch {}
+}
 
 function loadMemos(): Memos {
   try {
@@ -410,6 +427,12 @@ function BottomSheet({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [tide, setTide] = useState<TideDay | null>(null);
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
+  const [portPick, setPortPick] = useState(false); // 港選択モーダル
+  const [penLabels, setPenLabels] = useState<Record<string, string>>({});
+  const [penEdit, setPenEdit] = useState(false);
+  useEffect(() => setPenLabels(loadPenLabels()), []);
+  const [ports, setPorts] = useState<Port[]>([]);
+  const [portQ, setPortQ] = useState("");
   const [expanded, setExpanded] = useState(true); // 最初から全画面
   const dayEvs: TechoEv[] = dayMemo.ev ?? [];
   // 月の出・南中・月の入り（現在位置キャッシュがあればその場所で）
@@ -613,8 +636,17 @@ function BottomSheet({
                 <div className="mb-1 flex items-center gap-1 text-[9.5px] text-[#5080b0]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/icons/cel-earth.png" alt="" className="h-[13px] w-[13px] object-contain" />
-                  地球 — 潮汐 <span className="text-[#aab]">{tide ? `${tide.port}港` : "…"}</span>
+                  地球 — 潮の満ち引き
                 </div>
+                <button
+                  onClick={async () => {
+                    setPortPick(true);
+                    if (!ports.length) setPorts(await listPorts());
+                  }}
+                  className="mb-1 rounded-full border border-[#c8d8e8] bg-white px-2 py-0.5 text-[10px] font-bold text-[#3070b0]"
+                >
+                  ⚓ {tide ? `${tide.port}港` : "港を選ぶ"} ▾
+                </button>
                 {tide === null ? (
                   <div className="py-1 text-[10px] text-[#9ab]">現在位置から最寄り港を探しています...</div>
                 ) : tideRows.length === 0 ? (
@@ -633,7 +665,11 @@ function BottomSheet({
                 )}
               </div>
               <div className="rounded-xl border border-[#26262e] p-2.5 text-center" style={{ background: "#000005" }}>
-                <div className="text-[9.5px] tracking-wider text-[#c8c0d8]">月</div>
+                <div className="flex items-center justify-end gap-1 text-[9.5px] tracking-wider text-[#c8c0d8]">
+                  月 — 満ち欠け
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/cel-moon.png" alt="" className="h-[13px] w-[13px] object-contain" />
+                </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-1 h-11 w-11" loading="lazy" />
                 <div className="num text-[10.5px] text-[#e8e4f0]">月齢 {moon.age.toFixed(1)}</div>
@@ -810,6 +846,61 @@ function BottomSheet({
         </div>
       </div>
 
+      {/* 港選択（ツキヨガと同じ: 一覧から選ぶ・検索つき） */}
+      {portPick && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40" onClick={() => setPortPick(false)}>
+          <div
+            className="flex w-full max-w-[480px] flex-col rounded-t-2xl bg-white"
+            style={{ height: "70dvh" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="border-b border-[#eee] px-4 py-3">
+              <div className="mb-2 text-center text-[13px] font-extrabold text-[#3070b0]">⚓ 港をえらぶ</div>
+              <input
+                value={portQ}
+                onChange={(e) => setPortQ(e.target.value)}
+                placeholder="港名でさがす（例: 那覇）"
+                className="w-full rounded-xl border border-[#dde] bg-[#f8fafc] px-3 py-2 text-[13px] outline-none"
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 py-1">
+              <button
+                onClick={() => {
+                  setChosenPort(null);
+                  setPortPick(false);
+                  setTide(null);
+                  fetchTideDay(dk).then(setTide);
+                }}
+                className="w-full rounded-lg px-3 py-2.5 text-left text-[13px] font-bold text-[#3070b0]"
+              >
+                📍 現在位置の最寄り港にする
+              </button>
+              {ports
+                .filter((pt) => !portQ.trim() || pt.name.includes(portQ.trim()))
+                .map((pt) => (
+                  <button
+                    key={pt.code}
+                    onClick={() => {
+                      setChosenPort(pt.code);
+                      setPortPick(false);
+                      setTide(null);
+                      fetchTideDay(dk).then(setTide);
+                    }}
+                    className="w-full border-t border-[#f4f4f0] px-3 py-2.5 text-left text-[13px] text-[#333]"
+                  >
+                    {pt.name}
+                  </button>
+                ))}
+            </div>
+            <div className="border-t border-[#eee] p-2" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 8px)" }}>
+              <button onClick={() => setPortPick(false)} className="w-full rounded-xl py-2.5 text-[13px] font-bold text-[#999]">
+                とじる
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 予定の追加・編集（○時○分〜○時○分・色ペン） */}
       {evEdit && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40" onClick={() => setEvEdit(null)}>
@@ -865,24 +956,41 @@ function BottomSheet({
                 ))}
               </select>
             </div>
-            {/* 色ペン */}
-            <div className="mt-2.5 flex items-center gap-2.5">
+            {/* 色ペン（タグ名は✎で自由に変更できる） */}
+            <div className="mt-2.5 flex items-start gap-2.5">
               {PENS.map((pn) => (
-                <button
-                  key={pn.id}
-                  onClick={() => setEvEdit({ ...evEdit, color: pn.id })}
-                  className="flex flex-col items-center gap-0.5"
-                >
-                  <span
+                <div key={pn.id} className="flex flex-col items-center gap-0.5">
+                  <button
+                    onClick={() => setEvEdit({ ...evEdit, color: pn.id })}
                     className="h-7 w-7 rounded-full"
                     style={{
                       background: pn.c,
                       border: evEdit.color === pn.id ? "3px solid #333" : "3px solid transparent",
                     }}
+                    aria-label={penLabels[pn.id] ?? pn.label}
                   />
-                  <span className="text-[9px] text-[#888]">{pn.label}</span>
-                </button>
+                  {penEdit ? (
+                    <input
+                      value={penLabels[pn.id] ?? pn.label}
+                      onChange={(e) => {
+                        const next = { ...penLabels, [pn.id]: e.target.value };
+                        setPenLabels(next);
+                        savePenLabels(next);
+                      }}
+                      maxLength={5}
+                      className="w-11 rounded border border-[#ddd] px-0.5 py-0.5 text-center text-[9px] outline-none"
+                    />
+                  ) : (
+                    <span className="text-[9px] text-[#888]">{penLabels[pn.id] ?? pn.label}</span>
+                  )}
+                </div>
               ))}
+              <button
+                onClick={() => setPenEdit(!penEdit)}
+                className="ml-auto mt-1 rounded-full border border-[#e0dcd0] px-2 py-1 text-[10px] font-bold text-[#8a8070]"
+              >
+                {penEdit ? "完了" : "✎ タグ名"}
+              </button>
             </div>
             <div className="mt-3 flex gap-2">
               {evEdit.id && (

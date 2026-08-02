@@ -8,7 +8,7 @@
 
 const BASE = "https://mitsulow.github.io/0Lei/data/tide";
 
-interface Port {
+export interface Port {
   code: string;
   name: string;
   lat: number;
@@ -23,6 +23,25 @@ export interface TideDay {
 
 let portsCache: Port[] | null = null;
 const yearCache = new Map<string, Record<string, { high: Array<[string, number]>; low: Array<[string, number]> }>>();
+
+export async function listPorts(): Promise<Port[]> {
+  return loadPorts();
+}
+
+/** 手動で選んだ港（無ければ現在位置の最寄り） */
+export function getChosenPort(): string | null {
+  try {
+    return localStorage.getItem("techo-port");
+  } catch {
+    return null;
+  }
+}
+export function setChosenPort(code: string | null) {
+  try {
+    if (code) localStorage.setItem("techo-port", code);
+    else localStorage.removeItem("techo-port");
+  } catch {}
+}
 
 async function loadPorts(): Promise<Port[]> {
   if (portsCache) return portsCache;
@@ -96,11 +115,14 @@ async function loadYear(code: string, year: number) {
 /** 日付キー（YYYY-MM-DD）の最寄り港の満潮・干潮 */
 export async function fetchTideDay(dateKey: string): Promise<TideDay | null> {
   try {
-    const pos = await getPosition();
     const ports = await loadPorts();
     if (!ports.length) return null;
-    let port = ports[0];
-    if (pos) {
+    // 手動選択があれば最優先（ツキヨガと同じ仕様）
+    const chosen = getChosenPort();
+    const manual = chosen ? ports.find((p) => p.code === chosen) : null;
+    const pos = manual ? null : await getPosition();
+    let port = manual ?? ports[0];
+    if (!manual && pos) {
       let best = Infinity;
       for (const p of ports) {
         const d = haversine(pos.lat, pos.lon, p.lat, p.lon);
@@ -109,8 +131,7 @@ export async function fetchTideDay(dateKey: string): Promise<TideDay | null> {
           port = p;
         }
       }
-    } else {
-      // 位置不明時は那覇（N9?）が分からないので東京近辺を探す
+    } else if (!manual) {
       port = ports.find((p) => p.name.includes("東京")) ?? ports[0];
     }
     const year = Number(dateKey.slice(0, 4));
