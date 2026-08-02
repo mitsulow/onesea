@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { CotozutePost, fetchPostsPage, fetchPostsBefore, fetchMyLikes } from "@/lib/cotozute";
+import { fetchMyLikes } from "@/lib/cotozute";
 import { FeedItem, feedKey, fetchMixedFeed } from "@/lib/feed";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
@@ -22,8 +22,6 @@ const PAGE = 20;
 const WINDOW_MAX = 240;
 const TRIM = 80;
 
-const cotoItem = (post: CotozutePost): FeedItem => ({ kind: "coto", at: post.created_at, post });
-
 export default function CotozutePage() {
   const [me, setMe] = useState<User | null>(null);
   const [items, setItems] = useState<FeedItem[] | null>(null);
@@ -33,17 +31,14 @@ export default function CotozutePage() {
   const [composing, setComposing] = useState(false);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const [mode, setMode] = useState<"all" | "photo">("all");
-  const modeRef = useRef<"all" | "photo">("all");
-  modeRef.current = mode;
+  const [events, setEvents] = useState<any[]>([]); // ストーリー風の横スクロールイベント
   const loadingRef = useRef(false);
   const itemsRef = useRef<FeedItem[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
 
-  const fetchHead = useCallback(async (m: "all" | "photo"): Promise<FeedItem[]> => {
-    if (m === "photo") return (await fetchPostsPage(0, PAGE, true)).map(cotoItem);
+  const fetchHead = useCallback(async (): Promise<FeedItem[]> => {
     return fetchMixedFeed(null, PAGE);
   }, []);
 
@@ -60,23 +55,20 @@ export default function CotozutePage() {
       itemsRef.current = list;
       setHasMore(list.length > 0);
     });
+    // ストーリー風イベント（これからの分）
+    supabase
+      .from("village_posts")
+      .select(
+        "id, body, photo_url, event_at, villages!village_posts_village_id_fkey(id, name, prefecture)"
+      )
+      .eq("kind", "event")
+      .gte("event_at", new Date().toISOString())
+      .order("event_at", { ascending: true })
+      .limit(12)
+      .then(({ data }) => setEvents(data ?? []));
     if (new URLSearchParams(window.location.search).get("compose")) setComposing(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /* タブ切り替え */
-  const switchMode = (m: "all" | "photo") => {
-    if (m === mode) return;
-    setMode(m);
-    setItems(null);
-    setFresh([]);
-    fetchHead(m).then((list) => {
-      setItems(list);
-      itemsRef.current = list;
-      setHasMore(list.length > 0);
-      window.scrollTo({ top: 0 });
-    });
-  };
 
   /* 無限スクロール（カーソル式・窓方式） */
   const loadMore = useCallback(async () => {
@@ -85,10 +77,7 @@ export default function CotozutePage() {
     if (cur.length === 0) return;
     loadingRef.current = true;
     const cursor = cur[cur.length - 1].at;
-    const more =
-      modeRef.current === "photo"
-        ? (await fetchPostsBefore(cursor, PAGE, true)).map(cotoItem)
-        : await fetchMixedFeed(cursor, PAGE);
+    const more = await fetchMixedFeed(cursor, PAGE);
     const seen = new Set(cur.map(feedKey));
     let merged = [...cur, ...more.filter((it) => !seen.has(feedKey(it)))];
 
@@ -128,7 +117,7 @@ export default function CotozutePage() {
     const check = async () => {
       const newest = itemsRef.current[0]?.at;
       if (!newest) return;
-      const latest = await fetchHead(modeRef.current);
+      const latest = await fetchHead();
       const ids = new Set(itemsRef.current.map(feedKey));
       setFresh(latest.filter((it) => it.at > newest && !ids.has(feedKey(it))));
     };
@@ -154,7 +143,7 @@ export default function CotozutePage() {
   };
 
   const reload = async () => {
-    const list = await fetchHead(modeRef.current);
+    const list = await fetchHead();
     itemsRef.current = list;
     setItems(list);
     setFresh([]);
@@ -217,34 +206,47 @@ export default function CotozutePage() {
             Cotozute
           </div>
         </div>
-        {/* X風タブ */}
-        <div className="grid grid-cols-2">
-          {(
-            [
-              ["all", "みんな"],
-              ["photo", "画像"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              onClick={() => switchMode(id)}
-              className="relative py-2.5 text-[13.5px]"
-              style={{ color: mode === id ? "#3a3428" : "#a09888", fontWeight: mode === id ? 800 : 500 }}
-            >
-              {label}
-              {mode === id && (
-                <span className="absolute bottom-0 left-1/2 h-[3.5px] w-12 -translate-x-1/2 rounded-t-full bg-[#c94d3a]" />
-              )}
-            </button>
-          ))}
-        </div>
       </header>
+
+      {/* 📅 イベント（インスタのストーリー風・横スクロール） */}
+      {events.length > 0 && (
+        <div className="border-b border-[#f0e9dc] bg-[#fffdf8] py-2">
+          <div className="hide-scrollbar flex gap-3 overflow-x-auto px-3">
+            {events.map((ev) => {
+              const d = new Date(ev.event_at);
+              const title = String(ev.body ?? "").split("\n")[0];
+              return (
+                <a
+                  key={ev.id}
+                  href={ev.villages ? `/sekai/village/${ev.villages.id}` : "/sekai"}
+                  className="w-[72px] flex-shrink-0 no-underline"
+                >
+                  <div
+                    className="mx-auto flex h-[64px] w-[64px] items-center justify-center overflow-hidden rounded-full"
+                    style={{ border: "2.5px solid #4a9a5a", padding: 2, background: "#fff" }}
+                  >
+                    {ev.photo_url ? (
+                      <img src={ev.photo_url} alt="" loading="lazy" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center rounded-full bg-[#eaf4ec] text-[20px]">📅</span>
+                    )}
+                  </div>
+                  <div className="num mt-1 text-center text-[10.5px] font-extrabold leading-none text-[#2a7a48]">
+                    {d.getMonth() + 1}/{d.getDate()}
+                  </div>
+                  <div className="mt-0.5 truncate text-center text-[9.5px] leading-tight text-[#8a8070]">{title}</div>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 追いつきピル */}
       {fresh.length > 0 && (
         <div
           className="pointer-events-none fixed left-1/2 z-50 -translate-x-1/2"
-          style={{ top: "calc(env(safe-area-inset-top) + 104px)" }}
+          style={{ top: "calc(env(safe-area-inset-top) + 62px)" }}
         >
           <button
             onClick={catchUp}
@@ -283,7 +285,7 @@ export default function CotozutePage() {
           </div>
         ) : items.length === 0 ? (
           <p className="py-12 text-center text-[13px] text-[#b8b0a0]">
-            {mode === "photo" ? "画像つきの言の葉はまだありません 📷" : "まだ言の葉がありません。最初のひとことをどうぞ 🌿"}
+まだ言の葉がありません。最初のひとことをどうぞ 🌿
           </p>
         ) : (
           <>
