@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { MeishiModal } from "./MeishiModal";
 
 interface Suggestion {
   id: string;
@@ -12,9 +12,10 @@ interface Suggestion {
   status_line: string | null;
 }
 
-/** ✨ おすすめのむらびと（楽市楽座から移植・横スクロールカード） */
-export function VillagerSuggestions() {
+/** ✨ おすすめの人（横スクロール）。タップでまず名刺→マイページへ */
+export function VillagerSuggestions({ title = "✨ おすすめのむらびと" }: { title?: string }) {
   const [profiles, setProfiles] = useState<Suggestion[]>([]);
+  const [meishi, setMeishi] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -31,13 +32,14 @@ export function VillagerSuggestions() {
 
   return (
     <div>
-      <p className="mb-1.5 px-1 text-xs font-medium text-[#8a8070]">✨ おすすめのむらびと</p>
+      {meishi && <MeishiModal username={meishi} onClose={() => setMeishi(null)} />}
+      <p className="mb-1.5 px-1 text-xs font-medium text-[#8a8070]">{title}</p>
       <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {profiles.map((p) => (
-          <Link
+          <button
             key={p.id}
-            href={`/u/${p.username}`}
-            className="block w-32 flex-shrink-0 overflow-hidden rounded-xl border border-[#ede5d8] p-2.5 text-center no-underline"
+            onClick={() => setMeishi(p.username)}
+            className="block w-32 flex-shrink-0 overflow-hidden rounded-xl border border-[#ede5d8] p-2.5 text-center"
             style={{ background: "linear-gradient(180deg,#fffaf0 0%,#fdf6e9 100%)" }}
           >
             <div className="flex justify-center">
@@ -64,7 +66,7 @@ export function VillagerSuggestions() {
             <div className="mt-0.5 truncate text-[10px] text-[#a09888]">
               {p.status_line ?? "よろしくね 🌿"}
             </div>
-          </Link>
+          </button>
         ))}
       </div>
     </div>

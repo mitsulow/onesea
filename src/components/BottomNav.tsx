@@ -43,7 +43,7 @@ const SERVICES: Service[] = [
     active: "#eae6b8",
     inactive: "#8ab89a",
     tabs: [
-      { href: "/sekai/villages", icon: "⛺", label: "拠点" },
+      { href: "/sekai/villages", icon: "🏡", label: "拠点" },
       { href: "/sekai/clubs", icon: "🎌", label: "部活" },
       { href: "/sekai/kome", icon: "🌾", label: "米部" },
       { href: "/sekai/meister", icon: "🫙", label: "講座" },

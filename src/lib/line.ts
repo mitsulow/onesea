@@ -285,7 +285,7 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
       type: "village" as const,
       id: r.village_id as string,
       name: (r.villages?.name as string) ?? "村",
-      emoji: "⛺",
+      emoji: "🏡",
     })),
     ...((cm.data ?? []) as any[]).map((r) => ({
       type: "club" as const,

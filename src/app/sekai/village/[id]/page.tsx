@@ -189,7 +189,7 @@ export default function VillagePage() {
             </span>
           </span>
         </div>
-        <div className="mt-3 text-[40px] leading-none">⛺</div>
+        <div className="mt-3 text-[40px] leading-none">🏡</div>
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{village.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
           {village.prefecture} ・ 村人 {members.length}人 ・ 世話人 {steward?.display_name ?? "—"}

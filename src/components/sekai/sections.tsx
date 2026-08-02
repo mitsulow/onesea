@@ -515,7 +515,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [cSending, setCSending] = useState<string | null>(null);
 
-  const FEED_PAGE = 10;
+  const FEED_PAGE = 5;
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [events, setEvents] = useState<any[]>([]); // これからのイベント（横スクロール）
@@ -598,7 +598,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   };
 
   const eventLabel = (p: any) =>
-    `⛺${p.villages?.name ?? "セカイムラ"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
+    `🏡${p.villages?.name ?? "セカイムラ"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
 
   /** 参加を取り消す → 手帳からその行を消す */
   const cancelEvent = (p: any) => {
@@ -728,8 +728,8 @@ export function ActivitySection({ me }: { me: User | null }) {
         className="mb-2 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}
       >
-        <div className="text-[14px] font-extrabold tracking-[2px] text-[#eae6b8]">📣 むらびとたより</div>
-        <div className="mt-0.5 text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
+        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#eae6b8]">📔 村人日記</div>
+        <div className="mt-0.5 text-center text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
       </div>
 
       {/* 📅 これからのイベント（横スクロール・旧セカイムラ式） */}
@@ -782,7 +782,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                         className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
                         style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
                       >
-                        ⛺ {p.villages?.name ?? "セカイムラ"}
+                        🏡 {p.villages?.name ?? "セカイムラ"}
                       </div>
                     )}
                     <span
@@ -854,7 +854,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           className="mx-2 mb-2 block rounded-2xl border bg-white px-3.5 py-3 text-center text-[12.5px] font-bold no-underline shadow-sm"
           style={{ borderColor: "#c8dccb", color: GREEN }}
         >
-          ⛺ 拠点に入ると、ここから「むらびとたより」を投稿できます →
+          🏡 拠点に入ると、ここから「村人日記」を書けます →
         </a>
       )}
 
@@ -873,7 +873,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               >
                 {myVills.map((v) => (
                   <option key={v.id} value={v.id}>
-                    ⛺ {v.name}（{v.prefecture}）
+                    🏡 {v.name}（{v.prefecture}）
                   </option>
                 ))}
               </select>
@@ -953,7 +953,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               className="flex-shrink-0 rounded-full border border-[#d8e4da] bg-white px-3 py-1.5 text-[11.5px] font-bold no-underline"
               style={{ color: GREEN }}
             >
-              ⛺ {v.name}
+              🏡 {v.name}
               <span className="ml-1 font-normal text-[#a0aca0]">{v.prefecture}</span>
             </Link>
           ))}
@@ -1129,7 +1129,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               >
                 {myVills.map((v) => (
                   <option key={v.id} value={v.id}>
-                    ⛺ {v.name}（{v.prefecture}）
+                    🏡 {v.name}（{v.prefecture}）
                   </option>
                 ))}
               </select>
@@ -1186,7 +1186,7 @@ export function ActivitySection({ me }: { me: User | null }) {
 
       {/* おわりの帯（セクションの終わりが一目で分かる） */}
       <div className="mt-2 px-4 py-1.5 text-center" style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}>
-        <span className="text-[9.5px] tracking-[3px] text-[#8ab89a]">〜 むらびとたより ここまで 〜</span>
+        <span className="text-[9.5px] tracking-[3px] text-[#8ab89a]">〜 村人日記 ここまで 〜</span>
       </div>
     </section>
   );
@@ -1562,7 +1562,7 @@ export function VillagesSection({
       <div className="rounded-xl border border-[#e2eae0] bg-white p-3">
         <div className="flex items-start justify-between gap-2">
           <Link href={`/sekai/village/${v.id}`} className="min-w-0 no-underline">
-            <div className="text-[14.5px] font-extrabold text-[#2a4a34]">⛺ {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
+            <div className="text-[14.5px] font-extrabold text-[#2a4a34]">🏡 {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
             <div className="mt-0.5 text-[11px] text-[#a0aca0]">
               {v.prefecture}
               {v.city ? ` ${v.city}` : ""} ・ {members}人 ・ 世話人 {v.profiles?.display_name ?? "—"}
@@ -1646,7 +1646,7 @@ export function VillagesSection({
 
       <div className="mb-2.5 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-          ⛺ {pref}の拠点
+          🏡 {pref}の拠点
         </span>
         <span className="text-[10px] text-[#a0aca0]">一つの県に、いくつでも</span>
       </div>
@@ -1691,7 +1691,7 @@ export function VillagesSection({
           className="rounded-xl border-2 border-dashed px-4 py-5 text-center"
           style={{ borderColor: "#4a8a5c55", background: "linear-gradient(135deg,#eff7f0,#fffdf8)" }}
         >
-          <div className="text-3xl">⛺</div>
+          <div className="text-3xl">🏡</div>
           <p className="mt-1.5 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
             {pref}には、まだ拠点がありません
           </p>
@@ -1773,7 +1773,7 @@ export function VillagesSection({
             className="mt-3 w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
             style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
           >
-            ⛺ 拠点を立ち上げる
+            🏡 拠点を立ち上げる
           </button>
         ))}
 

@@ -11,6 +11,7 @@ import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
 import { MuraFeedCard, ShopStripCard } from "@/components/FeedCards";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import { VillagerSuggestions } from "@/components/VillagerSuggestions";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -440,7 +441,7 @@ export default function CotozutePage() {
                     className="flex h-full w-full items-center justify-center text-[12px] font-bold text-white"
                     style={{ background: "linear-gradient(160deg,#4a9a5a,#1e4530)" }}
                   >
-                    ⛺ {ev.villages?.name ?? "セカイムラ"}
+                    🏡 {ev.villages?.name ?? "セカイムラ"}
                   </div>
                 )}
               </div>
@@ -485,6 +486,14 @@ export default function CotozutePage() {
       if (i === 7 && shopStrip) {
         out.push(<div key="shop-strip">{shopStrip}</div>);
         out.push(<Band key="shop-band" />);
+      }
+      if (i === 12) {
+        out.push(
+          <div key="villagers" className="py-2.5">
+            <VillagerSuggestions title="✨ おすすめのむらびと" />
+          </div>
+        );
+        out.push(<Band key="villagers-band" />);
       }
     });
     return out;

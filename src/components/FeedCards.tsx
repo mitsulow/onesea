@@ -42,7 +42,7 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
             />
           ) : (
             <span className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#d8eef8] text-[16px]">
-              ⛺
+              🏡
             </span>
           )}
         </button>
@@ -95,7 +95,7 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
           onClick={() => v && router.push(`/sekai/village/${v.id}`)}
           className="w-full py-1 text-center text-[12.5px] font-bold text-[#4a8a5c]"
         >
-          ⛺ この拠点を見る →
+          🏡 この拠点を見る →
         </button>
       </div>
     </div>

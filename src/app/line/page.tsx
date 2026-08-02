@@ -215,7 +215,7 @@ export default function LinePage() {
               className="mt-4 inline-block rounded-xl px-5 py-2.5 text-[13px] font-extrabold text-white no-underline"
               style={{ background: "#4a8a5c" }}
             >
-              ⛺ 村をさがす
+              🏡 村をさがす
             </Link>
           </div>
         ) : (

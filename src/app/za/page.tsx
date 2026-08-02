@@ -71,7 +71,7 @@ export default function ZaPage() {
         {shops && shops.length > 0 && <ZaFeatured shops={shops} />}
 
         {/* おすすめのむらびと */}
-        <VillagerSuggestions />
+        <VillagerSuggestions title="✨ おすすめの座主" />
 
         {/* 楽市 / 楽座 の切り替え */}
         <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
