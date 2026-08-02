@@ -537,46 +537,35 @@ function BottomSheet({
         onTouchStart={sTS}
         onTouchMove={sTM}
         onTouchEnd={sTE}
-        className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-[480px] flex-col overflow-hidden bg-white"
+        className="fixed inset-y-0 left-1/2 z-[80] flex w-full max-w-[480px] flex-col overflow-hidden bg-white"
         style={{
-          height: expanded ? "96dvh" : "58vh",
-          borderRadius: "20px 20px 0 0",
-          boxShadow: "0 -6px 30px rgba(0,0,0,0.18)",
-          transform: `translate(calc(-50% + ${hx}px), ${Math.max(0, sheetY)}px)`,
-          transition:
-            draggingSheet || hDragging
-              ? "none"
-              : "height 0.28s cubic-bezier(0.22,1,0.36,1), transform 0.28s cubic-bezier(0.22,1,0.36,1)",
+          transform: `translateX(calc(-50% + ${hx}px))`,
+          transition: hDragging ? "none" : "transform 0.28s cubic-bezier(0.22,1,0.36,1)",
         }}
       >
-        {/* ハンドル（×で閉じてカレンダーへ戻る） */}
-        <div
-          onTouchStart={hTS}
-          onTouchMove={hTM}
-          onTouchEnd={hTE}
-          className="relative flex-shrink-0 border-b border-[#f0ede6] pb-1.5 pt-2.5"
-          style={{ background: "linear-gradient(180deg,#faf7f2,#fff)", touchAction: "none" }}
-        >
-          <div className="mx-auto h-[5px] w-[60px] rounded bg-[#c8c0b2]" />
-          <button
-            onClick={onClose}
-            aria-label="閉じる"
-            className="absolute right-3 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ece4] text-[15px] text-[#8a8070]"
-          >
-            ×
-          </button>
-        </div>
+
 
         <div className="flex-1 overflow-y-auto overscroll-contain" style={{ paddingBottom: 16 }}>
-          {/* 日付ヘッダー（センター日付・右に旧暦） */}
-          <div className="relative px-4 pb-1.5 pt-2.5 text-center">
-            <span className="text-xl font-extrabold text-[#2a2a2a]">
-              {m}月{d}日
-            </span>
-            <span className="ml-1.5 text-sm text-[#999]">（{dow}）</span>
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#b8a888]">
-              {kyurekiLabel(dk)}
-            </span>
+          {/* 日付ヘッダー（独立バー・センター日付・右上×） */}
+          <div
+            className="relative border-b border-[#f0ede6] px-4 pb-2 text-center"
+            style={{ paddingTop: "calc(env(safe-area-inset-top) + 10px)", background: "linear-gradient(180deg,#faf7f2,#fff)" }}
+          >
+            <div>
+              <span className="text-xl font-extrabold text-[#2a2a2a]">
+                {m}月{d}日
+              </span>
+              <span className="ml-1.5 text-sm text-[#999]">（{dow}）</span>
+            </div>
+            <div className="text-[10px] text-[#b8a888]">{kyurekiLabel(dk)}</div>
+            <button
+              onClick={onClose}
+              aria-label="閉じる"
+              className="absolute right-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#f0ece4] text-[16px] text-[#8a8070]"
+              style={{ top: "calc(env(safe-area-inset-top) + 8px)" }}
+            >
+              ×
+            </button>
           </div>
 
           <div className="px-3.5">
@@ -657,14 +646,6 @@ function BottomSheet({
               </div>
             </div>
 
-            {/* メモ */}
-            <textarea
-              value={dayMemo.note}
-              onChange={(e) => onSave(dk, "note", e.target.value)}
-              placeholder="今日の祈り・気づき..."
-              className="mb-2 w-full resize-y rounded-lg border border-[#e4e0d8] bg-[#fdfcfa] p-2 text-xs leading-normal text-[#333] outline-none"
-              style={{ minHeight: 40 }}
-            />
 
             {/* 24時間スケジュール */}
             <div className="mb-1 text-[10.5px] font-bold text-[#999]">📅 スケジュール</div>
