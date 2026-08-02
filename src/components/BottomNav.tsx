@@ -141,7 +141,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean }> 
   { href: "/", icon: "🏠", label: "OneSea" },
   { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
-  { href: "/tsukiyoga", icon: "/icons/cel-moon.png", label: "ツキヨガ" },
+  { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/line", icon: "💬", label: "TALK" },
   { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },

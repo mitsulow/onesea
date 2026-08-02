@@ -376,22 +376,7 @@ function MonthCal({
         </div>
       </div>
 
-      <div className="flex justify-center gap-3 py-2">
-        {(
-          [
-            ["#996b1d", "四至"],
-            ["#c09830", "節気"],
-            ["#4a9a88", "候"],
-            ["#7ba05b", "予定"],
-          ] as const
-        ).map(([c, lb]) => (
-          <div key={lb} className="flex items-center gap-1">
-            <div className="h-[7px] w-[7px] rounded-full" style={{ background: c }} />
-            <span className="text-[9px] text-[#999]">{lb}</span>
-          </div>
-        ))}
-      </div>
-      <div className="pb-3 text-center text-[8px] text-[#ccc]">← スワイプで月を移動 →</div>
+      <div className="pb-3" />
     </div>
   );
 }
@@ -564,19 +549,22 @@ function BottomSheet({
               : "height 0.28s cubic-bezier(0.22,1,0.36,1), transform 0.28s cubic-bezier(0.22,1,0.36,1)",
         }}
       >
-        {/* ハンドル */}
+        {/* ハンドル（×で閉じてカレンダーへ戻る） */}
         <div
-          onClick={() => setExpanded(!expanded)}
           onTouchStart={hTS}
           onTouchMove={hTM}
           onTouchEnd={hTE}
-          className="flex-shrink-0 cursor-grab border-b border-[#f0ede6] pb-2 pt-2.5"
+          className="relative flex-shrink-0 border-b border-[#f0ede6] pb-1.5 pt-2.5"
           style={{ background: "linear-gradient(180deg,#faf7f2,#fff)", touchAction: "none" }}
         >
-          <div className="mx-auto mb-1 h-[5px] w-[60px] rounded bg-[#c8c0b2]" />
-          <div className="text-center text-[9.5px] tracking-wider text-[#b0a898]">
-            {expanded ? "▼ 下へスワイプで閉じる" : "▲ 上へスワイプで全画面"}
-          </div>
+          <div className="mx-auto h-[5px] w-[60px] rounded bg-[#c8c0b2]" />
+          <button
+            onClick={onClose}
+            aria-label="閉じる"
+            className="absolute right-3 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-[#f0ece4] text-[15px] text-[#8a8070]"
+          >
+            ×
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto overscroll-contain" style={{ paddingBottom: 16 }}>
@@ -599,15 +587,8 @@ function BottomSheet({
             >
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[10px] tracking-widest text-[#b07a30]">
-                  <svg width="16" height="16" viewBox="0 0 40 40" aria-hidden>
-                    <circle cx="20" cy="20" r="9" fill="none" stroke="#e08830" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="4 2.2" />
-                    <g stroke="#e08830" strokeWidth="2.4" strokeLinecap="round">
-                      <line x1="20" y1="2.5" x2="20" y2="7.5" /><line x1="20" y1="32.5" x2="20" y2="37.5" />
-                      <line x1="2.5" y1="20" x2="7.5" y2="20" /><line x1="32.5" y1="20" x2="37.5" y2="20" />
-                      <line x1="7.6" y1="7.6" x2="11" y2="11" /><line x1="29" y1="29" x2="32.4" y2="32.4" />
-                      <line x1="32.4" y1="7.6" x2="29" y2="11" /><line x1="11" y1="29" x2="7.6" y2="32.4" />
-                    </g>
-                  </svg>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/cel-sun.png" alt="" className="h-[15px] w-[15px] object-contain" />
                   太陽 — 節分かれつ刻
                 </span>
                 <span className="text-[11px] text-[#bbb]">{best ? `${best.deg}°` : "—"}</span>

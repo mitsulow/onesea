@@ -21,19 +21,19 @@ export default function Home() {
         {/* ⓪ セカイムラ満月会 / 新月会 */}
         <MoonMootBanner />
 
-        {/* ① MasterMindSystem = 地球儀 + シューマン音プレイヤー（一体化） */}
+        {/* ① 祈りの手帳（OneSeaの主役。地球儀はMMMのホームが本籍） */}
+        <div id="techo" style={{ scrollMarginTop: 40 }}>
+          <InoriTecho />
+        </div>
+
+        {/* ② MasterMindSystem = 地球儀 + シューマン音プレイヤー（一体化） */}
         <div>
           <Otohikari />
           <SchumannAudioPlayer />
         </div>
 
-        {/* ② Cotozute */}
+        {/* ③ Cotozute */}
         <CotozuteTeaser />
-
-        {/* ③ 祈りの手帳 */}
-        <div id="techo" style={{ scrollMarginTop: 40 }}>
-          <InoriTecho />
-        </div>
 
         </div>
       </main>
