@@ -15,7 +15,7 @@ import {
   SHISHI_COLOR,
   SHISHI_BG,
 } from "@/lib/almanac";
-import { TideDay, Port, fetchTideDay, listPorts, setChosenPort } from "@/lib/tide";
+import { TideDay, Port, fetchTideDay, listPorts, setChosenPort, clearPositionCache } from "@/lib/tide";
 
 /**
  * 祈りの手帳 v2（InoriTechoV2.jsx を移植）。
@@ -867,13 +867,14 @@ function BottomSheet({
               <button
                 onClick={() => {
                   setChosenPort(null);
+                  clearPositionCache(); // 古い位置キャッシュを捨てて、いま居る場所で取り直す
                   setPortPick(false);
                   setTide(null);
                   fetchTideDay(dk).then(setTide);
                 }}
                 className="w-full rounded-lg px-3 py-2.5 text-left text-[13px] font-bold text-[#3070b0]"
               >
-                📍 現在位置の最寄り港にする
+                📍 いまの現在位置から最寄り港をえらぶ
               </button>
               {ports
                 .filter((pt) => !portQ.trim() || pt.name.includes(portQ.trim()))

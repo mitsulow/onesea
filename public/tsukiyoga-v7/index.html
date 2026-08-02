@@ -7475,6 +7475,31 @@
 </style>
 </head>
 <body>
+<!-- OneSea統合ヒーロー -->
+<div id="oneseaHero" style="position:relative;z-index:600;display:flex;align-items:center;justify-content:center;padding:7px 14px;background:#0a0c18;border-bottom:1px solid #26263a;">
+  <span style="display:flex;align-items:center;gap:7px;">
+    <img src="/icons/cel-moon.png" alt="" style="width:20px;height:20px;object-fit:contain;">
+    <span style="font-size:15px;font-weight:800;letter-spacing:3px;color:#f0e0a8;text-shadow:0 0 8px rgba(240,220,150,.8);">ツキヨガ</span>
+  </span>
+  <button id="oneseaAvatarBtn" aria-label="サービスメニュー" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;padding:0;cursor:pointer;">
+    <span id="oneseaAvatarInner" style="display:flex;width:30px;height:30px;border-radius:50%;border:2px solid rgba(240,224,168,.6);align-items:center;justify-content:center;font-size:15px;overflow:hidden;">🌊</span>
+  </button>
+</div>
+<!-- 全サービスメニュー（暦タブ/アバターで開閉） -->
+<div id="oneseaSvcOverlay" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.45);"></div>
+<div id="oneseaSvcMenu" style="display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom) + 66px);z-index:901;width:calc(100% - 24px);max-width:456px;background:linear-gradient(160deg,#0a0c18f8,#12142af8);border:1px solid #2a2a45;border-radius:18px;padding:12px;box-shadow:0 -6px 40px rgba(0,0,0,.5);">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+    <a href="/" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">🏠</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">OneSea</span></a>
+    <a href="/mmm" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/icons/cel-sun.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">MMM</span></a>
+    <a href="/sekai" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/icons/cel-earth.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">セカイムラ</span></a>
+    <a href="/za" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/rakuichi/logo-emblem.webp" style="width:26px;height:26px;border-radius:50%;object-fit:cover;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">楽市楽座</span></a>
+    <a href="/line" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">💬</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">TALK</span></a>
+    <a href="/cotozute" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><img src="/icons/tab-cotozute.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">コトヅテ</span></a>
+    <a href="/#techo" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">📖</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">手帳</span></a>
+    <a href="/my" style="text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 0;border-radius:12px;background:rgba(255,255,255,.07);"><span style="font-size:24px;line-height:1;">🪪</span><span style="font-size:10.5px;font-weight:800;color:#f0e0a8;">マイページ</span></a>
+  </div>
+</div>
+
 
 <!-- ★v6: 起動時のイントロスプラッシュ -->
 <div class="intro-splash" id="introSplash">
@@ -8630,11 +8655,6 @@
     <div class="tab-icon">⊙</div>
     <div class="tab-label">月ナビ</div>
     <div class="tab-en">nav</div>
-  </button>
-  <button class="tab-btn" data-view="main">
-    <div class="tab-icon">◐</div>
-    <div class="tab-label">宙</div>
-    <div class="tab-en">sora</div>
   </button>
   <button class="tab-btn" data-view="uranai">
     <div class="tab-icon">☽</div>
@@ -16905,5 +16925,36 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
+
+<script>
+(function () {
+  // OneSea(同一ドメイン)のSupabaseセッションからGoogleアバターを拝借
+  try {
+    var raw = localStorage.getItem('sb-hpgofjkxqguzgrptchqj-auth-token');
+    if (raw) {
+      var tok = JSON.parse(raw);
+      var av = tok && tok.user && tok.user.user_metadata && tok.user.user_metadata.avatar_url;
+      if (av) {
+        document.getElementById('oneseaAvatarInner').innerHTML =
+          '<img src="' + av + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
+      }
+    }
+  } catch (e) {}
+
+  var menu = document.getElementById('oneseaSvcMenu');
+  var ov = document.getElementById('oneseaSvcOverlay');
+  function toggleMenu(force) {
+    var show = force != null ? force : menu.style.display === 'none';
+    menu.style.display = show ? 'block' : 'none';
+    ov.style.display = show ? 'block' : 'none';
+  }
+  ov.addEventListener('click', function () { toggleMenu(false); });
+  var btn = document.getElementById('oneseaAvatarBtn');
+  if (btn) btn.addEventListener('click', function () { toggleMenu(); });
+  // 暦タブ = ホーム: 暦ビューに切り替えつつ全サービスメニューを開閉
+  var calTab = document.querySelector('.tab-btn[data-view="calendar"]');
+  if (calTab) calTab.addEventListener('click', function () { toggleMenu(); });
+})();
+</script>
 </body>
 </html>

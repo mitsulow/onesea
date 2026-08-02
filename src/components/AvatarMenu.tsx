@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +20,8 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [anchor, setAnchor] = useState<{ top: number; right: number }>({ top: 52, right: 12 });
 
   useEffect(() => {
     const supabase = createClient();
@@ -73,7 +76,16 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
 
   return (
     <span className="relative inline-block">
-      <button onClick={() => setOpen((v) => !v)} aria-label="サービスメニュー" className="relative block">
+      <button
+        ref={btnRef}
+        onClick={() => {
+          const r = btnRef.current?.getBoundingClientRect();
+          if (r) setAnchor({ top: r.bottom + 6, right: Math.max(8, window.innerWidth - r.right) });
+          setOpen((v) => !v);
+        }}
+        aria-label="サービスメニュー"
+        className="relative block"
+      >
         {avatar ? (
           <img
             src={avatar}
@@ -100,12 +112,14 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
         )}
       </button>
 
-      {open && (
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
         <>
-          <div className="fixed inset-0 z-[85]" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-[95]" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 top-full z-[86] mt-1.5 w-56 overflow-hidden rounded-xl border border-[#ede5d8] bg-white"
-            style={{ boxShadow: "0 10px 36px rgba(0,0,0,0.22)" }}
+            className="fixed z-[96] max-h-[80vh] w-56 overflow-y-auto rounded-xl border border-[#ede5d8] bg-white"
+            style={{ top: anchor.top, right: anchor.right, boxShadow: "0 10px 36px rgba(0,0,0,0.22)" }}
           >
             <Link href="/" onClick={() => setOpen(false)} className={item}>
               <span className="w-[20px] text-center text-[16px]">🏠</span> ホーム
@@ -147,7 +161,8 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               <span className="w-[20px] text-center text-[16px]">👋</span> ログアウト
             </button>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </span>
   );

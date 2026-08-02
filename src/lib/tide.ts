@@ -36,6 +36,13 @@ export function getChosenPort(): string | null {
     return null;
   }
 }
+/** 位置キャッシュを捨てて、いまの現在位置から最寄り港を選び直す */
+export function clearPositionCache() {
+  try {
+    localStorage.removeItem("onesea-pos");
+  } catch {}
+}
+
 export function setChosenPort(code: string | null) {
   try {
     if (code) localStorage.setItem("techo-port", code);
@@ -68,7 +75,7 @@ async function getPosition(): Promise<{ lat: number; lon: number } | null> {
     const cached = localStorage.getItem("onesea-pos");
     if (cached) {
       const p = JSON.parse(cached);
-      if (Date.now() - p.at < 24 * 3600000) return { lat: p.lat, lon: p.lon };
+      if (Date.now() - p.at < 6 * 3600000) return { lat: p.lat, lon: p.lon };
     }
   } catch {}
   return new Promise((resolve) => {
