@@ -212,7 +212,7 @@ export default function CotozutePage() {
               color: "transparent",
             }}
           >
-            CotoTsute
+            CotoTute
           </div>
         </div>
         {/* X風タブ（赤い下線） */}
