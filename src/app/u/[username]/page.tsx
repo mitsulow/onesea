@@ -12,6 +12,7 @@ import { Shop, fetchShopsByOwner, categoryOf, Reco, fetchRecos, addReco, deleteR
 import { SnsIcon } from "@/components/SnsIcon";
 import { CameraIcon } from "@/components/CameraIcon";
 import { PostCard } from "@/components/PostCard";
+import { AvatarMenu } from "@/components/AvatarMenu";
 
 interface FullProfile {
   id: string;
@@ -229,10 +230,13 @@ export default function UserPage() {
             if (window.history.length > 1) router.back();
             else router.push("/");
           }}
-          className="absolute left-3 top-3 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-sm"
+          className="absolute left-3 top-3 z-10 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-sm"
         >
           ◀ もどる
         </button>
+        <span className="absolute right-3 top-3 z-10">
+          <AvatarMenu />
+        </span>
         {isMe && (
           <>
             <button

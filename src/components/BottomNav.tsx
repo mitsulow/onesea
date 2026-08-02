@@ -22,6 +22,7 @@ interface Tab {
 interface Service {
   match: (p: string) => boolean;
   home: string;
+  isHome?: (p: string) => boolean;
   homeExt?: boolean;
   bg: string;
   border: string;
@@ -109,6 +110,7 @@ const SERVICES: Service[] = [
   {
     match: (p) => p.startsWith("/u/") || p === "/my" || p.startsWith("/settings"),
     home: "/my",
+    isHome: (p) => p === "/my" || p.startsWith("/u/"),
     bg: "rgba(255,253,248,.96)",
     border: "#e5dccb",
     active: "#c94d3a",
@@ -189,7 +191,7 @@ export function BottomNav() {
 
   const isActive = (href: string) =>
     href !== svc.home && !href.startsWith("#") && pathname.startsWith(href.split("?")[0].split("|").pop() ?? href);
-  const atHome = pathname === svc.home;
+  const atHome = svc.isHome ? svc.isHome(pathname) : pathname === svc.home;
 
   const onHome = () => {
     if (!atHome) router.push(svc.home);
