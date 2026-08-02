@@ -1,7 +1,7 @@
 import { InoriTecho } from "@/components/InoriTecho";
 import { AuthGate } from "@/components/AuthGate";
 import { HeaderBar } from "@/components/HeaderBar";
-import { HomeDashboard, NineGrid } from "@/components/HomeDashboard";
+import { HomeDashboard } from "@/components/HomeDashboard";
 import { MorningOpening } from "@/components/MorningOpening";
 import { A2hsPrompt } from "@/components/A2hsPrompt";
 import { MoonMootBanner } from "@/components/MoonMootBanner";
@@ -24,7 +24,6 @@ export default function Home() {
           <div id="techo" style={{ scrollMarginTop: 40 }}>
             <InoriTecho />
           </div>
-          <NineGrid />
         </div>
       </main>
     </AuthGate>

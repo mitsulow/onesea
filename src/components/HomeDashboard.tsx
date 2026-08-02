@@ -158,6 +158,9 @@ export function HomeDashboard() {
         </div>
       </div>
 
+      {/* ── サービスDock（指で撫でると膨らむ） ── */}
+      <ServiceDock />
+
       {/* ── 願い叶いタイム カウントダウン ── */}
       {target && (
         <Link href={isNow ? "/mmm/ddp" : "/#techo"} className="no-underline" onClick={(e) => {
@@ -247,100 +250,115 @@ export function HomeDashboard() {
   );
 }
 
-/* ═══ 9つのメインメニュー — 夜の星座盤（常時点灯） ═══ */
-export function NineGrid() {
+/* ═══ サービスDock — 指が来たアイコンだけ、Mac Dockのようにめっちゃ大きくなる ═══ */
+export function ServiceDock() {
   const [unread, setUnread] = useState(0);
-  const stopRef = useRef(false);
+  const [fx, setFx] = useState<number | null>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    stopRef.current = false;
+    let stop = false;
     const supabase = createClient();
     const run = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const uid = session?.user?.id;
-      if (!uid || stopRef.current) return;
+      if (!uid || stop) return;
       const n = await fetchUnreadTotal(uid);
-      if (!stopRef.current) setUnread(n);
+      if (!stop) setUnread(n);
     };
     run();
     const t = setInterval(run, 30000);
     return () => {
-      stopRef.current = true;
+      stop = true;
       clearInterval(t);
     };
   }, []);
 
-  const cell =
-    "relative flex flex-col items-center justify-center gap-1.5 rounded-2xl py-4 no-underline transition-transform active:scale-95";
-  const label = (t: string) => (
-    <span className="text-[10.5px] font-bold tracking-[1px] text-[#c8d2e4]">{t}</span>
-  );
-  const glow = { filter: "drop-shadow(0 0 8px rgba(140,180,255,.35))" };
+  const ITEMS: Array<{ href: string; icon: string; label: string; ext?: boolean; talk?: boolean; techo?: boolean }> = [
+    { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
+    { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
+    { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
+    { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
+    { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
+    { href: "/line", icon: "💬", label: "TALK", talk: true },
+    { href: "#techo", icon: "📖", label: "手帳", techo: true },
+    { href: "/my", icon: "🪪", label: "マイページ" },
+  ];
+
+  /* 指の位置からガウス分布で拡大率を出す（本家Dockの物理） */
+  const scaleFor = (i: number) => {
+    if (fx == null) return 1;
+    const r = rowRef.current?.getBoundingClientRect();
+    if (!r) return 1;
+    const cx = r.left + ((i + 0.5) * r.width) / ITEMS.length;
+    const d = Math.abs(fx - cx);
+    return 1 + 1.15 * Math.exp(-(d * d) / (2 * 52 * 52));
+  };
 
   return (
-    <section
-      className="px-4 pb-8 pt-5"
-      style={{ margin: "0 -16px", background: "linear-gradient(180deg,#0b1120 0%,#101830 60%,#0b1120 100%)" }}
+    <div
+      ref={rowRef}
+      className="flex items-end justify-between px-4 pb-1 pt-3"
+      style={{ touchAction: "pan-y" }}
+      onTouchStart={(e) => setFx(e.touches[0].clientX)}
+      onTouchMove={(e) => setFx(e.touches[0].clientX)}
+      onTouchEnd={() => setTimeout(() => setFx(null), 120)}
+      onMouseMove={(e) => setFx(e.clientX)}
+      onMouseLeave={() => setFx(null)}
     >
-      <div className="mb-3 text-center text-[9.5px] tracking-[4px] text-[#5a6a8a]">ONESEA — すべての海は、ひとつ。</div>
-      <div className="grid grid-cols-3 gap-2.5">
-        <Link href="/mmm" className={cell} style={{ background: "rgba(255,255,255,.045)" }}>
-          <img src="/icons/cel-sun.png" alt="" className="h-10 w-10 object-contain" style={glow} />
-          {label("MMM")}
-        </Link>
-        <Link href="/sekai" className={cell} style={{ background: "rgba(255,255,255,.045)" }}>
-          <img src="/icons/cel-earth.png" alt="" className="h-10 w-10 object-contain" style={glow} />
-          {label("セカイムラ")}
-        </Link>
-        <a href="/tsukiyoga-v7/index.html" className={cell} style={{ background: "rgba(255,255,255,.045)" }}>
-          <img src="/icons/cel-moon.png" alt="" className="h-10 w-10 object-contain" style={glow} />
-          {label("ツキヨガ")}
-        </a>
-
-        <Link href="/cotozute" className={cell} style={{ background: "rgba(255,255,255,.045)" }}>
-          <img src="/icons/tab-cotozute.png" alt="" className="h-10 w-10 object-contain" style={glow} />
-          {label("コトヅテ")}
-        </Link>
-        <div className={cell} style={{ background: "rgba(212,185,106,.10)", border: "1px solid rgba(212,185,106,.35)" }}>
-          <img src="/icons/tab-home.png" alt="" className="h-10 w-8 object-contain" style={{ filter: "drop-shadow(0 0 10px rgba(212,185,106,.5))" }} />
-          <span className="text-[10.5px] font-bold tracking-[1px] text-[#e8d8a8]">HOME</span>
-        </div>
-        <Link href="/za" className={cell} style={{ background: "rgba(255,255,255,.045)" }}>
-          <img src="/rakuichi/logo-emblem.webp" alt="" className="h-10 w-10 rounded-full object-cover" style={glow} />
-          {label("楽市楽座")}
-        </Link>
-
-        <a
-          href="/#techo"
-          className={cell}
-          style={{ background: "rgba(255,255,255,.045)" }}
-          onClick={(e) => {
-            e.preventDefault();
-            window.dispatchEvent(new Event("onesea:openToday"));
-          }}
-        >
-          <span className="text-[32px] leading-none" style={glow}>📖</span>
-          {label("手帳")}
-        </a>
-        <Link href="/my" className={cell} style={{ background: "rgba(255,255,255,.045)" }}>
-          <span className="text-[32px] leading-none" style={glow}>🪪</span>
-          {label("マイページ")}
-        </Link>
-        <Link href="/line" className={cell} style={{ background: "rgba(255,255,255,.045)" }}>
-          <span className="relative text-[32px] leading-none" style={glow}>
-            💬
-            {unread > 0 && (
+      {ITEMS.map((m, i) => {
+        const sc = scaleFor(i);
+        const big = sc > 1.6;
+        const inner = (
+          <span
+            className="relative block"
+            style={{
+              transform: `translateY(${-(sc - 1) * 13}px) scale(${sc})`,
+              transformOrigin: "bottom center",
+              transition: fx != null ? "transform 60ms linear" : "transform 260ms cubic-bezier(0.2,0.8,0.3,1)",
+            }}
+          >
+            {/* 拡大中だけ名前が浮かぶ */}
+            {big && (
               <span
-                className="absolute -right-3 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[10px] font-bold text-white"
+                className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2a2622] px-2 py-0.5 text-[8.5px] font-bold text-white"
+                style={{ transform: `translateX(-50%) scale(${1 / sc})`, transformOrigin: "bottom center" }}
+              >
+                {m.label}
+              </span>
+            )}
+            {m.icon.startsWith("/") ? (
+              <img src={m.icon} alt={m.label} className="h-[34px] w-[34px] rounded-full object-contain" />
+            ) : (
+              <span className="block text-[28px] leading-[34px]">{m.icon}</span>
+            )}
+            {m.talk && unread > 0 && (
+              <span
+                className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[8.5px] font-bold text-white"
                 style={{ lineHeight: 1 }}
               >
-                {unread > 99 ? "99+" : unread}
+                {unread > 99 ? "99" : unread}
               </span>
             )}
           </span>
-          {label("TALK")}
-        </Link>
-      </div>
-    </section>
+        );
+        if (m.techo) {
+          return (
+            <button key={m.href} onClick={() => window.dispatchEvent(new Event("onesea:openToday"))} aria-label={m.label}>
+              {inner}
+            </button>
+          );
+        }
+        return m.ext ? (
+          <a key={m.href} href={m.href} aria-label={m.label}>
+            {inner}
+          </a>
+        ) : (
+          <Link key={m.href} href={m.href} aria-label={m.label}>
+            {inner}
+          </Link>
+        );
+      })}
+    </div>
   );
 }
