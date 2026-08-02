@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { PriceBanner } from "@/components/PriceBanner";
+import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import {
   NEURA_SIZE,
@@ -107,6 +108,7 @@ export default function MmmPage() {
       <div className="px-4">
         <Otohikari />
         <SchumannAudioPlayer />
+        <CotozuteTeaser />
       </div>
 
       {/* ⑤ わたしのDDP */}

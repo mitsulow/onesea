@@ -23,7 +23,7 @@ export function CotozuteTeaser() {
       setMe(u);
       if (u) setLikedSet(await fetchMyLikes(u.id));
     });
-    fetchPostsPage(0, 3).then(setPosts);
+    fetchPostsPage(0, 5).then(setPosts);
   }, []);
 
   return (
@@ -35,13 +35,25 @@ export function CotozuteTeaser() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/cotozute-logo.webp" alt="Cotozute" className="mb-2 h-10 w-auto rounded-xl" />
       </Link>
+      {/* 入力ボックス（タップでコトヅテの投稿画面へ） */}
+      <Link href="/cotozute?compose=1" className="mb-2 flex items-center gap-2.5 no-underline">
+        {me?.user_metadata?.avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={me.user_metadata.avatar_url as string} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+        ) : (
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ead9] text-[16px]">🌿</span>
+        )}
+        <span className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14px] text-[#8a8d91]">
+          幸せの波紋を拡げよう
+        </span>
+      </Link>
       {posts === null ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>
       ) : posts.length === 0 ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">まだ言の葉がありません 🌿</p>
       ) : (
         posts.map((p) => (
-          <PostCard key={p.id} post={p} me={me} liked={likedSet.has(p.id)} onDeleted={() => fetchPostsPage(0, 3).then(setPosts)} />
+          <PostCard key={p.id} post={p} me={me} liked={likedSet.has(p.id)} onDeleted={() => fetchPostsPage(0, 5).then(setPosts)} />
         ))
       )}
       <Link
@@ -49,7 +61,7 @@ export function CotozuteTeaser() {
         className="mt-2.5 block w-full rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline shadow-sm"
         style={{ background: "linear-gradient(135deg,#d4603a,#c94d3a)" }}
       >
-        🌿 すべての言の葉へ →
+        続きを見る →
       </Link>
     </section>
   );
