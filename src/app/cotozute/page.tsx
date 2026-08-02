@@ -32,6 +32,7 @@ export default function CotozutePage() {
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [events, setEvents] = useState<any[]>([]); // ストーリー風の横スクロールイベント
+  const [myAvatar, setMyAvatar] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const itemsRef = useRef<FeedItem[]>([]);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -48,7 +49,12 @@ export default function CotozutePage() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
       setMe(u);
-      if (u) setLikedSet(await fetchMyLikes(u.id));
+      setMyAvatar((u?.user_metadata?.avatar_url as string) ?? null);
+      if (u) {
+        setLikedSet(await fetchMyLikes(u.id));
+        const { data: prof } = await supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle();
+        if (prof?.avatar_url) setMyAvatar(prof.avatar_url);
+      }
     });
     fetchMixedFeed(null, PAGE).then((list) => {
       setItems(list);
@@ -209,9 +215,33 @@ export default function CotozutePage() {
       </header>
 
       {/* 📅 イベント（インスタのストーリー風・横スクロール） */}
-      {events.length > 0 && (
+      {(events.length > 0 || me) && (
         <div className="border-b border-[#f0e9dc] bg-[#fffdf8] py-2">
           <div className="hide-scrollbar flex gap-3 overflow-x-auto px-3">
+            {/* 先頭: 自分の丸+＋ = イベントを作る（インスタの「ストーリーズを追加」と同じ記号） */}
+            {me && (
+              <a href="/sekai?write=event" className="w-[72px] flex-shrink-0 no-underline">
+                <div className="relative mx-auto h-[64px] w-[64px]">
+                  <div
+                    className="flex h-full w-full items-center justify-center overflow-hidden rounded-full"
+                    style={{ border: "2.5px solid #e0d8c8", padding: 2, background: "#fff" }}
+                  >
+                    {myAvatar ? (
+                      <img src={myAvatar} alt="" referrerPolicy="no-referrer" className="h-full w-full rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center rounded-full bg-[#f0ead9] text-[20px]">✏️</span>
+                    )}
+                  </div>
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full text-[14px] font-extrabold text-white"
+                    style={{ background: "#4a9a5a", border: "2px solid #fffdf8" }}
+                  >
+                    ＋
+                  </span>
+                </div>
+                <div className="mt-1 text-center text-[9.5px] font-bold leading-tight text-[#8a8070]">イベント作成</div>
+              </a>
+            )}
             {events.map((ev) => {
               const d = new Date(ev.event_at);
               const title = String(ev.body ?? "").split("\n")[0];

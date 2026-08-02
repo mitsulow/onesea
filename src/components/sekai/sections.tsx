@@ -490,6 +490,16 @@ export function ActivitySection({ me }: { me: User | null }) {
     loadEvents();
   }, [loadEvents]);
 
+  // Cotozuteの「＋」から来たら、イベント投稿モードで開く
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("write") === "event") {
+        setWriting(true);
+        setWKind("event");
+      }
+    } catch {}
+  }, []);
+
   const extrasFor = async (posts: any[]) => {
     const map: Record<string, VillagePostComment[]> = {};
     for (const c of await fetchVillagePostComments(posts.map((p) => p.id))) {
