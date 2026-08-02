@@ -436,6 +436,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [villages, setVillages] = useState<Village[]>([]);
   const [myVills, setMyVills] = useState<Village[]>([]);
   const [writing, setWriting] = useState(false);
+  const [evWriting, setEvWriting] = useState(false); // イベント作成モーダル
   const [wKind, setWKind] = useState<"normal" | "event">("normal");
   const [wEventAt, setWEventAt] = useState("");
   const [joinedEv, setJoinedEv] = useState<Set<string>>(new Set());
@@ -494,7 +495,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   useEffect(() => {
     try {
       if (new URLSearchParams(window.location.search).get("write") === "event") {
-        setWriting(true);
+        setEvWriting(true);
         setWKind("event");
       }
     } catch {}
@@ -643,9 +644,13 @@ export function ActivitySection({ me }: { me: User | null }) {
     }
     setWSaving(false);
     setWriting(false);
+    setEvWriting(false);
+    setWKind("normal");
     setWBody("");
     setWPhoto(null);
+    setWEventAt("");
     loadFeed();
+    loadEvents();
   };
 
   return (
@@ -670,23 +675,22 @@ export function ActivitySection({ me }: { me: User | null }) {
             {me && myVills.length > 0 && (
               <button
                 onClick={() => {
-                  setWriting(true);
                   setWKind("event");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  setEvWriting(true);
                 }}
-                className="flex w-[150px] flex-shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed bg-white py-6"
+                className="flex w-[76px] flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed bg-white py-4"
                 style={{ borderColor: "#4a9a5a" }}
               >
                 <span
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-[22px] font-extrabold text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[18px] font-extrabold text-white"
                   style={{ background: "#4a9a5a" }}
                 >
                   ＋
                 </span>
-                <span className="px-2 text-center text-[11.5px] font-extrabold leading-snug" style={{ color: GREEN }}>
+                <span className="px-1 text-center text-[10px] font-extrabold leading-snug" style={{ color: GREEN }}>
                   イベントを
                   <br />
-                  投稿する
+                  作成
                 </span>
               </button>
             )}
@@ -806,41 +810,11 @@ export function ActivitySection({ me }: { me: User | null }) {
                 ))}
               </select>
             )}
-            {/* 日々の活動 / イベント投稿 */}
-            <div className="mb-2 grid grid-cols-2 gap-1 rounded-xl bg-white p-1">
-              {(
-                [
-                  ["normal", "📣 日々の活動"],
-                  ["event", "📅 イベント投稿"],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  onClick={() => setWKind(id)}
-                  className="rounded-lg py-1.5 text-[12px] font-extrabold"
-                  style={wKind === id ? { background: "#4a8a5c", color: "#fff" } : { background: "transparent", color: "#8a968a" }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            {wKind === "event" && (
-              <input
-                type="datetime-local"
-                value={wEventAt}
-                onChange={(e) => setWEventAt(e.target.value)}
-                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
-              />
-            )}
             <textarea
               value={wBody}
               onChange={(e) => setWBody(e.target.value)}
               rows={2}
-              placeholder={
-                wKind === "event"
-                  ? "例: 田植えイベントやります！持ち物は長靴と着替え"
-                  : "例: 今日は田植えをしました / 古民家の床を張り替えました"
-              }
+              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
               className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
             />
             <div className="mb-2 flex items-center gap-2">
@@ -868,17 +842,20 @@ export function ActivitySection({ me }: { me: User | null }) {
               </button>
               <button
                 onClick={publish}
-                disabled={!wBody.trim() || (wKind === "event" && !wEventAt) || wSaving || wUploading}
+                disabled={!wBody.trim() || wSaving || wUploading}
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >
-                {wSaving ? "投稿中..." : wKind === "event" ? "📅 イベントを投稿する" : "📣 全国に報告する"}
+                {wSaving ? "投稿中..." : "📣 全国に報告する"}
               </button>
             </div>
           </div>
         ) : (
           <button
-            onClick={() => setWriting(true)}
+            onClick={() => {
+              setWKind("normal");
+              setWriting(true);
+            }}
             className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
             style={{ borderColor: "#c8dccb" }}
           >
@@ -1062,6 +1039,81 @@ export function ActivitySection({ me }: { me: User | null }) {
         >
           {loadingMore ? "読み込み中..." : "▼ もっと見る"}
         </button>
+      )}
+
+      {/* 📅 イベント作成モーダル */}
+      {evWriting && me && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => setEvWriting(false)}>
+          <div
+            className="w-full max-w-[480px] rounded-t-2xl bg-white px-4 pt-3"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#ddd]" />
+            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
+              📅 イベントを作成
+            </div>
+            {myVills.length > 1 && (
+              <select
+                value={wVillage}
+                onChange={(e) => setWVillage(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+              >
+                {myVills.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    ⛺ {v.name}（{v.prefecture}）
+                  </option>
+                ))}
+              </select>
+            )}
+            <input
+              type="datetime-local"
+              value={wEventAt}
+              onChange={(e) => setWEventAt(e.target.value)}
+              className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
+            />
+            <textarea
+              value={wBody}
+              onChange={(e) => setWBody(e.target.value)}
+              rows={3}
+              autoFocus
+              placeholder="例: 田植えイベントやります！持ち物は長靴と着替え"
+              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
+            />
+            <div className="mb-2 flex items-center gap-2">
+              {wPhoto && <img src={wPhoto} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
+                {wUploading ? "⏳" : <CameraIcon size={16} />}
+                写真（カードの顔になります）
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me) return;
+                    setWUploading(true);
+                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
+                    setWUploading(false);
+                  }}
+                />
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setEvWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+                やめる
+              </button>
+              <button
+                onClick={publish}
+                disabled={!wBody.trim() || !wEventAt || wSaving || wUploading}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#4a8a5c" }}
+              >
+                {wSaving ? "作成中..." : "📅 イベントを作成する"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* おわりの帯（セクションの終わりが一目で分かる） */}
