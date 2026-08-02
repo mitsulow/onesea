@@ -11,6 +11,16 @@
  * - 音程ゆらぎは Hz 単位で Lo/Hi 両方に同じ値を加算（detune 禁止）
  * - PAN は「沈めて→底で配線切替→浮上」。クロスフェード禁止（モノラルビート発生）
  * - 音響イベントは AudioContext.currentTime 基準で全予約（setTimeout 禁止・画面オフ対応）
+ *
+ * 仕様書からの改良（音響神経科学的な根拠つき）:
+ * 1. 音量ゆらぎの75%を両耳共通に。バイノーラルビートは両耳の音量が揃っているとき
+ *    最も深くうなる。左右が独立に±35%揺れると耳間レベル差が開いてうなりが痩せる。
+ *    残り25%だけ左右独立に揺らし、有機的な非対称感は保つ
+ * 2. 極浅の同相AM（アイソクロニック補強）。脳波の聴性定常応答はバイノーラルより
+ *    同相の振幅変調のほうが強い。深さ8%なら「ばっばっば」にはならず、全発振器
+ *    同時startのためバイノーラルのうなりと位相も揃った 8.02Hz の二重ドライブになる
+ * 3. 呼吸スウェル。全体音量に周期12秒（5呼吸/分＝副交感神経が最大化する帯域）、
+ *    吸う4割/吐く6割の非対称な±12%の波を敷き、意識させずに深呼吸へ誘導する
  */
 
 export interface MedConfig {
@@ -29,6 +39,9 @@ export interface MedConfig {
   dwell: number; // 滞在時間 秒
   master: number; // 全体の音量
   phi8F2On: boolean; // φ⁸×F2 を鳴らすか（32×F3 と 6.196Hz の音響ビートを作る副産物の元）
+  isoDepth: number; // 同相AM補強の深さ（0でオフ）
+  breathDepth: number; // 呼吸スウェルの深さ（0でオフ）
+  breathPeriod: number; // 呼吸スウェルの周期 秒
 }
 
 export const MED_DEFAULTS: MedConfig = {
@@ -49,6 +62,9 @@ export const MED_DEFAULTS: MedConfig = {
   // が瞑想中の正解なので初期値はさらに絞る（設定でいつでも上げられる）
   master: 0.06,
   phi8F2On: true,
+  isoDepth: 0.08,
+  breathDepth: 0.12,
+  breathPeriod: 12,
 };
 
 const PHI = 1.6180339887498949;
@@ -275,10 +291,46 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
   const end = t0 + tl.total;
 
   const merger = ctx.createChannelMerger(2);
+  const breath = ctx.createGain(); // 呼吸スウェル（両chに同じ波 → 耳間バランスは崩れない）
+  breath.gain.value = 1;
   const master = ctx.createGain();
   master.gain.value = cfg.master;
-  merger.connect(master);
+  merger.connect(breath);
+  breath.connect(master);
   master.connect(ctx.destination);
+
+  // ---- 呼吸スウェル: 周期12秒(5呼吸/分)・吸う4割/吐く6割の非対称波。
+  //      音が満ちてくる=吸う、長く引いていく=吐く。全区間ぶんを一度に予約 ----
+  if (cfg.breathDepth > 0) {
+    const P = cfg.breathPeriod;
+    const RISE = 0.4;
+    const sr = 4; // 4点/秒（線形補間で十分なめらか）
+    const n = Math.ceil((tl.total + 2) * sr);
+    const curve = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const ph = (i / sr / P) % 1;
+      const x = ph < RISE ? ph / RISE : 1 - (ph - RISE) / (1 - RISE); // 三角 0→1→0
+      const s = 0.5 - 0.5 * Math.cos(Math.PI * x); // 角を丸める
+      curve[i] = 1 - cfg.breathDepth + cfg.breathDepth * s;
+    }
+    breath.gain.setValueAtTime(curve[0], t0 - 0.1);
+    breath.gain.setValueCurveAtTime(curve, t0, tl.total + 2);
+  }
+
+  // ---- 同相AM補強（アイソクロニック）: 両耳同相・極浅の Δf Hz 振幅変調。
+  //      聴性定常応答はバイノーラルより同相AMのほうが強い。全発振器と同時startなので
+  //      バイノーラルのうなりと位相の揃った 8.02Hz 二重ドライブになる ----
+  if (cfg.isoDepth > 0) {
+    const iso = ctx.createOscillator();
+    iso.type = "sine";
+    iso.frequency.value = cfg.deltaF;
+    const ig = ctx.createGain();
+    ig.gain.value = cfg.master * cfg.isoDepth;
+    iso.connect(ig);
+    ig.connect(master.gain);
+    iso.start(t0);
+    iso.stop(end + 1);
+  }
 
   // Δf は1本の信号線から全 Hi 発振器へ配る（将来Δfを時間変化させるときは offset 1箇所を書き換える）
   const dfSrc = ctx.createConstantSource();
@@ -325,26 +377,41 @@ export function startMedSession(cfg: MedConfig, timeline?: MedTimeline): MedSess
     oscLo.connect(gLoL);
     oscLo.connect(gLoR);
 
+    // ---- 音量ゆらぎ ----
+    // 共通成分(75%): R, R·φ, R·φ² を 1 : 1/φ : 1/φ² で合成し、両耳に同じ波を配る。
+    // 無理数比なので二度と同じ形に戻らない。両耳が同じに揺れる＝耳間バランスが
+    // 保たれ、バイノーラルのうなりが痩せない（ここが仕様書からの改良点）
+    const ampSum = 1 + 1 / PHI + 1 / PHI ** 2;
+    const commonFlutter: GainNode[] = [];
+    [1, PHI, PHI ** 2].forEach((rm, i) => {
+      const lfo = ctx.createOscillator();
+      lfo.type = "sine";
+      lfo.frequency.value = spec.rate * rm;
+      const lg = ctx.createGain();
+      lg.gain.value = ((spec.vol * cfg.flutterDepth * 0.75) / ampSum) * (1 / PHI ** i);
+      lfo.connect(lg);
+      lfo.start(t0);
+      lfo.stop(end + 1);
+      stoppables.push(lfo);
+      commonFlutter.push(lg);
+    });
+
     // ---- 耳ごとのゲイン（基本音量 + 音量ゆらぎ）と包絡（登場/PAN/退場） ----
     const buildEar = (lr: 0 | 1) => {
       const ear = ctx.createGain();
       ear.gain.value = spec.vol;
-      // 音量ゆらぎ: R, R·φ, R·φ² を 1 : 1/φ : 1/φ² で合成。無理数比なので二度と同じ形に戻らない。
-      // 左右で速度を φ^0.11 ずらし、完全同期を避ける
-      const earRate = spec.rate * (lr === 1 ? Math.pow(PHI, 0.11) : 1);
-      const ampSum = 1 + 1 / PHI + 1 / PHI ** 2;
-      [1, PHI, PHI ** 2].forEach((rm, i) => {
-        const lfo = ctx.createOscillator();
-        lfo.type = "sine";
-        lfo.frequency.value = earRate * rm;
-        const lg = ctx.createGain();
-        lg.gain.value = ((spec.vol * cfg.flutterDepth) / ampSum) * (1 / PHI ** i);
-        lfo.connect(lg);
-        lg.connect(ear.gain);
-        lfo.start(t0);
-        lfo.stop(end + 1);
-        stoppables.push(lfo);
-      });
+      commonFlutter.forEach((lg) => lg.connect(ear.gain));
+      // 独立成分(25%): 左右で速度を φ^0.11 ずらした1本だけ。完全同期を避けて有機感を残す
+      const lfo = ctx.createOscillator();
+      lfo.type = "sine";
+      lfo.frequency.value = spec.rate * Math.sqrt(PHI) * (lr === 1 ? Math.pow(PHI, 0.11) : 1);
+      const lg = ctx.createGain();
+      lg.gain.value = spec.vol * cfg.flutterDepth * 0.25;
+      lfo.connect(lg);
+      lg.connect(ear.gain);
+      lfo.start(t0);
+      lfo.stop(end + 1);
+      stoppables.push(lfo);
       const env = ctx.createGain();
       env.gain.value = 0.0001;
       ear.connect(env);
