@@ -167,16 +167,15 @@ export function useSekaiMe() {
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="pb-44">
-      <header className="relative z-[60] px-6 py-2 text-center" style={{ background: DARKGREEN_BG }}>
-        <div className="text-[10px] leading-tight tracking-[3px] text-[#a8cca8]">世界は一つの村になる。</div>
-        <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eae6b8]">セカイムラ</div>
+      <header className="relative z-[60] px-6 py-2 text-center" style={{ background: "linear-gradient(150deg,#5ab8e0,#2e88c0)" }}>
+        <div className="text-[10px] leading-tight tracking-[3px] text-[#dff2fb]">世界は一つの村になる。</div>
+        <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-white">セカイムラ</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-left">
           <AvatarMenu />
         </span>
       </header>
-      <PriceBanner service="セカイムラ" price="月額3,000円" color="#7ad8a8" />
-      {/* セクション同士は地色の隙間で区切る（どこからどこまでが1つか分かるように） */}
-      <div className="space-y-2.5" style={{ background: "#e8e4d8" }}>{children}</div>
+      {/* セクション同士は白地の隙間で区切る */}
+      <div className="space-y-2.5 bg-white">{children}</div>
     </main>
   );
 }
@@ -234,23 +233,16 @@ export function MootsSection({
       className="card"
       style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "none", padding: "10px 8px 12px", scrollMarginTop: 56 }}
     >
-      <div className="mb-2 flex items-baseline justify-between px-1">
-        <span className="text-[13.5px] font-extrabold tracking-[1px] text-[#7aa88a]">
-          📺 セカイムラオンライン満月会・新月会
-        </span>
-        {me && <span className="text-[10px] text-[#5a7a68]">あなたの参加 {mootCount}回</span>}
-      </div>
-
       {/* テレビ画面（当日はここにZoomの導線が出る） */}
       {next && (
         <div className="relative overflow-hidden rounded-xl border border-[#2a4a3a]">
           <img src="/sekai/zoom-tv.webp" alt="" className="w-full object-cover" />
           <div
             className="absolute inset-0"
-            style={{ background: "linear-gradient(180deg, rgba(8,16,24,.6) 0%, rgba(8,16,24,.05) 45%, rgba(8,16,24,.74) 100%)" }}
+            style={{ background: "linear-gradient(180deg, rgba(8,16,24,.25) 0%, rgba(8,16,24,.02) 45%, rgba(8,16,24,.55) 100%)" }}
           />
           {/* 案内パネル（30%の半透明地に文字を重ねる） */}
-          <div className="absolute left-3 right-3 top-2.5 rounded-xl px-3 py-2 text-center" style={{ background: "rgba(8,16,24,.3)", backdropFilter: "blur(2px)" }}>
+          <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2.5 text-center" style={{ background: "rgba(8,16,24,.24)" }}>
             <div className="text-[19px] font-extrabold leading-snug text-white" style={{ textShadow: "0 2px 12px rgba(0,0,0,.9)" }}>
               第{mootNoOf(next.dateKey) ?? "—"}回セカイムラ{next.kind === "new" ? "新月会" : "満月会"}
             </div>
@@ -323,7 +315,7 @@ export function MootsSection({
         onClick={() => setFutureOpen((v) => !v)}
         className="mt-1.5 w-full py-1 text-center text-[10.5px] font-bold text-[#5a7a68]"
       >
-        {futureOpen ? "▾" : "▸"} 今後の月例会開催予定
+        {futureOpen ? "▾" : "▸"} 今後の新月会・満月会
       </button>
       {futureOpen && (
         <div className="rounded-xl bg-white/5 px-3 py-2">
