@@ -38,19 +38,18 @@ const MURA_SELECT =
 const SHOP_SELECT =
   "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
 
-/** cursor（ISO時刻）より古いものを3媒体から混ぜて取得。cursor=null で最新から */
+/** cursor（ISO時刻）より古いものを混ぜて取得（言の葉+むらびとたより。出品は横スクロールへ分離） */
 export async function fetchMixedFeed(cursor: string | null, limit = 20): Promise<FeedItem[]> {
   const supabase = createClient();
 
   let qP = supabase.from("posts").select(POST_SELECT).order("created_at", { ascending: false }).limit(limit);
   let qM = supabase.from("village_posts").select(MURA_SELECT).order("created_at", { ascending: false }).limit(limit);
-  let qS = supabase.from("shops").select(SHOP_SELECT).order("created_at", { ascending: false }).limit(limit);
   if (cursor) {
     qP = qP.lt("created_at", cursor);
     qM = qM.lt("created_at", cursor);
-    qS = qS.lt("created_at", cursor);
   }
-  const [p, m, sh] = await Promise.all([qP, qM, qS]);
+  const [p, m] = await Promise.all([qP, qM]);
+  const sh = { data: [] as unknown[] };
 
   // これからのイベントは上のストーリー欄に出るので、フィードからは除外（重複防止）。
   // 終わったイベントは記録としてフィードに残る。
@@ -69,4 +68,34 @@ export async function fetchMixedFeed(cursor: string | null, limit = 20): Promise
   ];
   items.sort((a, b) => b.at.localeCompare(a.at));
   return items.slice(0, limit);
+}
+
+/** 楽市楽座の最新出品（横スクロールストリップ用） */
+export async function fetchLatestShops(limit = 10): Promise<Shop[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("shops")
+    .select(SHOP_SELECT)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return ((data ?? []) as unknown) as Shop[];
+}
+
+/** いいねした人の顔（FB風・投稿ごとに最大3人） */
+export async function fetchLikersFor(
+  postIds: string[]
+): Promise<Record<string, Array<{ avatar_url: string | null; display_name: string | null }>>> {
+  if (!postIds.length) return {};
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("likes")
+    .select("post_id, profiles!likes_user_id_fkey(avatar_url, display_name)")
+    .in("post_id", postIds)
+    .limit(postIds.length * 6);
+  const map: Record<string, Array<{ avatar_url: string | null; display_name: string | null }>> = {};
+  for (const r of (data ?? []) as unknown as Array<{ post_id: string; profiles: { avatar_url: string | null; display_name: string | null } | null }>) {
+    if (!r.profiles) continue;
+    (map[r.post_id] = map[r.post_id] ?? []).length < 3 && map[r.post_id].push(r.profiles);
+  }
+  return map;
 }

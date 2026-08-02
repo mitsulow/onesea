@@ -506,7 +506,7 @@ export default function UserPage() {
       {shops.length > 0 && (
         <div className="pt-5">
           <div className="card">
-            <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>楽市出品一覧</span></div>
+            <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>{isMe ? "わたしの出品一覧" : `${profile.display_name ?? "この人"}さんの出品一覧`}</span></div>
             <div className="grid grid-cols-2 gap-3">
               {shops.map((shop) => {
                 const cat = categoryOf(shop.category);
@@ -555,7 +555,7 @@ export default function UserPage() {
         <div className="pt-5" id="recos-sec" style={{ scrollMarginTop: 20 }}>
           <div className="card">
             <div className="sec mb-2.5 flex items-center justify-between">
-              <span>⭐ {isMe ? "わたしのおススメ" : "この人のおススメ"}</span>
+              <span>⭐ {isMe ? "わたしのオススメ" : `${profile.display_name ?? "この人"}さんのオススメ`}</span>
               {isMe && !recoForm && (
                 <button
                   onClick={() => setRecoForm(true)}
@@ -669,7 +669,7 @@ export default function UserPage() {
       {/* 言の葉 */}
       <div className="pt-5">
         <div className="card">
-          <div className="sec mb-2">💭 {isMe ? "過去のコトヅテ" : "この人の過去のコトヅテ"}</div>
+          <div className="sec mb-2">全ての投稿</div>
           {posts === null ? (
             <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>
           ) : posts.length === 0 ? (
