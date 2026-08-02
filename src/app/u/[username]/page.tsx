@@ -355,25 +355,6 @@ export default function UserPage() {
           )}
         </div>
 
-        {/* 実績（X風の数字ストリップ） */}
-        {stats && (
-          <div className="mt-2 flex items-center gap-4 text-[12px] text-[#a09888]">
-            <span>
-              <b className="num text-[13.5px] text-[#3a3428]">{stats.posts}</b> 言の葉
-            </span>
-            <span>
-              ❤️ <b className="num text-[13.5px] text-[#3a3428]">{stats.leaves}</b> もらった
-            </span>
-            {shops.length > 0 && (
-              <span>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[15px] w-[15px] rounded-full object-cover align-[-2px]" />{" "}
-                <b className="num text-[13.5px] text-[#3a3428]">{shops.length}</b> 出品
-              </span>
-            )}
-          </div>
-        )}
-
         {/* DDP（端的な夢） */}
         {masterDdp && (
           <div
