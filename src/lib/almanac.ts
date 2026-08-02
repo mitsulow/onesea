@@ -329,3 +329,46 @@ export function moonImageOf(age: number): string {
   const idx = Math.min(29, Math.max(0, Math.round(age)));
   return `/icons/moon/moon_${String(idx + 1).padStart(2, "0")}.png`;
 }
+
+/* ---- 旧暦（朔望月 + 中気で月名を決める本式・閏月対応） ---- */
+const CHUKI_MONTH: Record<number, number> = {
+  330: 1, 0: 2, 30: 3, 60: 4, 90: 5, 120: 6,
+  150: 7, 180: 8, 210: 9, 240: 10, 270: 11, 300: 12,
+};
+
+export function kyurekiOf(dateKey: string): { month: number; leap: boolean; day: number } {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const noon = Date.UTC(y, m - 1, d, 3); // JST正午
+  // この日を含む朔望月（朔=新月の瞬間）を探す
+  const news = nextMoons(5, noon - 40 * 86400000).filter((x) => x.type === "new");
+  let start: number | null = null;
+  let next: number | null = null;
+  for (const n of news) {
+    if (n.time <= noon) start = n.time;
+    else if (start !== null && next === null) next = n.time;
+  }
+  const fallbackDay = Math.floor(moonOf(dateKey).age) + 1;
+  if (start === null) return { month: 0, leap: false, day: fallbackDay };
+  if (next === null) {
+    const more = nextMoons(3, start + 86400000).filter((x) => x.type === "new");
+    next = more[0]?.time ?? start + 30 * 86400000;
+  }
+  // 旧暦日 = 朔のあった日（JST）を1日目とする
+  const dayIdx = (ms: number) => Math.floor((ms + 9 * 3600000) / 86400000);
+  const day = dayIdx(noon) - dayIdx(start) + 1;
+  // 月名: この朔望月に含まれる中気（太陽黄経30°の倍数）で決まる
+  const t0 = dayIdx(start) * 86400000 - 9 * 3600000;
+  const t1 = dayIdx(next) * 86400000 - 9 * 3600000;
+  const chuki = computeNodes(t0, t1 - 1).filter((n) => n.deg % 30 === 0);
+  if (chuki.length > 0) return { month: CHUKI_MONTH[chuki[0].deg], leap: false, day };
+  // 中気を含まない月 = 閏月（前月の名前を引き継ぐ）
+  const prev = computeNodes(t0 - 33 * 86400000, t0 - 1).filter((n) => n.deg % 30 === 0);
+  const pm = prev.length ? CHUKI_MONTH[prev[prev.length - 1].deg] : 0;
+  return { month: pm, leap: true, day };
+}
+
+export function kyurekiLabel(dateKey: string): string {
+  const k = kyurekiOf(dateKey);
+  if (!k.month) return `旧暦${k.day}日`;
+  return `旧暦${k.leap ? "閏" : ""}${k.month}月${k.day}日`;
+}

@@ -8,6 +8,7 @@ import {
   moonOf,
   moonTimesOf,
   moonImageOf,
+  kyurekiLabel,
   keyOf,
   todayKey,
   YOBI,
@@ -424,7 +425,7 @@ function BottomSheet({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [tide, setTide] = useState<TideDay | null>(null);
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true); // 最初から全画面
   const dayEvs: TechoEv[] = dayMemo.ev ?? [];
   // 月の出・南中・月の入り（現在位置キャッシュがあればその場所で）
   const mt = (() => {
@@ -553,7 +554,7 @@ function BottomSheet({
         onTouchEnd={sTE}
         className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-[480px] flex-col overflow-hidden bg-white"
         style={{
-          height: expanded ? "92vh" : "58vh",
+          height: expanded ? "96dvh" : "58vh",
           borderRadius: "20px 20px 0 0",
           boxShadow: "0 -6px 30px rgba(0,0,0,0.18)",
           transform: `translate(calc(-50% + ${hx}px), ${Math.max(0, sheetY)}px)`,
@@ -578,59 +579,37 @@ function BottomSheet({
           </div>
         </div>
 
-        {/* 週ストリップ */}
-        <div className="grid flex-shrink-0 grid-cols-7 border-b border-[#efebe4] px-2 pb-1.5">
-          {weekDays.map((wd, i) => {
-            const isCur = wd.diff === 0;
-            const ev = bestOfComputed(wd.key);
-            const l = ev?.level ?? 0;
-            return (
-              <div
-                key={i}
-                onClick={() => wd.diff !== 0 && onShift(wd.diff)}
-                className="cursor-pointer rounded-lg py-1 text-center"
-                style={{ background: isCur ? "#fff3e0" : "transparent" }}
-              >
-                <div className="text-[9px]" style={{ color: i === 0 ? "#c05030" : i === 6 ? "#3070b0" : "#aaa" }}>
-                  {wd.dow}
-                </div>
-                <div
-                  className="text-[15px] leading-tight"
-                  style={{ fontWeight: isCur ? 800 : 500, color: isCur ? "#c05030" : l >= 3 ? "#8b6914" : "#444" }}
-                >
-                  {wd.d}
-                </div>
-                {l >= 3 && (
-                  <div
-                    className="mx-auto mt-[1px] h-1 w-1 rounded-full"
-                    style={{ background: l === 4 ? SHISHI_COLOR[ev!.deg] : "#c09830" }}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 80px)" }}>
-          {/* 日付ヘッダー */}
-          <div className="flex items-baseline justify-between px-4 pb-1.5 pt-2.5">
-            <div>
-              <span className="text-xl font-extrabold text-[#2a2a2a]">
-                {m}月{d}日
-              </span>
-              <span className="ml-1.5 text-sm text-[#999]">（{dow}）</span>
-            </div>
-            <div className="text-[10px] text-[#b8a888]">旧暦{moon.reki}</div>
+        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ paddingBottom: 16 }}>
+          {/* 日付ヘッダー（センター日付・右に旧暦） */}
+          <div className="relative px-4 pb-1.5 pt-2.5 text-center">
+            <span className="text-xl font-extrabold text-[#2a2a2a]">
+              {m}月{d}日
+            </span>
+            <span className="ml-1.5 text-sm text-[#999]">（{dow}）</span>
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-[#b8a888]">
+              {kyurekiLabel(dk)}
+            </span>
           </div>
 
           <div className="px-3.5">
             {/* 節分かれつ刻（天文計算） */}
             <div
               className="mb-2 rounded-xl p-3"
-              style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fafaf6", border: `2px solid ${ac}35` }}
+              style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fdf3e4", border: `2px solid ${ac}35` }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[10px] tracking-widest text-[#999]">☀ 節分かれつ刻</span>
+                <span className="flex items-center gap-1.5 text-[10px] tracking-widest text-[#b07a30]">
+                  <svg width="16" height="16" viewBox="0 0 40 40" aria-hidden>
+                    <circle cx="20" cy="20" r="9" fill="none" stroke="#e08830" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="4 2.2" />
+                    <g stroke="#e08830" strokeWidth="2.4" strokeLinecap="round">
+                      <line x1="20" y1="2.5" x2="20" y2="7.5" /><line x1="20" y1="32.5" x2="20" y2="37.5" />
+                      <line x1="2.5" y1="20" x2="7.5" y2="20" /><line x1="32.5" y1="20" x2="37.5" y2="20" />
+                      <line x1="7.6" y1="7.6" x2="11" y2="11" /><line x1="29" y1="29" x2="32.4" y2="32.4" />
+                      <line x1="32.4" y1="7.6" x2="29" y2="11" /><line x1="11" y1="29" x2="7.6" y2="32.4" />
+                    </g>
+                  </svg>
+                  太陽 — 節分かれつ刻
+                </span>
                 <span className="text-[11px] text-[#bbb]">{best ? `${best.deg}°` : "—"}</span>
               </div>
               <div className="num text-center text-[32px] font-extrabold leading-tight" style={{ color: ac }}>
@@ -661,8 +640,10 @@ function BottomSheet({
             {/* 潮汐＋月 */}
             <div className="mb-2 grid gap-2" style={{ gridTemplateColumns: "1.15fr 1fr" }}>
               <div className="rounded-xl border border-[#d8e4f0] bg-[#f4f8fc] p-2.5">
-                <div className="mb-1 text-[9.5px] text-[#5080b0]">
-                  🌊 潮汐 <span className="text-[#aab]">{tide ? `${tide.port}港` : "…"}</span>
+                <div className="mb-1 flex items-center gap-1 text-[9.5px] text-[#5080b0]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/cel-earth.png" alt="" className="h-[13px] w-[13px] object-contain" />
+                  地球 — 潮汐 <span className="text-[#aab]">{tide ? `${tide.port}港` : "…"}</span>
                 </div>
                 {tide === null ? (
                   <div className="py-1 text-[10px] text-[#9ab]">現在位置から最寄り港を探しています...</div>
@@ -681,16 +662,16 @@ function BottomSheet({
                   </div>
                 )}
               </div>
-              <div className="rounded-xl border border-[#e4dcc8] bg-[#faf8f4] p-2.5 text-center">
-                <div className="text-[9.5px] text-[#a09060]">🌙 月</div>
+              <div className="rounded-xl border border-[#26262e] p-2.5 text-center" style={{ background: "#000005" }}>
+                <div className="text-[9.5px] tracking-wider text-[#c8c0d8]">月</div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-0.5 h-9 w-9" loading="lazy" />
-                <div className="num text-[10.5px] text-[#7a6a4a]">月齢 {moon.age.toFixed(1)}</div>
-                {moon.holy && <div className="mt-[1px] text-[10.5px] font-extrabold text-[#c09030]">✦{moon.holy}</div>}
-                <div className="mt-1 border-t border-[#eee4d0] pt-1 text-[9.5px] leading-relaxed text-[#8a7a5a]">
-                  <div className="flex justify-between"><span>月の出</span><span className="num">{mt.rise ?? "—"}</span></div>
-                  <div className="flex justify-between"><span>南中</span><span className="num">{mt.transit ?? "—"}</span></div>
-                  <div className="flex justify-between"><span>月の入</span><span className="num">{mt.set ?? "—"}</span></div>
+                <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-1 h-11 w-11" loading="lazy" />
+                <div className="num text-[10.5px] text-[#e8e4f0]">月齢 {moon.age.toFixed(1)}</div>
+                {moon.holy && <div className="mt-[1px] text-[10.5px] font-extrabold text-[#e8c860]">✦{moon.holy}</div>}
+                <div className="mt-1 border-t border-[#2a2a35] pt-1 text-[9.5px] leading-relaxed text-[#b8b4c8]">
+                  <div className="flex justify-between"><span>月の出</span><span className="num text-white">{mt.rise ?? "—"}</span></div>
+                  <div className="flex justify-between"><span>南中</span><span className="num text-white">{mt.transit ?? "—"}</span></div>
+                  <div className="flex justify-between"><span>月の入</span><span className="num text-white">{mt.set ?? "—"}</span></div>
                 </div>
               </div>
             </div>
@@ -828,6 +809,42 @@ function BottomSheet({
               })}
             </div>
           </div>
+        </div>
+
+        {/* 週ストリップ（下側） */}
+        <div
+          className="grid flex-shrink-0 grid-cols-7 border-t border-[#efebe4] px-2 pt-1.5"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 60px)" }}
+        >
+          {weekDays.map((wd, i) => {
+            const isCur = wd.diff === 0;
+            const ev = bestOfComputed(wd.key);
+            const l = ev?.level ?? 0;
+            return (
+              <div
+                key={i}
+                onClick={() => wd.diff !== 0 && onShift(wd.diff)}
+                className="cursor-pointer rounded-lg py-1 text-center"
+                style={{ background: isCur ? "#fff3e0" : "transparent" }}
+              >
+                <div className="text-[9px]" style={{ color: i === 0 ? "#c05030" : i === 6 ? "#3070b0" : "#aaa" }}>
+                  {wd.dow}
+                </div>
+                <div
+                  className="text-[15px] leading-tight"
+                  style={{ fontWeight: isCur ? 800 : 500, color: isCur ? "#c05030" : l >= 3 ? "#8b6914" : "#444" }}
+                >
+                  {wd.d}
+                </div>
+                {l >= 3 && (
+                  <div
+                    className="mx-auto mt-[1px] h-1 w-1 rounded-full"
+                    style={{ background: l === 4 ? SHISHI_COLOR[ev!.deg] : "#c09830" }}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
