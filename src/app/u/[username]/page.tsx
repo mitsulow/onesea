@@ -7,7 +7,8 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { CotozutePost, fetchPosts, fetchMyLikes } from "@/lib/cotozute";
 import { getOrCreateChat } from "@/lib/line";
-import { uploadImage } from "@/lib/images";
+import { uploadImage, uploadCroppedBlob } from "@/lib/images";
+import { PhotoCropper } from "@/components/PhotoCropper";
 import { Shop, fetchShopsByOwner, categoryOf, Reco, fetchRecos, addReco, deleteReco } from "@/lib/za";
 import { SnsIcon } from "@/components/SnsIcon";
 import { CameraIcon } from "@/components/CameraIcon";
@@ -46,6 +47,7 @@ export default function UserPage() {
   const [editingBio, setEditingBio] = useState(false);
   const [bioDraft, setBioDraft] = useState("");
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
+  const [cropping, setCropping] = useState<{ kind: "cover" | "avatar"; file: File } | null>(null);
   const [shops, setShops] = useState<Shop[]>([]);
   const [recos, setRecos] = useState<Reco[]>([]);
   const [recoForm, setRecoForm] = useState(false);
@@ -125,10 +127,18 @@ export default function UserPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
-  const changeImage = async (kind: "cover" | "avatar", file: File | null) => {
+  // 写真を選んだら、まず位置調整・ズーム切り抜きへ
+  const changeImage = (kind: "cover" | "avatar", file: File | null) => {
     if (!me || !file || busy) return;
+    setCropping({ kind, file });
+  };
+
+  const onCropped = async (blob: Blob | null) => {
+    const kind = cropping?.kind;
+    setCropping(null);
+    if (!me || !blob || !kind) return;
     setBusy(kind);
-    const url = await uploadImage("avatars", me.id, file, kind === "cover" ? 1600 : 512, 0.82);
+    const url = await uploadCroppedBlob("avatars", me.id, blob);
     if (url) {
       const supabase = createClient();
       await supabase
@@ -213,6 +223,16 @@ export default function UserPage() {
 
   return (
     <main className="pb-20">
+      {cropping && (
+        <PhotoCropper
+          file={cropping.file}
+          aspect={cropping.kind === "avatar" ? 1 : 2.6}
+          outWidth={cropping.kind === "avatar" ? 512 : 1600}
+          quality={0.8}
+          title={cropping.kind === "avatar" ? "プロフィール写真の位置を調整" : "ヘッダー画像の位置を調整"}
+          onDone={onCropped}
+        />
+      )}
       {/* カバー画像 */}
       <div className="relative h-44 w-full overflow-hidden">
         {profile.cover_url ? (

@@ -81,3 +81,9 @@ export async function uploadImagePair(
   if (!full || !thumb) return null;
   return { full, thumb };
 }
+
+/** 切り抜き・加工済みのBlobをそのままアップロード（既に圧縮済みの前提） */
+export async function uploadCroppedBlob(bucket: string, userId: string, blob: Blob): Promise<string | null> {
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+  return uploadBlob(bucket, path, blob);
+}

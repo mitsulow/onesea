@@ -6,7 +6,6 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { fetchMyLikes } from "@/lib/cotozute";
 import { FeedItem, Story, feedKey, fetchMixedFeed, fetchLatestShops, fetchLikersFor, fetchStories, addStory, deleteStory } from "@/lib/feed";
-import { uploadImage } from "@/lib/images";
 import type { Shop } from "@/lib/za";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
@@ -61,6 +60,10 @@ export default function CotozutePage() {
   const [stories, setStoriesList] = useState<Story[]>([]);
   const [storyView, setStoryView] = useState<number | null>(null); // 表示中のストーリーindex
   const [storyUploading, setStoryUploading] = useState(false);
+  const [storyDraft, setStoryDraft] = useState<{ file: File; url: string } | null>(null);
+  const [storyText, setStoryText] = useState("");
+  const [storyColor, setStoryColor] = useState("#0affd0");
+  const [storyY, setStoryY] = useState(0.5); // 文字の縦位置 0..1
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [hideBar, setHideBar] = useState(false);
@@ -261,15 +264,66 @@ export default function CotozutePage() {
   }, [pull, refreshing]);
 
   /* ストーリーズ（24時間で消える・写真1枚・FB型） */
-  const postStory = async (f: File | null) => {
+  const postStory = (f: File | null) => {
     if (!me || !f || storyUploading) return;
+    setStoryText("");
+    setStoryY(0.5);
+    setStoryDraft({ file: f, url: URL.createObjectURL(f) });
+  };
+
+  /** ネオン文字を写真に焼き込んで投稿（閲覧側はただの画像=軽い） */
+  const bakeAndPost = async () => {
+    if (!me || !storyDraft || storyUploading) return;
     setStoryUploading(true);
-    const url = await uploadImage("post-images", me.id, f, 960, 0.72);
-    if (url) {
-      await addStory(me.id, url);
-      setStoriesList(await fetchStories());
-    }
-    setStoryUploading(false);
+    const img = new Image();
+    img.onload = async () => {
+      const maxW = 960;
+      const sc = Math.min(1, maxW / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * sc);
+      canvas.height = Math.round(img.height * sc);
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const text = storyText.trim();
+      if (text) {
+        const lines = text.split("\n");
+        const fs = Math.round(canvas.width * 0.085);
+        ctx.font = `900 ${fs}px -apple-system, "Hiragino Sans", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const cy = canvas.height * storyY - ((lines.length - 1) * fs * 1.25) / 2;
+        lines.forEach((line, i) => {
+          const y = cy + i * fs * 1.25;
+          // 蛍光ネオン: 色グローを2重 → 白抜き本体
+          ctx.shadowColor = storyColor;
+          ctx.shadowBlur = fs * 0.55;
+          ctx.fillStyle = storyColor;
+          ctx.fillText(line, canvas.width / 2, y);
+          ctx.fillText(line, canvas.width / 2, y);
+          ctx.shadowBlur = fs * 0.18;
+          ctx.fillStyle = "#ffffff";
+          ctx.fillText(line, canvas.width / 2, y);
+        });
+      }
+      canvas.toBlob(
+        async (blob) => {
+          if (blob) {
+            const { uploadCroppedBlob } = await import("@/lib/images");
+            const url = await uploadCroppedBlob("post-images", me.id, blob);
+            if (url) {
+              await addStory(me.id, url);
+              setStoriesList(await fetchStories());
+            }
+          }
+          URL.revokeObjectURL(storyDraft.url);
+          setStoryDraft(null);
+          setStoryUploading(false);
+        },
+        "image/webp",
+        0.72
+      );
+    };
+    img.src = storyDraft.url;
   };
 
   const storiesRow = (
@@ -561,6 +615,84 @@ export default function CotozutePage() {
           </>
         )}
       </div>
+
+      {/* ストーリー作成エディタ（ネオン文字を写真に乗せる） */}
+      {storyDraft && (
+        <div className="fixed inset-0 z-[93] flex flex-col bg-black" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+          <div className="relative flex-1 overflow-hidden">
+            <img src={storyDraft.url} alt="" className="absolute inset-0 h-full w-full object-contain" />
+            {storyText.trim() && (
+              <div
+                className="pointer-events-none absolute left-0 right-0 whitespace-pre-wrap px-4 text-center font-extrabold"
+                style={{
+                  top: `${storyY * 100}%`,
+                  transform: "translateY(-50%)",
+                  fontSize: 30,
+                  color: "#fff",
+                  textShadow: `0 0 6px ${storyColor}, 0 0 18px ${storyColor}, 0 0 34px ${storyColor}`,
+                  lineHeight: 1.25,
+                }}
+              >
+                {storyText}
+              </div>
+            )}
+            {/* 縦位置スライダー（右端） */}
+            {storyText.trim() && (
+              <input
+                type="range"
+                min={0.12}
+                max={0.88}
+                step={0.01}
+                value={storyY}
+                onChange={(e) => setStoryY(Number(e.target.value))}
+                className="absolute right-[-56px] top-1/2 w-[150px] -rotate-90 accent-white"
+                aria-label="文字の位置"
+              />
+            )}
+          </div>
+          <div className="px-4 pb-4 pt-2" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 14px)" }}>
+            <textarea
+              value={storyText}
+              onChange={(e) => setStoryText(e.target.value)}
+              rows={2}
+              placeholder="ネオン文字を入れる（改行OK・空欄でもOK）"
+              className="w-full resize-none rounded-xl bg-white/12 px-3 py-2.5 text-[15px] font-bold text-white outline-none placeholder:text-white/40"
+            />
+            <div className="mt-2.5 flex items-center gap-3">
+              {["#0affd0", "#ff3db8", "#ffd93d", "#4dc3ff", "#b04dff"].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setStoryColor(c)}
+                  aria-label="ネオン色"
+                  className="h-8 w-8 rounded-full"
+                  style={{
+                    background: c,
+                    boxShadow: `0 0 12px ${c}`,
+                    border: storyColor === c ? "3px solid #fff" : "3px solid transparent",
+                  }}
+                />
+              ))}
+              <button
+                onClick={() => {
+                  URL.revokeObjectURL(storyDraft.url);
+                  setStoryDraft(null);
+                }}
+                className="ml-auto px-2 py-2 text-[13px] font-bold text-white/70"
+              >
+                やめる
+              </button>
+              <button
+                onClick={bakeAndPost}
+                disabled={storyUploading}
+                className="rounded-full px-5 py-2.5 text-[14px] font-extrabold text-white disabled:opacity-50"
+                style={{ background: TIFFANY }}
+              >
+                {storyUploading ? "投稿中..." : "シェアする"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ストーリービューア（全画面・タップで次へ） */}
       {storyView != null && stories[storyView] && (
