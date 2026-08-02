@@ -6,7 +6,6 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Otohikari } from "@/components/Otohikari";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
-import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { PriceBanner } from "@/components/PriceBanner";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import {
@@ -250,10 +249,6 @@ export default function MmmPage() {
         )}
       </section>
 
-      {/* ③ Cotozute */}
-      <div className="px-4">
-        <CotozuteTeaser />
-      </div>
     </main>
   );
 }
