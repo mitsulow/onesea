@@ -14,8 +14,12 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [guest, setGuest] = useState(false); // 無料アプリとしてログインせず使う
 
   useEffect(() => {
+    try {
+      if (localStorage.getItem("onesea-guest") === "1") setGuest(true);
+    } catch {}
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -66,6 +70,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
+    if (guest) return <>{children}</>; // 無料アプリモード（投稿系はUpgradeGateが守る）
     return (
       <div
         className="flex min-h-screen flex-col items-center justify-center px-7 py-9 text-center"
@@ -107,6 +112,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.4 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/>
           </svg>
           Google でログインしてください
+        </button>
+        <button
+          onClick={() => {
+            try {
+              localStorage.setItem("onesea-guest", "1");
+            } catch {}
+            setGuest(true);
+          }}
+          className="mt-3 w-full max-w-[300px] rounded-2xl border border-white/25 py-3 text-[13px] font-bold text-[#c8d8e4]"
+        >
+          ログインせずに無料で使ってみる →
         </button>
         {error && <p className="mt-4 text-xs text-[#e0a0a0]">エラー: {error}</p>}
         <p className="mt-8 text-[11.5px] leading-loose text-[#5a7a92]">

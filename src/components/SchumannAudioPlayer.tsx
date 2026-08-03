@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { AUDIO, SCHUMANN, SCHUMANN_DATA_URL } from "@/lib/config";
+import { UpgradeDialog } from "@/components/UpgradeGate";
 import {
   BRAIN_MODES,
   MED_DEFAULTS,
@@ -53,6 +54,9 @@ export function SchumannAudioPlayer() {
 
   /* モード（瞑想/アイディア/シンクロ） */
   const [modeOpen, setModeOpen] = useState(false);
+  /* 無料アプリ: 未ログインは15秒プレビューのみ。モードは会員専用 */
+  const [showUpgrade, setShowUpgrade] = useState(false);
+  const previewRef = useRef<number | null>(null);
   const [introKind, setIntroKind] = useState<Exclude<ProgramKind, "meditation"> | null>(null);
   const [program, setProgram] = useState<{ kind: ProgramKind; course?: number; mode?: string } | null>(null);
   const [medPick, setMedPick] = useState<string>("random"); // 脳波モード（🎲=おまかせ）
@@ -169,6 +173,15 @@ export function SchumannAudioPlayer() {
     }
     sendBeacon();
     if (!heartbeatRef.current) heartbeatRef.current = setInterval(sendBeacon, 30000);
+    if (!user) {
+      // 無料アプリ: 15秒だけ聴けて、グレードアップ案内
+      if (previewRef.current) clearTimeout(previewRef.current);
+      previewRef.current = window.setTimeout(() => {
+        const a = audioRef.current;
+        if (a && !a.paused) a.pause();
+        setShowUpgrade(true);
+      }, 15000);
+    }
     if (user && !countedRef.current) {
       countedRef.current = true;
       const supabase = createClient();
@@ -178,6 +191,10 @@ export function SchumannAudioPlayer() {
 
   const onStopped = useCallback(() => {
     if (suppressRef.current) return;
+    if (previewRef.current) {
+      clearTimeout(previewRef.current);
+      previewRef.current = null;
+    }
     setPlaying(false);
     countedRef.current = false;
     stopBeacon();
@@ -245,6 +262,11 @@ export function SchumannAudioPlayer() {
   }, [endProgram]);
 
   const beginProgram = async (kind: ProgramKind, course?: number) => {
+    if (!user) {
+      setModeOpen(false);
+      setShowUpgrade(true);
+      return;
+    }
     const a = audioRef.current;
     if (!a || !src || program) return;
     setModeOpen(false);
@@ -541,6 +563,7 @@ export function SchumannAudioPlayer() {
             <button
               onClick={() => {
                 setModeOpen(false);
+                if (!user) return setShowUpgrade(true);
                 setIntroKind("idea");
               }}
               className="flex-shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
@@ -560,6 +583,7 @@ export function SchumannAudioPlayer() {
             <button
               onClick={() => {
                 setModeOpen(false);
+                if (!user) return setShowUpgrade(true);
                 setIntroKind("synchro");
               }}
               className="flex-shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
@@ -734,6 +758,7 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
+      <UpgradeDialog open={showUpgrade} onClose={() => setShowUpgrade(false)} feature="シューマン音のフル再生" />
       <audio
         ref={audioRef}
         src={src ?? undefined}

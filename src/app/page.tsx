@@ -2,7 +2,7 @@ import { InoriTecho } from "@/components/InoriTecho";
 import { AuthGate } from "@/components/AuthGate";
 import { HeaderBar } from "@/components/HeaderBar";
 import { HomeDashboard, ServiceDock } from "@/components/HomeDashboard";
-import { MorningOpening } from "@/components/MorningOpening";
+import { MorningRedirect } from "@/components/MorningRedirect";
 import { A2hsPrompt } from "@/components/A2hsPrompt";
 import { MoonMootBanner } from "@/components/MoonMootBanner";
 
@@ -14,7 +14,7 @@ import { MoonMootBanner } from "@/components/MoonMootBanner";
 export default function Home() {
   return (
     <AuthGate>
-      <MorningOpening />
+      <MorningRedirect />
       <A2hsPrompt />
       <main>
         <HeaderBar />

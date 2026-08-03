@@ -31,7 +31,7 @@ export function HeaderBar() {
             className="text-[11.5px] font-bold text-[#e8d5a0]"
             style={{ letterSpacing: 3, fontFamily: '"Shippori Mincho", "Yu Mincho", "Hiragino Mincho ProN", serif' }}
           >
-            わらわ〜アプリ
+            無料アプリ
           </span>
           <span
             className="text-[16px] font-semibold"

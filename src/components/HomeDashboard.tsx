@@ -105,7 +105,7 @@ export function HomeDashboard() {
         }
       }
       list.sort((a, b) => a.time.localeCompare(b.time));
-      setPlans(list.slice(0, 4));
+      setPlans(list.slice(0, 6));
     } catch {}
     const supabase = createClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -149,7 +149,7 @@ export function HomeDashboard() {
       <div className="px-5 pb-1 pt-3 text-center" style={{ borderTop: isShishi ? `3px solid ${accent}` : "none" }}>
         <div style={{ fontFamily: MINCHO }}>
           <span className="text-[26px] font-bold tracking-wide text-[#2a2622]">
-            {y}年{m}月{d}日<span className="ml-1 text-[19px] text-[#8a8070]">（{dow}）</span>
+            {y}年{m}月{d}日（{dow}）
           </span>
         </div>
         <div className="mt-0.5 text-[11.5px] tracking-[1px] text-[#a09880]">
@@ -170,18 +170,19 @@ export function HomeDashboard() {
       {schumann != null && (
         <a
           href="/schumann1/index.html"
-          className="mx-5 mt-2 flex items-baseline justify-center gap-2 rounded-lg py-1.5 no-underline"
+          className="mx-5 mt-2 block rounded-xl py-2.5 text-center no-underline"
           style={{ background: "linear-gradient(120deg,#0d2724,#10332e)" }}
         >
-          <span className="text-[11px] font-bold tracking-[1px] text-[#7ac8b8]">⚡ 現在のシューマン共振</span>
-          <span
-            className="num text-[22px] font-extrabold leading-none"
-            style={{ color: "#35e0b8", textShadow: "0 0 12px rgba(53,224,184,.5)" }}
+          <div className="text-[11.5px] font-bold tracking-[2px] text-[#7ac8b8]">
+            ⚡ 本日のシューマン共振 <span className="ml-1 text-[10px] font-bold text-[#5aa896]">詳しくは→</span>
+          </div>
+          <div
+            className="num mt-0.5 text-[38px] font-extrabold leading-none"
+            style={{ color: "#35e0b8", textShadow: "0 0 16px rgba(53,224,184,.55)" }}
           >
             {schumann.toFixed(2)}
-            <span className="text-[12px]">Hz</span>
-          </span>
-          <span className="text-[10.5px] font-bold text-[#5aa896]">詳しくは→</span>
+            <span className="text-[16px]">Hz</span>
+          </div>
         </a>
       )}
 
@@ -209,31 +210,60 @@ export function HomeDashboard() {
                 </div>
               </div>
             ) : (
-              <div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[10.5px] tracking-[2px] text-[#a09070]">⏳ 次の叶いタイムまで</span>
-                  <span className="num text-[15px] text-[#6a5a3a]" style={{ fontFamily: MINCHO }}>
-                    {hrs > 0 && <b>{hrs}<span className="text-[10px]">時間</span></b>}
-                    <b>{mins}<span className="text-[10px]">分</span></b>
-                    <b>{secs}<span className="text-[10px]">秒</span></b>
-                  </span>
-                </div>
-                <div className="num mt-0.5 text-right text-[10.5px] text-[#b0a080]">
-                  Next{" "}
-                  {(() => {
-                    const nd = new Date(target.t);
-                    return `${nd.getMonth() + 1}月${nd.getDate()}日 ${nd.getHours()}時${String(nd.getMinutes()).padStart(2, "0")}分`;
-                  })()}
-                </div>
+              <div className="text-center">
+                {(() => {
+                  const nd = new Date(target.t);
+                  const isTomorrow = nd.getDate() !== d || nd.getMonth() + 1 !== m;
+                  return (
+                    <>
+                      <div className="text-[11px] tracking-[2px] text-[#a09070]">
+                        ⏳ {isTomorrow ? "明日" : "今日"}のフシワカレツトキ（願い叶いタイム）
+                      </div>
+                      <div
+                        className="num mt-0.5 text-[34px] font-bold leading-none text-[#6a5010]"
+                        style={{ fontFamily: MINCHO }}
+                      >
+                        {isTomorrow ? `${nd.getMonth() + 1}月${nd.getDate()}日 ` : ""}
+                        {nd.getHours()}時{String(nd.getMinutes()).padStart(2, "0")}分
+                      </div>
+                      <div className="num mt-1 text-[11px] text-[#b0a080]">
+                        あと {hrs > 0 && `${hrs}時間`}
+                        {mins}分{secs}秒
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
           </div>
         </Link>
       )}
 
-      {/* ── 今日のダイジェスト（左=潮・中=予定・右=月） ── */}
-      <button onClick={openToday} className="mt-3 grid w-full grid-cols-3 border-y border-[#efe9dc] text-left">
-        <div className="border-r border-[#efe9dc] px-3.5 py-2.5">
+      {/* ── 今日の予定（手帳アプリの主役なので大きく・全幅） ── */}
+      <button onClick={openToday} className="mt-3 block w-full border-t border-[#efe9dc] px-5 py-3 text-left">
+        <div className="text-[10.5px] font-bold tracking-[2px] text-[#7ba05b]">📖 今日の予定</div>
+        <div className="mt-1.5 space-y-1.5">
+          {plans.length ? (
+            plans.map((p, i) => (
+              <div key={i} className="flex items-baseline gap-2.5">
+                <span className="num flex-shrink-0 text-[12px] font-bold text-[#a09880]">{p.time}</span>
+                {p.color && <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
+                <span className="truncate text-[14.5px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
+                  {p.text}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="py-1.5 text-[13px] text-[#b0a890]" style={{ fontFamily: MINCHO }}>
+              今日の予定はまだありません。<span className="text-[#7ba05b]">タップして書く</span>
+            </div>
+          )}
+        </div>
+      </button>
+
+      {/* ── 潮と月（2列） ── */}
+      <button onClick={openToday} className="grid w-full grid-cols-2 border-y border-[#efe9dc] text-left">
+        <div className="border-r border-[#efe9dc] px-5 py-2.5">
           <div className="text-[9px] tracking-[2px] text-[#8ea8c0]">潮 {tide ? `・${tide.port}` : ""}</div>
           <div className="mt-1 space-y-[3px]">
             {tideRows.length ? (
@@ -248,22 +278,7 @@ export function HomeDashboard() {
             )}
           </div>
         </div>
-        <div className="border-r border-[#efe9dc] px-3.5 py-2.5">
-          <div className="text-[9px] tracking-[2px] text-[#7ba05b]">予定</div>
-          <div className="mt-1 space-y-[3px]">
-            {plans.length ? (
-              plans.map((p, i) => (
-                <div key={i} className="flex items-baseline gap-1.5 text-[11px]">
-                  <span className="num flex-shrink-0 text-[9.5px] text-[#a09880]">{p.time}</span>
-                  <span className="truncate text-[#4a4438]">{p.text}</span>
-                </div>
-              ))
-            ) : (
-              <div className="text-[10px] leading-relaxed text-[#c0b8a8]">まだ予定なし<br />タップして書く</div>
-            )}
-          </div>
-        </div>
-        <div className="px-3.5 py-2.5">
+        <div className="px-5 py-2.5">
           <div className="text-[9px] tracking-[2px] text-[#a89860]">月</div>
           <div className="mt-1 flex items-center gap-2">
             <img src={moonImageOf(moon.age)} alt="" className="h-8 w-8" loading="lazy" />

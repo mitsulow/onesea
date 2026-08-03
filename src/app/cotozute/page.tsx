@@ -11,6 +11,7 @@ import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
 import { MuraFeedCard, ShopStripCard } from "@/components/FeedCards";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import { UpgradeDialog } from "@/components/UpgradeGate";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
 
 /* eslint-disable @next/next/no-img-element */
@@ -73,6 +74,7 @@ export default function CotozutePage() {
   const [storyView, setStoryView] = useState<number | null>(null); // 表示中のストーリーindex
   const [storyUploading, setStoryUploading] = useState(false);
   const [storyDraft, setStoryDraft] = useState<{ file: File; url: string } | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false); // 無料アプリ: 投稿は会員専用
   const [storyText, setStoryText] = useState("");
   const [storyColor, setStoryColor] = useState("#0affd0");
   const [storyPos, setStoryPos] = useState({ x: 0.5, y: 0.5 }); // 文字位置（自由ドラッグ）
@@ -282,6 +284,10 @@ export default function CotozutePage() {
 
   /* ストーリーズ（24時間で消える・写真1枚・FB型） */
   const postStory = (f: File | null) => {
+    if (!me) {
+      setShowUpgrade(true);
+      return;
+    }
     if (!me || !f || storyUploading) return;
     setStoryText("");
     setStoryPos({ x: 0.5, y: 0.5 });
@@ -604,6 +610,7 @@ export default function CotozutePage() {
         </div>
       )}
 
+      <UpgradeDialog open={showUpgrade} onClose={() => setShowUpgrade(false)} feature="CotoZuteへの投稿" />
       <div className="px-4" ref={feedRef}>
         {/* 投稿ボックス（FB型: アバター + 丸ボックス + 写真） */}
         <div className="flex items-center gap-2.5 py-2.5">
@@ -613,12 +620,12 @@ export default function CotozutePage() {
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px]">🌿</span>
           )}
           <button
-            onClick={() => setComposing(true)}
+            onClick={() => (me ? setComposing(true) : setShowUpgrade(true))}
             className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14.5px] text-[#65676b]"
           >
             幸せの波紋を拡げよう
           </button>
-          <button onClick={() => setComposing(true)} aria-label="写真を添付" className="flex-shrink-0 text-[22px]">
+          <button onClick={() => (me ? setComposing(true) : setShowUpgrade(true))} aria-label="写真を添付" className="flex-shrink-0 text-[22px]">
             🖼️
           </button>
         </div>

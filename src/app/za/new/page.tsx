@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/cotozute";
 import { Market, ZA_CATEGORIES, uploadShopImage } from "@/lib/za";
 import { CameraIcon } from "@/components/CameraIcon";
+import { UpgradeDialog } from "@/components/UpgradeGate";
 
 /** 楽座を出す（出品フォーム） */
 export default function NewShopPage() {
@@ -25,10 +26,14 @@ export default function NewShopPage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [gateReady, setGateReady] = useState(false); // 無料アプリ: 出品は会員専用
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => setMe(session?.user ?? null));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setMe(session?.user ?? null);
+      setGateReady(true);
+    });
   }, []);
 
   const onFiles = async (files: FileList | null) => {
@@ -75,6 +80,10 @@ export default function NewShopPage() {
   };
 
   return (
+    <>
+      {gateReady && !me && (
+        <UpgradeDialog open onClose={() => router.push("/za")} feature="楽市楽座への出品" />
+      )}
     <main className="pb-20">
       <header
         className="flex items-center justify-between px-4 pb-3.5 pt-4"
@@ -246,5 +255,6 @@ export default function NewShopPage() {
         </div>
       )}
     </main>
+    </>
   );
 }

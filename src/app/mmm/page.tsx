@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Otohikari } from "@/components/Otohikari";
+import { MorningOpening } from "@/components/MorningOpening";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { AvatarMenu } from "@/components/AvatarMenu";
@@ -90,6 +91,8 @@ export default function MmmPage() {
 
   return (
     <main className="pb-24">
+      {/* 朝一: その日はじめてなら「今日の地球を、どう楽しむ？」→ 地球儀に着地 */}
+      <MorningOpening />
       {/* ヒーロー（薄い帯） */}
       <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
         <div className="text-center">
