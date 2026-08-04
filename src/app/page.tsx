@@ -16,16 +16,25 @@ export default function Home() {
     <AuthGate>
       <MorningRedirect />
       <A2hsPrompt />
-      <main>
-        <HeaderBar />
-        <ServiceDock />
+      {/* 黒い机の上に、紙の手帳と光る計器を置く構成。
+          題字と今日 → 手帳（紙のカード） → オービット → ヒーローは一番下 */}
+      <main style={{ background: "#0e1116", minHeight: "100dvh" }}>
         <div className="px-4">
-          <MoonMootBanner />
           <HomeDashboard />
-          <div id="techo" style={{ scrollMarginTop: 40 }}>
+          <MoonMootBanner />
+          <div
+            id="techo"
+            className="overflow-hidden rounded-2xl"
+            style={{ scrollMarginTop: 40, boxShadow: "0 10px 44px rgba(0,0,0,.55)" }}
+          >
             <InoriTecho />
           </div>
         </div>
+        <div className="mt-2">
+          <ServiceDock />
+        </div>
+        <HeaderBar />
+        <div style={{ height: 28 }} />
       </main>
     </AuthGate>
   );
