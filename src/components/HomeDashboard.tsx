@@ -119,24 +119,6 @@ export function HomeDashboard() {
     return () => clearInterval(schT);
   }, [tk]);
 
-  /* ページ全体を黒基調に（オーバースクロール・ステータスバーも同色に溶かす） */
-  useEffect(() => {
-    const prev = document.body.style.background;
-    document.body.style.background = "#0e1116";
-    let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
-    const prevTheme = meta?.content ?? null;
-    if (!meta) {
-      meta = document.createElement("meta");
-      meta.name = "theme-color";
-      document.head.appendChild(meta);
-    }
-    meta.content = "#0e1116";
-    return () => {
-      document.body.style.background = prev;
-      if (meta && prevTheme != null) meta.content = prevTheme;
-    };
-  }, []);
-
   const openToday = () => window.dispatchEvent(new Event("onesea:openToday"));
 
   const hrs = Math.floor(Math.max(0, left) / 3600000);
@@ -155,33 +137,32 @@ export function HomeDashboard() {
   }, [tide]);
 
   return (
-    <section className="pb-2 pt-6 text-center" style={{ margin: "0 -16px", background: "#0e1116" }}>
-      {/* 題字 — 小さく・字間を広く（絵文字やバッジは使わない） */}
-      <div
-        className="text-[12px] font-bold text-[#d4b96a]"
-        style={{ fontFamily: MINCHO, letterSpacing: "0.6em", textIndent: "0.6em" }}
-      >
-        願い叶い手帳
+    <section className="bg-white pb-2 text-center" style={{ margin: "0 -16px" }}>
+      {/* 題字 — ここだけ黒帯（「い」を小さくする元のバージョン） */}
+      <div className="py-1.5 text-center" style={{ background: "#0e1116" }}>
+        <span className="text-[15.5px] font-extrabold tracking-[3px] text-[#e8d5a0]">
+          願<span style={{ fontSize: "70%" }}>い</span>叶<span style={{ fontSize: "70%" }}>い</span>手帳
+        </span>
       </div>
 
-      {/* 日付 — このページの主役。曜日まで同じ書体・同じ色で一体 */}
-      <div className="mt-3" style={{ fontFamily: MINCHO }}>
-        <span className="text-[27px] font-bold tracking-wide text-[#e9e4da]">
+      {/* 日付 — 主役。曜日まで同じ書体・同じ色で一体 */}
+      <div className="pt-4" style={{ fontFamily: MINCHO }}>
+        <span className="text-[27px] font-bold tracking-wide text-[#2a2622]">
           {y}年{m}月{d}日（{dow}）
         </span>
       </div>
-      <div className="mt-1 text-[11.5px] tracking-[1px]" style={{ color: "rgba(233,228,218,.5)" }}>
+      <div className="mt-1 text-[11.5px] tracking-[1px] text-[#a09880]">
         {kyurekiLabel(tk)}
         {best?.sekki && (
           <span className="ml-2 font-bold" style={{ color: accent }}>
             {best.sekki[0]}
           </span>
         )}
-        {moon.holy && <span className="ml-2 font-bold text-[#d4b96a]">{moon.holy}</span>}
+        {moon.holy && <span className="ml-2 font-bold text-[#c09030]">{moon.holy}</span>}
       </div>
       {advDays != null && (
-        <div className="mt-1.5 text-[12.5px]" style={{ fontFamily: MINCHO, color: "rgba(233,228,218,.62)" }}>
-          今日は <span className="num text-[15px] font-bold text-[#d4b96a]">{advDays.toLocaleString()}</span> 回目の地球冒険の日
+        <div className="mt-1.5 text-[12.5px] text-[#6a604a]" style={{ fontFamily: MINCHO }}>
+          今日は <span className="num text-[15px] font-bold text-[#8b6914]">{advDays.toLocaleString()}</span> 回目の地球冒険の日
         </div>
       )}
 
@@ -198,22 +179,22 @@ export function HomeDashboard() {
           className="block rounded-2xl px-3 py-4 no-underline"
           style={
             isNow
-              ? { background: "rgba(212,185,106,.12)", border: "1px solid rgba(212,185,106,.55)" }
-              : { background: "rgba(255,255,255,.045)", border: "1px solid rgba(255,255,255,.07)" }
+              ? { background: "linear-gradient(120deg,#3a2c08,#6a5010)", boxShadow: "0 0 24px rgba(212,185,106,.5)" }
+              : { background: "#faf7f0", border: "1px solid #eee6d4" }
           }
         >
-          <div className="text-[10px] font-bold tracking-[3px]" style={{ color: "rgba(233,228,218,.5)" }}>
+          <div className="text-[10px] font-bold tracking-[3px] text-[#a09070]">
             フシワカレツトキ
           </div>
           {target ? (
             isNow ? (
               <>
-                <div className="mt-2 text-[17px] font-bold leading-snug text-[#f0e2b8]" style={{ fontFamily: MINCHO }}>
+                <div className="mt-2 text-[17px] font-bold leading-snug text-[#f6e9c4]" style={{ fontFamily: MINCHO }}>
                   いま、願いを
                   <br />
                   書き換える時
                 </div>
-                <div className="mt-2 text-[10.5px] text-[#d4b96a]">ひらく</div>
+                <div className="mt-2 text-[10.5px] text-[#e8cc80]">ひらく</div>
               </>
             ) : (
               (() => {
@@ -221,12 +202,12 @@ export function HomeDashboard() {
                 const isTomorrow = nd.getDate() !== d || nd.getMonth() + 1 !== m;
                 return (
                   <>
-                    <div className="num mt-1.5 text-[40px] leading-none text-[#e8d5a0]" style={{ fontWeight: 300 }}>
+                    <div className="num mt-1.5 text-[40px] leading-none text-[#6a5010]" style={{ fontWeight: 300 }}>
                       {nd.getHours()}
-                      <span className="text-[22px]" style={{ color: "rgba(232,213,160,.6)" }}>:</span>
+                      <span className="text-[22px] text-[#b0a080]">:</span>
                       {String(nd.getMinutes()).padStart(2, "0")}
                     </div>
-                    <div className="num mt-2 text-[11px]" style={{ color: "rgba(233,228,218,.42)" }}>
+                    <div className="num mt-2 text-[11px] text-[#b0a080]">
                       {isTomorrow ? "明日 ・ " : ""}あと {hrs > 0 ? hrs + "時間" : ""}
                       {mins}分
                     </div>
@@ -235,32 +216,32 @@ export function HomeDashboard() {
               })()
             )
           ) : (
-            <div className="mt-3 text-[12px]" style={{ color: "rgba(233,228,218,.4)" }}>—</div>
+            <div className="mt-3 text-[12px] text-[#c0b8a8]">—</div>
           )}
         </Link>
 
         <a
           href="/schumann1/index.html"
           className="block rounded-2xl px-3 py-4 no-underline"
-          style={{ background: "rgba(255,255,255,.045)", border: "1px solid rgba(255,255,255,.07)" }}
+          style={{ background: "linear-gradient(120deg,#0d2724,#10332e)" }}
         >
-          <div className="text-[10px] font-bold tracking-[3px]" style={{ color: "rgba(233,228,218,.5)" }}>
+          <div className="text-[10px] font-bold tracking-[3px] text-[#7ac8b8]">
             シューマン共振
           </div>
           {schumann != null ? (
             <>
-              <div className="num mt-1.5 text-[40px] leading-none" style={{ fontWeight: 300, color: "#3fd3ac" }}>
+              <div className="num mt-1.5 text-[40px] leading-none" style={{ fontWeight: 300, color: "#35e0b8", textShadow: "0 0 14px rgba(53,224,184,.45)" }}>
                 {schumann.toFixed(2)}
-                <span className="ml-0.5 text-[14px]" style={{ color: "rgba(63,211,172,.6)" }}>
+                <span className="ml-0.5 text-[14px]" style={{ color: "rgba(53,224,184,.6)" }}>
                   Hz
                 </span>
               </div>
-              <div className="mt-2 text-[11px]" style={{ color: "rgba(233,228,218,.42)" }}>
+              <div className="mt-2 text-[11px] text-[#5aa896]">
                 いまの地球の音 ・ くわしく
               </div>
             </>
           ) : (
-            <div className="mt-3 text-[12px]" style={{ color: "rgba(233,228,218,.4)" }}>—</div>
+            <div className="mt-3 text-[12px] text-[#3a5a50]">—</div>
           )}
         </a>
       </div>
@@ -269,27 +250,27 @@ export function HomeDashboard() {
       <button
         onClick={openToday}
         className="mx-5 mt-3 block rounded-2xl px-4 py-3.5 text-left"
-        style={{ background: "rgba(255,255,255,.045)", border: "1px solid rgba(255,255,255,.07)", width: "calc(100% - 40px)" }}
+        style={{ background: "#faf7f0", border: "1px solid #eee6d4", width: "calc(100% - 40px)" }}
       >
-        <div className="text-[10px] font-bold tracking-[3px]" style={{ color: "rgba(233,228,218,.5)" }}>
+        <div className="text-[10px] font-bold tracking-[3px] text-[#7ba05b]">
           今日の予定
         </div>
         <div className="mt-2 space-y-2">
           {plans.length ? (
             plans.map((p, i) => (
               <div key={i} className="flex items-baseline gap-2.5">
-                <span className="num flex-shrink-0 text-[12px]" style={{ color: "rgba(233,228,218,.45)" }}>
+                <span className="num flex-shrink-0 text-[12px] text-[#a09880]">
                   {p.time}
                 </span>
                 {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
-                <span className="truncate text-[15px] text-[#e9e4da]" style={{ fontFamily: MINCHO }}>
+                <span className="truncate text-[15px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
                   {p.text}
                 </span>
               </div>
             ))
           ) : (
-            <div className="py-1 text-[13.5px]" style={{ fontFamily: MINCHO, color: "rgba(233,228,218,.45)" }}>
-              今日の予定はまだありません — <span className="text-[#d4b96a]">タップして書く</span>
+            <div className="py-1 text-[13.5px] text-[#b0a890]" style={{ fontFamily: MINCHO }}>
+              今日の予定はまだありません — <span className="text-[#7ba05b]">タップして書く</span>
             </div>
           )}
         </div>
@@ -300,32 +281,32 @@ export function HomeDashboard() {
         <button
           onClick={openToday}
           className="rounded-2xl px-4 py-3 text-left"
-          style={{ background: "rgba(255,255,255,.045)", border: "1px solid rgba(255,255,255,.07)" }}
+          style={{ background: "#faf7f0", border: "1px solid #eee6d4" }}
         >
-          <div className="text-[10px] font-bold tracking-[3px]" style={{ color: "rgba(233,228,218,.5)" }}>
+          <div className="text-[10px] font-bold tracking-[3px] text-[#8ea8c0]">
             潮{tide ? " ・ " + tide.port : ""}
           </div>
           <div className="mt-2 space-y-1">
             {tideRows.length ? (
               tideRows.map(([lb, t], i) => (
                 <div key={i} className="flex justify-between text-[11.5px]">
-                  <span style={{ color: lb === "満" ? "#7aa8d8" : "rgba(233,228,218,.4)", fontWeight: lb === "満" ? 700 : 400 }}>
+                  <span style={{ color: lb === "満" ? "#3070b0" : "#88aac8", fontWeight: lb === "満" ? 700 : 400 }}>
                     {lb}
                   </span>
-                  <span className="num" style={{ color: "rgba(233,228,218,.8)" }}>{t}</span>
+                  <span className="num text-[#4a4438]">{t}</span>
                 </div>
               ))
             ) : (
-              <div className="text-[11px]" style={{ color: "rgba(233,228,218,.35)" }}>—</div>
+              <div className="text-[11px] text-[#c0b8a8]">—</div>
             )}
           </div>
         </button>
         <button
           onClick={openToday}
           className="rounded-2xl px-4 py-3 text-left"
-          style={{ background: "rgba(255,255,255,.045)", border: "1px solid rgba(255,255,255,.07)" }}
+          style={{ background: "#14161e", border: "1px solid #24283a" }}
         >
-          <div className="text-[10px] font-bold tracking-[3px]" style={{ color: "rgba(233,228,218,.5)" }}>
+          <div className="text-[10px] font-bold tracking-[3px] text-[#a89860]">
             月
           </div>
           <div className="mt-2 flex items-center gap-2.5">
