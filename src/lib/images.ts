@@ -31,6 +31,7 @@ export function compressImage(file: File, maxEdge: number, quality: number): Pro
 async function uploadBlob(bucket: string, path: string, blob: Blob): Promise<string | null> {
   const supabase = createClient();
   const { error } = await supabase.storage.from(bucket).upload(path, blob, {
+    cacheControl: "31536000", // ファイル名ユニークなので1年キャッシュ安全
     contentType: "image/webp",
     upsert: true,
   });
@@ -86,4 +87,16 @@ export async function uploadImagePair(
 export async function uploadCroppedBlob(bucket: string, userId: string, blob: Blob): Promise<string | null> {
   const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
   return uploadBlob(bucket, path, blob);
+}
+
+/**
+ * 画像の回覧板を通す: Supabase Storage の公開URLを /api/img 経由に変換。
+ * エッジ+ブラウザに1年キャッシュされ、倉庫からの持ち出しが世界で数回になる。
+ * Storage以外のURL（Googleアバター等）とnullはそのまま返す。
+ */
+const STORAGE_PREFIX = "https://hpgofjkxqguzgrptchqj.supabase.co/storage/v1/object/public/";
+export function srcCdn(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  if (url.startsWith(STORAGE_PREFIX)) return "/api/img?p=" + url.slice(STORAGE_PREFIX.length);
+  return url;
 }

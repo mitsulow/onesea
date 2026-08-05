@@ -1505,7 +1505,7 @@
   // === Data ===
   async function loadData() {
     try {
-      const res = await fetch("https://mitsulow.github.io/0Lei/schumann_data.json?t=" + Date.now());
+      const res = await fetch("/api/sr/schumann_data.json");
       if (!res.ok) throw new Error("Data fetch failed");
       const data = await res.json();
       renderData(data);
@@ -1595,7 +1595,7 @@
       document.getElementById("gf1-dist").textContent = fmtDist(distNow);
     }
     // 3日間平均 (graph_stats.json)
-    fetch("https://mitsulow.github.io/0Lei/graph_stats.json?t=" + Date.now(), { cache: "no-store" })
+    fetch("/api/sr/graph_stats.json", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
       .then(s => {
         if (!s || !s.modes) return;
@@ -1670,7 +1670,7 @@
   async function drawSparkline() {
     try {
       if (!sparkCache || Date.now() - sparkCacheAt > 14 * 60 * 1000) {
-        const res = await fetch("https://mitsulow.github.io/0Lei/schumann_history.json?t=" + Date.now());
+        const res = await fetch("/api/sr/schumann_history.json", { cache: "no-store" });
         if (!res.ok) return;
         sparkCache = await res.json();
         sparkCacheAt = Date.now();
@@ -1733,7 +1733,7 @@
   async function loadTrendDays() {
     if (trendDays) return trendDays;
     try {
-      const r = await fetch("https://mitsulow.github.io/0Lei/history/daily_summary.json?t=" + Date.now());
+      const r = await fetch("/api/sr/history/daily_summary.json");
       if (r.ok) {
         trendDays = ((await r.json()).days || []).filter(e => typeof e.f1 === "number");
         if (trendDays.length) return trendDays;
@@ -1745,7 +1745,7 @@
   async function loadSolar() {
     if (solarDays) return solarDays;
     try {
-      const r = await fetch("https://mitsulow.github.io/0Lei/history/solar_daily.json?t=" + Date.now());
+      const r = await fetch("/api/sr/history/solar_daily.json");
       if (r.ok) solarDays = ((await r.json()).days || []).filter(e => typeof e.ap === "number");
     } catch (e) {}
     if (!solarDays) solarDays = [];
@@ -2079,7 +2079,7 @@
   async function drawModeGraphs() {
     try {
       if (!seriesCache) {
-        const r = await fetch("https://mitsulow.github.io/0Lei/schumann_series.json?t=" + Date.now(), { cache: "no-store" });
+        const r = await fetch("/api/sr/schumann_series_3d.json", { cache: "no-store" });
         if (!r.ok) return;
         seriesCache = await r.json();
       }

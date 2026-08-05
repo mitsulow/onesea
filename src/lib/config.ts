@@ -14,7 +14,7 @@ export const SCHUMANN = {
 export const TARGET_HZ = 8.0219032748;
 
 /** シューマン共振 実測データ（公式API v1・凍結スキーマ） */
-export const SCHUMANN_DATA_URL = "https://mitsulow.github.io/0Lei/schumann_data.json";
+export const SCHUMANN_DATA_URL = "/api/sr/schumann_data.json" // 回覧板(5分エッジキャッシュ)経由;
 
 /**
  * シューマン音© 音源（令和八年夏至点）。

@@ -14,6 +14,7 @@ import { SnsIcon } from "@/components/SnsIcon";
 import { CameraIcon } from "@/components/CameraIcon";
 import { PostCard } from "@/components/PostCard";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import { srcCdn } from "@/lib/images";
 
 interface FullProfile {
   id: string;
@@ -237,7 +238,7 @@ export default function UserPage() {
       <div className="relative h-44 w-full overflow-hidden">
         {profile.cover_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={profile.cover_url} alt="" className="h-full w-full object-cover" />
+          <img src={srcCdn(profile.cover_url)} alt="" className="h-full w-full object-cover" />
         ) : (
           <div
             className="h-full w-full"
@@ -289,7 +290,7 @@ export default function UserPage() {
           {profile.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={profile.avatar_url}
+              src={srcCdn(profile.avatar_url)}
               alt=""
               referrerPolicy="no-referrer"
               className="h-[88px] w-[88px] rounded-full border-4 border-[#f2ede4] object-cover shadow-md"
@@ -521,7 +522,7 @@ export default function UserPage() {
                       <div className="relative aspect-square overflow-hidden bg-[#f2ede4]">
                         {(shop.thumb_urls?.[0] ?? shop.image_urls[0]) ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={shop.thumb_urls?.[0] ?? shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
+                          <img src={srcCdn(shop.thumb_urls?.[0] ?? shop.image_urls[0])} alt={shop.name} className="h-full w-full object-cover" />
                         ) : (
                           <div
                             className="flex h-full w-full items-center justify-center"

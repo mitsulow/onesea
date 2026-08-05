@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { MeishiModal } from "./MeishiModal";
+import { srcCdn } from "@/lib/images";
 
 interface Suggestion {
   id: string;
@@ -46,7 +47,7 @@ export function VillagerSuggestions({ title = "✨ おすすめのむらびと" 
               {p.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={p.avatar_url}
+                  src={srcCdn(p.avatar_url)}
                   alt=""
                   referrerPolicy="no-referrer"
                   className="h-12 w-12 rounded-full object-cover"

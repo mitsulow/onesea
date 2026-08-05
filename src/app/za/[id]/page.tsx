@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Shop, ShopComment, categoryOf, fetchShop, deleteShop, fetchShopComments, addShopComment, deleteShopComment, fetchShopsByOwner } from "@/lib/za";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
+import { srcCdn } from "@/lib/images";
 
 /** 楽座の詳細 — 「連絡を取る」で出品者と LINE が始まる */
 export default function ShopDetailPage() {
@@ -135,7 +136,7 @@ export default function ShopDetailPage() {
           {(shop.image_urls.length ? shop.image_urls : [null]).map((url, i) =>
             url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={url} alt={shop.name} className="h-full w-full flex-shrink-0 snap-center object-cover" />
+              <img key={i} src={srcCdn(url)} alt={shop.name} className="h-full w-full flex-shrink-0 snap-center object-cover" />
             ) : (
               <div
                 key={i}
@@ -206,7 +207,7 @@ export default function ShopDetailPage() {
           >
             {owner.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={owner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" />
+              <img src={srcCdn(owner.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" />
             ) : (
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-full text-lg"
@@ -301,7 +302,7 @@ export default function ShopDetailPage() {
                       >
                         {s.image_urls[0] ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={s.image_urls[0]} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
+                          <img src={srcCdn(s.image_urls[0])} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
                         ) : (
                           <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2ede4] text-[16px]">
                             🎁
@@ -358,7 +359,7 @@ export default function ShopDetailPage() {
                   {c.profiles?.avatar_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={c.profiles.avatar_url}
+                      src={srcCdn(c.profiles.avatar_url)}
                       alt=""
                       referrerPolicy="no-referrer"
                       className="h-7 w-7 flex-shrink-0 rounded-full object-cover"

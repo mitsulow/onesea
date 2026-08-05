@@ -111,8 +111,8 @@ export async function uploadShopImage(
   if (!fullBlob || !thumbBlob) return null;
   const base = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const [r1, r2] = await Promise.all([
-    supabase.storage.from("shop-images").upload(`${base}.webp`, fullBlob, { contentType: "image/webp", upsert: false }),
-    supabase.storage.from("shop-images").upload(`${base}-t.webp`, thumbBlob, { contentType: "image/webp", upsert: false }),
+    supabase.storage.from("shop-images").upload(`${base}.webp`, fullBlob, { contentType: "image/webp", upsert: false, cacheControl: "31536000" }),
+    supabase.storage.from("shop-images").upload(`${base}-t.webp`, thumbBlob, { contentType: "image/webp", upsert: false, cacheControl: "31536000" }),
   ]);
   if (r1.error || r2.error) return null;
   return {

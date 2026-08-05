@@ -108,7 +108,7 @@ export async function fetchMeasuredModes(url: string): Promise<{ modes: number[]
       return isFinite(v) && v >= lo && v <= hi ? v : tb;
     });
   try {
-    const r = await fetch(`${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`, { cache: "no-store" });
+    const r = await fetch(url, { cache: "no-store" });
     const d = await r.json();
     const raw = [d?.modes?.F1?.hz, d?.modes?.F2?.hz, d?.modes?.F3?.hz, d?.modes?.F4?.hz];
     const modes = sanitize(raw);

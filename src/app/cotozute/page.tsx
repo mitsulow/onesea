@@ -13,6 +13,7 @@ import { MuraFeedCard, ShopStripCard } from "@/components/FeedCards";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
+import { srcCdn } from "@/lib/images";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -371,7 +372,7 @@ export default function CotozutePage() {
           <input type="file" accept="image/*" className="hidden" onChange={(e) => postStory(e.target.files?.[0] ?? null)} />
           <div className="h-[104px] w-full bg-[#f0f2f5]">
             {myAvatar ? (
-              <img src={myAvatar} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+              <img src={srcCdn(myAvatar)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-[28px]">🌿</div>
             )}
@@ -393,12 +394,12 @@ export default function CotozutePage() {
           onClick={() => setStoryView(i)}
           className="relative h-[168px] w-[106px] flex-shrink-0 overflow-hidden rounded-xl border border-[#e4e6e9]"
         >
-          <img src={st.image_url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={srcCdn(st.image_url)} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
           <span className="absolute inset-0" style={{ background: "linear-gradient(180deg,rgba(0,0,0,.02) 55%,rgba(0,0,0,.5))" }} />
           {/* 左上の丸アイコン（ティファニーのリング=FBの青リング） */}
           <span className="absolute left-1.5 top-1.5 h-8 w-8 overflow-hidden rounded-full" style={{ border: `2.5px solid ${TIFFANY}` }}>
             {st.profiles?.avatar_url ? (
-              <img src={st.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+              <img src={srcCdn(st.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
               <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[13px]">🌿</span>
             )}
@@ -452,7 +453,7 @@ export default function CotozutePage() {
             >
               <div className="relative h-[96px] bg-[#eaf2ea]">
                 {ev.photo_url ? (
-                  <img src={ev.photo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  <img src={srcCdn(ev.photo_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
                 ) : (
                   <div
                     className="flex h-full w-full items-center justify-center text-[12px] font-bold text-white"
@@ -562,7 +563,7 @@ export default function CotozutePage() {
               return m.ext ? (
                 <a key={m.href} href={m.href} className={rowCls}>
                   {m.icon.startsWith("/") ? (
-                    <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
+                    <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" />
                   ) : (
                     <span className="w-[22px] text-center text-[17px]">{m.icon}</span>
                   )}
@@ -571,7 +572,7 @@ export default function CotozutePage() {
               ) : (
                 <Link key={m.href} href={m.href} onClick={() => setDrawer(false)} className={rowCls}>
                   {m.icon.startsWith("/") ? (
-                    <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
+                    <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" />
                   ) : (
                     <span className="w-[22px] text-center text-[17px]">{m.icon}</span>
                   )}
@@ -615,7 +616,7 @@ export default function CotozutePage() {
         {/* 投稿ボックス（FB型: アバター + 丸ボックス + 写真） */}
         <div className="flex items-center gap-2.5 py-2.5">
           {myAvatar ? (
-            <img src={myAvatar} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+            <img src={srcCdn(myAvatar)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
           ) : (
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px]">🌿</span>
           )}
@@ -667,7 +668,7 @@ export default function CotozutePage() {
       {storyDraft && (
         <div className="fixed inset-0 z-[93] flex flex-col bg-black" style={{ paddingTop: "env(safe-area-inset-top)" }}>
           <div ref={storyBoxRef} className="relative flex-1 overflow-hidden">
-            <img src={storyDraft.url} alt="" className="absolute inset-0 h-full w-full object-contain" />
+            <img src={srcCdn(storyDraft.url)} alt="" className="absolute inset-0 h-full w-full object-contain" />
             {storyText.trim() && (
               <div
                 className="absolute cursor-grab touch-none select-none whitespace-pre-wrap text-center font-extrabold"
@@ -808,11 +809,11 @@ export default function CotozutePage() {
             setTimeout(() => (storySwipe.current = null), 50);
           }}
         >
-          <img src={stories[storyView].image_url} alt="" className="max-h-full w-full object-contain" />
+          <img src={srcCdn(stories[storyView].image_url)} alt="" className="max-h-full w-full object-contain" />
           <div className="absolute left-3 top-3 flex items-center gap-2" style={{ paddingTop: "env(safe-area-inset-top)" }}>
             <span className="h-9 w-9 overflow-hidden rounded-full" style={{ border: `2px solid ${TIFFANY}` }}>
               {stories[storyView].profiles?.avatar_url ? (
-                <img src={stories[storyView].profiles!.avatar_url!} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                <img src={srcCdn(stories[storyView].profiles!.avatar_url!)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
               ) : (
                 <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[14px]">🌿</span>
               )}

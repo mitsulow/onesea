@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { CotozutePost, toggleLike, deletePost, warawer } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
 import { MeishiModal } from "./MeishiModal";
+import { srcCdn } from "@/lib/images";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -90,7 +91,7 @@ export function PostCard({
 
   const avatar = pr?.avatar_url ? (
     <img
-      src={pr.avatar_url}
+      src={srcCdn(pr.avatar_url)}
       alt=""
       referrerPolicy="no-referrer"
       className="h-[40px] w-[40px] rounded-full object-cover"
@@ -173,7 +174,7 @@ export function PostCard({
           {post.image_urls.map((full, i) => (
             <a key={i} href={full} target="_blank" rel="noopener noreferrer">
               <img
-                src={hd ? full : post.thumb_urls?.[i] ?? full}
+                src={srcCdn(hd ? full : post.thumb_urls?.[i] ?? full)}
                 alt=""
                 loading="lazy"
                 className="w-full object-cover"
@@ -225,7 +226,7 @@ export function PostCard({
             <span key={i} style={{ marginLeft: i === 0 ? 0 : -6 }}>
               {l.avatar_url ? (
                 <img
-                  src={l.avatar_url}
+                  src={srcCdn(l.avatar_url)}
                   alt=""
                   referrerPolicy="no-referrer"
                   className="h-[20px] w-[20px] rounded-full border-2 border-white object-cover"

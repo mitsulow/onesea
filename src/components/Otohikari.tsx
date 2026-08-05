@@ -64,7 +64,7 @@ export function Otohikari() {
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch(`${SCHUMANN_DATA_URL}?t=${Date.now()}`);
+        const res = await fetch(SCHUMANN_DATA_URL, { cache: "no-store" });
         const d = await res.json();
         if (cancelled) return;
         setLive({ f1hz: d?.modes?.F1?.hz ?? null, updated: d?.timestamp ?? null });

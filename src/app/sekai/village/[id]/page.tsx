@@ -22,6 +22,7 @@ import {
 import { CameraIcon } from "@/components/CameraIcon";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
 import { linkify } from "@/components/sekai/sections";
+import { srcCdn } from "@/lib/images";
 
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
 
@@ -320,7 +321,7 @@ export default function VillagePage() {
           />
           {/* ヘッダー画像 */}
           <div className="mb-2 flex items-center gap-2">
-            {eCover && <img src={eCover} alt="" className="h-12 w-20 rounded-lg object-cover" />}
+            {eCover && <img src={srcCdn(eCover)} alt="" className="h-12 w-20 rounded-lg object-cover" />}
             <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
               {eCoverUp ? "⏳" : "🖼"} ヘッダー画像を選ぶ
               <input
@@ -377,7 +378,7 @@ export default function VillagePage() {
             {members.map((m: any, i) => {
               const p = m.profiles;
               const inner = p?.avatar_url ? (
-                <img src={p.avatar_url} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" />
+                <img src={srcCdn(p.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-full text-lg" style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}>
                   🌿
@@ -407,7 +408,7 @@ export default function VillagePage() {
               <div key={p.id} className="border-b border-[#eef2ec] py-2.5">
                 <div className="flex items-center gap-2">
                   {p.profiles?.avatar_url ? (
-                    <img src={p.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
+                    <img src={srcCdn(p.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
                   ) : (
                     <span className="text-lg">🌿</span>
                   )}
@@ -419,7 +420,7 @@ export default function VillagePage() {
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">
                   {linkify(String(p.body ?? ""))}
                 </p>
-                {p.photo_url && <img src={p.photo_url} alt="" loading="lazy" className="mt-1.5 max-h-72 rounded-lg object-cover" />}
+                {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-1.5 max-h-72 rounded-lg object-cover" />}
 
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
                 {(() => {
@@ -431,7 +432,7 @@ export default function VillagePage() {
                       {shown.map((c: any) => (
                         <div key={c.id} className="mb-1.5 flex items-start gap-1.5">
                           {c.profiles?.avatar_url ? (
-                            <img src={c.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-5 w-5 flex-shrink-0 rounded-full object-cover" />
+                            <img src={srcCdn(c.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-5 w-5 flex-shrink-0 rounded-full object-cover" />
                           ) : (
                             <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#e8f0e4] text-[10px]">🌿</span>
                           )}

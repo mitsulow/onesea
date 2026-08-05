@@ -85,6 +85,7 @@ import { AvatarMenu } from "@/components/AvatarMenu";
 import { moonsOfYear, YOBI, keyOf } from "@/lib/almanac";
 import { MEISTER_COURSES } from "@/data/meister-courses";
 import { LATEST_MOOT_VIDEO, PAST_MOOT_VIDEOS } from "@/data/moot-videos";
+import { srcCdn } from "@/lib/images";
 
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -95,7 +96,7 @@ const DARKGREEN_BG = "linear-gradient(165deg,#0e2014 0%,#163522 55%,#1e4530 100%
 export function AvatarSm({ p, size = 34 }: { p: any; size?: number }) {
   const inner = p?.avatar_url ? (
     <img
-      src={p.avatar_url}
+      src={srcCdn(p.avatar_url)}
       alt=""
       referrerPolicy="no-referrer"
       style={{ width: size, height: size }}
@@ -348,7 +349,7 @@ export function MootsSection({
           className="mb-2 mt-2 block overflow-hidden rounded-xl border border-[#4a9a6a]/40 no-underline"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={LATEST_MOOT_VIDEO.thumb} alt="" className="w-full object-cover" />
+          <img src={srcCdn(LATEST_MOOT_VIDEO.thumb)} alt="" className="w-full object-cover" />
           <div className="bg-white/5 px-3 py-2 text-[12.5px] font-extrabold text-[#a8d8b8]">
             ▶ {LATEST_MOOT_VIDEO.title} — 今回の会の動画
           </div>
@@ -370,7 +371,7 @@ export function MootsSection({
                   className="relative w-[104px] flex-shrink-0 overflow-hidden rounded-lg no-underline"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={v.thumb} alt={v.title} className="aspect-video w-full object-cover" />
+                  <img src={srcCdn(v.thumb)} alt={v.title} className="aspect-video w-full object-cover" />
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-[9px] text-white">
                       ▶
@@ -380,7 +381,7 @@ export function MootsSection({
               ) : (
                 <div key={i} className="w-[104px] flex-shrink-0 overflow-hidden rounded-lg opacity-70">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={v.thumb} alt={v.title} className="aspect-video w-full object-cover" />
+                  <img src={srcCdn(v.thumb)} alt={v.title} className="aspect-video w-full object-cover" />
                 </div>
               )
             )}
@@ -776,7 +777,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                 >
                   <div className="relative h-[110px] bg-[#eaf2ea]">
                     {p.photo_url ? (
-                      <img src={p.photo_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
                     ) : (
                       <div
                         className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
@@ -886,7 +887,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
             />
             <div className="mb-2 flex items-center gap-2">
-              {wPhoto && <img src={wPhoto} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              {wPhoto && <img src={srcCdn(wPhoto)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
                 {wUploading ? "⏳" : <CameraIcon size={16} />}
                 写真
@@ -1034,7 +1035,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                   {linkify(String(p.body ?? ""))}
                 </p>
                 {p.photo_url && (
-                  <img src={p.photo_url} alt="" loading="lazy" className="mt-2 max-h-64 rounded-lg object-cover" />
+                  <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-64 rounded-lg object-cover" />
                 )}
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
                 {(() => {
@@ -1149,7 +1150,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
             />
             <div className="mb-2 flex items-center gap-2">
-              {wPhoto && <img src={wPhoto} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              {wPhoto && <img src={srcCdn(wPhoto)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
                 {wUploading ? "⏳" : <CameraIcon size={16} />}
                 写真（カードの顔になります）
@@ -1988,7 +1989,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
           {tanbo.slice(0, 6).map((t) => (
             <div key={t.id} className="flex items-center gap-2.5 rounded-xl border border-[#eef2ec] bg-white p-2">
               {t.photo_url ? (
-                <img src={t.photo_url} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                <img src={srcCdn(t.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
               ) : (
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2f4ea] text-xl">
                   🌾
@@ -2034,7 +2035,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
               className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] outline-none"
             />
             <div className="mb-2 flex items-center gap-2">
-              {photo && <img src={photo} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              {photo && <img src={srcCdn(photo)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
                 {uploading ? "⏳" : <CameraIcon size={16} />}
                 写真
@@ -2136,7 +2137,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
           {reports.slice(0, 5).map((r) => (
             <div key={r.id} className="flex items-center gap-2.5 rounded-xl border border-[#eef2ec] bg-white p-2">
               {r.photo_url ? (
-                <img src={r.photo_url} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                <img src={srcCdn(r.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
               ) : (
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[#f4f0e8] text-xl">
                   ⛩
@@ -2182,7 +2183,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
               className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] outline-none"
             />
             <div className="mb-2 flex items-center gap-2">
-              {photo && <img src={photo} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              {photo && <img src={srcCdn(photo)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
               <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
                 {uploading ? "⏳" : <CameraIcon size={16} />}
                 写真

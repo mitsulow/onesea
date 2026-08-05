@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Shop, Market, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
 import { ZaFeatured } from "@/components/ZaFeatured";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
+import { srcCdn } from "@/lib/images";
 
 function priceLabel(s: Shop): string {
   if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "物々交換" : "0円";
@@ -200,7 +201,7 @@ export default function ZaPage() {
                     <div className="relative aspect-square overflow-hidden bg-[#f2ede4]">
                       {(shop.thumb_urls?.[0] ?? shop.image_urls[0]) ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={shop.thumb_urls?.[0] ?? shop.image_urls[0]} alt={shop.name} className="h-full w-full object-cover" />
+                        <img src={srcCdn(shop.thumb_urls?.[0] ?? shop.image_urls[0])} alt={shop.name} className="h-full w-full object-cover" />
                       ) : (
                         <div
                           className="flex h-full w-full items-center justify-center"
@@ -225,7 +226,7 @@ export default function ZaPage() {
                       {shop.profiles?.avatar_url && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={shop.profiles.avatar_url}
+                          src={srcCdn(shop.profiles.avatar_url)}
                           alt=""
                           referrerPolicy="no-referrer"
                           className="absolute bottom-1 left-1 h-7 w-7 rounded-full object-cover ring-2 ring-white"

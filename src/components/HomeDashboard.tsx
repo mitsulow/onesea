@@ -86,7 +86,7 @@ export function HomeDashboard() {
     fetchTideDay(tk).then(setTide);
     // キャッシュを避けて常に最新の実測値を取る（10分ごとに更新）
     const loadSchumann = () =>
-      fetch(`https://mitsulow.github.io/0Lei/schumann_data.json?t=${Date.now()}`, { cache: "no-store" })
+      fetch("/api/sr/schumann_data.json", { cache: "no-store" })
         .then((r) => r.json())
         .then((d) => setSchumann(d?.modes?.F1?.hz ?? null))
         .catch(() => {});

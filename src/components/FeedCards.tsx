@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MuraPost } from "@/lib/feed";
 import type { Shop } from "@/lib/za";
+import { srcCdn } from "@/lib/images";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -35,7 +36,7 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
         <button onClick={() => v && router.push(`/sekai/village/${v.id}`)} className="flex-shrink-0">
           {mura.profiles?.avatar_url ? (
             <img
-              src={mura.profiles.avatar_url}
+              src={srcCdn(mura.profiles.avatar_url)}
               alt=""
               referrerPolicy="no-referrer"
               className="h-[40px] w-[40px] rounded-full object-cover"
@@ -93,7 +94,7 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
       {/* 写真は左右いっぱい */}
       {mura.photo_url && (
         <div className="-mx-4 mt-2">
-          <img src={mura.photo_url} alt="" loading="lazy" className="w-full object-cover" style={{ maxHeight: 480 }} />
+          <img src={srcCdn(mura.photo_url)} alt="" loading="lazy" className="w-full object-cover" style={{ maxHeight: 480 }} />
         </div>
       )}
 
@@ -120,7 +121,7 @@ export function ShopStripCard({ shop }: { shop: Shop }) {
     >
       <div className="h-[110px] w-full bg-[#f2ede4]">
         {thumb ? (
-          <img src={thumb} alt="" loading="lazy" className="h-full w-full object-cover" />
+          <img src={srcCdn(thumb)} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
           <div
             className="flex h-full w-full items-center justify-center"

@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { CotozutePost, fetchPostsPage, fetchMyLikes } from "@/lib/cotozute";
 import { PostCard } from "./PostCard";
+import { srcCdn } from "@/lib/images";
 
 /**
  * Cotozuteチラ見せ — 最新3件だけ見せて、本体（/cotozute の無限フィード）へ誘う。
@@ -50,7 +51,7 @@ export function CotozuteTeaser() {
       <Link href="/cotozute?compose=1" className="mb-2 flex items-center gap-2.5 no-underline">
         {me?.user_metadata?.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={me.user_metadata.avatar_url as string} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+          <img src={srcCdn(me.user_metadata.avatar_url as string)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
         ) : (
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ead9] text-[16px]">🌿</span>
         )}
