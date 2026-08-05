@@ -27,7 +27,7 @@ export const AUDIO = {
 } as const;
 
 export const LINKS = {
-  sekaimura: "https://sekaimura-gold.vercel.app",
+  sekaimura: "/sekai", // 旧sekaimura-goldは畳んだ(2026-08-05)。本体は/sekai
   mmm: "https://mastermindmembers.net",
   // 同一ドメイン内のコピー（PWAの×バー回避）。素材は0Leiから読む
   tsukiyoga: "/tsukiyoga-v7/index.html",
