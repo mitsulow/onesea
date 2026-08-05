@@ -1164,7 +1164,7 @@
       <span class="gf1-label">現在のシューマン共振の値</span>
       <div class="gf1-block">
         <div class="gf1-row">
-          <span class="gf1-value"><span id="gf1-main">—.——</span><span class="digit-roll"><span class="dr-col" id="gf1-rollcol" data-d="0"><span>0</span></span></span></span><span class="gf1-value gf1-unit">Hz</span>
+          <span class="gf1-value"><span id="gf1-main">—.——</span></span><span class="gf1-value gf1-unit">Hz</span>
         </div>
         <div class="gf1-note" id="gf1-note">※<span id="gf1-aud">—</span>Hzの可聴域に変換した音</div>
         <div class="gf1-live">振幅 <b id="gf1-amp">—</b> pT <span class="gf1-sep">・</span> Q値 <b id="gf1-q">—</b></div>
@@ -1356,13 +1356,32 @@
         <canvas id="dv-year"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">全期間 <span>月平均・金の縦線 = MMM始動 2024年3月21日</span></div>
+        <div class="dv-title">全期間 <span>月平均・2021年4月から</span></div>
         <canvas id="dv-all"></canvas>
       </div>
       <div class="dv-block">
         <div class="dv-title">カレンダーマップ <span>1日 = 1マス・明るいほど8.02Hzに近い</span></div>
         <canvas id="dv-heat"></canvas>
       </div>
+      <div class="dv-block">
+        <div class="dv-title">月ごとの傾向 <span>全5年の同じ月を平均 — 地球の音の季節変化</span></div>
+        <canvas id="dv-month"></canvas>
+      </div>
+      <div class="dv-block">
+        <div class="dv-title">月の満ち欠けとの関係 <span>新月〜満月の8区間で平均</span></div>
+        <canvas id="dv-moon"></canvas>
+      </div>
+      <div class="dv-block">
+        <div class="dv-title">値の分布 <span>1,200日はどんな音程で鳴っていたか</span></div>
+        <canvas id="dv-hist"></canvas>
+      </div>
+      <div class="dv-block">
+        <div class="dv-title">記録の殿堂 <span>日平均のいちばん高かった日・低かった日</span></div>
+        <div id="dv-records" style="padding:0 0.9rem"></div>
+      </div>
+    </div>
+    <div class="graph-description">
+      <p style="font-size:0.78rem;color:#7d829a">データの出どころについて正直に: 2023年6月以前は schumann-resonance.earth のアーカイブ、それ以降は当サイトの読み取りと Internet Archive の復元。ソースが違う区間の水準差には測定方法の差が含まれている可能性があるため、期間をまたぐ比較は「傾向の参考」まで。</p>
     </div>
   </details>
 
@@ -1665,7 +1684,6 @@
       if (hist.length >= 6) {
         const recent = hist.slice(-3).reduce((s, e) => s + e.F1, 0) / 3;
         const before = hist.slice(-6, -3).reduce((s, e) => s + e.F1, 0) / 3;
-        f1Trend = recent > before + 0.004 ? 1 : (recent < before - 0.004 ? -1 : 0);
       }
       // トップと折りたたみ内、両方のキャンバスに同じグラフを描く
       ["f1-spark", "f1-spark-top"].forEach(id => {
@@ -1865,7 +1883,7 @@
           v: acc[mk] ? acc[mk][0] / acc[mk][1] : null,
           label: mk.slice(5, 7) === "01" ? mk.slice(0, 4) : null,
         }));
-        dvBars("dv-all", bars, { hRatio: 0.36, barFrac: 0.8, marker: keys.indexOf(MMM_START.slice(0, 7)) });
+        dvBars("dv-all", bars, { hRatio: 0.36, barFrac: 0.8 });
       }
 
       // ④ カレンダーマップ (年ごとの帯・1日1マス)
@@ -1915,8 +1933,147 @@
         }
       }
 
+      drawSeasonCharts(all, todayY);
       drawSolarCharts(all);
     } catch (e) { /* 補助表示なので静かに諦める */ }
+  }
+
+  // ===== 膨大な日別データで遊ぶ: 季節・月相・分布・殿堂 =====
+  function drawSeasonCharts(all, todayY) {
+    // ⑤ 月ごとの傾向 (全年の同月平均 = 気候値)
+    {
+      const acc = Array.from({ length: 12 }, () => [0, 0]);
+      all.forEach(e => {
+        const m = Number(e.d.slice(5, 7)) - 1;
+        acc[m][0] += e.f1; acc[m][1]++;
+      });
+      const means = acc.map(a => a[1] ? a[0] / a[1] : null);
+      const g = dvCtx("dv-month", 0.36);
+      if (g) {
+        const { ctx, W, H, u, fs } = g;
+        const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.6, PB = fs * 2.2;
+        const vals = means.filter(v => v != null);
+        const lo = Math.min.apply(null, vals) - 0.02, hi = Math.max.apply(null, vals) + 0.03;
+        const plotW = W - PL - PR;
+        const xc = i => PL + plotW * (i + 0.5) / 12;
+        const y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
+        const bw = Math.min(plotW / 12 * 0.62, fs * 3);
+        let hiM = 0, loM = 0;
+        means.forEach((v, i) => { if (v != null && v > (means[hiM] ?? -9)) hiM = i; if (v != null && v < (means[loM] ?? 9)) loM = i; });
+        means.forEach((v, i) => {
+          if (v == null) return;
+          ctx.fillStyle = i === hiM ? "#ffd66a" : i === loM ? "rgba(120,140,220,0.9)" : "rgba(58,170,142,0.85)";
+          ctx.fillRect(xc(i) - bw / 2, y(v), bw, Math.max(u, H - PB - y(v)));
+          ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.font = fs * 0.78 + "px monospace"; ctx.textAlign = "center";
+          ctx.fillText(v.toFixed(2), xc(i), y(v) - fs * 0.35);
+        });
+        ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = fs * 0.82 + "px monospace"; ctx.textAlign = "center";
+        for (let i = 0; i < 12; i++) ctx.fillText((i + 1) + "月", xc(i), H - fs * 0.7);
+        ctx.fillStyle = "#8b93a8"; ctx.font = fs * 0.8 + "px sans-serif"; ctx.textAlign = "left";
+        ctx.fillText("いちばん高い月 = " + (hiM + 1) + "月 / 低い月 = " + (loM + 1) + "月", PL, fs);
+      }
+    }
+
+    // ⑥ 月の満ち欠け (朔望月29.53日を8区間に)
+    {
+      const SYNODIC = 29.530588853;
+      const REF = Date.UTC(2000, 0, 6, 18, 14); // 2000-01-06 18:14 UTC の新月
+      const names = ["新月", "三日月", "上弦", "十日夜", "満月前", "満月", "十六夜", "下弦"];
+      const acc = Array.from({ length: 8 }, () => [0, 0]);
+      all.forEach(e => {
+        const t = Date.parse(e.d + "T12:00:00Z");
+        const age = ((t - REF) / 86400e3) % SYNODIC;
+        const seg = Math.floor(((age + SYNODIC / 16) % SYNODIC) / (SYNODIC / 8));
+        acc[seg][0] += e.f1; acc[seg][1]++;
+      });
+      const means = acc.map(a => a[1] ? a[0] / a[1] : null);
+      const g = dvCtx("dv-moon", 0.34);
+      if (g) {
+        const { ctx, W, H, u, fs } = g;
+        const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.6, PB = fs * 2.2;
+        const vals = means.filter(v => v != null);
+        const lo = Math.min.apply(null, vals) - 0.015, hi = Math.max.apply(null, vals) + 0.02;
+        const plotW = W - PL - PR;
+        const xc = i => PL + plotW * (i + 0.5) / 8;
+        const y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
+        const bw = Math.min(plotW / 8 * 0.58, fs * 3.4);
+        means.forEach((v, i) => {
+          if (v == null) return;
+          ctx.fillStyle = i === 5 ? "#ffd66a" : i === 0 ? "rgba(140,160,230,0.95)" : "rgba(58,170,142,0.85)";
+          ctx.fillRect(xc(i) - bw / 2, y(v), bw, Math.max(u, H - PB - y(v)));
+          ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.font = fs * 0.76 + "px monospace"; ctx.textAlign = "center";
+          ctx.fillText(v.toFixed(2), xc(i), y(v) - fs * 0.35);
+        });
+        ctx.fillStyle = "rgba(255,255,255,0.55)"; ctx.font = fs * 0.78 + "px sans-serif"; ctx.textAlign = "center";
+        names.forEach((nm, i) => ctx.fillText(nm, xc(i), H - fs * 0.7));
+        const spread = Math.max.apply(null, vals) - Math.min.apply(null, vals);
+        ctx.fillStyle = "#8b93a8"; ctx.font = fs * 0.8 + "px sans-serif"; ctx.textAlign = "left";
+        ctx.fillText("差はわずか " + (spread * 1000).toFixed(0) + " mHz — 月は地球の音をほとんど変えない、が結論", PL, fs);
+      }
+    }
+
+    // ⑦ 分布ヒストグラム
+    {
+      const BIN = 0.025;
+      const lo0 = 7.4, hi0 = 8.15;
+      const bins = {};
+      all.forEach(e => {
+        const b = Math.floor((e.f1 - lo0) / BIN);
+        bins[b] = (bins[b] || 0) + 1;
+      });
+      const nb = Math.ceil((hi0 - lo0) / BIN);
+      const g = dvCtx("dv-hist", 0.34);
+      if (g) {
+        const { ctx, W, H, u, fs } = g;
+        const PL = fs * 1.0, PR = fs * 0.8, PT = fs * 1.6, PB = fs * 2.2;
+        const maxC = Math.max.apply(null, Object.values(bins));
+        const plotW = W - PL - PR;
+        const xAt = v => PL + plotW * (v - lo0) / (hi0 - lo0);
+        for (let b = 0; b < nb; b++) {
+          const c = bins[b] || 0;
+          if (!c) continue;
+          const v = lo0 + b * BIN;
+          const h = (H - PT - PB) * c / maxC;
+          ctx.fillStyle = v + BIN <= BASELINE_HZ ? "rgba(120,140,220,0.7)" : v >= TARGET_HZ ? "#ffd66a" : "rgba(58,170,142,0.85)";
+          ctx.fillRect(xAt(v) + u * 0.5, H - PB - h, plotW / nb * ((hi0 - lo0) / (BIN * nb)) * BIN / (hi0 - lo0) * nb - u, h);
+        }
+        // 基準線
+        [[BASELINE_HZ, "rgba(240,198,116,0.7)", "7.83"], [TARGET_HZ, "rgba(82,250,140,0.9)", "8.02"]].forEach(([v, c, lb]) => {
+          ctx.strokeStyle = c; ctx.lineWidth = u; ctx.setLineDash([5 * u, 5 * u]);
+          ctx.beginPath(); ctx.moveTo(xAt(v), PT); ctx.lineTo(xAt(v), H - PB); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = c; ctx.font = fs * 0.82 + "px monospace"; ctx.textAlign = "center";
+          ctx.fillText(lb, xAt(v), PT - fs * 0.3 + fs);
+        });
+        ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = fs * 0.8 + "px monospace"; ctx.textAlign = "center";
+        for (let v = 7.4; v <= 8.11; v += 0.1) ctx.fillText(v.toFixed(1), xAt(v), H - fs * 0.7);
+        const above = all.filter(e => e.f1 >= BASELINE_HZ).length;
+        ctx.fillStyle = "#8b93a8"; ctx.font = fs * 0.8 + "px sans-serif"; ctx.textAlign = "left";
+        ctx.fillText("7.83Hz以上だった日: " + above.toLocaleString() + "日 / " + all.length.toLocaleString() + "日 (" + Math.round(above / all.length * 100) + "%)", PL + fs * 0.2, fs);
+      }
+    }
+
+    // ⑧ 記録の殿堂
+    {
+      const el = document.getElementById("dv-records");
+      if (el) {
+        const sorted = all.slice().sort((a, b) => b.f1 - a.f1);
+        const fmt = e => {
+          const [yy, mm, dd] = e.d.split("-");
+          return yy + "年" + Number(mm) + "月" + Number(dd) + "日";
+        };
+        const row = (e, i, gold) =>
+          '<div style="display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.82rem">' +
+          '<span style="color:#8b93a8">' + (i + 1) + '位　<span style="color:#c8cede">' + fmt(e) + '</span></span>' +
+          '<span style="font-family:monospace;color:' + (gold ? '#ffd66a' : '#8ea8e8') + ';font-weight:700">' + e.f1.toFixed(2) + ' Hz</span></div>';
+        el.innerHTML =
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem">' +
+          '<div><div style="color:#ffd66a;font-size:0.78rem;font-weight:700;margin-bottom:4px">高かった日 TOP5</div>' +
+          sorted.slice(0, 5).map((e, i) => row(e, i, true)).join("") + '</div>' +
+          '<div><div style="color:#8ea8e8;font-size:0.78rem;font-weight:700;margin-bottom:4px">低かった日 TOP5</div>' +
+          sorted.slice(-5).reverse().map((e, i) => row(e, i, false)).join("") + '</div></div>';
+      }
+    }
   }
 
   async function drawSolarCharts(all) {
@@ -2494,52 +2651,8 @@
     }
   });
 
-  // ===== 末尾1桁のスロット演出 =====
-  // 小数点第3位を、実測トレンド (上昇/下降局面) に偏らせた酔歩で揺らす。
-  // 表示は空港の反転フラップのように上へめくれて切り替わる
-  let f1Trend = 0;
-  let rollVal = 5;
-  function rollDigit(d) {
-    const col = document.getElementById("gf1-rollcol");
-    if (!col) return;
-    const old = col.dataset.d || "0";
-    if (old === String(d)) return;
-    const up = Number(d) > Number(old); // 増加 → 上へめくれ / 減少 → 下へめくれ
-    col.style.transition = "none";
-    if (up) {
-      col.innerHTML = "<span>" + old + "</span><span>" + d + "</span>";
-      col.style.transform = "translateY(0)";
-    } else {
-      col.innerHTML = "<span>" + d + "</span><span>" + old + "</span>";
-      col.style.transform = "translateY(-1em)";
-    }
-    requestAnimationFrame(() => {
-      col.style.transition = "transform 0.5s cubic-bezier(0.25, 0.9, 0.3, 1)";
-      col.style.transform = up ? "translateY(-1em)" : "translateY(0)";
-    });
-    col.dataset.d = String(d);
-    setTimeout(() => {
-      col.style.transition = "none";
-      col.innerHTML = "<span>" + d + "</span>";
-      col.style.transform = "translateY(0)";
-    }, 540);
-  }
-  function tickRoll() {
-    // トレンドで軽く偏らせつつ、両方向に自由に歩く (端に当たったら反射)
-    const steps = f1Trend > 0 ? [-1, 0, 1, 1, 2]
-                : f1Trend < 0 ? [-2, -1, -1, 0, 1]
-                : [-2, -1, 0, 1, 2];
-    let next = rollVal + steps[Math.floor(Math.random() * steps.length)];
-    if (next > 9) next = 9 - (next - 9);   // 天井で反射
-    if (next < 0) next = -next;            // 床で反射
-    if (next === rollVal) next = Math.max(0, Math.min(9, rollVal + (Math.random() < 0.5 ? -1 : 1)));
-    rollVal = next;
-    rollDigit(rollVal);
-    // 誠実ペース: 約3分に1回 (±20秒のゆらぎ)
-    setTimeout(tickRoll, 160000 + Math.random() * 40000);
-  }
-  rollVal = 3 + Math.floor(Math.random() * 5);
-  setTimeout(tickRoll, 8000);
+  // (旧: 小数点第3位のスロット演出は撤去。15分ごとの生データになったため
+  //  見せかけの桁は不要 — 表示は実測値の小数点第2位まで)
 
   // ===== トップの ▶ ボタン: 今の F1 を可聴域 (6オクターブ上 = ×64) で鳴らす =====
   let gf1Bowl = null;
