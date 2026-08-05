@@ -191,7 +191,7 @@ const ffMat=new THREE.ShaderMaterial({
   float alpha=smoothstep(0.5,0.05,d);float core=smoothstep(0.22,0.0,d);
   float b=alpha*pulse*vIn*0.62*ain*aout*flash;
   if(b<0.004)discard;
-  vec3 col=mix(vec3(0.55,0.68,0.95),vec3(1.0,1.0,1.0),core);
+  vec3 col=mix(vec3(0.96,0.40,0.36),vec3(1.0,0.90,0.84),core); // レッドスプライト風: 赤い残光+温かい芯
   gl_FragColor=vec4(col*b,b);}`,
   uniforms:{uTime:{value:0},uLife:{value:STRIKE_LIFE}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
 });
