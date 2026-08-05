@@ -1264,7 +1264,7 @@
         <div class="sr-v"><span class="sr-l">QUALITY Q</span><span class="sr-n"><b id="sr-q-F1">—</b></span></div>
       </div>
     </div>
-    <img class="mode-graph" src="https://mitsulow.github.io/0Lei/graph_f1.png" alt="第一次モード">
+    <canvas class="mode-graph" data-g="F:F1"></canvas>
   </div>
 
   <div class="mode-block m2">
@@ -1279,7 +1279,7 @@
         <div class="sr-v"><span class="sr-l">QUALITY Q</span><span class="sr-n"><b id="sr-q-F2">—</b></span></div>
       </div>
     </div>
-    <img class="mode-graph" src="https://mitsulow.github.io/0Lei/graph_f2.png" alt="第二次モード">
+    <canvas class="mode-graph" data-g="F:F2"></canvas>
   </div>
 
   <div class="mode-block m3">
@@ -1294,7 +1294,7 @@
         <div class="sr-v"><span class="sr-l">QUALITY Q</span><span class="sr-n"><b id="sr-q-F3">—</b></span></div>
       </div>
     </div>
-    <img class="mode-graph" src="https://mitsulow.github.io/0Lei/graph_f3.png" alt="第三次モード">
+    <canvas class="mode-graph" data-g="F:F3"></canvas>
   </div>
 
   <div class="mode-block m4">
@@ -1309,7 +1309,7 @@
         <div class="sr-v"><span class="sr-l">QUALITY Q</span><span class="sr-n"><b id="sr-q-F4">—</b></span></div>
       </div>
     </div>
-    <img class="mode-graph" src="https://mitsulow.github.io/0Lei/graph_f4.png" alt="第四次モード">
+    <canvas class="mode-graph" data-g="F:F4"></canvas>
   </div>
 
   <details class="subfold">
@@ -1319,19 +1319,19 @@
 
   <details class="subfold">
     <summary>振幅（アンプリチュード）の推移 — pT</summary>
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_a1.png" alt="第一次モード 振幅">
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_a2.png" alt="第二次モード 振幅">
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_a3.png" alt="第三次モード 振幅">
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_a4.png" alt="第四次モード 振幅">
+    <canvas class="mode-graph sub-graph" data-g="A:F1"></canvas>
+    <canvas class="mode-graph sub-graph" data-g="A:F2"></canvas>
+    <canvas class="mode-graph sub-graph" data-g="A:F3"></canvas>
+    <canvas class="mode-graph sub-graph" data-g="A:F4"></canvas>
     <p>共振の強さ（ピコテスラ）。世界の雷活動の総量がそのまま出ます。上から第一次〜第四次モード。</p>
   </details>
 
   <details class="subfold">
     <summary>Q値の推移 — 共振の鋭さ</summary>
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_q1.png" alt="第一次モード Q値">
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_q2.png" alt="第二次モード Q値">
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_q3.png" alt="第三次モード Q値">
-    <img class="mode-graph sub-graph" src="https://mitsulow.github.io/0Lei/graph_q4.png" alt="第四次モード Q値">
+    <canvas class="mode-graph sub-graph" data-g="Q:F1"></canvas>
+    <canvas class="mode-graph sub-graph" data-g="Q:F2"></canvas>
+    <canvas class="mode-graph sub-graph" data-g="Q:F3"></canvas>
+    <canvas class="mode-graph sub-graph" data-g="Q:F4"></canvas>
     <p>共振の「鋭さ」。太陽フレアや地磁気嵐で跳ね上がる、電離層のコンディションの鏡。上から第一次〜第四次モード。</p>
   </details>
 
@@ -2071,6 +2071,95 @@
           sorted.slice(-5).reverse().map((e, i) => row(e, i, false)).join("") + '</div></div>';
       }
     }
+  }
+
+  // ===== 観測グラフ F1〜F4: schumann_series.json からクライアント描画 =====
+  // (以前はサーバーでPNGを描いてgitに積んでいた。数値だけ運ぶ方式に変更)
+  let seriesCache = null;
+  async function drawModeGraphs() {
+    try {
+      if (!seriesCache) {
+        const r = await fetch("https://mitsulow.github.io/0Lei/schumann_series.json?t=" + Date.now(), { cache: "no-store" });
+        if (!r.ok) return;
+        seriesCache = await r.json();
+      }
+      const S = seriesCache;
+      const COLORS = { F1: "#e8ecf4", F2: "#ffd60a", F3: "#ff7a6a", F4: "#5ae08a" };
+      document.querySelectorAll("canvas.mode-graph").forEach(cv => {
+        if (cv.clientWidth < 40) return;
+        const parts = (cv.dataset.g || "").split(":");
+        const kind = parts[0], mode = parts[1];
+        const src = kind === "F" ? S.modes : kind === "A" ? S.amp : S.q;
+        const ser = src && src[mode];
+        if (!ser) return;
+        let keys = Object.keys(ser).sort();
+        if (!keys.length) return;
+        // ローリング3日窓 (一昨日00:00〜) — キーはJST
+        const lastDay = keys[keys.length - 1].slice(0, 10);
+        const cut = new Date(Date.parse(lastDay + "T00:00:00Z") - 2 * 86400e3).toISOString().slice(0, 10) + "T00:00";
+        keys = keys.filter(k => k >= cut);
+        const vals = keys.map(k => ser[k]);
+        const u = window.devicePixelRatio || 1;
+        const W = Math.round(cv.clientWidth * u);
+        const H = Math.round(cv.clientWidth * (kind === "F" ? 0.3 : 0.26) * u);
+        cv.width = W; cv.height = H;
+        const ctx = cv.getContext("2d");
+        const fs = Math.max(9, Math.min(12, W / u / 38)) * u;
+        ctx.fillStyle = "#22242c";
+        ctx.fillRect(0, 0, W, H);
+        const PL = fs * 0.6, PR = fs * 3.4, PT = fs * 1.0, PB = fs * 1.8;
+        let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+        const mg = (hi - lo) * 0.15 + 1e-6;
+        lo -= mg; hi += mg;
+        const t0 = Date.parse(keys[0] + ":00Z");
+        const t1 = Date.parse(keys[keys.length - 1] + ":00Z");
+        const X = k => PL + (W - PL - PR) * (Date.parse(k + ":00Z") - t0) / Math.max(1, t1 - t0);
+        const Y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
+        // 日付境界の縦線
+        ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = u;
+        ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = fs * 0.85 + "px monospace"; ctx.textAlign = "left";
+        for (let t = Date.parse(cut + ":00Z"); t <= t1; t += 86400e3) {
+          const k = new Date(t).toISOString().slice(0, 16);
+          const x = X(k);
+          if (x > PL) { ctx.beginPath(); ctx.moveTo(x, PT); ctx.lineTo(x, H - PB); ctx.stroke(); }
+          ctx.fillText(Number(k.slice(5, 7)) + "/" + Number(k.slice(8, 10)), x + fs * 0.3, H - fs * 0.55);
+        }
+        // 横グリッド + 右軸ラベル
+        ctx.textAlign = "left";
+        for (let i = 0; i <= 3; i++) {
+          const v = lo + (hi - lo) * i / 3;
+          const y = Y(v);
+          ctx.strokeStyle = "rgba(255,255,255,0.06)";
+          ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke();
+          ctx.fillStyle = "rgba(255,255,255,0.45)";
+          ctx.fillText(v.toFixed(kind === "F" ? 2 : 1), W - PR + fs * 0.3, y + fs * 0.35);
+        }
+        // 3日平均の破線
+        const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+        ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.setLineDash([4 * u, 4 * u]); ctx.lineWidth = u;
+        ctx.beginPath(); ctx.moveTo(PL, Y(avg)); ctx.lineTo(W - PR, Y(avg)); ctx.stroke();
+        ctx.setLineDash([]);
+        // 本体の線
+        ctx.strokeStyle = COLORS[mode] || "#e8ecf4"; ctx.lineWidth = 1.8 * u;
+        ctx.beginPath();
+        let pen = false, prev = null;
+        keys.forEach(k => {
+          const t = Date.parse(k + ":00Z");
+          if (prev != null && t - prev > 30 * 60000) pen = false; // 30分以上の欠測は線を切る
+          prev = t;
+          const x = X(k), y = Y(ser[k]);
+          pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+          pen = true;
+        });
+        ctx.stroke();
+        // 最新点
+        const lk = keys[keys.length - 1];
+        ctx.fillStyle = COLORS[mode] || "#e8ecf4";
+        ctx.beginPath(); ctx.arc(X(lk), Y(ser[lk]), 2.6 * u, 0, Math.PI * 2); ctx.fill();
+        ctx.font = fs + "px monospace"; ctx.textAlign = "left";
+        ctx.fillText(String(ser[lk]), W - PR + fs * 0.3, PT + fs * 0.9);
+      });
+    } catch (e) { /* 補助表示 */ }
   }
 
   async function drawSolarCharts(all) {
@@ -2833,16 +2922,17 @@
   buildJstOverlays();
   refreshGraphImages();
   setInterval(() => { refreshGraphImages(); buildJstOverlays(); }, 5 * 60 * 1000);
-  window.addEventListener("resize", () => { buildJstOverlays(); drawMonthlyTrend(); });
+  window.addEventListener("resize", () => { buildJstOverlays(); drawMonthlyTrend(); drawModeGraphs(); });
   window.addEventListener("load", () => buildJstOverlays());
 
   // 折りたたみを開いた瞬間に、隠れていた間サイズ0だったオーバーレイ等を再計算
   document.querySelectorAll("details.fold").forEach(d => {
     d.addEventListener("toggle", () => {
-      if (d.open) { buildJstOverlays(); drawSparkline(); drawMonthlyTrend(); }
+      if (d.open) { buildJstOverlays(); drawSparkline(); drawMonthlyTrend(); drawModeGraphs(); }
     });
   });
   drawMonthlyTrend();
+  drawModeGraphs();
 </script>
 
 </body>
