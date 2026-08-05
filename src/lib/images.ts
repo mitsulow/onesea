@@ -29,6 +29,21 @@ export function compressImage(file: File, maxEdge: number, quality: number): Pro
 }
 
 async function uploadBlob(bucket: string, path: string, blob: Blob): Promise<string | null> {
+  // まず Cloudflare R2（転送料ゼロのCDN倉庫）へ。folder=bucket名で名前空間を分ける
+  try {
+    const fd = new FormData();
+    fd.append("file", blob, "image.webp");
+    fd.append("folder", bucket);
+    fd.append("key", path); // 参考情報（サーバー側で最終キーを決める）
+    const r = await fetch("/api/upload", { method: "POST", body: fd });
+    if (r.ok) {
+      const { url } = await r.json();
+      if (url) return url;
+    }
+  } catch {
+    /* R2が未設定・障害時は下のSupabaseへ */
+  }
+  // フォールバック: Supabase Storage
   const supabase = createClient();
   const { error } = await supabase.storage.from(bucket).upload(path, blob, {
     cacheControl: "31536000", // ファイル名ユニークなので1年キャッシュ安全
@@ -90,13 +105,15 @@ export async function uploadCroppedBlob(bucket: string, userId: string, blob: Bl
 }
 
 /**
- * 画像の回覧板を通す: Supabase Storage の公開URLを /api/img 経由に変換。
- * エッジ+ブラウザに1年キャッシュされ、倉庫からの持ち出しが世界で数回になる。
- * Storage以外のURL（Googleアバター等）とnullはそのまま返す。
+ * 表示URLの整流:
+ * - R2の公開URL（pub-xxx.r2.dev）→ そのまま（転送料ゼロなので回覧板も不要）
+ * - Supabase Storage の公開URL → /api/img 経由（エッジ+1年キャッシュ）
+ * - それ以外（Googleアバター等）とnull → そのまま
  */
 const STORAGE_PREFIX = "https://hpgofjkxqguzgrptchqj.supabase.co/storage/v1/object/public/";
 export function srcCdn(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
+  if (url.includes(".r2.dev/")) return url;
   if (url.startsWith(STORAGE_PREFIX)) return "/api/img?p=" + url.slice(STORAGE_PREFIX.length);
   return url;
 }

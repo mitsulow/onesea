@@ -98,27 +98,47 @@ export async function deleteShopComment(id: string, userId: string) {
   return supabase.from("shop_comments").delete().eq("id", id).eq("user_id", userId);
 }
 
-/** 商品写真の2枚方式: 一覧サムネ400px + 詳細用1280px（パケ死対策・Cotozuteと同じ思想） */
+/** 商品写真の2枚方式: 一覧サムネ400px + 詳細用1280px（R2へ・パケ死対策） */
 export async function uploadShopImage(
   userId: string,
   file: File
 ): Promise<{ full: string; thumb: string } | null> {
-  const supabase = createClient();
   const [fullBlob, thumbBlob] = await Promise.all([
     compressImage(file, 1280, 0.75).catch(() => null),
     compressImage(file, 400, 0.6).catch(() => null),
   ]);
   if (!fullBlob || !thumbBlob) return null;
-  const base = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const [r1, r2] = await Promise.all([
-    supabase.storage.from("shop-images").upload(`${base}.webp`, fullBlob, { contentType: "image/webp", upsert: false, cacheControl: "31536000" }),
-    supabase.storage.from("shop-images").upload(`${base}-t.webp`, thumbBlob, { contentType: "image/webp", upsert: false, cacheControl: "31536000" }),
+  const [full, thumb] = await Promise.all([
+    r2OrStorageUpload("shop-images", userId, fullBlob),
+    r2OrStorageUpload("shop-images", userId, thumbBlob),
   ]);
-  if (r1.error || r2.error) return null;
-  return {
-    full: supabase.storage.from("shop-images").getPublicUrl(`${base}.webp`).data.publicUrl,
-    thumb: supabase.storage.from("shop-images").getPublicUrl(`${base}-t.webp`).data.publicUrl,
-  };
+  if (!full || !thumb) return null;
+  return { full, thumb };
+}
+
+/** R2優先アップロード（失敗時Supabase）。images.ts の uploadCroppedBlob と同経路 */
+async function r2OrStorageUpload(bucket: string, userId: string, blob: Blob): Promise<string | null> {
+  try {
+    const fd = new FormData();
+    fd.append("file", blob, "image.webp");
+    fd.append("folder", bucket);
+    const r = await fetch("/api/upload", { method: "POST", body: fd });
+    if (r.ok) {
+      const { url } = await r.json();
+      if (url) return url;
+    }
+  } catch {
+    /* フォールバックへ */
+  }
+  const supabase = createClient();
+  const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
+  const { error } = await supabase.storage.from(bucket).upload(path, blob, {
+    contentType: "image/webp",
+    upsert: false,
+    cacheControl: "31536000",
+  });
+  if (error) return null;
+  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
 
 function compressImage(file: File, maxEdge: number, quality: number): Promise<Blob> {
