@@ -546,7 +546,10 @@ export default function CotozutePage() {
   };
 
   return (
-    <main className="min-h-screen bg-white pb-20">
+    <main
+      className="min-h-screen pb-20"
+      style={{ background: "#f0f2f5", width: "100vw", marginLeft: "calc(50% - 50vw)" }}
+    >
       {/* ヘッダー: ☰ + CotoZute（ティファニーブルー） */}
       <header
         className="sticky top-0 z-40 bg-white"
@@ -634,7 +637,30 @@ export default function CotozutePage() {
       )}
 
       <UpgradeDialog open={showUpgrade} onClose={() => setShowUpgrade(false)} feature="CotoZuteへの投稿" />
-      <div className="px-4" ref={feedRef}>
+
+      {/* デスクトップは Facebook/Instagram 型の3カラム。中央フィードは細いまま、両脇にレール */}
+      <div className="mx-auto flex w-full max-w-[1180px] justify-center gap-5 lg:px-4">
+        {/* 左レール: サービスへの入口ナビ（lgのみ・追従） */}
+        <aside className="hidden w-[240px] shrink-0 pt-4 lg:block">
+          <div className="sticky top-16 rounded-xl border border-[#e4e6e9] bg-white p-2">
+            {MENU_ITEMS.map((m) =>
+              m.ext ? (
+                <a key={m.href} href={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#1c1e21] no-underline hover:bg-[#f2f3f5]">
+                  {m.icon.startsWith("/") ? <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" /> : <span className="w-[22px] text-center text-[17px]">{m.icon}</span>}
+                  {m.label}
+                </a>
+              ) : (
+                <Link key={m.href} href={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#1c1e21] no-underline hover:bg-[#f2f3f5]">
+                  {m.icon.startsWith("/") ? <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" /> : <span className="w-[22px] text-center text-[17px]">{m.icon}</span>}
+                  {m.label}
+                </Link>
+              )
+            )}
+          </div>
+        </aside>
+
+        {/* 中央フィード（スマホ幅のまま中央に） */}
+        <div className="w-full max-w-[600px] bg-white px-4 lg:rounded-xl lg:border lg:border-[#e4e6e9]" ref={feedRef}>
         {/* 投稿ボックス（FB型: アバター + 丸ボックス + 写真） */}
         <div className="flex items-center gap-2.5 py-2.5">
           {myAvatar ? (
@@ -694,6 +720,57 @@ export default function CotozutePage() {
               ))}
           </>
         )}
+        </div>
+
+        {/* 右レール: キャンペーン・イベント・楽市楽座・おすすめ（lgのみ・追従） */}
+        <aside className="hidden w-[300px] shrink-0 pt-4 lg:block">
+          <div className="sticky top-16 space-y-3">
+            <Link href="/lp/onesea" className="block overflow-hidden rounded-xl no-underline" style={{ background: "linear-gradient(135deg,#0e2230,#123a46)" }}>
+              <div className="px-4 py-4">
+                <div className="text-[11px] font-bold tracking-[2px] text-[#7cf9d4]">ONESEA PREMIUM</div>
+                <div className="mt-1 text-[14px] font-extrabold text-[#f0e6c8]">四つの扉が、ひとつに</div>
+                <div className="mt-1 text-[11.5px] leading-relaxed text-[#a9c3cf]">総額210,000円分が、いま <span className="num font-bold text-[#7cf9d4]">39,600円/年</span></div>
+              </div>
+            </Link>
+
+            {events.length > 0 && (
+              <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
+                <div className="mb-1.5 px-1 text-[12px] font-bold text-[#65676b]">📅 これからのイベント</div>
+                {events.slice(0, 4).map((ev) => (
+                  <Link key={ev.id} href={`/sekai/village/${ev.villages?.id}`} className="block rounded-lg px-1 py-1.5 no-underline hover:bg-[#f2f3f5]">
+                    <div className="truncate text-[12.5px] font-bold text-[#1c1e21]">{String(ev.body ?? "").split("\n")[0]}</div>
+                    <div className="num text-[11px] text-[#8a8d91]">
+                      {new Date(ev.event_at).getMonth() + 1}/{new Date(ev.event_at).getDate()} ・ {ev.villages?.name ?? "セカイムラ"}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {shops.length > 0 && (
+              <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
+                <div className="mb-1.5 px-1 text-[12px] font-bold text-[#65676b]">🏮 新着の楽市楽座</div>
+                {shops.slice(0, 4).map((sh) => (
+                  <Link key={sh.id} href={`/za/${sh.id}`} className="flex items-center gap-2.5 rounded-lg px-1 py-1.5 no-underline hover:bg-[#f2f3f5]">
+                    {sh.thumb_urls?.[0] || sh.image_urls?.[0] ? (
+                      <img src={srcCdn(sh.thumb_urls?.[0] ?? sh.image_urls[0])} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#f0f2f5] text-[15px]">🏮</span>
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate text-[12.5px] font-bold text-[#1c1e21]">{sh.name}</div>
+                      <div className="num text-[11px] text-[#c94d3a]">{sh.is_trial ? "お試し" : sh.price_jpy ? `¥${sh.price_jpy.toLocaleString()}` : "0円"}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
+              <VillagerSuggestions title="✨ おすすめのむらびと" />
+            </div>
+          </div>
+        </aside>
       </div>
 
       {/* ストーリー作成エディタ（ネオン文字を写真に乗せる） */}
