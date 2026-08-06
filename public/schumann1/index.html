@@ -57,7 +57,7 @@
     background: linear-gradient(180deg, #03050c 0%, #05070f 60%, #070a14 100%);
     padding: 0.4rem 0 0.9rem;
   }
-  .hero-inner { max-width: 1200px; margin: 0 auto; }
+  .hero-inner { max-width: 760px; margin: 0 auto; position: relative; }
   .hero-dark .last-update { color: #6d7288; }
   .hero-dark .mmm-logo .mmm-text {
     background: none;
@@ -96,7 +96,7 @@
   /* 鼠色グラフ: 白背景の上に置く */
   .spark-wrap { text-align: center; }
   .spark-wrap #f1-spark-top { margin-top: 0.2rem; }
-  .wrap { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 1rem 1.5rem 6rem;
+  .wrap { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 1rem 1.5rem 6rem;
     display: flex; flex-direction: column; }
   .wrap > * { width: 100%; }
   /* 表示順: 観測グラフ (source順のまま=0) → 音とシューマン電磁波 → 磁場の回転 → footer */
@@ -1142,16 +1142,16 @@
   }
   .error-banner.visible { display: block; }
   /* 右上: 他のサービス(OneSea)へ戻るアバター */
-  /* 他ページと同じ上部バー */
-  .svc-topbar{position:sticky;top:0;z-index:70;display:flex;align-items:center;
-    justify-content:space-between;padding:8px 14px;
-    background:rgba(8,12,20,0.82);backdrop-filter:blur(8px);
-    -webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(140,190,230,0.18)}
-  .svc-wordmark{font-weight:800;font-size:13px;letter-spacing:3px;color:#e8d5a0;text-decoration:none}
+  /* ヒーロー内の右上アバター（他サービスと同じ・Google認証アイコン） */
+  .svc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+    text-align:left;padding:0.15rem 0 0.4rem}
+  .svc-titles{min-width:0}
+  .svc-avwrap{position:relative;flex-shrink:0;padding-top:4px}
   .svc-av{width:34px;height:34px;border-radius:50%;overflow:hidden;padding:0;cursor:pointer;
-    border:2px solid rgba(212,185,106,0.7);background:#0e1626;display:flex;align-items:center;justify-content:center}
-  .svc-av img{width:100%;height:100%;object-fit:cover}
-  .svc-menu{position:absolute;top:48px;right:12px;min-width:180px;
+    border:2px solid rgba(212,185,106,0.7);background:#0e1626;display:flex;
+    align-items:center;justify-content:center;font-size:16px}
+  .svc-av img{width:100%;height:100%;object-fit:cover;display:block}
+  .svc-menu{position:absolute;top:42px;right:0;min-width:186px;
     background:#101826;border:1px solid rgba(140,190,230,0.22);border-radius:14px;
     box-shadow:0 12px 36px rgba(0,0,0,0.5);overflow:hidden;display:none}
   .svc-menu.open{display:block}
@@ -1189,31 +1189,28 @@
 </head>
 <body>
 
-<!-- 他ページと同じ上部バー: 右上にアバター(押すと他サービスへ) -->
-<div class="svc-topbar">
-  <a href="/" class="svc-wordmark">OneSea</a>
-  <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー">
-    <img src="/icon-192.png" alt="OneSea" />
-  </button>
-  <div class="svc-menu" id="svcMenu">
-    <a href="/">🏠 ホーム</a>
-    <a href="/mmm">☀ MMM</a>
-    <a href="/sekai">🌏 セカイムラ</a>
-    <a href="/tsukiyoga-v7/index.html">🌙 ツキヨガ</a>
-    <a href="/cotozute">💬 コトヅテ</a>
-    <a href="/za">🏮 楽市楽座</a>
-    <a href="/#techo">📖 手帳</a>
-    <a href="/my">🪪 マイページ</a>
-  </div>
-</div>
-
 <!-- ★★ 黒バンド: ロゴ〜地球儀〜今の値〜鼠色グラフまでは宇宙の中 ★★ -->
 <div class="hero-dark">
   <div class="hero-inner">
 
-    <header>
-      <div class="site-title">SCHUMANN RESONANCE</div>
-      <div class="mmm-logo"><span class="bolt">⚡</span><span class="mmm-text">MASTER MIND MEMBERS</span><span class="bolt">⚡</span></div>
+    <header class="svc-head">
+      <div class="svc-titles">
+        <div class="site-title">SCHUMANN RESONANCE</div>
+        <div class="mmm-logo"><span class="bolt">⚡</span><span class="mmm-text">MASTER MIND MEMBERS</span><span class="bolt">⚡</span></div>
+      </div>
+      <div class="svc-avwrap">
+        <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー"><span id="svcAvFallback">🌊</span></button>
+        <div class="svc-menu" id="svcMenu">
+          <a href="/">🏠 ホーム</a>
+          <a href="/mmm">☀ MMM</a>
+          <a href="/sekai">🌏 セカイムラ</a>
+          <a href="/tsukiyoga-v7/index.html">🌙 ツキヨガ</a>
+          <a href="/cotozute">💬 コトヅテ</a>
+          <a href="/za">🏮 楽市楽座</a>
+          <a href="/#techo">📖 手帳</a>
+          <a href="/my">🪪 マイページ</a>
+        </div>
+      </div>
     </header>
 
     <!-- 地球儀: 世界の雷がリアルタイムで光る (セクション分けなし、黒に直置き) -->
@@ -1851,14 +1848,19 @@
   }
 
   // --- 共通描画ヘルパ ---
-  function dvCtx(id, hRatio) {
+  function dvCtx(id, hRatio, maxHpx) {
     const cv = document.getElementById(id);
     if (!cv || cv.clientWidth < 40) return null;
     const u = window.devicePixelRatio || 1;
     const W = Math.round(cv.clientWidth * u);
-    const H = Math.round(cv.clientWidth * hRatio * u);
+    // 高さは clientWidth*hRatio。ただし maxHpx(CSSピクセル)で頭打ちにして、
+    // 広い画面でグラフが縦に巨大化して全体が見えなくなるのを防ぐ。
+    let hcss = cv.clientWidth * hRatio;
+    if (maxHpx) hcss = Math.min(hcss, maxHpx);
+    const H = Math.round(hcss * u);
     if (cv.width !== W) cv.width = W;
     if (cv.height !== H) cv.height = H;
+    cv.style.height = Math.round(hcss) + "px";
     const ctx = cv.getContext("2d");
     ctx.clearRect(0, 0, W, H);
     const fs = Math.max(10, Math.min(13, W / u / 36)) * u;
@@ -1936,7 +1938,8 @@
   // F1 全記録の散布図 (1日=1点)。range: "all" | "3y"
   let dotRange = "all";
   function drawDotGraph(all) {
-    const g = dvCtx("dv-dot", 0.62);
+    // 時系列は横長が見やすい。縦は最大320pxで頭打ち（広い画面での巨大化を防止）
+    const g = dvCtx("dv-dot", 0.46, 320);
     if (!g || !all || !all.length) return;
     const { ctx, W, H, u, fs } = g;
     // 背景（宇宙の黒）
@@ -3157,13 +3160,30 @@
       if (d.open) { buildJstOverlays(); drawSparkline(); drawMonthlyTrend(); drawModeGraphs(); }
     });
   });
-  // 上部バーのアバターメニュー（他サービスへ）
+  // 右上アバター: 他サービスと同じGoogle認証アイコンを出す。
+  // 静的ページなので Supabase セッション(localStorage・同一オリジン)から avatar_url を読む。
   (function () {
     const btn = document.getElementById("svcAvBtn"), menu = document.getElementById("svcMenu");
-    if (btn && menu) {
-      btn.addEventListener("click", (e) => { e.stopPropagation(); menu.classList.toggle("open"); });
-      document.addEventListener("click", () => menu.classList.remove("open"));
-    }
+    const fb = document.getElementById("svcAvFallback");
+    if (!btn || !menu) return;
+    try {
+      let url = null;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("sb-") && k.endsWith("-auth-token")) {
+          const s = JSON.parse(localStorage.getItem(k) || "null");
+          url = s?.user?.user_metadata?.avatar_url || s?.currentSession?.user?.user_metadata?.avatar_url || null;
+          if (url) break;
+        }
+      }
+      if (url) {
+        const img = document.createElement("img");
+        img.src = url; img.alt = ""; img.referrerPolicy = "no-referrer";
+        if (fb) fb.replaceWith(img); else btn.appendChild(img);
+      }
+    } catch (e) {}
+    btn.addEventListener("click", (e) => { e.stopPropagation(); menu.classList.toggle("open"); });
+    document.addEventListener("click", () => menu.classList.remove("open"));
   })();
 
   // F1ドットグラフの期間切替

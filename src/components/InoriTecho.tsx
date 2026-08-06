@@ -835,20 +835,8 @@ function BottomSheet({
                           </span>
                         </div>
                       ))}
-                      {/* 右端: 時間指定式（◯時◯分〜+色ペン）の入口 */}
-                      {!isEd && (
-                        <button
-                          data-ev
-                          onClick={() =>
-                            setEvEdit({ id: "", sh: h, sm: 0, eh: Math.min(23, h + 1), em: h === 23 ? 59 : 0, text: "", color: "green" })
-                          }
-                          aria-label="この時間から予定を入れる"
-                          className="absolute right-1 top-1/2 z-[3] flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[14px] font-bold"
-                          style={{ color: "#b8b0a0", border: "1px dashed #ddd6c8" }}
-                        >
-                          ＋
-                        </button>
-                      )}
+                      {/* 各時間の＋は廃止（上の「予定を追加」で足りる）。
+                          空欄の長押し/タップ書き込みはそのまま残す。 */}
                       {isEd ? (
                         <textarea
                           ref={inputRef}
