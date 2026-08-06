@@ -27,9 +27,13 @@ export default function JoinCompletePage() {
       await ensureProfile(user);
       const { data: prof } = await supabase.from("profiles").select("warawa_until").eq("id", user.id).maybeSingle();
       if (!isWarawaUntil(prof?.warawa_until as string | null)) {
-        const until = new Date();
-        until.setFullYear(until.getFullYear() + 1); // 年会費: 1年分
-        await supabase.from("profiles").update({ warawa_until: until.toISOString() }).eq("id", user.id);
+        // warawa_until はDBトリガーでサーバー専用。付与はサービスロールのAPIに委ねる
+        // （クライアントからの直接updateは無視される＝タダで有料会員になれない）
+        const { data: sess } = await supabase.auth.getSession();
+        const token = sess.session?.access_token;
+        if (token) {
+          await fetch("/api/warawa/grant", { method: "POST", headers: { authorization: `Bearer ${token}` } });
+        }
       }
       router.replace("/my");
     });
