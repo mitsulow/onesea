@@ -13,21 +13,50 @@ interface Suggestion {
   status_line: string | null;
 }
 
-/** ✨ おすすめの人（横スクロール）。タップでまず名刺→マイページへ */
-export function VillagerSuggestions({ title = "✨ おすすめのむらびと" }: { title?: string }) {
+/** ✨ おすすめの人（横スクロール）。タップでまず名刺→マイページへ。
+ * sellersOnly: 実際に出品がある人（座主）だけに絞る — 登録しただけの
+ * 無料会員が「おすすめの座主」に並ばないように */
+export function VillagerSuggestions({
+  title = "✨ おすすめのむらびと",
+  sellersOnly = false,
+}: {
+  title?: string;
+  sellersOnly?: boolean;
+}) {
   const [profiles, setProfiles] = useState<Suggestion[]>([]);
   const [meishi, setMeishi] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase
-      .from("profiles")
-      .select("id, username, display_name, avatar_url, status_line")
-      .not("username", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(10)
-      .then(({ data }) => setProfiles((data as Suggestion[]) ?? []));
-  }, []);
+    (async () => {
+      let q = supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url, status_line")
+        .not("username", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(10);
+      if (sellersOnly) {
+        const { data: shops } = await supabase
+          .from("shops")
+          .select("owner_id")
+          .order("created_at", { ascending: false })
+          .limit(60);
+        const ids = [...new Set((shops ?? []).map((s) => s.owner_id))].slice(0, 10);
+        if (ids.length === 0) {
+          setProfiles([]);
+          return;
+        }
+        q = supabase
+          .from("profiles")
+          .select("id, username, display_name, avatar_url, status_line")
+          .not("username", "is", null)
+          .in("id", ids)
+          .limit(10);
+      }
+      const { data } = await q;
+      setProfiles((data as Suggestion[]) ?? []);
+    })();
+  }, [sellersOnly]);
 
   if (profiles.length === 0) return null;
 
