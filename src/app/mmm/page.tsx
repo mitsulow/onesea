@@ -8,6 +8,7 @@ import { Otohikari } from "@/components/Otohikari";
 import { MorningOpening } from "@/components/MorningOpening";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { CotozuteTeaser } from "@/components/CotozuteTeaser";
+import { ThreeCol } from "@/components/SideRails";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import {
   NEURA_SIZE,
@@ -108,12 +109,15 @@ export default function MmmPage() {
         MMMについて・入会案内 →
       </Link>
 
-      {/* ① OTOHIKARI MAP + ② シューマン音 */}
+      {/* ① OTOHIKARI MAP + ② シューマン音（地球儀は全幅の没入バンド） */}
       <div className="px-4">
         <Otohikari />
         <SchumannAudioPlayer />
-        <CotozuteTeaser />
       </div>
+
+      {/* ③以降は Cotozute と同じ3カラム（全幅・中央・左右レール）。地球儀の下から切り替わる */}
+      <ThreeCol dark bg="#070b0a" centerClassName="space-y-3 px-3 lg:px-0" showSuggestions={false}>
+      <CotozuteTeaser />
 
       {/* ⑤ わたしのDDP */}
       <section className="card" style={{ background: "linear-gradient(150deg,#0f1a25,#16251a)", border: "none" }}>
@@ -254,7 +258,7 @@ export default function MmmPage() {
           </div>
         )}
       </section>
-
+      </ThreeCol>
     </main>
   );
 }

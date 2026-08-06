@@ -19,12 +19,21 @@ const NAV: Array<{ href: string; icon: string; label: string; ext?: boolean }> =
   { href: "/talk", icon: "💬", label: "TALK" },
 ];
 
-/** 左レール: サービスへの入口ナビ（PC・追従） */
-export function ServiceNavRail() {
+interface RailStyle {
+  card: string; // カードのclass（bg/border）
+  text: string; // 主要文字色
+  sub: string; // 補助文字色
+  hover: string; // ホバー背景class
+}
+const LIGHT: RailStyle = { card: "border border-[#e4e6e9] bg-white", text: "text-[#1c1e21]", sub: "text-[#65676b]", hover: "hover:bg-[#f2f3f5]" };
+const DARK: RailStyle = { card: "border border-white/10 bg-white/5", text: "text-[#e6f4ee]", sub: "text-[#8fb2a4]", hover: "hover:bg-white/10" };
+
+export function ServiceNavRail({ dark = false }: { dark?: boolean }) {
+  const s = dark ? DARK : LIGHT;
   return (
-    <div className="sticky top-16 rounded-xl border border-[#e4e6e9] bg-white p-2">
+    <div className={"sticky top-16 rounded-xl p-2 " + s.card}>
       {NAV.map((m) => {
-        const cls = "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#1c1e21] no-underline hover:bg-[#f2f3f5]";
+        const cls = `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium no-underline ${s.text} ${s.hover}`;
         const icon = m.icon.startsWith("/") ? (
           <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" />
         ) : (
@@ -40,8 +49,8 @@ export function ServiceNavRail() {
   );
 }
 
-/** 右レール上部: 今日の地球（日付・月齢・シューマン共振） */
-export function TodayEarthCard() {
+export function TodayEarthCard({ dark = false }: { dark?: boolean }) {
+  const s = dark ? DARK : LIGHT;
   const [hz, setHz] = useState<number | null>(null);
   useEffect(() => {
     fetch("/api/sr/schumann_data.json", { cache: "no-store" })
@@ -56,12 +65,12 @@ export function TodayEarthCard() {
   let age = ((Date.now() - BASE) / 86400000) % SYN;
   if (age < 0) age += SYN;
   return (
-    <div className="overflow-hidden rounded-xl border border-[#e4e6e9] bg-white p-4">
-      <div className="text-[12px] font-bold text-[#65676b]">🌏 今日の地球</div>
-      <div className="num mt-2 text-[15px] font-extrabold text-[#1c1e21]">{label}</div>
-      <div className="mt-1.5 text-[12px] text-[#65676b]">
-        月齢 <b className="num text-[#3a3428]">{age.toFixed(1)}</b>
-        <span className="mx-1.5 text-[#c8ccd1]">・</span>
+    <div className={"overflow-hidden rounded-xl p-4 " + s.card}>
+      <div className={"text-[12px] font-bold " + s.sub}>🌏 今日の地球</div>
+      <div className={"num mt-2 text-[15px] font-extrabold " + s.text}>{label}</div>
+      <div className={"mt-1.5 text-[12px] " + s.sub}>
+        月齢 <b className={"num " + s.text}>{age.toFixed(1)}</b>
+        <span className="mx-1.5 opacity-40">・</span>
         シューマン共振 <b className="num text-[#2CB7DE]">{hz ? hz.toFixed(2) : "—"}</b> Hz
       </div>
       <Link href="/mmm" className="mt-2.5 inline-block text-[12px] font-bold text-[#2CB7DE] no-underline">
@@ -73,8 +82,7 @@ export function TodayEarthCard() {
 
 /**
  * Facebook/Instagram型の3カラム。全幅に広げ、中央は細いまま、両脇にレール。
- * lg未満（スマホ・タブレット）は中央1カラムのみ（レールは隠す）。
- * bg: ページ背景色。rightExtra: 右レールに足す追加要素。
+ * lg未満は中央1カラムのみ。dark=暗いテーマ（MMM等）でレールも暗色に。
  */
 export function ThreeCol({
   children,
@@ -82,28 +90,31 @@ export function ThreeCol({
   centerClassName = "",
   rightExtra,
   showSuggestions = true,
+  dark = false,
 }: {
   children: React.ReactNode;
   bg?: string;
   centerClassName?: string;
   rightExtra?: React.ReactNode;
   showSuggestions?: boolean;
+  dark?: boolean;
 }) {
+  const s = dark ? DARK : LIGHT;
   return (
     <div style={{ background: bg, width: "100vw", marginLeft: "calc(50% - 50vw)" }}>
       <div className="mx-auto flex w-full max-w-[1180px] justify-center gap-5 lg:px-4">
         <aside className="hidden w-[240px] shrink-0 pt-4 lg:block">
-          <ServiceNavRail />
+          <ServiceNavRail dark={dark} />
         </aside>
         <div className={"w-full max-w-[600px] " + centerClassName} style={{ minWidth: 0 }}>
           {children}
         </div>
         <aside className="hidden w-[300px] shrink-0 pt-4 lg:block">
           <div className="sticky top-16 space-y-3">
-            <TodayEarthCard />
+            <TodayEarthCard dark={dark} />
             {rightExtra}
             {showSuggestions && (
-              <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
+              <div className={"rounded-xl p-3 " + s.card}>
                 <VillagerSuggestions title="✨ おすすめのむらびと" variant="list" />
               </div>
             )}
