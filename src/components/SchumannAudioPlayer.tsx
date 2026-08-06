@@ -264,6 +264,7 @@ export function SchumannAudioPlayer() {
   const endProgram = useCallback(() => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
+    suppressRef.current = false; // 瞑想開始の解錠フラグが残らないように
     stopCountdown();
     medRef.current?.stop();
     medRef.current = null;
@@ -296,15 +297,19 @@ export function SchumannAudioPlayer() {
     wakeOn();
 
     if (kind === "meditation") {
-      // 急に音が始まると座る間がないので、押してから約1秒は無音（ミュート再生）で待ち、
-      // 座って目を閉じる時間をつくってからシューマン音を鳴らす。
-      // ※ミュートのまま即 play することで、iOSの「操作内で音声を解錠」も満たす。
-      setPhase("そっと目を閉じて…");
-      a.currentTime = 0;
+      // 座る間をつくるため、押してから2秒待ち、2秒後に「最初から」鳴らす。
+      // 以前は無音のまま再生を進めていたので曲の頭が飛んでいた。
+      // ここでは一瞬だけ無音で play→pause して iOS の音声解錠だけ済ませ、
+      // 実際の再生は2秒後に currentTime=0 から始める。
+      setPhase("そっと目を閉じて…（まもなく始まります）");
+      suppressRef.current = true; // 解錠用の play/pause で点呼・状態が動かないように
       a.muted = true;
-      a.play().catch(() => {});
-      after(1000, () => {
+      a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+      after(2000, () => {
+        suppressRef.current = false;
         a.muted = false;
+        a.currentTime = 0; // 必ず最初から
+        a.play().catch(() => {});
         setPhase("シューマン音");
       });
     } else {
