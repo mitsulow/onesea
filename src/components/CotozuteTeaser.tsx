@@ -43,8 +43,8 @@ export function CotozuteTeaser() {
           <span className="relative text-[14px] leading-none text-white">
             ✦<span className="absolute -right-1.5 -top-1 text-[8px]">✦</span>
           </span>
-          <span className="text-[17px] font-extrabold tracking-tight text-white">
-            CotoZute<span className="ml-0.5">→</span>
+          <span className="text-[17px] font-extrabold text-white" style={{ letterSpacing: 0 }}>
+            CotoZute<span style={{ marginLeft: "-0.08em" }}>→</span>
           </span>
         </span>
       </Link>

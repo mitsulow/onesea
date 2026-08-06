@@ -15,6 +15,9 @@ import { CameraIcon } from "@/components/CameraIcon";
 import { PostCard } from "@/components/PostCard";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { srcCdn } from "@/lib/images";
+import { isWarawaUntil } from "@/lib/warawa";
+import { WarawaBadge } from "@/components/WarawaBadge";
+import { PremiumSetupCard } from "@/components/PremiumSetupCard";
 
 interface FullProfile {
   id: string;
@@ -34,6 +37,7 @@ interface FullProfile {
   member_no: number | null;
   created_at: string | null;
   birthday: string | null;
+  warawa_until: string | null;
 }
 
 /** むらびとのマイページ（楽市楽座の名刺スタイル: カバー画像 + 重なるアバター） */
@@ -70,7 +74,7 @@ export default function UserPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at, birthday")
+      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at, birthday, warawa_until")
       .eq("username", username)
       .maybeSingle();
     const prof = (data as FullProfile) ?? null;
@@ -190,6 +194,7 @@ export default function UserPage() {
   }
 
   const isMe = me?.id === profile.id;
+  const isWara = isWarawaUntil(profile.warawa_until);
 
   /* シンクロ単語の下に「何％叶ったか」— 本人は左右に動かしてすぐ選べる */
   const pctRow = (d: { day: string; body: string; fulfilled_pct: number | null }) =>
@@ -324,28 +329,29 @@ export default function UserPage() {
         </div>
 
         <div className="mt-1.5">
-          <h1 className="text-[21px] font-extrabold leading-snug text-[#3a3428]">
+          <h1 className="flex items-center gap-1.5 text-[21px] font-extrabold leading-snug text-[#3a3428]">
             {profile.display_name ?? "むらびと"}
+            {isWara && <WarawaBadge size={17} />}
           </h1>
-          {profile.member_no != null && (
+          {/* @Warawer・わらわ〜No.はわらわ〜会員（認証済み）だけの称号 */}
+          {isWara && profile.member_no != null && (
             <div className="text-[12px] text-[#a09888]">@Warawer{String(profile.member_no).padStart(7, "0")}</div>
           )}
-          {/* わらわ〜No.（入会順の永久番号）+ 地球冒険日数 */}
-          {profile.member_no != null && (
-            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {isWara && profile.member_no != null && (
               <span
                 className="num rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-[#7a5a10]"
                 style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
               >
                 わらわ〜No.{String(profile.member_no).padStart(7, "0")}
               </span>
-              {profile.birthday && (
-                <span className="num text-[11px] font-bold text-[#a09888]">
-                  🌏 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
-                </span>
-              )}
-            </div>
-          )}
+            )}
+            {profile.birthday && (
+              <span className="num text-[11px] font-bold text-[#a09888]">
+                🌏 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
+              </span>
+            )}
+          </div>
           {profile.status_line && (
             <div className="mt-0.5 text-[13px] font-medium text-[#5a5448]">{profile.status_line}</div>
           )}
@@ -355,6 +361,9 @@ export default function UserPage() {
             </div>
           )}
         </div>
+
+        {/* わらわ〜会員の未入力情報（本人のみ・全部埋まるまでバッジが消えない） */}
+        {isMe && <PremiumSetupCard userId={profile.id} />}
 
         {/* DDP（端的な夢） */}
         {masterDdp && (

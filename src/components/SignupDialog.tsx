@@ -3,13 +3,20 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { WARAWA_LP_URL } from "@/lib/warawa";
 
 /**
- * プレミアム（わらわ〜会員）専用機能に触れたときの案内。
- * 無料会員・ゲスト共通: 「詳しくはコチラ→」でLP（後日Stripe決済ページに差し替え）へ。
+ * ゲスト（未ログイン）が無料会員機能（手帳の書き込み等）に触れたときの案内。
+ * プレミアム誘導の UpgradeDialog とは別物 — こちらは無料登録（Google認証）へ。
  */
-export function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () => void; feature?: string }) {
+export function SignupDialog({
+  open,
+  onClose,
+  feature,
+}: {
+  open: boolean;
+  onClose: () => void;
+  feature?: string;
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!open || !mounted) return null;
@@ -33,25 +40,19 @@ export function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClo
         style={{ background: "linear-gradient(165deg,#0e1e2e,#14324a)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="text-[16px] font-extrabold leading-relaxed tracking-wide text-[#f0e6c8]">
-          {feature ?? "この機能"}には
+        <div className="text-[15.5px] font-extrabold leading-relaxed tracking-wide text-[#f0e6c8]">
+          OneSea（無料）会員になると
           <br />
-          プレミアム会員登録が必要です
+          {feature ?? "この機能"}が使えます
         </div>
-        <a
-          href={WARAWA_LP_URL}
-          className="mt-5 block w-full rounded-2xl py-3.5 text-[14.5px] font-extrabold text-[#123] no-underline"
-          style={{ background: "linear-gradient(120deg,#f0e6c8,#d4b96a)" }}
-        >
-          詳しくはコチラ →
-        </a>
         <button
           onClick={login}
-          className="mt-2.5 w-full rounded-2xl border border-white/20 py-2.5 text-[12px] font-bold text-[#c8d8e4]"
+          className="mt-5 w-full rounded-2xl py-3.5 text-[14.5px] font-extrabold text-white"
+          style={{ background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)" }}
         >
-          すでに会員の方は Googleでログイン
+          OneSeaに登録（無料）
         </button>
-        <button onClick={onClose} className="mt-2 text-[11px] text-[#5a7a92]">
+        <button onClick={onClose} className="mt-2.5 text-[11px] text-[#5a7a92]">
           閉じる
         </button>
       </div>

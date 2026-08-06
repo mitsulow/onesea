@@ -17,6 +17,8 @@ import {
   SHISHI_BG,
 } from "@/lib/almanac";
 import { TideDay, Port, fetchTideDay, listPorts, setChosenPort, clearPositionCache } from "@/lib/tide";
+import { createClient } from "@/lib/supabase/client";
+import { SignupDialog } from "@/components/SignupDialog";
 
 /**
  * 祈りの手帳 v2（InoriTechoV2.jsx を移植）。
@@ -105,14 +107,34 @@ export function InoriTecho() {
   const [mi, setMi] = useState(initialMi);
   const [sheetKey, setSheetKey] = useState<string | null>(null);
   const [memos, setMemos] = useState<Memos>({});
+  // ゲストは眺めるだけ。書き込み（日シートを開く）は無料会員から
+  const loggedIn = useRef<boolean | null>(null);
+  const [showSignup, setShowSignup] = useState(false);
 
   useEffect(() => {
     setMemos(loadMemos());
+    createClient()
+      .auth.getSession()
+      .then(({ data: { session } }) => {
+        loggedIn.current = !!session?.user;
+      });
   }, []);
+
+  const tryOpenDay = (k: string | null) => {
+    if (k !== null && loggedIn.current === false) {
+      setShowSignup(true);
+      return;
+    }
+    setSheetKey(k);
+  };
 
   // ダッシュボードや手帳アイコンから「今日」を直接開く
   useEffect(() => {
     const f = () => {
+      if (loggedIn.current === false) {
+        setShowSignup(true);
+        return;
+      }
       setMemos(loadMemos());
       setSheetKey(todayK);
     };
@@ -154,7 +176,8 @@ export function InoriTecho() {
 
   return (
     <div className="relative overflow-hidden bg-white" style={{ margin: "0 -16px" }}>
-      <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={setSheetKey} openKey={sheetKey} />
+      <SignupDialog open={showSignup} onClose={() => setShowSignup(false)} feature="手帳への書き込み" />
+      <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={tryOpenDay} openKey={sheetKey} />
       {sheetKey && (
         <BottomSheet
           dk={sheetKey}

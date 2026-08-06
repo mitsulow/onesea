@@ -8,6 +8,7 @@ export interface CotozuteProfile {
   display_name: string | null;
   avatar_url: string | null;
   member_no?: number | null;
+  warawa_until?: string | null;
 }
 
 /** 表示用ハンドル。Googleアカウント名は出さず、わらわ〜番号ベースの @Warawer0000001 を使う */
@@ -43,7 +44,7 @@ export interface CotozuteComment {
 }
 
 const POST_SELECT =
-  "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url, member_no), likes(count), comments(count)";
+  "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url, member_no, warawa_until), likes(count), comments(count)";
 
 /** ページ単位で取得（メモリ保護のため一度に全件は読まない） */
 export async function fetchPostsPage(offset: number, limit = 20, photosOnly = false): Promise<CotozutePost[]> {

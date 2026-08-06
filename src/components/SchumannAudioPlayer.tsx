@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { fetchIsWarawa } from "@/lib/warawa";
 import { AUDIO, SCHUMANN, SCHUMANN_DATA_URL } from "@/lib/config";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import {
@@ -44,6 +45,7 @@ export function SchumannAudioPlayer() {
   const suppressRef = useRef(false); // iOSの音声アンロック時にイベントを無視する
 
   const [user, setUser] = useState<User | null>(null);
+  const [warawa, setWarawa] = useState(false); // わらわ〜会員=フル再生・プログラム解禁
   const [src, setSrc] = useState<string | null>(null);
   const [dl, setDl] = useState<"loading" | "cached" | "stream">("loading");
   const [playing, setPlaying] = useState(false);
@@ -81,10 +83,14 @@ export function SchumannAudioPlayer() {
   const [ideaSaving, setIdeaSaving] = useState(false);
   const [ideaSaved, setIdeaSaved] = useState(false);
 
-  /* ---- セッション ---- */
+  /* ---- セッション + わらわ〜会員判定 ---- */
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      setWarawa(await fetchIsWarawa(u?.id));
+    });
   }, []);
 
   /* ---- 実測シューマンF1〜F4（不思議な音のキャリア + 鐘 = F1×64） ---- */
@@ -173,8 +179,8 @@ export function SchumannAudioPlayer() {
     }
     sendBeacon();
     if (!heartbeatRef.current) heartbeatRef.current = setInterval(sendBeacon, 30000);
-    if (!user) {
-      // 無料アプリ: 15秒だけ聴けて、グレードアップ案内
+    if (!warawa) {
+      // ゲスト・無料会員: 15秒だけ聴けて、プレミアム案内
       if (previewRef.current) clearTimeout(previewRef.current);
       previewRef.current = window.setTimeout(() => {
         const a = audioRef.current;
@@ -187,7 +193,7 @@ export function SchumannAudioPlayer() {
       const supabase = createClient();
       await supabase.from("listens").insert({ user_id: user.id });
     }
-  }, [user, sendBeacon]);
+  }, [user, warawa, sendBeacon]);
 
   const onStopped = useCallback(() => {
     if (suppressRef.current) return;
@@ -276,7 +282,7 @@ export function SchumannAudioPlayer() {
   }, [endProgram]);
 
   const beginProgram = async (kind: ProgramKind, course?: number) => {
-    if (!user) {
+    if (!warawa) {
       setModeOpen(false);
       setShowUpgrade(true);
       return;

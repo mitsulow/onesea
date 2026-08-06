@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { fetchMyLikes } from "@/lib/cotozute";
+import { isWarawaUntil } from "@/lib/warawa";
 import { FeedItem, Story, feedKey, fetchMixedFeed, fetchLatestShops, fetchLikersFor, fetchStories, addStory, deleteStory } from "@/lib/feed";
 import type { Shop } from "@/lib/za";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
@@ -76,7 +77,9 @@ export default function CotozutePage() {
   const [storyView, setStoryView] = useState<number | null>(null); // 表示中のストーリーindex
   const [storyUploading, setStoryUploading] = useState(false);
   const [storyDraft, setStoryDraft] = useState<{ file: File; url: string } | null>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false); // 無料アプリ: 投稿は会員専用
+  const [showUpgrade, setShowUpgrade] = useState(false); // 投稿はわらわ〜会員専用
+  const [isWara, setIsWara] = useState(false);
+  const [autoLimit, setAutoLimit] = useState(30); // 無限スクロールは30件ごとに一時停止
   const [storyText, setStoryText] = useState("");
   const [storyColor, setStoryColor] = useState("#0affd0");
   const [storyPos, setStoryPos] = useState({ x: 0.5, y: 0.5 }); // 文字位置（自由ドラッグ）
@@ -104,15 +107,30 @@ export default function CotozutePage() {
 
   /* 初回ロード */
   useEffect(() => {
+    // フィード最下部に和紙色が覗く/引っぱりで見えるのを防ぐ（このページは白基調）
+    const prevBg = document.body.style.background;
+    document.body.style.background = "#fff";
     const supabase = createClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
       setMe(u);
       setMyAvatar((u?.user_metadata?.avatar_url as string) ?? null);
+      let wara = false;
       if (u) {
         setLikedSet(await fetchMyLikes(u.id));
-        const { data: prof } = await supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle();
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("avatar_url, warawa_until")
+          .eq("id", u.id)
+          .maybeSingle();
         if (prof?.avatar_url) setMyAvatar(prof.avatar_url);
+        wara = isWarawaUntil(prof?.warawa_until as string | null);
+        setIsWara(wara);
+      }
+      // ?compose=1 で来た人: わらわ〜なら作成画面、そうでなければ案内
+      if (new URLSearchParams(window.location.search).get("compose")) {
+        if (u && wara) setComposing(true);
+        else setShowUpgrade(true);
       }
     });
     fetchMixedFeed(null, PAGE).then((list) => {
@@ -131,7 +149,9 @@ export default function CotozutePage() {
       .order("event_at", { ascending: true })
       .limit(12)
       .then(({ data }) => setEvents(data ?? []));
-    if (new URLSearchParams(window.location.search).get("compose")) setComposing(true);
+    return () => {
+      document.body.style.background = prevBg;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -167,13 +187,14 @@ export default function CotozutePage() {
     if (!el) return;
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) loadMore();
+        // 30件ごとに一時停止 — 「続きを読み込む」を押すまで自動読み込みしない
+        if (entries[0].isIntersecting && itemsRef.current.length < autoLimit) loadMore();
       },
       { rootMargin: "600px" }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [loadMore, items !== null]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadMore, autoLimit, items !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* 新着チェック */
   useEffect(() => {
@@ -286,7 +307,7 @@ export default function CotozutePage() {
 
   /* ストーリーズ（24時間で消える・写真1枚・FB型） */
   const postStory = (f: File | null) => {
-    if (!me) {
+    if (!me || !isWara) {
       setShowUpgrade(true);
       return;
     }
@@ -622,13 +643,10 @@ export default function CotozutePage() {
             <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px]">🌿</span>
           )}
           <button
-            onClick={() => (me ? setComposing(true) : setShowUpgrade(true))}
+            onClick={() => (me && isWara ? setComposing(true) : setShowUpgrade(true))}
             className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14.5px] text-[#65676b]"
           >
             幸せの波紋を拡げよう
-          </button>
-          <button onClick={() => (me ? setComposing(true) : setShowUpgrade(true))} aria-label="写真を添付" className="flex-shrink-0 text-[22px]">
-            🖼️
           </button>
         </div>
 
@@ -656,11 +674,24 @@ export default function CotozutePage() {
           <>
             {renderItems()}
             <div ref={sentinelRef} />
-            {hasMore && (
-              <div className="flex justify-center py-6">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#d8dade] border-t-transparent" />
-              </div>
-            )}
+            {hasMore &&
+              (items.length >= autoLimit ? (
+                <div className="flex justify-center bg-white py-5">
+                  <button
+                    onClick={() => {
+                      setAutoLimit(items.length + 30);
+                      loadMore();
+                    }}
+                    className="rounded-full border border-[#dcdfe4] bg-white px-6 py-2.5 text-[13.5px] font-bold text-[#2CB7DE]"
+                  >
+                    続きを読み込む
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-center bg-white py-6">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#d8dade] border-t-transparent" />
+                </div>
+              ))}
           </>
         )}
       </div>

@@ -11,14 +11,26 @@ export default function CallbackPage() {
   useEffect(() => {
     const supabase = createClient();
 
+    // ログイン前に localStorage へ入れた戻り先（/join/complete 等）があればそこへ
+    const dest = (() => {
+      try {
+        const d = localStorage.getItem("onesea-return");
+        if (d && d.startsWith("/")) {
+          localStorage.removeItem("onesea-return");
+          return d;
+        }
+      } catch {}
+      return "/";
+    })();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) router.replace("/");
+      if (session) router.replace(dest);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace("/");
+      if (session) router.replace(dest);
     });
 
     const timeout = setTimeout(() => setStatus("ログインに失敗しました"), 8000);

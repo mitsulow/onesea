@@ -4,30 +4,30 @@ import { useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/cotozute";
+import { WARAWA_LP_URL } from "@/lib/warawa";
+import MUNI from "@/data/municipalities.json";
 
 /**
  * 無料OneSea会員の初回登録。Google 認証の直後に一度だけ表示。
- * 必須は名前と誕生日だけ。誕生日はカレンダーではなく年/月/日の
- * ホイール選択（年のデフォルト1980 — メイン顧客層。カレンダーで
- * 月を延々戻す事故を防ぐ）。誕生時刻は未選択なら15:00として保存。
- * 携帯・住所・DDP はここでは聞かない。
- * 保存後は「①無料で楽しむ ②わらわ〜へアップグレード」の2択。
+ * 必須は名前と誕生日だけ。誕生日は年/月/日ホイール（年の既定1980）。
+ * 誕生時刻は未選択なら15:00として保存。
+ * 生まれた場所は都道府県→その県の市町村（全国1,916自治体・緯度経度つき
+ * data/municipalities.json）で、月占いの経度緯度計算に使える精度で取る。
+ * 海外を選んだら国名+その他。
  */
 
-const PREFS = [
-  "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
-  "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
-  "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県",
-  "静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県",
-  "奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県",
-  "徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県",
-  "熊本県","大分県","宮崎県","鹿児島県","沖縄県","海外",
+const MUNI_MAP = MUNI as unknown as Record<string, [string, number, number][]>;
+const PREFS = [...Object.keys(MUNI_MAP), "海外"];
+
+const COUNTRIES = [
+  "アメリカ", "カナダ", "ブラジル", "イギリス", "フランス", "ドイツ", "イタリア", "スペイン",
+  "オーストラリア", "ニュージーランド", "中国", "台湾", "韓国", "タイ", "シンガポール", "インド",
+  "その他",
 ];
 
 const THIS_YEAR = new Date().getFullYear();
 const YEARS: number[] = [];
 for (let y = THIS_YEAR; y >= 1930; y--) YEARS.push(y);
-
 
 export function Onboarding({ user, onDone }: { user: User; onDone: () => void }) {
   const meta = user.user_metadata ?? {};
@@ -45,6 +45,11 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
   const [done, setDone] = useState(false);
 
   const daysInMonth = useMemo(() => new Date(bYear, bMonth, 0).getDate(), [bYear, bMonth]);
+  const cityOptions = useMemo<string[]>(() => {
+    if (!birthPref) return [];
+    if (birthPref === "海外") return COUNTRIES;
+    return (MUNI_MAP[birthPref] ?? []).map((c) => c[0]);
+  }, [birthPref]);
 
   const askGeo = () => {
     if (!navigator.geolocation) {
@@ -77,17 +82,16 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
     const day = Math.min(bDay, daysInMonth);
     const birthDate = `${bYear}-${String(bMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const [r1, r2] = await Promise.all([
+      // upsert: 行が無い/更新失敗で onboarded_at が残らないと再登録を求めてしまうため
       supabase
         .from("profiles")
-        .update({ display_name: name.trim(), onboarded_at: now })
-        .eq("id", user.id),
+        .upsert({ id: user.id, display_name: name.trim(), onboarded_at: now }, { onConflict: "id" }),
       supabase.from("private_profiles").upsert({
         user_id: user.id,
         birth_date: birthDate,
-        // 分からない人は15時。時を選んだら分まで保存
         birth_time: bHour === "" ? "15:00" : `${bHour.padStart(2, "0")}:${String(bMin).padStart(2, "0")}`,
         birth_pref: birthPref || null,
-        birth_city: birthCity.trim() || null,
+        birth_city: birthCity || null,
         updated_at: now,
       }),
     ]);
@@ -102,6 +106,7 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
 
   const selCls =
     "w-full rounded-xl border border-[#e8dcc4] bg-white p-2.5 text-center text-[15px] outline-none focus:border-[#c94d3a]";
+  const hint = (t: string) => <span className="text-[10px] font-normal text-[#c0b8a8]">（{t}）</span>;
 
   /* 保存後: ①無料で楽しむ ②わらわ〜へ の2択 */
   if (done) {
@@ -125,7 +130,7 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
           ① まずは無料で楽しむ
         </button>
         <a
-          href="/join"
+          href={WARAWA_LP_URL}
           className="mt-3 block w-full max-w-[320px] rounded-2xl py-3.5 text-[14.5px] font-extrabold text-[#123] no-underline"
           style={{ background: "linear-gradient(120deg,#f0e6c8,#d4b96a)" }}
         >
@@ -192,7 +197,9 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
           </div>
 
           <div>
-            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生時刻</label>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
+              誕生時刻 {hint("月占いが正確になります")}
+            </label>
             <div className="flex gap-2">
               <select
                 value={bHour}
@@ -220,10 +227,17 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
 
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
-              生まれた場所 <span className="font-normal text-[#c0b8a8]">月占いが正確になります</span>
+              生まれた場所 {hint("月占いが正確になります")}
             </label>
             <div className="space-y-2">
-              <select value={birthPref} onChange={(e) => setBirthPref(e.target.value)} className={selCls}>
+              <select
+                value={birthPref}
+                onChange={(e) => {
+                  setBirthPref(e.target.value);
+                  setBirthCity("");
+                }}
+                className={selCls}
+              >
                 <option value="">選択しない</option>
                 {PREFS.map((p) => (
                   <option key={p} value={p}>
@@ -231,12 +245,16 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
                   </option>
                 ))}
               </select>
-              <input
-                value={birthCity}
-                onChange={(e) => setBirthCity(e.target.value)}
-                placeholder="市町村（例: 那覇市）"
-                className="w-full rounded-xl border border-[#e8dcc4] bg-white p-2.5 text-[14px] outline-none focus:border-[#c94d3a]"
-              />
+              {birthPref && (
+                <select value={birthCity} onChange={(e) => setBirthCity(e.target.value)} className={selCls}>
+                  <option value="">{birthPref === "海外" ? "国を選択" : "市町村を選択"}</option>
+                  {cityOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -251,15 +269,18 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
                 : { background: "#fff", borderColor: "#e8dcc4", color: "#8a7a5a" }
             }
           >
-            {geo === "ok"
-              ? "✅ 現在位置を使えます"
-              : geo === "asking"
-                ? "確認中..."
-                : geo === "ng"
-                  ? "📍 現在位置を許可（もう一度試す）"
-                  : "📍 現在位置を許可する"}
+            {geo === "ok" ? (
+              "✅ 現在位置を使えます"
+            ) : geo === "asking" ? (
+              "確認中..."
+            ) : geo === "ng" ? (
+              "📍 現在位置を許可（もう一度試す）"
+            ) : (
+              <>
+                📍 現在位置を許可する<span className="text-[10px] font-normal">（手帳アプリに使用）</span>
+              </>
+            )}
           </button>
-          <p className="-mt-1.5 text-[10.5px] leading-relaxed text-[#b8ae9c]">手帳アプリに使います</p>
 
           {message && <p className="text-[12px] text-[#c05030]">{message}</p>}
 

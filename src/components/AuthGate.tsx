@@ -39,10 +39,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     const supabase = createClient();
     supabase
       .from("profiles")
-      .select("onboarded_at")
+      .select("onboarded_at, display_name")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => setOnboarded(!!data?.onboarded_at));
+      // display_name が既にある人（マイページ編集済み等）にも再登録は求めない
+      .then(({ data }) => setOnboarded(!!data?.onboarded_at || !!data?.display_name));
   }, [user]);
 
   if (!ready) {

@@ -8,6 +8,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { fetchUnreadTotal } from "@/lib/line";
 import { setBadge, ensureSw } from "@/lib/push";
+import { fetchWarawaMissing } from "@/lib/warawa";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -26,6 +27,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [waraMissing, setWaraMissing] = useState(0); // わらわ〜会員の未入力数（0で消える）
   const btnRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<{ top: number; right: number }>({ top: 52, right: 12 });
 
@@ -45,16 +47,21 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
       }
     };
 
+    const refreshMissing = () => {
+      if (userId) fetchWarawaMissing(userId).then((m) => setWaraMissing(m.missing.length));
+    };
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
       userId = session?.user?.id ?? null;
       refresh();
+      refreshMissing();
       // マイページで変えた写真（profiles.avatar_url）を優先表示
       if (userId) {
         const { data: prof } = await supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle();
         if (prof?.avatar_url) setProfileAvatar(prof.avatar_url);
       }
     });
+    window.addEventListener("onesea:warawaMissingRefresh", refreshMissing);
     const t = setInterval(refresh, 30000);
     window.addEventListener("focus", refresh);
     window.addEventListener("onesea:unreadRefresh", refresh);
@@ -63,6 +70,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
       clearInterval(t);
       window.removeEventListener("focus", refresh);
       window.removeEventListener("onesea:unreadRefresh", refresh);
+      window.removeEventListener("onesea:warawaMissingRefresh", refreshMissing);
     };
   }, []);
 
@@ -159,6 +167,14 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             🌊
           </span>
         )}
+        {waraMissing > 0 && (
+          <span
+            className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[9.5px] font-bold text-white"
+            style={{ lineHeight: 1 }}
+          >
+            {waraMissing}
+          </span>
+        )}
       </button>
 
       {open &&
@@ -194,6 +210,14 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             </Link>
             <Link href="/my" onClick={() => setOpen(false)} className={item + hereCls("/my")}>
               <span className="w-[20px] text-center text-[16px]">🪪</span> マイページ編集
+              {waraMissing > 0 && (
+                <span
+                  className="ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
+                  style={{ lineHeight: 1 }}
+                >
+                  {waraMissing}
+                </span>
+              )}
             </Link>
             <Link href="/line" onClick={() => setOpen(false)} className={item + hereCls("/line")}>
               <span className="w-[20px] text-center text-[16px]">💬</span> TALK

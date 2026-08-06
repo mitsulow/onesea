@@ -9,6 +9,7 @@ import { ensureProfile } from "@/lib/cotozute";
 import { Market, ZA_CATEGORIES, uploadShopImage } from "@/lib/za";
 import { CameraIcon } from "@/components/CameraIcon";
 import { UpgradeDialog } from "@/components/UpgradeGate";
+import { fetchIsWarawa } from "@/lib/warawa";
 
 /** 楽座を出す（出品フォーム） */
 export default function NewShopPage() {
@@ -26,12 +27,15 @@ export default function NewShopPage() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [gateReady, setGateReady] = useState(false); // 無料アプリ: 出品は会員専用
+  const [gateReady, setGateReady] = useState(false); // 出品はわらわ〜会員専用
+  const [isWara, setIsWara] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setMe(session?.user ?? null);
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setMe(u);
+      setIsWara(await fetchIsWarawa(u?.id));
       setGateReady(true);
     });
   }, []);
@@ -81,7 +85,7 @@ export default function NewShopPage() {
 
   return (
     <>
-      {gateReady && !me && (
+      {gateReady && !isWara && (
         <UpgradeDialog open onClose={() => router.push("/za")} feature="楽市楽座への出品" />
       )}
     <main className="pb-20">
@@ -96,8 +100,8 @@ export default function NewShopPage() {
         <span className="w-10" />
       </header>
 
-      {!me ? (
-        <p className="px-5 py-10 text-center text-sm text-[#8a8070]">ログインすると出品できます</p>
+      {!me || !isWara ? (
+        <p className="px-5 py-10 text-center text-sm text-[#8a8070]">出品はわらわ〜会員から</p>
       ) : (
         <div className="space-y-4 px-2 pt-4">
           {/* 楽市 or 楽座 */}

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isWarawaUntil } from "@/lib/warawa";
+import { WarawaBadge } from "@/components/WarawaBadge";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -26,6 +28,7 @@ interface MeishiProfile {
   life_work: string | null;
   skills: string[] | null;
   member_no: number | null;
+  warawa_until: string | null;
   created_at: string | null;
   birthday: string | null;
 }
@@ -38,7 +41,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
     const supabase = createClient();
     supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, status_line, prefecture, city, rice_work, life_work, skills, member_no, created_at, birthday")
+      .select("id, username, display_name, avatar_url, cover_url, status_line, prefecture, city, rice_work, life_work, skills, member_no, created_at, birthday, warawa_until")
       .eq("username", username)
       .maybeSingle()
       .then(({ data }) => setP((data as MeishiProfile) ?? null));
@@ -100,10 +103,11 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
             <div className="flex min-h-0 flex-1 flex-col px-8 pb-9 pt-2">
               {/* 名前 + @ */}
               <div className="min-w-0">
-                <div className="truncate text-[17px] font-extrabold text-[#3a3428]">
+                <div className="flex items-center gap-1 truncate text-[17px] font-extrabold text-[#3a3428]">
                   {p.display_name ?? "むらびと"}
+                  {isWarawaUntil(p.warawa_until) && <WarawaBadge size={15} />}
                 </div>
-                {p.member_no != null && (
+                {isWarawaUntil(p.warawa_until) && p.member_no != null && (
                   <div className="truncate text-[11px] text-[#b0a890]">@Warawer{String(p.member_no).padStart(7, "0")}</div>
                 )}
               </div>
