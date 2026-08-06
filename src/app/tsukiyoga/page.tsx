@@ -85,7 +85,7 @@ export default function TsukiyogaPage() {
           <AvatarMenu ring="#f0e0a8" />
         </span>
       </header>
-      <PriceBanner service="ツキヨガ" price="月額5,000円" color="#f0e0a8" />
+      <PriceBanner service="ツキヨガ" price="月5,500円" lp="/lp/tsukiyoga" color="#f0e0a8" />
 
       {/* 今日の月 */}
       <section className="card" style={{ background: "linear-gradient(160deg,#141020,#1e1830)", border: "none" }}>

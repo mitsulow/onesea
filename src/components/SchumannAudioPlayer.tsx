@@ -786,7 +786,7 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
-      <UpgradeDialog open={showUpgrade} onClose={() => setShowUpgrade(false)} feature="シューマン音のフル再生" />
+      <UpgradeDialog open={showUpgrade} onClose={() => setShowUpgrade(false)} feature="シューマン音のフル再生" lp="/lp/mmm" />
       <audio
         ref={audioRef}
         src={src ?? undefined}

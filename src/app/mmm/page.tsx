@@ -104,6 +104,9 @@ export default function MmmPage() {
           <AvatarMenu ring="#7de0a0" />
         </span>
       </header>
+      <Link href="/lp/mmm" className="block py-1.5 text-center text-[11px] font-bold no-underline" style={{ background: "#0a1410", color: "#7de0a0" }}>
+        MMMについて・入会案内 →
+      </Link>
 
       {/* ① OTOHIKARI MAP + ② シューマン音 */}
       <div className="px-4">

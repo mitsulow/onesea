@@ -86,7 +86,7 @@ export default function NewShopPage() {
   return (
     <>
       {gateReady && !isWara && (
-        <UpgradeDialog open onClose={() => router.push("/za")} feature="楽市楽座への出品" />
+        <UpgradeDialog open onClose={() => router.push("/za")} feature="楽市楽座への出品" lp="/lp/za" />
       )}
     <main className="pb-20">
       <header

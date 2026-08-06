@@ -9,10 +9,21 @@ import { WARAWA_LP_URL } from "@/lib/warawa";
  * プレミアム（わらわ〜会員）専用機能に触れたときの案内。
  * 無料会員・ゲスト共通: 「詳しくはコチラ→」でLP（後日Stripe決済ページに差し替え）へ。
  */
-export function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClose: () => void; feature?: string }) {
+export function UpgradeDialog({
+  open,
+  onClose,
+  feature,
+  lp,
+}: {
+  open: boolean;
+  onClose: () => void;
+  feature?: string;
+  lp?: string; // サービスLP（例: /lp/mmm）。あればそこへ、無ければ中央キャンペーンへ
+}) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!open || !mounted) return null;
+  const detailHref = lp ?? WARAWA_LP_URL;
 
   const login = async () => {
     try {
@@ -39,7 +50,7 @@ export function UpgradeDialog({ open, onClose, feature }: { open: boolean; onClo
           プレミアム会員登録が必要です
         </div>
         <a
-          href={WARAWA_LP_URL}
+          href={detailHref}
           className="mt-5 block w-full rounded-2xl py-3.5 text-[14.5px] font-extrabold text-[#123] no-underline"
           style={{ background: "linear-gradient(120deg,#f0e6c8,#d4b96a)" }}
         >
