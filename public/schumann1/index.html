@@ -1157,6 +1157,25 @@
     border-radius:999px;padding:6px 16px;cursor:pointer;transition:all .15s}
   .dot-tab:hover{border-color:rgba(44,183,222,0.6)}
   .dot-tab.active{color:#06121c;background:#2CB7DE;border-color:#2CB7DE}
+  /* 宝の山サマリー帯 */
+  .dv-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;
+    padding:0 0.9rem 0.8rem}
+  .dvs-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;padding:10px 6px;text-align:center}
+  .dvs-num{font:700 1.05rem/1.2 "SF Mono",Consolas,monospace;color:#7cf9d4}
+  .dvs-label{margin-top:3px;font-size:0.66rem;color:#8b93a8;letter-spacing:0.04em}
+  /* MMM誘導カード */
+  .dv-mmm-cta{display:block;margin:1rem 0.9rem 0.4rem;padding:16px 18px;border-radius:16px;
+    background:linear-gradient(140deg,#0d2b33,#123a46 55%,#0e2f42);
+    border:1px solid rgba(124,249,212,0.35);text-decoration:none;
+    box-shadow:0 4px 24px rgba(20,180,160,0.12);transition:border-color .15s,transform .15s}
+  .dv-mmm-cta:hover{border-color:#7cf9d4;transform:translateY(-1px)}
+  .dv-mmm-head{font-weight:800;font-size:0.98rem;color:#7cf9d4;letter-spacing:0.03em}
+  .dv-mmm-cta p{margin:8px 0 12px;font-size:0.8rem;line-height:1.75;color:#a9c3cf}
+  .dv-mmm-cta p b{color:#ffd66a;font-family:monospace}
+  .dv-mmm-btn{display:block;text-align:center;padding:11px 0;border-radius:12px;
+    font-weight:800;font-size:0.88rem;color:#06201c;
+    background:linear-gradient(120deg,#7cf9d4,#35c9a5)}
 </style>
 </head>
 <body>
@@ -1378,6 +1397,13 @@
     <div class="graph-description">
       <p>2011年からの実測アーカイブ、全<b id="dv-count">—</b>日ぶん。トムスクの折れ線グラフを5分刻みで読み取ったF1〜F4の生データが土台。基準線は従来値 7.83 Hz と目標 8.02 Hz。</p>
     </div>
+    <div class="dv-stats" id="dv-stats" style="display:none">
+      <div class="dvs-item"><div class="dvs-num" id="dvs-days">—</div><div class="dvs-label">観測日数</div></div>
+      <div class="dvs-item"><div class="dvs-num" id="dvs-avg">—</div><div class="dvs-label">全期間平均 Hz</div></div>
+      <div class="dvs-item"><div class="dvs-num" id="dvs-above">—</div><div class="dvs-label">7.83Hz以上の日</div></div>
+      <div class="dvs-item"><div class="dvs-num" id="dvs-target">—</div><div class="dvs-label">8.02Hz到達日数</div></div>
+      <div class="dvs-item"><div class="dvs-num" id="dvs-max">—</div><div class="dvs-label" id="dvs-max-label">歴代最高</div></div>
+    </div>
     <div class="dv-panel">
       <div class="dv-block">
         <div class="dv-title">一週間 <span>過去7日間・1日 = 1本</span></div>
@@ -1400,7 +1426,7 @@
         <canvas id="dv-heat"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">月ごとの傾向 <span>全5年の同じ月を平均 — 地球の音の季節変化</span></div>
+        <div class="dv-title">月ごとの傾向 <span>全期間の同じ月を平均 — 地球の音の季節変化</span></div>
         <canvas id="dv-month"></canvas>
       </div>
       <div class="dv-block">
@@ -1408,7 +1434,7 @@
         <canvas id="dv-moon"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">値の分布 <span>1,200日はどんな音程で鳴っていたか</span></div>
+        <div class="dv-title">値の分布 <span>全記録はどんな音程で鳴っていたか</span></div>
         <canvas id="dv-hist"></canvas>
       </div>
       <div class="dv-block">
@@ -1419,6 +1445,15 @@
         <div class="dv-title">突発的に出た値 <span>その日の5分値が跳ねた最高・最低（日平均ではない）。グラフの描き幅を振り切った日は端の値＝「少なくともここまで」</span></div>
         <div id="dv-records-inst" style="padding:0 0.9rem"></div>
       </div>
+
+      <!-- MMM誘導: 宝の山 → 「この音を自分の耳で」 -->
+      <a class="dv-mmm-cta" href="/mmm">
+        <div class="dv-mmm-head">⚡ この音を、自分の耳で</div>
+        <p>ここに並ぶ<b id="dvs-days2">—</b>日ぶんの実測が、そのまま「地球の音」の楽譜。
+        MMM（MasterMindMembers）では、いまこの瞬間のシューマン共振を音に変換して聴けます。
+        目標は 8.02 Hz — 地球の基音を、みんなで聴いて、揃えていく。</p>
+        <span class="dv-mmm-btn">▶ いまの地球の音を聴きに行く（15秒無料）</span>
+      </a>
     </div>
   </details>
 
@@ -1937,6 +1972,25 @@
       const cnt = document.getElementById("dv-count");
       if (cnt) cnt.textContent = all.length.toLocaleString();
       drawDotGraph(all);
+
+      // 宝の山サマリー帯 + MMM誘導の日数
+      {
+        const $ = id => document.getElementById(id);
+        const avg = all.reduce((a, e) => a + e.f1, 0) / all.length;
+        const above = all.filter(e => e.f1 >= BASELINE_HZ).length;
+        const hitTarget = all.filter(e => (typeof e.hi === "number" ? e.hi : e.f1) >= TARGET_HZ).length;
+        const top = all.reduce((a, e) => (e.f1 > a.f1 ? e : a), all[0]);
+        if ($("dvs-days")) {
+          $("dvs-days").textContent = all.length.toLocaleString();
+          $("dvs-avg").textContent = avg.toFixed(2);
+          $("dvs-above").textContent = Math.round(above / all.length * 100) + "%";
+          $("dvs-target").textContent = hitTarget.toLocaleString() + "日";
+          $("dvs-max").textContent = top.f1.toFixed(2);
+          $("dvs-max-label").textContent = "歴代最高 " + top.d.slice(0, 4) + "年";
+          $("dv-stats").style.display = "";
+        }
+        if ($("dvs-days2")) $("dvs-days2").textContent = all.length.toLocaleString();
+      }
       const todayY = jstToday().getUTCFullYear();
       const yv = all.filter(e => e.d.startsWith(String(todayY))).map(e => e.f1);
       const yearAvg = yv.length ? yv.reduce((a, b) => a + b, 0) / yv.length : null;
@@ -1988,7 +2042,7 @@
           v: acc[mk] ? acc[mk][0] / acc[mk][1] : null,
           label: mk.slice(5, 7) === "01" ? mk.slice(0, 4) : null,
         }));
-        dvBars("dv-all", bars, { hRatio: 0.36, barFrac: 0.8 });
+        dvBars("dv-all", bars, { hRatio: 0.36, barFrac: 0.8, marker: keys.indexOf(MMM_START.slice(0, 7)) });
       }
 
       // ④ カレンダーマップ (年ごとの帯・1日1マス)
