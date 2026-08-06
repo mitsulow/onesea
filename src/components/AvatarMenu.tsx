@@ -80,6 +80,71 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
     <img src={src} alt="" className="h-[20px] w-[20px] flex-shrink-0 object-contain" />
   );
 
+  const login = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/callback` },
+    });
+  };
+
+  /* 通りすがり（未ログイン）: 金の「はじめる」ピル。
+     登録後は同じ位置がアバターに変わる = 「始まりの場所」が常に右上に1個 */
+  if (!user) {
+    return (
+      <span className="relative inline-block">
+        <button
+          onClick={() => setOpen(true)}
+          className="rounded-full px-4 py-[7px] text-[12.5px] font-extrabold text-[#1a1a24]"
+          style={{
+            background: "linear-gradient(120deg,#f0e6c8,#d4b96a)",
+            boxShadow: "0 2px 10px rgba(212,185,106,.4)",
+          }}
+        >
+          はじめる
+        </button>
+        {open &&
+          typeof document !== "undefined" &&
+          createPortal(
+            <>
+              <div className="fixed inset-0 z-[95] bg-black/45" onClick={() => setOpen(false)} />
+              <div className="fixed inset-x-0 bottom-0 z-[96] mx-auto max-w-[480px] rounded-t-3xl bg-white px-5 pb-8 pt-5">
+                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0d8c8]" />
+                <div className="mb-4 text-center text-[15px] font-extrabold text-[#3a3428]">
+                  OneSea をはじめる 🌊
+                </div>
+                <button
+                  onClick={login}
+                  className="mb-2.5 w-full rounded-2xl py-3.5 text-[14.5px] font-extrabold text-white"
+                  style={{ background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)" }}
+                >
+                  🌊 無料でOneSea会員になる
+                </button>
+                <p className="mb-3 text-center text-[10.5px] text-[#a09880]">
+                  Google認証・30秒。手帳と占いが使えるようになります
+                </p>
+                <a
+                  href="/join"
+                  onClick={() => setOpen(false)}
+                  className="mb-2.5 block w-full rounded-2xl py-3.5 text-center text-[14px] font-extrabold text-[#1a1a24] no-underline"
+                  style={{ background: "linear-gradient(120deg,#f0e6c8,#d4b96a)" }}
+                >
+                  🏆 わらわ〜会員とは
+                </a>
+                <button
+                  onClick={login}
+                  className="w-full rounded-2xl border border-[#e0d8c8] py-3 text-[12.5px] font-bold text-[#8a7a5a]"
+                >
+                  すでに会員の方はログイン
+                </button>
+              </div>
+            </>,
+            document.body
+          )}
+      </span>
+    );
+  }
+
   return (
     <span className="relative inline-block">
       <button
