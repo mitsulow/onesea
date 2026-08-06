@@ -1,18 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchWarawaMissing, WarawaMissing } from "@/lib/warawa";
+import MUNI from "@/data/municipalities.json";
 
-const PREFS = [
-  "北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県",
-  "茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県",
-  "新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県",
-  "静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県",
-  "奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県",
-  "徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県",
-  "熊本県","大分県","宮崎県","鹿児島県","沖縄県","海外",
-];
+// 都道府県 → 市町村（全国1,916自治体）。Onboarding と同じ自動表示方式。
+const MUNI_MAP = MUNI as unknown as Record<string, [string, number, number][]>;
+const PREFS = [...Object.keys(MUNI_MAP), "海外"];
 
 /**
  * わらわ〜会員の未入力情報カード（自分のマイページにだけ出る）。
@@ -26,6 +21,7 @@ export function PremiumSetupCard({ userId }: { userId: string }) {
   const [ddp, setDdp] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const cityOptions = useMemo<string[]>(() => (pref && pref !== "海外" ? (MUNI_MAP[pref] ?? []).map((c) => c[0]) : []), [pref]);
 
   useEffect(() => {
     fetchWarawaMissing(userId).then(setStatus);
@@ -98,7 +94,11 @@ export function PremiumSetupCard({ userId }: { userId: string }) {
               住んでいる市町村 <span className="font-normal text-[#c0b8a8]">公開されません</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <select value={pref} onChange={(e) => setPref(e.target.value)} className={input}>
+              <select
+                value={pref}
+                onChange={(e) => { setPref(e.target.value); setCity(""); }}
+                className={input}
+              >
                 <option value="">都道府県</option>
                 {PREFS.map((p) => (
                   <option key={p} value={p}>
@@ -106,7 +106,18 @@ export function PremiumSetupCard({ userId }: { userId: string }) {
                   </option>
                 ))}
               </select>
-              <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="市町村" className={input} />
+              {pref === "海外" ? (
+                <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="都市名" className={input} />
+              ) : (
+                <select value={city} onChange={(e) => setCity(e.target.value)} disabled={!pref} className={input}>
+                  <option value="">{pref ? "市町村を選択" : "先に都道府県"}</option>
+                  {cityOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         )}
