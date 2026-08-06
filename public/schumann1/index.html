@@ -1142,14 +1142,23 @@
   }
   .error-banner.visible { display: block; }
   /* 右上: 他のサービス(OneSea)へ戻るアバター */
-  .svc-avatar{position:fixed;top:12px;right:12px;z-index:60;width:40px;height:40px;
-    border-radius:50%;display:flex;align-items:center;justify-content:center;
-    background:rgba(20,26,38,0.72);border:1.5px solid rgba(140,190,230,0.55);
-    box-shadow:0 2px 10px rgba(0,0,0,0.4);backdrop-filter:blur(6px);
-    -webkit-backdrop-filter:blur(6px);color:#bfe0f2;text-decoration:none;
-    transition:transform .15s,border-color .15s}
-  .svc-avatar:hover{transform:scale(1.06);border-color:#2CB7DE}
-  .svc-avatar svg{width:22px;height:22px}
+  /* 他ページと同じ上部バー */
+  .svc-topbar{position:sticky;top:0;z-index:70;display:flex;align-items:center;
+    justify-content:space-between;padding:8px 14px;
+    background:rgba(8,12,20,0.82);backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);border-bottom:1px solid rgba(140,190,230,0.18)}
+  .svc-wordmark{font-weight:800;font-size:13px;letter-spacing:3px;color:#e8d5a0;text-decoration:none}
+  .svc-av{width:34px;height:34px;border-radius:50%;overflow:hidden;padding:0;cursor:pointer;
+    border:2px solid rgba(212,185,106,0.7);background:#0e1626;display:flex;align-items:center;justify-content:center}
+  .svc-av img{width:100%;height:100%;object-fit:cover}
+  .svc-menu{position:absolute;top:48px;right:12px;min-width:180px;
+    background:#101826;border:1px solid rgba(140,190,230,0.22);border-radius:14px;
+    box-shadow:0 12px 36px rgba(0,0,0,0.5);overflow:hidden;display:none}
+  .svc-menu.open{display:block}
+  .svc-menu a{display:block;padding:11px 16px;font-size:13.5px;color:#d8e4ec;text-decoration:none;
+    border-bottom:1px solid rgba(255,255,255,0.05)}
+  .svc-menu a:last-child{border-bottom:none}
+  .svc-menu a:active,.svc-menu a:hover{background:rgba(44,183,222,0.14)}
   /* F1ドットグラフの期間切替タブ */
   .dot-tabs{display:flex;gap:8px;padding:0 0.9rem 0.4rem}
   .dot-tab{font:600 0.82rem/1 "Noto Sans JP",sans-serif;color:#9fb2c8;
@@ -1180,9 +1189,23 @@
 </head>
 <body>
 
-<a class="svc-avatar" href="/" title="OneSea の他のサービスへ戻る" aria-label="他のサービスへ">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>
-</a>
+<!-- 他ページと同じ上部バー: 右上にアバター(押すと他サービスへ) -->
+<div class="svc-topbar">
+  <a href="/" class="svc-wordmark">OneSea</a>
+  <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー">
+    <img src="/icon-192.png" alt="OneSea" />
+  </button>
+  <div class="svc-menu" id="svcMenu">
+    <a href="/">🏠 ホーム</a>
+    <a href="/mmm">☀ MMM</a>
+    <a href="/sekai">🌏 セカイムラ</a>
+    <a href="/tsukiyoga-v7/index.html">🌙 ツキヨガ</a>
+    <a href="/cotozute">💬 コトヅテ</a>
+    <a href="/za">🏮 楽市楽座</a>
+    <a href="/#techo">📖 手帳</a>
+    <a href="/my">🪪 マイページ</a>
+  </div>
+</div>
 
 <!-- ★★ 黒バンド: ロゴ〜地球儀〜今の値〜鼠色グラフまでは宇宙の中 ★★ -->
 <div class="hero-dark">
@@ -1860,16 +1883,19 @@
     const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.4, PB = fs * 2.2;
     const vals = bars.map(b => b.v).filter(v => v != null);
     if (!vals.length) return;
-    let lo = Math.min.apply(null, vals.concat([BASELINE_HZ])) - 0.06;
-    let hi = Math.max.apply(null, vals.concat([TARGET_HZ])) + 0.06;
+    // 固定軸 (opt.fixedLo/fixedHi) があればそれを使う。日々の比較がしやすいよう
+    // 一週間などは 0〜9Hz 固定で「地に足の着いた」高さで見せる。
+    let lo = opt.fixedLo != null ? opt.fixedLo : Math.min.apply(null, vals.concat([BASELINE_HZ])) - 0.06;
+    let hi = opt.fixedHi != null ? opt.fixedHi : Math.max.apply(null, vals.concat([TARGET_HZ])) + 0.06;
     const n = bars.length;
     const plotW = W - PL - PR;
     const xc = i => PL + plotW * (i + 0.5) / n;
     const y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
-    // 縦軸目盛
+    // 縦軸目盛 (範囲が広いときは1.0刻み、狭いときは0.2刻み)
+    const step = (hi - lo) > 3 ? 1 : 0.2;
     ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = fs * 0.8 + "px monospace"; ctx.textAlign = "left";
-    for (let v = Math.ceil(lo * 10) / 10; v <= hi; v += 0.2) {
-      ctx.fillText(v.toFixed(1), fs * 0.3, y(v) + fs * 0.3);
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-6; v += step) {
+      ctx.fillText(v.toFixed(step < 1 ? 1 : 0), fs * 0.3, y(v) + fs * 0.3);
       ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = u;
       ctx.beginPath(); ctx.moveTo(PL, y(v)); ctx.lineTo(W - PR, y(v)); ctx.stroke();
     }
@@ -1910,33 +1936,34 @@
   // F1 全記録の散布図 (1日=1点)。range: "all" | "3y"
   let dotRange = "all";
   function drawDotGraph(all) {
-    const g = dvCtx("dv-dot", 0.5);
+    const g = dvCtx("dv-dot", 0.62);
     if (!g || !all || !all.length) return;
     const { ctx, W, H, u, fs } = g;
+    // 背景（宇宙の黒）
+    ctx.fillStyle = "#0a0e16"; ctx.fillRect(0, 0, W, H);
     const nowT = jstToday().getTime();
     const t0 = dotRange === "3y" ? nowT - 3 * 365.25 * 86400e3
       : Date.parse(all[0].d + "T00:00:00Z");
     const pts = all.filter(e => Date.parse(e.d + "T00:00:00Z") >= t0);
     if (!pts.length) return;
-    const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.2, PB = fs * 2.0;
-    const vals = pts.map(e => e.f1);
-    let lo = Math.min.apply(null, vals.concat([BASELINE_HZ])) - 0.05;
-    let hi = Math.max.apply(null, vals.concat([TARGET_HZ])) + 0.05;
+    const PL = fs * 3.0, PR = fs * 0.8, PT = fs * 1.4, PB = fs * 2.2;
+    // 縦軸は常に固定（7.2〜8.15Hz）。全期間でも3年でも同じ物差しで見える
+    const lo = 7.2, hi = 8.15;
     const t1 = nowT;
     const X = t => PL + (W - PL - PR) * (t - t0) / Math.max(1, t1 - t0);
-    const Y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
-    // 横グリッド + 縦軸ラベル
+    const Y = v => PT + (H - PT - PB) * (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo));
+    // 横グリッド + 縦軸ラベル（0.2刻み）
     ctx.font = fs * 0.8 + "px monospace"; ctx.textAlign = "left";
-    for (let v = Math.ceil(lo * 10) / 10; v <= hi; v += 0.1) {
-      ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = u;
+    for (let v = 7.2; v <= hi + 1e-6; v += 0.2) {
+      ctx.strokeStyle = "rgba(255,255,255,0.055)"; ctx.lineWidth = u;
       ctx.beginPath(); ctx.moveTo(PL, Y(v)); ctx.lineTo(W - PR, Y(v)); ctx.stroke();
-      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
       ctx.fillText(v.toFixed(1), fs * 0.3, Y(v) + fs * 0.3);
     }
-    dvRule(g, Y(BASELINE_HZ), "rgba(240,198,116,0.5)", "7.83", PL, PR);
-    dvRule(g, Y(TARGET_HZ), "rgba(82,250,140,0.85)", "8.02 目標", PL, PR);
+    dvRule(g, Y(BASELINE_HZ), "rgba(240,198,116,0.55)", "7.83", PL, PR);
+    dvRule(g, Y(TARGET_HZ), "rgba(82,250,140,0.9)", "8.02 目標", PL, PR);
     // 年(または月)の縦ラベル
-    ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = fs * 0.78 + "px monospace"; ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = fs * 0.78 + "px monospace"; ctx.textAlign = "center";
     const y0 = new Date(t0).getUTCFullYear(), y1 = new Date(t1).getUTCFullYear();
     if (dotRange === "3y") {
       for (let t = new Date(Date.UTC(y0, new Date(t0).getUTCMonth(), 1)).getTime(); t <= t1; ) {
@@ -1947,22 +1974,35 @@
     } else {
       for (let y = y0; y <= y1; y++) {
         const x = X(Date.UTC(y, 0, 1));
-        if (x >= PL && x <= W - PR) ctx.fillText(String(y), x, H - fs * 0.5);
+        if (x >= PL && x <= W - PR) {
+          ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = u;
+          ctx.beginPath(); ctx.moveTo(x, PT); ctx.lineTo(x, H - PB); ctx.stroke();
+          ctx.fillStyle = "rgba(255,255,255,0.5)";
+          ctx.fillText(String(y), x, H - fs * 0.5);
+        }
       }
     }
-    // 点
-    const r = dotRange === "3y" ? 1.7 * u : 1.1 * u;
+    // 点（値で色分け・加算合成でホタルのように光らせる）
+    const r = dotRange === "3y" ? 2.0 * u : 1.5 * u;
+    ctx.globalCompositeOperation = "lighter";
     pts.forEach(e => {
       const k = Math.max(0, Math.min(1, (e.f1 - 7.45) / (TARGET_HZ - 7.45)));
-      const c1 = [130, 150, 210], c2 = [53, 224, 184], c3 = [255, 214, 106];
+      const c1 = [120, 150, 220], c2 = [64, 224, 208], c3 = [255, 214, 106];
       const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
       const c = k < 0.6 ? mix(c1, c2, k / 0.6) : mix(c2, c3, (k - 0.6) / 0.4);
-      ctx.fillStyle = "rgba(" + c.join(",") + ",0.72)";
-      ctx.beginPath(); ctx.arc(X(Date.parse(e.d + "T00:00:00Z")), Y(e.f1), r, 0, Math.PI * 2); ctx.fill();
+      const x = X(Date.parse(e.d + "T00:00:00Z")), yy = Y(e.f1);
+      const halo = ctx.createRadialGradient(x, yy, 0, x, yy, r * 3);
+      halo.addColorStop(0, "rgba(" + c.join(",") + ",0.55)");
+      halo.addColorStop(1, "rgba(" + c.join(",") + ",0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(x, yy, r * 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "rgba(" + c.join(",") + ",0.95)";
+      ctx.beginPath(); ctx.arc(x, yy, r, 0, Math.PI * 2); ctx.fill();
     });
+    ctx.globalCompositeOperation = "source-over";
     // 点数の注記
-    ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = fs * 0.8 + "px sans-serif"; ctx.textAlign = "left";
-    ctx.fillText(pts.length.toLocaleString() + "日", PL + fs * 0.2, PT + fs * 0.6);
+    ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = fs * 0.8 + "px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText(pts.length.toLocaleString() + "日ぶんの実測", PL + fs * 0.2, PT + fs * 0.4);
   }
 
   async function drawMonthlyTrend() {
@@ -1995,10 +2035,10 @@
       const yv = all.filter(e => e.d.startsWith(String(todayY))).map(e => e.f1);
       const yearAvg = yv.length ? yv.reduce((a, b) => a + b, 0) / yv.length : null;
 
-      // ① 一週間 (過去7日)
+      // ① 一週間 (過去7日) — 縦軸を0〜9Hz固定にして日々の高さを素直に比べられるように
       dvBars("dv-week", all.slice(-7).map(e => ({
         v: e.f1, label: Number(e.d.slice(5, 7)) + "/" + Number(e.d.slice(8, 10)),
-      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true, avg: yearAvg, avgLabel: todayY + "平均" });
+      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true, fixedLo: 0, fixedHi: 9 });
 
       // ② 一カ月 (過去30日)
       dvBars("dv-recent", all.slice(-30).map(e => ({
@@ -3117,6 +3157,15 @@
       if (d.open) { buildJstOverlays(); drawSparkline(); drawMonthlyTrend(); drawModeGraphs(); }
     });
   });
+  // 上部バーのアバターメニュー（他サービスへ）
+  (function () {
+    const btn = document.getElementById("svcAvBtn"), menu = document.getElementById("svcMenu");
+    if (btn && menu) {
+      btn.addEventListener("click", (e) => { e.stopPropagation(); menu.classList.toggle("open"); });
+      document.addEventListener("click", () => menu.classList.remove("open"));
+    }
+  })();
+
   // F1ドットグラフの期間切替
   document.querySelectorAll("#dot-tabs .dot-tab").forEach(btn => {
     btn.addEventListener("click", () => {
