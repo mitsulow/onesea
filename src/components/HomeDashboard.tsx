@@ -81,8 +81,12 @@ export function HomeDashboard() {
     }
   }, [tk]);
 
-  /* 今日の予定（手帳から） */
-  const [plans, setPlans] = useState<Array<{ time: string; text: string; color?: string }>>([]);
+  /* 予定（手帳から）— 予定が入っている日だけをスワイプで前後に渡り歩ける */
+  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string }>>>({});
+  const [planKeys, setPlanKeys] = useState<string[]>([]);
+  const [viewKey, setViewKey] = useState(tk);
+  const [planDragX, setPlanDragX] = useState(0);
+  const planTouch = useRef<{ x: number; y: number; locked: boolean; dir: string | null } | null>(null);
   useEffect(() => {
     fetchTideDay(tk).then(setTide);
     // キャッシュを避けて常に最新の実測値を取る（10分ごとに更新）
@@ -95,18 +99,27 @@ export function HomeDashboard() {
     const schT = setInterval(loadSchumann, 10 * 60000);
     try {
       const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
-      const day = memos[tk];
-      const list: Array<{ time: string; text: string; color?: string }> = [];
-      for (const ev of day?.ev ?? []) {
-        list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color });
-      }
-      for (const [h, v] of Object.entries(day?.h ?? {})) {
-        for (const line of String(v).split("\n")) {
-          if (line.trim()) list.push({ time: `${pad(Number(h))}:00`, text: line.trim() });
+      const byDay: Record<string, Array<{ time: string; text: string; color?: string }>> = {};
+      const keys: string[] = [];
+      for (const [k, day] of Object.entries(memos) as Array<[string, any]>) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        const list: Array<{ time: string; text: string; color?: string }> = [];
+        for (const ev of day?.ev ?? []) {
+          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color });
+        }
+        for (const [h, v] of Object.entries(day?.h ?? {})) {
+          for (const line of String(v).split("\n")) {
+            if (line.trim()) list.push({ time: `${pad(Number(h))}:00`, text: line.trim() });
+          }
+        }
+        if (list.length) {
+          list.sort((a, b) => a.time.localeCompare(b.time));
+          byDay[k] = list.slice(0, 6);
+          keys.push(k);
         }
       }
-      list.sort((a, b) => a.time.localeCompare(b.time));
-      setPlans(list.slice(0, 6));
+      keys.sort();
+      setDayPlans(byDay);
+      setPlanKeys(keys);
     } catch {}
     const supabase = createClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -250,35 +263,114 @@ export function HomeDashboard() {
         </a>
       </div>
 
-      {/* 今日の予定 — 手帳の本文なので明朝で大きく */}
-      <button
-        onClick={openToday}
-        className="mx-5 mt-3 block rounded-2xl px-4 py-3.5 text-left"
-        style={{ background: "#faf7f0", border: "1px solid #eee6d4", width: "calc(100% - 40px)" }}
-      >
-        <div className="text-[10px] font-bold tracking-[3px] text-[#7ba05b]">
-          今日の予定
-        </div>
-        <div className="mt-2 space-y-2">
-          {plans.length ? (
-            plans.map((p, i) => (
-              <div key={i} className="flex items-baseline gap-2.5">
-                <span className="num flex-shrink-0 text-[12px] text-[#a09880]">
-                  {p.time}
-                </span>
-                {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
-                <span className="truncate text-[15px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
-                  {p.text}
-                </span>
-              </div>
-            ))
-          ) : (
-            <div className="py-1 text-[13.5px] text-[#b0a890]" style={{ fontFamily: MINCHO }}>
-              今日の予定はまだありません — <span className="text-[#7ba05b]">タップして書く</span>
+      {/* 予定 — 予定が入っている日だけをスワイプ/矢印で前後に渡れる */}
+      {(() => {
+        const plans = dayPlans[viewKey] ?? [];
+        const prevKey = [...planKeys].reverse().find((k) => k < viewKey) ?? null;
+        const nextKey = planKeys.find((k) => k > viewKey) ?? null;
+        const shortD = (k: string) => `${Number(k.split("-")[1])}/${Number(k.split("-")[2])}`;
+        const label = (() => {
+          if (viewKey === tk) return "今日の予定";
+          const [yy, mm, dd] = viewKey.split("-").map(Number);
+          const diff = Math.round((new Date(yy, mm - 1, dd).getTime() - new Date(y, m - 1, d).getTime()) / 86400000);
+          const dw = YOBI[new Date(yy, mm - 1, dd).getDay()];
+          return diff === 1 ? "明日の予定" : diff === -1 ? "昨日の予定" : `${mm}/${dd}（${dw}）の予定`;
+        })();
+        const openView = () => {
+          if (Math.abs(planDragX) > 8) return; // スワイプ後の誤タップ防止
+          if (viewKey === tk) openToday();
+          else window.dispatchEvent(new CustomEvent("onesea:openDay", { detail: viewKey }));
+        };
+        const go = (k: string | null) => {
+          if (k) setViewKey(k);
+          setPlanDragX(0);
+        };
+        return (
+          <div
+            className="relative mx-5 mt-3 overflow-hidden rounded-2xl"
+            style={{ background: "#faf7f0", border: "1px solid #eee6d4" }}
+            onTouchStart={(e) => {
+              planTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: false, dir: null };
+            }}
+            onTouchMove={(e) => {
+              const t = planTouch.current;
+              if (!t) return;
+              const dx = e.touches[0].clientX - t.x;
+              const dy = e.touches[0].clientY - t.y;
+              if (!t.locked) {
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                  t.locked = true;
+                  t.dir = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+                }
+                return;
+              }
+              if (t.dir === "h") setPlanDragX(Math.max(-90, Math.min(90, dx * 0.6)));
+            }}
+            onTouchEnd={() => {
+              const dx = planDragX;
+              planTouch.current = null;
+              if (dx < -34 && nextKey) go(nextKey); // 左へ払う = 次に予定がある日
+              else if (dx > 34 && prevKey) go(prevKey); // 右へ払う = 前に予定がある日
+              else setPlanDragX(0);
+            }}
+          >
+            {/* 見出し: ‹ 前の日付 ── ラベル ── 次の日付 › で「渡れる」ことを見せる */}
+            <div className="flex items-center justify-between px-2.5 pt-2.5">
+              <button
+                onClick={() => go(prevKey)}
+                disabled={!prevKey}
+                className="num flex items-center gap-0.5 rounded-full px-2 py-1 text-[11px] font-bold disabled:opacity-25"
+                style={{ color: "#7ba05b" }}
+                aria-label="前の予定日へ"
+              >
+                ‹ {prevKey ? shortD(prevKey) : "前"}
+              </button>
+              <span className="text-[10px] font-bold tracking-[3px] text-[#7ba05b]">{label}</span>
+              <button
+                onClick={() => go(nextKey)}
+                disabled={!nextKey}
+                className="num flex items-center gap-0.5 rounded-full px-2 py-1 text-[11px] font-bold disabled:opacity-25"
+                style={{ color: "#7ba05b" }}
+                aria-label="次の予定日へ"
+              >
+                {nextKey ? shortD(nextKey) : "次"} ›
+              </button>
             </div>
-          )}
-        </div>
-      </button>
+            <button
+              onClick={openView}
+              className="block w-full px-4 pb-3 pt-1 text-left"
+              style={{
+                transform: `translateX(${planDragX}px)`,
+                opacity: 1 - Math.abs(planDragX) / 220,
+                transition: planTouch.current ? "none" : "transform .18s ease, opacity .18s ease",
+              }}
+            >
+              <div className="space-y-2">
+                {plans.length ? (
+                  plans.map((p, i) => (
+                    <div key={i} className="flex items-baseline gap-2.5">
+                      <span className="num flex-shrink-0 text-[12px] text-[#a09880]">{p.time}</span>
+                      {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
+                      <span className="truncate text-[15px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
+                        {p.text}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-1 text-[13.5px] text-[#b0a890]" style={{ fontFamily: MINCHO }}>
+                    今日の予定はまだありません — <span className="text-[#7ba05b]">タップして書く</span>
+                  </div>
+                )}
+              </div>
+              {(prevKey || nextKey) && (
+                <div className="mt-2 text-center text-[9px] tracking-[1px] text-[#c8c0ac]">
+                  ‹ スワイプで予定のある日だけを渡れます ›
+                </div>
+              )}
+            </button>
+          </div>
+        );
+      })()}
 
       {/* 潮と月 */}
       <div className="mx-5 mb-4 mt-3 grid grid-cols-2 gap-3">

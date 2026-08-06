@@ -139,7 +139,22 @@ export function InoriTecho() {
       setSheetKey(todayK);
     };
     window.addEventListener("onesea:openToday", f);
-    return () => window.removeEventListener("onesea:openToday", f);
+    // ダッシュボードの予定スワイプから「その日」を直接開く
+    const g = (e: Event) => {
+      const k = (e as CustomEvent).detail;
+      if (typeof k !== "string") return;
+      if (loggedIn.current === false) {
+        setShowSignup(true);
+        return;
+      }
+      setMemos(loadMemos());
+      setSheetKey(k);
+    };
+    window.addEventListener("onesea:openDay", g);
+    return () => {
+      window.removeEventListener("onesea:openToday", f);
+      window.removeEventListener("onesea:openDay", g);
+    };
   }, [todayK]);
 
   const saveEvents = (k: string, evs: TechoEv[]) => {
