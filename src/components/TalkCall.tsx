@@ -236,6 +236,16 @@ export function TalkCall({
     })();
     return () => {
       disposed = true;
+      // 「通話を終える」を押さずに離脱（ルート遷移・戻る）してもカメラとRealtimeを確実に後始末
+      pcRef.current?.close();
+      pcRef.current = null;
+      localStream.current?.getTracks().forEach((t) => t.stop());
+      localStream.current = null;
+      if (chRef.current) {
+        const supabase = createClient();
+        supabase.removeChannel(chRef.current);
+        chRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, me.id]);

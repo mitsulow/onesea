@@ -17,7 +17,7 @@ import {
   SHISHI_COLOR,
 } from "@/lib/almanac";
 import { TideDay, fetchTideDay } from "@/lib/tide";
-import { fetchUnreadTotal } from "@/lib/line";
+import { subscribeUnread } from "@/lib/unreadStore";
 import { AvatarMenu } from "@/components/AvatarMenu";
 
 /* eslint-disable @next/next/no-img-element */
@@ -451,19 +451,16 @@ export function ServiceDock() {
 
   useEffect(() => {
     let stop = false;
+    let unsub: (() => void) | null = null;
     const supabase = createClient();
-    const run = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       const uid = session?.user?.id;
       if (!uid || stop) return;
-      const n = await fetchUnreadTotal(uid);
-      if (!stop) setUnread(n);
-    };
-    run();
-    const t = setInterval(run, 30000);
+      unsub = subscribeUnread(uid, setUnread); // 共有ポーラー（1タブ1本）
+    });
     return () => {
       stop = true;
-      clearInterval(t);
+      unsub?.();
     };
   }, []);
 

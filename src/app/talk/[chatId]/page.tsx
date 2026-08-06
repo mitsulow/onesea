@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { MessageRow, fetchMessages, sendMessage, markRead } from "@/lib/line";
+import { MessageRow, fetchMessages, fetchMessagesSince, sendMessage, markRead } from "@/lib/line";
 import type { CotozuteProfile } from "@/lib/cotozute";
 import { TalkCall, peekCall } from "@/components/TalkCall";
 
@@ -45,9 +45,27 @@ export default function ChatPage() {
     }
   };
 
+  const cursorRef = useRef<string | null>(null);
+  const tickRef = useRef(0);
+
+  // 初回・6回に1回は全件（既読の反映用）、それ以外は新着だけ増分取得
   const load = useCallback(async () => {
-    const list = await fetchMessages(chatId);
-    setMessages(list);
+    const full = cursorRef.current === null || tickRef.current % 6 === 0;
+    tickRef.current++;
+    if (full) {
+      const list = await fetchMessages(chatId);
+      setMessages(list);
+      if (list.length) cursorRef.current = list[list.length - 1].created_at;
+    } else {
+      const fresh = await fetchMessagesSince(chatId, cursorRef.current!);
+      if (fresh.length) {
+        cursorRef.current = fresh[fresh.length - 1].created_at;
+        setMessages((prev) => {
+          const seen = new Set(prev.map((m) => m.id));
+          return [...prev, ...fresh.filter((m) => !seen.has(m.id))];
+        });
+      }
+    }
     if (meRef.current) markRead(chatId, meRef.current.id);
   }, [chatId]);
 

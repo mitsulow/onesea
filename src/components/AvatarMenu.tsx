@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { fetchUnreadTotal } from "@/lib/line";
+import { subscribeUnread } from "@/lib/unreadStore";
 import { setBadge, ensureSw } from "@/lib/push";
 import { fetchWarawaMissing } from "@/lib/warawa";
 
@@ -35,41 +35,33 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
     const supabase = createClient();
     let stop = false;
     let userId: string | null = null;
+    let unsub: (() => void) | null = null;
 
     ensureSw();
-
-    const refresh = async () => {
-      if (stop || !userId) return;
-      const n = await fetchUnreadTotal(userId);
-      if (!stop) {
-        setUnread(n);
-        setBadge(n);
-      }
-    };
 
     const refreshMissing = () => {
       if (userId) fetchWarawaMissing(userId).then((m) => setWaraMissing(m.missing.length));
     };
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (stop) return;
       setUser(session?.user ?? null);
       userId = session?.user?.id ?? null;
-      refresh();
       refreshMissing();
-      // マイページで変えた写真（profiles.avatar_url）を優先表示
+      // 未読は共有ポーラー（1タブ1本・非表示中は止まる）から受け取る
       if (userId) {
+        unsub = subscribeUnread(userId, (n) => {
+          setUnread(n);
+          setBadge(n);
+        });
+        // マイページで変えた写真（profiles.avatar_url）を優先表示
         const { data: prof } = await supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle();
         if (prof?.avatar_url) setProfileAvatar(prof.avatar_url);
       }
     });
     window.addEventListener("onesea:warawaMissingRefresh", refreshMissing);
-    const t = setInterval(refresh, 30000);
-    window.addEventListener("focus", refresh);
-    window.addEventListener("onesea:unreadRefresh", refresh);
     return () => {
       stop = true;
-      clearInterval(t);
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("onesea:unreadRefresh", refresh);
+      unsub?.();
       window.removeEventListener("onesea:warawaMissingRefresh", refreshMissing);
     };
   }, []);

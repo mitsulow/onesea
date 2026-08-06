@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { fetchUnreadTotal } from "@/lib/line";
+import { subscribeUnread } from "@/lib/unreadStore";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -140,23 +140,18 @@ export function BottomNav() {
 
   useEffect(() => {
     let stop = false;
+    let unsub: (() => void) | null = null;
     const supabase = createClient();
-    const run = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    supabase.auth.getSession().then(({ data: { session } }) => {
       const uid = session?.user?.id;
       if (!uid || stop) return;
-      const n = await fetchUnreadTotal(uid);
-      if (!stop) setUnread(n);
-    };
-    run();
-    const t = setInterval(run, 30000);
-    window.addEventListener("onesea:unreadRefresh", run);
+      unsub = subscribeUnread(uid, setUnread); // 共有ポーラー（1タブ1本）
+    });
     return () => {
       stop = true;
-      clearInterval(t);
-      window.removeEventListener("onesea:unreadRefresh", run);
+      unsub?.();
     };
-  }, [pathname]);
+  }, []);
 
   useEffect(() => setMenu(false), [pathname]);
 

@@ -112,6 +112,19 @@ export async function fetchMessages(chatId: string): Promise<MessageRow[]> {
   return (data as MessageRow[]) ?? [];
 }
 
+/** cursor(=最後に受け取ったcreated_at)より後の新着だけを取る（5秒ポーリングの転送量を圧縮） */
+export async function fetchMessagesSince(chatId: string, sinceIso: string): Promise<MessageRow[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("messages")
+    .select("id, chat_id, sender_id, body, read_at, created_at")
+    .eq("chat_id", chatId)
+    .gt("created_at", sinceIso)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  return (data as MessageRow[]) ?? [];
+}
+
 export async function sendMessage(chatId: string, myId: string, body: string) {
   const supabase = createClient();
   const { error } = await supabase.from("messages").insert({ chat_id: chatId, sender_id: myId, body });
