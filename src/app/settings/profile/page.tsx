@@ -37,6 +37,7 @@ export default function ProfileSettingsPage() {
   const [wants, setWants] = useState("");
   const [sns, setSns] = useState<Record<string, string>>({});
   const [birthday, setBirthday] = useState("");
+  const [birthTime, setBirthTime] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -65,6 +66,18 @@ export default function ProfileSettingsPage() {
         setWants((data.wants_to_do ?? []).join("、"));
         setSns((data.sns as Record<string, string>) ?? {});
         setBirthday((data.birthday as string) ?? "");
+      }
+      // 誕生日・誕生時刻は private_profiles（登録フォームやツキヨガが使う）から吸い上げる。
+      // いきなり課金で登録フォームを経ていない人も、ここで見えて直せる。
+      const { data: priv } = await supabase
+        .from("private_profiles")
+        .select("birth_date, birth_time")
+        .eq("user_id", u.id)
+        .maybeSingle();
+      if (priv?.birth_date && !data?.birthday) setBirthday(priv.birth_date as string);
+      if (priv?.birth_time) {
+        const t = String(priv.birth_time).slice(0, 5);
+        if (t !== "15:00") setBirthTime(t); // 既定の15:00は「未入力」として空欄扱い
       }
     });
   }, []);
@@ -98,9 +111,13 @@ export default function ProfileSettingsPage() {
         birthday: birthday || null,
       })
       .eq("id", me.id);
-    // 誕生日はツキヨガ等が読む private_profiles にも同期
-    if (birthday) {
-      await supabase.from("private_profiles").upsert({ user_id: me.id, birth_date: birthday });
+    // 誕生日・誕生時刻はツキヨガ月占い等が読む private_profiles にも同期
+    if (birthday || birthTime) {
+      await supabase.from("private_profiles").upsert({
+        user_id: me.id,
+        ...(birthday ? { birth_date: birthday } : {}),
+        birth_time: birthTime || "15:00", // 未入力は15時
+      });
     }
     setSaving(false);
     if (error) {
@@ -169,14 +186,28 @@ export default function ProfileSettingsPage() {
             {field("市町村", city, setCity, "例: 那覇市")}
           </div>
           <div>
-            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生日</label>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
+              生年月日 <span className="font-normal text-[#c0b8a8]">月占いに使います</span>
+            </label>
             <input
               type="date"
               value={birthday}
               onChange={(e) => setBirthday(e.target.value)}
               className="w-full rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] outline-none focus:border-[#c94d3a]"
             />
-            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">名刺の「地球冒険◯日目」（生まれてから何日目）に使われます</p>
+            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">名刺の「地球冒険◯日目」（生まれてから何日目）にも使われます</p>
+          </div>
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
+              誕生時刻 <span className="font-normal text-[#c0b8a8]">月占いに使います・分からなければ空欄でOK</span>
+            </label>
+            <input
+              type="time"
+              value={birthTime}
+              onChange={(e) => setBirthTime(e.target.value)}
+              className="w-full rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] outline-none focus:border-[#c94d3a]"
+            />
+            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">未入力の場合は15時として占います（知らない人が多いので大丈夫）</p>
           </div>
           {field("ライスワーク", riceWork, setRiceWork, "いまの仕事")}
           {field("ライフワーク", lifeWork, setLifeWork, "本当にやりたいこと")}
