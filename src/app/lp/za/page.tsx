@@ -24,6 +24,7 @@ const cfg: LPConfig = {
   ],
   priceMain: "月 4,000円",
   priceSub: "単体プラン（出品・年 48,000円分）",
+  campaignServices: "MMM・ツキヨガ・セカイムラ",
 };
 
 export default function Page() {

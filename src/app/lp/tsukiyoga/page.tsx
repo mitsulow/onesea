@@ -22,6 +22,14 @@ const cfg: LPConfig = {
     { no: "3", title: "トップ講師のZoomレッスン", body: "日本を代表する3名の講師による、少人数の生レッスン。画面ごしでも、その場の呼吸が伝わります。" },
     { no: "4", title: "暦・潮汐と一体の手帳", body: "節分かれつ刻・潮の時刻・月の出入りを、あなたの手帳の上で。ツキヨガはOneSeaの暦と地続きです。" },
   ],
+  stories: [
+    {
+      img: "/tsukiyoga-v7/moon_nasa_round/moon_15.png",
+      kicker: "MOON PHASES",
+      title: "月相ごとに、体をひらく",
+      body: "新月は内へ、満月は外へ。月の満ち欠けに沿って設計されたプログラムで、無理なく心身をととのえます。潮の満ち引き・月の出入りも、あなたの手帳の上に。",
+    },
+  ],
   instructorsHeading: "講師 — 日本トップクラスの3名",
   instructors: [
     { monogram: "壱", role: "月と呼吸の講師", line: "満ち欠けに沿う呼吸法の第一人者" },
@@ -30,6 +38,7 @@ const cfg: LPConfig = {
   ],
   priceMain: "5,500円 / 月",
   priceSub: "単体プラン（年 66,000円分）",
+  campaignServices: "MMM・セカイムラ・楽市楽座",
 };
 
 export default function Page() {
