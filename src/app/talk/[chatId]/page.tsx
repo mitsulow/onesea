@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { MessageRow, fetchMessages, sendMessage, markRead } from "@/lib/line";
 import type { CotozuteProfile } from "@/lib/cotozute";
+import { TalkCall, peekCall } from "@/components/TalkCall";
 
 /** LINE — トーク画面（吹き出し・既読つけ・5秒ポーリング） */
 export default function ChatPage() {
@@ -17,8 +18,32 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<MessageRow[]>([]);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [inCall, setInCall] = useState(false);
+  const [callActive, setCallActive] = useState(0); // 相手が通話ルームにいる人数
   const bottomRef = useRef<HTMLDivElement>(null);
   const meRef = useRef<User | null>(null);
+
+  /* 通話中かどうかを覗く（7秒ごと・自分が通話中は不要） */
+  useEffect(() => {
+    if (inCall) return;
+    let stop = false;
+    const check = () => peekCall(chatId).then((n) => !stop && setCallActive(n));
+    check();
+    const t = setInterval(check, 7000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [chatId, inCall]);
+
+  const startCall = async () => {
+    if (!me) return;
+    setInCall(true);
+    // まだ誰もいなければ「発信」— 相手のTALKに📞メッセージが届く（未読/プッシュ経由）
+    if (callActive === 0) {
+      await sendMessage(chatId, me.id, "📞 ビデオ通話をはじめました — TALKを開いて、上の「参加する」からどうぞ");
+    }
+  };
 
   const load = useCallback(async () => {
     const list = await fetchMessages(chatId);
@@ -101,7 +126,38 @@ export default function ChatPage() {
           ) : (
             <span className="text-[15px] font-bold text-[#f0e6c8]">むらびと</span>
           ))}
+        {me && (
+          <button
+            onClick={startCall}
+            className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-[17px]"
+            style={{ background: "rgba(212,185,106,.18)", border: "1px solid rgba(212,185,106,.5)" }}
+            aria-label="ビデオ通話"
+          >
+            🎥
+          </button>
+        )}
       </header>
+
+      {/* 相手が通話中なら参加バナー */}
+      {!inCall && callActive > 0 && (
+        <button
+          onClick={startCall}
+          className="flex items-center justify-center gap-2 py-2.5 text-[13px] font-extrabold text-white"
+          style={{ background: "linear-gradient(120deg,#2a9a5a,#1e7a46)" }}
+        >
+          📞 ビデオ通話中です — タップして参加する
+        </button>
+      )}
+
+      {/* 通話オーバーレイ */}
+      {inCall && me && (
+        <TalkCall
+          chatId={chatId}
+          me={me}
+          partnerName={partner?.display_name ?? "むらびと"}
+          onClose={() => setInCall(false)}
+        />
+      )}
 
       {/* メッセージ */}
       <div className="flex-1 space-y-2 bg-[#ece5d8] px-3 py-4">
