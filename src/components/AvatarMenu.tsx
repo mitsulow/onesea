@@ -88,20 +88,20 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
     });
   };
 
-  /* 通りすがり（未ログイン）: 金の「はじめる」ピル。
-     登録後は同じ位置がアバターに変わる = 「始まりの場所」が常に右上に1個 */
+  /* 通りすがり（未ログイン）: アバターと同じ大きさの丸に「ゲスト」。
+     登録後は同じ位置が本物のアバターに変わる */
   if (!user) {
     return (
       <span className="relative inline-block">
         <button
           onClick={() => setOpen(true)}
-          className="rounded-full px-4 py-[7px] text-[12.5px] font-extrabold text-[#1a1a24]"
-          style={{
-            background: "linear-gradient(120deg,#f0e6c8,#d4b96a)",
-            boxShadow: "0 2px 10px rgba(212,185,106,.4)",
-          }}
+          aria-label="登録・ログイン"
+          className="flex h-8 w-8 items-center justify-center rounded-full border-2"
+          style={{ borderColor: `${ring}b0`, background: "rgba(255,255,255,.05)" }}
         >
-          はじめる
+          <span className="text-[8px] font-bold leading-none" style={{ color: ring, letterSpacing: 0.5 }}>
+            ゲスト
+          </span>
         </button>
         {open &&
           typeof document !== "undefined" &&
@@ -109,33 +109,19 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <>
               <div className="fixed inset-0 z-[95] bg-black/45" onClick={() => setOpen(false)} />
               <div className="fixed inset-x-0 bottom-0 z-[96] mx-auto max-w-[480px] rounded-t-3xl bg-white px-5 pb-8 pt-5">
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#e0d8c8]" />
-                <div className="mb-4 text-center text-[15px] font-extrabold text-[#3a3428]">
-                  OneSea をはじめる 🌊
-                </div>
+                <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#e0d8c8]" />
                 <button
                   onClick={login}
                   className="mb-2.5 w-full rounded-2xl py-3.5 text-[14.5px] font-extrabold text-white"
                   style={{ background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)" }}
                 >
-                  🌊 無料でOneSea会員になる
+                  OneSeaに登録（無料）
                 </button>
-                <p className="mb-3 text-center text-[10.5px] text-[#a09880]">
-                  Google認証・30秒。手帳と占いが使えるようになります
-                </p>
-                <a
-                  href="/join"
-                  onClick={() => setOpen(false)}
-                  className="mb-2.5 block w-full rounded-2xl py-3.5 text-center text-[14px] font-extrabold text-[#1a1a24] no-underline"
-                  style={{ background: "linear-gradient(120deg,#f0e6c8,#d4b96a)" }}
-                >
-                  🏆 わらわ〜会員とは
-                </a>
                 <button
                   onClick={login}
                   className="w-full rounded-2xl border border-[#e0d8c8] py-3 text-[12.5px] font-bold text-[#8a7a5a]"
                 >
-                  すでに会員の方はログイン
+                  会員の方はログイン
                 </button>
               </div>
             </>,

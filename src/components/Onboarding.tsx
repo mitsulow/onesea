@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { ensureProfile } from "@/lib/cotozute";
 
 /**
  * 無料OneSea会員の初回登録。Google 認証の直後に一度だけ表示。
- * 必須は名前と誕生日だけ（30秒で終わる）。
- * 誕生時刻は未入力なら15:00として保存（占いの経度補正用に出生地の都道府県も任意で）。
- * 携帯・住所・DDP はここでは聞かない（わらわ〜入会時・MMM初回に文脈つきで）。
- * 保存後は「①無料で楽しむ ②わらわ〜へアップグレード」の2択を出す。
+ * 必須は名前と誕生日だけ。誕生日はカレンダーではなく年/月/日の
+ * ホイール選択（年のデフォルト1980 — メイン顧客層。カレンダーで
+ * 月を延々戻す事故を防ぐ）。誕生時刻は未選択なら15:00として保存。
+ * 携帯・住所・DDP はここでは聞かない。
+ * 保存後は「①無料で楽しむ ②わらわ〜へアップグレード」の2択。
  */
 
 const PREFS = [
@@ -23,16 +24,28 @@ const PREFS = [
   "熊本県","大分県","宮崎県","鹿児島県","沖縄県","海外",
 ];
 
+const THIS_YEAR = new Date().getFullYear();
+const YEARS: number[] = [];
+for (let y = THIS_YEAR; y >= 1930; y--) YEARS.push(y);
+
+/** 30分刻みの時刻リスト（誕生時刻の選択肢） */
+const TIMES: string[] = [];
+for (let h = 0; h < 24; h++) for (const m of ["00", "30"]) TIMES.push(`${String(h).padStart(2, "0")}:${m}`);
+
 export function Onboarding({ user, onDone }: { user: User; onDone: () => void }) {
   const meta = user.user_metadata ?? {};
   const [name, setName] = useState((meta.full_name as string) ?? (meta.name as string) ?? "");
-  const [birthDate, setBirthDate] = useState("");
+  const [bYear, setBYear] = useState(1980);
+  const [bMonth, setBMonth] = useState(1);
+  const [bDay, setBDay] = useState(1);
   const [birthTime, setBirthTime] = useState("");
   const [birthPref, setBirthPref] = useState("");
   const [geo, setGeo] = useState<"none" | "asking" | "ok" | "ng">("none");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+
+  const daysInMonth = useMemo(() => new Date(bYear, bMonth, 0).getDate(), [bYear, bMonth]);
 
   const askGeo = () => {
     if (!navigator.geolocation) {
@@ -56,12 +69,14 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
   };
 
   const submit = async () => {
-    if (!name.trim() || !birthDate || saving) return;
+    if (!name.trim() || saving) return;
     setSaving(true);
     setMessage(null);
     const supabase = createClient();
     await ensureProfile(user);
     const now = new Date().toISOString();
+    const day = Math.min(bDay, daysInMonth);
+    const birthDate = `${bYear}-${String(bMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const [r1, r2] = await Promise.all([
       supabase
         .from("profiles")
@@ -70,7 +85,7 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
       supabase.from("private_profiles").upsert({
         user_id: user.id,
         birth_date: birthDate,
-        birth_time: birthTime || "15:00", // 未入力は15時とみなす（正午±3hの安全側・占い用）
+        birth_time: birthTime || "15:00", // 分からない人は15時
         birth_pref: birthPref || null,
         updated_at: now,
       }),
@@ -84,6 +99,9 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
     setDone(true);
   };
 
+  const selCls =
+    "w-full rounded-xl border border-[#e8dcc4] bg-white p-2.5 text-center text-[15px] outline-none focus:border-[#c94d3a]";
+
   /* 保存後: ①無料で楽しむ ②わらわ〜へ の2択 */
   if (done) {
     return (
@@ -91,8 +109,7 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
         className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
         style={{ background: "linear-gradient(170deg,#0e1e2e 0%,#14324a 62%,#1e4a66 100%)" }}
       >
-        <div className="text-[44px]">🌊</div>
-        <h1 className="mt-2 text-[20px] font-extrabold tracking-[3px] text-[#f0e6c8]">
+        <h1 className="text-[20px] font-extrabold tracking-[3px] text-[#f0e6c8]">
           ようこそ、OneSeaへ
         </h1>
         <p className="mt-3 text-[13px] leading-loose text-[#b8ccda]">
@@ -126,14 +143,9 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
       style={{ background: "linear-gradient(170deg,#0e1e2e 0%,#14324a 62%,#1e4a66 100%)" }}
     >
       <div className="mx-auto max-w-[420px]">
-        <h1 className="text-center text-[22px] font-extrabold tracking-[4px] text-[#f0e6c8]">
-          はじめまして 🌊
+        <h1 className="mb-6 text-center text-[22px] font-extrabold tracking-[4px] text-[#f0e6c8]">
+          はじめまして
         </h1>
-        <p className="mb-6 mt-1.5 text-center text-[12.5px] leading-relaxed text-[#9ab8cc]">
-          30秒で終わります。
-          <br />
-          手帳・占い・お知らせに使われます。
-        </p>
 
         <div className="space-y-3.5 rounded-2xl bg-[#fffdf8] p-4">
           <div>
@@ -146,38 +158,55 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
               className="w-full rounded-xl border border-[#e8dcc4] bg-white p-3 text-[15px] outline-none focus:border-[#c94d3a]"
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生日 *</label>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="w-full rounded-xl border border-[#e8dcc4] bg-white p-2.5 text-[14px] outline-none focus:border-[#c94d3a]"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生時刻</label>
-              <input
-                type="time"
-                value={birthTime}
-                onChange={(e) => setBirthTime(e.target.value)}
-                className="w-full rounded-xl border border-[#e8dcc4] bg-white p-2.5 text-[14px] outline-none focus:border-[#c94d3a]"
-              />
+
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生日 *</label>
+            <div className="grid grid-cols-3 gap-2">
+              <select value={bYear} onChange={(e) => setBYear(Number(e.target.value))} className={selCls}>
+                {YEARS.map((y) => (
+                  <option key={y} value={y}>
+                    {y}年
+                  </option>
+                ))}
+              </select>
+              <select value={bMonth} onChange={(e) => setBMonth(Number(e.target.value))} className={selCls}>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>
+                    {m}月
+                  </option>
+                ))}
+              </select>
+              <select
+                value={Math.min(bDay, daysInMonth)}
+                onChange={(e) => setBDay(Number(e.target.value))}
+                className={selCls}
+              >
+                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
+                  <option key={d} value={d}>
+                    {d}日
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          <p className="-mt-2 text-[10.5px] leading-relaxed text-[#b8ae9c]">
-            誕生時刻が分からない人は15時に設定されます（知らない人の方が多いので大丈夫）。
-          </p>
+
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生時刻</label>
+            <select value={birthTime} onChange={(e) => setBirthTime(e.target.value)} className={selCls}>
+              <option value="">分からない人は15時に設定</option>
+              {TIMES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
               生まれた都道府県 <span className="font-normal text-[#c0b8a8]">月占いが正確になります</span>
             </label>
-            <select
-              value={birthPref}
-              onChange={(e) => setBirthPref(e.target.value)}
-              className="w-full rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] outline-none focus:border-[#c94d3a]"
-            >
+            <select value={birthPref} onChange={(e) => setBirthPref(e.target.value)} className={selCls}>
               <option value="">選択しない</option>
               {PREFS.map((p) => (
                 <option key={p} value={p}>
@@ -206,19 +235,17 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
                   ? "📍 現在位置を許可（もう一度試す）"
                   : "📍 現在位置を許可する"}
           </button>
-          <p className="-mt-1.5 text-[10.5px] leading-relaxed text-[#b8ae9c]">
-            シューマン音©を聴くとき地球儀にあなたの光が灯り、手帳に最寄り港の潮汐が出ます。許可しなくても使えます。
-          </p>
+          <p className="-mt-1.5 text-[10.5px] leading-relaxed text-[#b8ae9c]">手帳アプリに使います</p>
 
           {message && <p className="text-[12px] text-[#c05030]">{message}</p>}
 
           <button
             onClick={submit}
-            disabled={!name.trim() || !birthDate || saving}
+            disabled={!name.trim() || saving}
             className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
             style={{ background: "#c94d3a" }}
           >
-            {saving ? "保存中..." : "無料OneSea会員に登録する 🌊"}
+            {saving ? "保存中..." : "OneSeaを使ってみる"}
           </button>
         </div>
       </div>
