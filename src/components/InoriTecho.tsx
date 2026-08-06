@@ -728,7 +728,20 @@ function BottomSheet({
 
 
             {/* 24時間スケジュール */}
-            <div className="mb-1 text-[10.5px] font-bold text-[#999]">📅 スケジュール</div>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-[10.5px] font-bold text-[#999]">📅 スケジュール</span>
+              {/* ＋ 予定を追加 — 開始時刻〜終了時刻を選んで入れる（一般的な手帳アプリと同じ） */}
+              <button
+                onClick={() => {
+                  const nh = Math.min(23, new Date().getHours() + 1);
+                  setEvEdit({ id: "", sh: nh, sm: 0, eh: Math.min(23, nh + 1), em: nh >= 22 ? 59 : 0, text: "", color: "green" });
+                }}
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
+                style={{ background: "#c94d3a" }}
+              >
+                <span className="text-[13px] leading-none">＋</span> 予定を追加
+              </button>
+            </div>
             <div className="mb-4 overflow-hidden rounded-xl border border-[#e4e0d8]">
               {Array.from({ length: 24 }, (_, h) => {
                 const isNode = nodeH === h;
@@ -814,11 +827,11 @@ function BottomSheet({
                           onClick={() =>
                             setEvEdit({ id: "", sh: h, sm: 0, eh: Math.min(23, h + 1), em: h === 23 ? 59 : 0, text: "", color: "green" })
                           }
-                          aria-label="時間を指定して予定を入れる"
-                          className="absolute right-1 top-1/2 z-[3] flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[12px]"
-                          style={{ color: "#c8c2b4" }}
+                          aria-label="この時間から予定を入れる"
+                          className="absolute right-1 top-1/2 z-[3] flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[14px] font-bold"
+                          style={{ color: "#b8b0a0", border: "1px dashed #ddd6c8" }}
                         >
-                          ⏱
+                          ＋
                         </button>
                       )}
                       {isEd ? (
