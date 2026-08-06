@@ -8679,6 +8679,17 @@
     obtained: false
   };
   const NAHA = userLocation;
+  // ★v7.3: OneSea本体が保存済みの現在地(onesea-pos)を起動時に即採用する。
+  // これが無いと「月を探す」の月・惑星・星が全部那覇で計算され、他県ではズレていた。
+  try {
+    const saved = JSON.parse(localStorage.getItem('onesea-pos') || 'null');
+    if (saved && typeof saved.lat === 'number' && typeof saved.lon === 'number') {
+      userLocation.lat = saved.lat;
+      userLocation.lon = saved.lon;
+      userLocation.obtained = true;
+      userLocation.name = '現在地';
+    }
+  } catch (e) {}
 
   const SYNODIC_MONTH = 29.530588853;
   const BASE_NEW_MOON = new Date('2000-01-06T18:14:00Z').getTime();
