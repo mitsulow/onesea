@@ -14,6 +14,7 @@ import { MuraFeedCard, ShopStripCard } from "@/components/FeedCards";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
+import { DragScroll } from "@/components/DragScroll";
 import { srcCdn } from "@/lib/images";
 
 /* eslint-disable @next/next/no-img-element */
@@ -406,7 +407,7 @@ export default function CotozutePage() {
   };
 
   const storiesRow = (
-    <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-2.5">
+    <DragScroll className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 py-2.5">
       {/* 一番左: ストーリーズを作成 */}
       {me && (
         <label className="relative h-[168px] w-[106px] flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border border-[#e4e6e9] bg-white">
@@ -450,7 +451,7 @@ export default function CotozutePage() {
           </span>
         </button>
       ))}
-    </div>
+    </DragScroll>
   );
 
   /* 楽市楽座 横スクロール */
@@ -465,11 +466,11 @@ export default function CotozutePage() {
           すべて見る
         </Link>
       </div>
-      <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+      <DragScroll className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
         {shops.map((sh) => (
           <ShopStripCard key={sh.id} shop={sh} />
         ))}
-      </div>
+      </DragScroll>
     </div>
   );
 
@@ -482,7 +483,7 @@ export default function CotozutePage() {
           すべて見る
         </Link>
       </div>
-      <div className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+      <DragScroll className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
         {events.map((ev) => {
           const d = new Date(ev.event_at);
           const title = String(ev.body ?? "").split("\n")[0];
@@ -513,7 +514,7 @@ export default function CotozutePage() {
             </a>
           );
         })}
-      </div>
+      </DragScroll>
     </div>
   );
 
@@ -792,7 +793,7 @@ export default function CotozutePage() {
             )}
 
             <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
-              <VillagerSuggestions title="✨ おすすめのむらびと" />
+              <VillagerSuggestions title="✨ おすすめのむらびと" variant="list" />
             </div>
           </div>
         </aside>

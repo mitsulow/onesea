@@ -19,9 +19,11 @@ interface Suggestion {
 export function VillagerSuggestions({
   title = "✨ おすすめのむらびと",
   sellersOnly = false,
+  variant = "row",
 }: {
   title?: string;
   sellersOnly?: boolean;
+  variant?: "row" | "list"; // list=縦並び（PCの右レール用・マウスで確実にクリックできる）
 }) {
   const [profiles, setProfiles] = useState<Suggestion[]>([]);
   const [meishi, setMeishi] = useState<string | null>(null);
@@ -59,6 +61,36 @@ export function VillagerSuggestions({
   }, [sellersOnly]);
 
   if (profiles.length === 0) return null;
+
+  // 縦並び（PCの右レール）: マウスで確実に押せる素直なリスト
+  if (variant === "list") {
+    return (
+      <div>
+        {meishi && <MeishiModal username={meishi} onClose={() => setMeishi(null)} />}
+        <p className="mb-1.5 px-1 text-xs font-bold text-[#65676b]">{title}</p>
+        <div className="space-y-0.5">
+          {profiles.slice(0, 6).map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setMeishi(p.username)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-left hover:bg-[#f2f3f5]"
+            >
+              {p.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={srcCdn(p.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[15px]" style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}>🌿</span>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12.5px] font-bold text-[#1c1e21]">{p.display_name ?? "むらびと"}</span>
+                <span className="block truncate text-[10.5px] text-[#a09888]">{p.status_line ?? "よろしくね 🌿"}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

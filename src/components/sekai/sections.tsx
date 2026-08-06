@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ThreeCol } from "@/components/SideRails";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
@@ -178,9 +179,10 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
       <Link href="/lp/sekai" className="block border-b border-[#eee] bg-white py-1.5 text-center text-[11px] font-bold text-[#2a7a38] no-underline">
         セカイムラについて・入会案内 →
       </Link>
-      {/* PCでは読みやすい幅に中央寄せ（横いっぱいに引き伸ばさない）。
-          満月会のテレビ等はこの幅で十分見栄えする。 */}
-      <div className="mx-auto max-w-[720px] space-y-2.5 bg-white">{children}</div>
+      {/* PCは Cotozute と同じ3カラム（全幅・中央フィード・左右レール） */}
+      <ThreeCol centerClassName="space-y-2.5 bg-white lg:rounded-xl lg:border lg:border-[#e4e6e9]">
+        {children}
+      </ThreeCol>
     </main>
   );
 }
