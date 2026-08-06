@@ -9,7 +9,7 @@ import { PostCard } from "./PostCard";
 import { srcCdn } from "@/lib/images";
 
 /**
- * Cotozuteチラ見せ — 最新3件だけ見せて、本体（/cotozute の無限フィード）へ誘う。
+ * Cotozuteチラ見せ — 最新5件だけ見せて、本体（/cotozute の無限フィード）へ誘う。
  * ホームとMMMに置く。
  */
 export function CotozuteTeaser() {
@@ -34,17 +34,18 @@ export function CotozuteTeaser() {
     >
       <Link href="/cotozute" className="no-underline">
         <span
-          className="mb-2 inline-flex items-center gap-2 rounded-full px-5 py-2"
+          className="mb-1.5 inline-flex items-center gap-1.5 rounded-full px-4 py-1.5"
           style={{
-            background: "linear-gradient(120deg,#14b8a0,#0a8a84)",
-            boxShadow: "0 4px 16px rgba(10,186,181,.35)",
+            background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)",
+            boxShadow: "0 4px 14px rgba(44,183,222,.35)",
           }}
         >
-          <span className="relative text-[15px] leading-none text-white">
+          <span className="relative text-[14px] leading-none text-white">
             ✦<span className="absolute -right-1.5 -top-1 text-[8px]">✦</span>
           </span>
-          <span className="text-[18px] font-extrabold tracking-tight text-white">CotoZute</span>
-          <span className="text-[17px] font-extrabold text-white">→</span>
+          <span className="text-[17px] font-extrabold tracking-tight text-white">
+            CotoZute<span className="ml-0.5">→</span>
+          </span>
         </span>
       </Link>
       {/* 入力ボックス（タップでコトヅテの投稿画面へ） */}
@@ -70,10 +71,10 @@ export function CotozuteTeaser() {
       )}
       <Link
         href="/cotozute"
-        className="mt-2.5 block w-full rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline shadow-sm"
-        style={{ background: "linear-gradient(135deg,#d4603a,#c94d3a)" }}
+        className="mt-2 block w-full rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline shadow-sm"
+        style={{ background: "linear-gradient(135deg,#2CB7DE,#1B8FB5)" }}
       >
-        続きを見る →
+        もっとCotozuteを見る →
       </Link>
     </section>
   );

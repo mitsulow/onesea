@@ -1,13 +1,12 @@
 "use client";
 
-import { AvatarMenu } from "./AvatarMenu";
-
-/** ヒーロー: 中央にOneSeaロゴ、右上アバター=全サービスメニュー */
+/** ヒーロー: 中央にOneSeaロゴ（右上アバターは題字ヒーローに移設したのでここでは出さない） */
 export function HeaderBar() {
   return (
     <header
       className="relative z-[60] flex items-center justify-center px-5 py-2"
-      style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
+      /* 上のServiceDock(星が回るセクション)の下端色 #0a1420 から続けて、境目を消す */
+      style={{ background: "linear-gradient(180deg,#0a1420,#081019)" }}
     >
       <h1
         className="rounded-full border px-4 py-[3px]"
@@ -49,9 +48,6 @@ export function HeaderBar() {
           </span>
         </span>
       </h1>
-      <span className="absolute right-4 top-1/2 -translate-y-1/2">
-        <AvatarMenu />
-      </span>
     </header>
   );
 }

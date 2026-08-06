@@ -26,7 +26,7 @@ export default function Home() {
             <InoriTecho />
           </div>
         </div>
-        <div style={{ background: "#0e1116" }}>
+        <div style={{ background: "#0a1420" }}>
           <ServiceDock />
           <HeaderBar />
         </div>

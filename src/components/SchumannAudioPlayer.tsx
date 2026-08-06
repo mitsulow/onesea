@@ -205,6 +205,17 @@ export function SchumannAudioPlayer() {
     window.dispatchEvent(new CustomEvent("onesea:mm", { detail: { on: playing || program !== null } }));
   }, [playing, program]);
 
+  /* ---- プログラム中はTUNINGを灯し続ける ----
+     瞑想モードは<audio>のシューマン音が終わると「不思議な音」(Web Audio)に移り、
+     <audio>のonEndedでstopBeaconされてしまう。プログラムが続く限り点呼を打ち直し、
+     瞑想／アイディア／シンクロのどれでも「今聞いている人」に確実に+1する。 */
+  useEffect(() => {
+    if (!program || !user) return;
+    sendBeacon();
+    const iv = setInterval(sendBeacon, 30000);
+    return () => clearInterval(iv);
+  }, [program, user, sendBeacon]);
+
   /* ---- Wake Lock（プログラム中は画面を消さない） ---- */
   const wakeOn = useCallback(async () => {
     try {
@@ -257,7 +268,10 @@ export function SchumannAudioPlayer() {
 
   const cancelProgram = useCallback(() => {
     const a = audioRef.current;
-    if (a && !a.paused) a.pause();
+    if (a) {
+      a.muted = false;
+      if (!a.paused) a.pause();
+    }
     endProgram();
   }, [endProgram]);
 
@@ -276,11 +290,19 @@ export function SchumannAudioPlayer() {
     wakeOn();
 
     if (kind === "meditation") {
-      // 開始の鈴は廃止: シューマン音がいきなり始まる
-      setPhase("シューマン音");
+      // 急に音が始まると座る間がないので、押してから約1秒は無音（ミュート再生）で待ち、
+      // 座って目を閉じる時間をつくってからシューマン音を鳴らす。
+      // ※ミュートのまま即 play することで、iOSの「操作内で音声を解錠」も満たす。
+      setPhase("そっと目を閉じて…");
       a.currentTime = 0;
+      a.muted = true;
       a.play().catch(() => {});
+      after(1000, () => {
+        a.muted = false;
+        setPhase("シューマン音");
+      });
     } else {
+      a.muted = false;
       setPhase(kind === "idea" ? "叡智に接続中 — イデアを受け取る" : "ふと、全体に繋がろう");
       a.currentTime = 0;
       a.play().catch(() => {});

@@ -27,7 +27,8 @@ import { srcCdn } from "@/lib/images";
 const PAGE = 20;
 const WINDOW_MAX = 240;
 const TRIM = 80;
-const TIFFANY = "#0abab5";
+// コーポレート水色（OneSea 一番かっこいい水色）。定数名は歴史的経緯で TIFFANY のまま。
+const TIFFANY = "#2CB7DE";
 
 type Liker = { avatar_url: string | null; display_name: string | null };
 
@@ -558,7 +559,7 @@ export default function CotozutePage() {
             {MENU_ITEMS.map((m) => {
               const isHere = m.href === "/cotozute";
               const rowCls = `flex items-center gap-3 border-b border-[#f2f3f5] px-5 py-3 text-[14px] no-underline ${
-                isHere ? "bg-[#e8f7f6] font-bold text-[#0a8a84]" : "font-medium text-[#1c1e21]"
+                isHere ? "bg-[#e5f6fb] font-bold text-[#1B8FB5]" : "font-medium text-[#1c1e21]"
               }`;
               return m.ext ? (
                 <a key={m.href} href={m.href} className={rowCls}>

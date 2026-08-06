@@ -1141,9 +1141,29 @@
     display: none;
   }
   .error-banner.visible { display: block; }
+  /* 右上: 他のサービス(OneSea)へ戻るアバター */
+  .svc-avatar{position:fixed;top:12px;right:12px;z-index:60;width:40px;height:40px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(20,26,38,0.72);border:1.5px solid rgba(140,190,230,0.55);
+    box-shadow:0 2px 10px rgba(0,0,0,0.4);backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);color:#bfe0f2;text-decoration:none;
+    transition:transform .15s,border-color .15s}
+  .svc-avatar:hover{transform:scale(1.06);border-color:#2CB7DE}
+  .svc-avatar svg{width:22px;height:22px}
+  /* F1ドットグラフの期間切替タブ */
+  .dot-tabs{display:flex;gap:8px;padding:0 0.9rem 0.4rem}
+  .dot-tab{font:600 0.82rem/1 "Noto Sans JP",sans-serif;color:#9fb2c8;
+    background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+    border-radius:999px;padding:6px 16px;cursor:pointer;transition:all .15s}
+  .dot-tab:hover{border-color:rgba(44,183,222,0.6)}
+  .dot-tab.active{color:#06121c;background:#2CB7DE;border-color:#2CB7DE}
 </style>
 </head>
 <body>
+
+<a class="svc-avatar" href="/" title="OneSea の他のサービスへ戻る" aria-label="他のサービスへ">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.5-6 8-6s8 2 8 6"/></svg>
+</a>
 
 <!-- ★★ 黒バンド: ロゴ〜地球儀〜今の値〜鼠色グラフまでは宇宙の中 ★★ -->
 <div class="hero-dark">
@@ -1340,6 +1360,18 @@
 
   </details>
 
+  <details class="fold" id="fold-dot" open>
+    <summary>F1の全記録（1日 = 1点）</summary>
+    <div class="graph-description">
+      <p>トムスクの実測から得たF1日平均を、1日1点で打った散布図。2012年からだと点が詰まって見えにくいので、<b>3年間</b>に切り替えると2024年以降の濃ゆい記録が見えます。青緑=8.02Hz目標に近い日、金=7.83基準線。</p>
+    </div>
+    <div class="dot-tabs" id="dot-tabs">
+      <button type="button" class="dot-tab active" data-range="all">全期間</button>
+      <button type="button" class="dot-tab" data-range="3y">3年間</button>
+    </div>
+    <div class="dv-block"><canvas id="dv-dot"></canvas></div>
+  </details>
+
   <details class="fold" id="fold-target">
     <summary>データ一覧（シューマン共振）</summary>
 
@@ -1348,11 +1380,15 @@
     </div>
     <div class="dv-panel">
       <div class="dv-block">
-        <div class="dv-title">直近3週間 <span>1日 = 1本</span></div>
+        <div class="dv-title">一週間 <span>過去7日間・1日 = 1本</span></div>
+        <canvas id="dv-week"></canvas>
+      </div>
+      <div class="dv-block">
+        <div class="dv-title">一カ月 <span>過去30日間・1日 = 1本</span></div>
         <canvas id="dv-recent"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">今年 <span>1月1日から・空きはデータの無い日</span></div>
+        <div class="dv-title">今年 <span>冬至(12月21日)から・空きはデータの無い日</span></div>
         <canvas id="dv-year"></canvas>
       </div>
       <div class="dv-block">
@@ -1376,8 +1412,12 @@
         <canvas id="dv-hist"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">過去の上位データ</div>
+        <div class="dv-title">過去の上位データ <span>日平均での上位・下位</span></div>
         <div id="dv-records" style="padding:0 0.9rem"></div>
+      </div>
+      <div class="dv-block">
+        <div class="dv-title">突発的に出た値 <span>その日の5分値が跳ねた最高・最低（日平均ではない）</span></div>
+        <div id="dv-records-inst" style="padding:0 0.9rem"></div>
       </div>
     </div>
   </details>
@@ -1725,7 +1765,7 @@
   }
 
   // ===== データ一覧（シューマン共振）: 2021年〜の日別実測を多面的に描く =====
-  // データ源: 0Lei history/daily_summary.json（全幅読み取り + Wayback + 2021-23遺産CSV）
+  // データ源: 0Lei history/daily_summary.json（トムスク線グラフ5分読取りの日別平均+lo/hi・全期間）
   //           0Lei history/solar_daily.json（GFZポツダム Ap指数・CC BY 4.0）
   const MMM_START = "2024-03-21";
   let trendDays = null, solarDays = null;
@@ -1832,28 +1872,96 @@
 
   function jstToday() { return new Date(Date.now() + 9 * 3600e3); }
 
+  // F1 全記録の散布図 (1日=1点)。range: "all" | "3y"
+  let dotRange = "all";
+  function drawDotGraph(all) {
+    const g = dvCtx("dv-dot", 0.5);
+    if (!g || !all || !all.length) return;
+    const { ctx, W, H, u, fs } = g;
+    const nowT = jstToday().getTime();
+    const t0 = dotRange === "3y" ? nowT - 3 * 365.25 * 86400e3
+      : Date.parse(all[0].d + "T00:00:00Z");
+    const pts = all.filter(e => Date.parse(e.d + "T00:00:00Z") >= t0);
+    if (!pts.length) return;
+    const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.2, PB = fs * 2.0;
+    const vals = pts.map(e => e.f1);
+    let lo = Math.min.apply(null, vals.concat([BASELINE_HZ])) - 0.05;
+    let hi = Math.max.apply(null, vals.concat([TARGET_HZ])) + 0.05;
+    const t1 = nowT;
+    const X = t => PL + (W - PL - PR) * (t - t0) / Math.max(1, t1 - t0);
+    const Y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
+    // 横グリッド + 縦軸ラベル
+    ctx.font = fs * 0.8 + "px monospace"; ctx.textAlign = "left";
+    for (let v = Math.ceil(lo * 10) / 10; v <= hi; v += 0.1) {
+      ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = u;
+      ctx.beginPath(); ctx.moveTo(PL, Y(v)); ctx.lineTo(W - PR, Y(v)); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillText(v.toFixed(1), fs * 0.3, Y(v) + fs * 0.3);
+    }
+    dvRule(g, Y(BASELINE_HZ), "rgba(240,198,116,0.5)", "7.83", PL, PR);
+    dvRule(g, Y(TARGET_HZ), "rgba(82,250,140,0.85)", "8.02 目標", PL, PR);
+    // 年(または月)の縦ラベル
+    ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = fs * 0.78 + "px monospace"; ctx.textAlign = "center";
+    const y0 = new Date(t0).getUTCFullYear(), y1 = new Date(t1).getUTCFullYear();
+    if (dotRange === "3y") {
+      for (let t = new Date(Date.UTC(y0, new Date(t0).getUTCMonth(), 1)).getTime(); t <= t1; ) {
+        const dt = new Date(t); const x = X(t);
+        if (x >= PL && x <= W - PR) ctx.fillText((dt.getUTCMonth() + 1) + "月", x, H - fs * 0.5);
+        t = Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth() + 3, 1);
+      }
+    } else {
+      for (let y = y0; y <= y1; y++) {
+        const x = X(Date.UTC(y, 0, 1));
+        if (x >= PL && x <= W - PR) ctx.fillText(String(y), x, H - fs * 0.5);
+      }
+    }
+    // 点
+    const r = dotRange === "3y" ? 1.7 * u : 1.1 * u;
+    pts.forEach(e => {
+      const k = Math.max(0, Math.min(1, (e.f1 - 7.45) / (TARGET_HZ - 7.45)));
+      const c1 = [130, 150, 210], c2 = [53, 224, 184], c3 = [255, 214, 106];
+      const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+      const c = k < 0.6 ? mix(c1, c2, k / 0.6) : mix(c2, c3, (k - 0.6) / 0.4);
+      ctx.fillStyle = "rgba(" + c.join(",") + ",0.72)";
+      ctx.beginPath(); ctx.arc(X(Date.parse(e.d + "T00:00:00Z")), Y(e.f1), r, 0, Math.PI * 2); ctx.fill();
+    });
+    // 点数の注記
+    ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = fs * 0.8 + "px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText(pts.length.toLocaleString() + "日", PL + fs * 0.2, PT + fs * 0.6);
+  }
+
   async function drawMonthlyTrend() {
     try {
       const all = await loadTrendDays();
       if (!all.length) return;
       const cnt = document.getElementById("dv-count");
       if (cnt) cnt.textContent = all.length.toLocaleString();
+      drawDotGraph(all);
       const todayY = jstToday().getUTCFullYear();
       const yv = all.filter(e => e.d.startsWith(String(todayY))).map(e => e.f1);
       const yearAvg = yv.length ? yv.reduce((a, b) => a + b, 0) / yv.length : null;
 
-      // ① 直近3週間
-      dvBars("dv-recent", all.slice(-21).map(e => ({
+      // ① 一週間 (過去7日)
+      dvBars("dv-week", all.slice(-7).map(e => ({
         v: e.f1, label: Number(e.d.slice(5, 7)) + "/" + Number(e.d.slice(8, 10)),
-      })).map((b, i, arr) => (i % Math.ceil(arr.length / 7) && i !== arr.length - 1 ? { ...b, label: null } : b)),
+      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true, avg: yearAvg, avgLabel: todayY + "平均" });
+
+      // ② 一カ月 (過去30日)
+      dvBars("dv-recent", all.slice(-30).map(e => ({
+        v: e.f1, label: Number(e.d.slice(5, 7)) + "/" + Number(e.d.slice(8, 10)),
+      })).map((b, i, arr) => (i % Math.ceil(arr.length / 8) && i !== arr.length - 1 ? { ...b, label: null } : b)),
         { hRatio: 0.42, hotLast: true, avg: yearAvg, avgLabel: todayY + "平均" });
 
-      // ② 今年
+      // ③ 今年 (冬至=12月21日スタート)
       {
-        const y0 = todayY + "-01-01";
-        const map = {}; all.forEach(e => { if (e.d >= y0) map[e.d] = e.f1; });
+        // 直近の冬至(12/21)を起点にする
+        const tj = jstToday();
+        const solsticeY = (tj.getUTCMonth() > 11 || (tj.getUTCMonth() === 11 && tj.getUTCDate() >= 21))
+          ? tj.getUTCFullYear() : tj.getUTCFullYear() - 1;
+        const start = Date.UTC(solsticeY, 11, 21);
+        const map = {}; all.forEach(e => { map[e.d] = e.f1; });
         const bars = [];
-        for (let t = Date.parse(y0 + "T00:00:00Z"); t <= jstToday().getTime(); t += 86400e3) {
+        for (let t = start; t <= tj.getTime(); t += 86400e3) {
           const d = new Date(t).toISOString().slice(0, 10);
           bars.push({ v: map[d] ?? null, label: d.slice(8, 10) === "01" ? Number(d.slice(5, 7)) + "月" : null });
         }
@@ -2069,6 +2177,30 @@
           sorted.slice(0, 5).map((e, i) => row(e, i, true)).join("") + '</div>' +
           '<div><div style="color:#8ea8e8;font-size:0.78rem;font-weight:700;margin-bottom:4px">低かった日 TOP5</div>' +
           sorted.slice(-5).reverse().map((e, i) => row(e, i, false)).join("") + '</div></div>';
+      }
+    }
+
+    // ⑨ 突発的に出た値 (その日の5分値の最高hi / 最低lo)
+    {
+      const el = document.getElementById("dv-records-inst");
+      if (el) {
+        const fmt = e => { const [yy, mm, dd] = e.d.split("-"); return yy + "年" + Number(mm) + "月" + Number(dd) + "日"; };
+        const row = (e, val, i, gold) =>
+          '<div style="display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.82rem">' +
+          '<span style="color:#8b93a8">' + (i + 1) + '位　<span style="color:#c8cede">' + fmt(e) + '</span></span>' +
+          '<span style="font-family:monospace;color:' + (gold ? '#ffd66a' : '#8ea8e8') + ';font-weight:700">' + val.toFixed(2) + ' Hz</span></div>';
+        const hiDays = all.filter(e => typeof e.hi === "number").sort((a, b) => b.hi - a.hi);
+        const loDays = all.filter(e => typeof e.lo === "number").sort((a, b) => a.lo - b.lo);
+        if (hiDays.length && loDays.length) {
+          el.innerHTML =
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem">' +
+            '<div><div style="color:#ffd66a;font-size:0.78rem;font-weight:700;margin-bottom:4px">瞬間の最高 TOP5</div>' +
+            hiDays.slice(0, 5).map((e, i) => row(e, e.hi, i, true)).join("") + '</div>' +
+            '<div><div style="color:#8ea8e8;font-size:0.78rem;font-weight:700;margin-bottom:4px">瞬間の最低 TOP5</div>' +
+            loDays.slice(0, 5).map((e, i) => row(e, e.lo, i, false)).join("") + '</div></div>';
+        } else {
+          el.innerHTML = '<div style="color:#8b93a8;font-size:0.8rem;padding:4px 0">瞬間値データを集計中…</div>';
+        }
       }
     }
   }
@@ -2929,6 +3061,14 @@
   document.querySelectorAll("details.fold").forEach(d => {
     d.addEventListener("toggle", () => {
       if (d.open) { buildJstOverlays(); drawSparkline(); drawMonthlyTrend(); drawModeGraphs(); }
+    });
+  });
+  // F1ドットグラフの期間切替
+  document.querySelectorAll("#dot-tabs .dot-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      dotRange = btn.dataset.range;
+      document.querySelectorAll("#dot-tabs .dot-tab").forEach(b => b.classList.toggle("active", b === btn));
+      loadTrendDays().then(drawDotGraph);
     });
   });
   drawMonthlyTrend();

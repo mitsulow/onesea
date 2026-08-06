@@ -18,6 +18,7 @@ import {
 } from "@/lib/almanac";
 import { TideDay, fetchTideDay } from "@/lib/tide";
 import { fetchUnreadTotal } from "@/lib/line";
+import { AvatarMenu } from "@/components/AvatarMenu";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -138,10 +139,13 @@ export function HomeDashboard() {
 
   return (
     <section className="bg-white pb-2 text-center" style={{ margin: "0 -16px" }}>
-      {/* 題字 — ここだけ黒帯（「い」を小さくする元のバージョン） */}
-      <div className="py-1.5 text-center" style={{ background: "#0e1116" }}>
+      {/* 題字 — ここだけ黒帯（「い」を小さくする元のバージョン）。右にアバター＝他サービスの入口 */}
+      <div className="relative flex items-center justify-center py-1.5" style={{ background: "#0e1116" }}>
         <span className="text-[15.5px] font-extrabold tracking-[3px] text-[#e8d5a0]">
           願<span style={{ fontSize: "70%" }}>い</span>叶<span style={{ fontSize: "70%" }}>い</span>手帳
+        </span>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2">
+          <AvatarMenu ring="#e8d5a0" />
         </span>
       </div>
 

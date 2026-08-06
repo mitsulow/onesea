@@ -127,7 +127,7 @@ export function PhotoCropper({
             setScale(v);
             setOff((o) => clampOff(o.x, o.y));
           }}
-          className="flex-1 accent-[#0abab5]"
+          className="flex-1 accent-[#2CB7DE]"
           aria-label="ズーム"
         />
       </div>
@@ -139,7 +139,7 @@ export function PhotoCropper({
         <button
           onClick={done}
           className="flex-1 rounded-xl py-2.5 text-[14px] font-extrabold text-white"
-          style={{ background: "#0abab5" }}
+          style={{ background: "#2CB7DE" }}
         >
           この位置で決定
         </button>
