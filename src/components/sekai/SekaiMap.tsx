@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PREF_COORDS } from "@/lib/sekai";
 import type { Village } from "@/lib/sekai";
+import { fetchRecoShops, recoCat } from "@/lib/recoShops";
 
 /**
  * 村の地図 — 拠点 + 村人おすすめ（旅先でも美味しい自然なお店）。
@@ -24,6 +25,12 @@ const CAT_COLOR: Record<string, string> = {
 const FILTERS = [
   ["all", "すべて"],
   ["base", "⛺ 拠点"],
+  // 村人の「私のおススメの店」（マイページから集計・4セグメント）
+  ["reco_alt_med", "🌿 代替医療"],
+  ["reco_natural_restaurant", "🍽 ナチュラルなレストラン"],
+  ["reco_natural_food", "🌾 自然食品"],
+  ["reco_massage", "💆 マッサージ・鍼灸"],
+  // 旧・村人おすすめ（楽市楽座の113件）
   ["natural_food", "🌾 たべもの"],
   ["natural_therapy", "💆 いやし"],
   ["natural_goods", "🧺 もの"],
@@ -105,6 +112,28 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
       } catch {
         setCount(`拠点 ${villages.length}`);
       }
+
+      // 村人みんなの「私のおススメの店」（マイページの地図から集計）
+      try {
+        const shops = await fetchRecoShops();
+        if (disposed) return;
+        for (const s of shops) {
+          const c = recoCat(s.category);
+          const mk = L.marker([s.lat, s.lng], {
+            icon: L.divIcon({
+              className: "",
+              html: `<div style="width:20px;height:20px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${c.color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:10px">${c.emoji}</span></div>`,
+              iconSize: [20, 20],
+              iconAnchor: [10, 20],
+            }),
+          })
+            .addTo(map)
+            .bindPopup(
+              `<b>${s.name}</b><br>${c.emoji} ${c.label}${s.comment ? `<br><span style="color:#888">${s.comment}</span>` : ""}`
+            );
+          layersRef.current.push({ cat: `reco_${s.category}`, mk });
+        }
+      } catch {}
     })();
     return () => {
       disposed = true;

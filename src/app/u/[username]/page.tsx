@@ -18,6 +18,7 @@ import { srcCdn } from "@/lib/images";
 import { isWarawaUntil } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
 import { PremiumSetupCard } from "@/components/PremiumSetupCard";
+import { MyRecoMap } from "@/components/MyRecoMap";
 
 interface FullProfile {
   id: string;
@@ -560,6 +561,11 @@ export default function UserPage() {
           </div>
         </div>
       )}
+
+      {/* 私のおススメの店 — 地図（全員分はセカイムラのおススメマップに集計される） */}
+      <div className="px-4">
+        <MyRecoMap userId={profile.id} isMe={isMe} />
+      </div>
 
       {/* わたしのおススメ（好きな農家さんのお米など外部リンク紹介） */}
       {(recos.length > 0 || isMe) && (

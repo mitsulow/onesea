@@ -46,6 +46,7 @@ export function SchumannAudioPlayer() {
 
   const [user, setUser] = useState<User | null>(null);
   const [warawa, setWarawa] = useState(false); // わらわ〜会員=フル再生・プログラム解禁
+  const previewDoneRef = useRef(false); // 無料試聴15秒を使い切ったか（ページ再読込までロック）
   const [src, setSrc] = useState<string | null>(null);
   const [dl, setDl] = useState<"loading" | "cached" | "stream">("loading");
   const [playing, setPlaying] = useState(false);
@@ -167,6 +168,14 @@ export function SchumannAudioPlayer() {
 
   const onPlayStarted = useCallback(async () => {
     if (suppressRef.current) return;
+    // ゲスト・無料会員: 15秒ぶんだけ試聴。使い切った後は再生ボタンを押しても始まらない
+    // （時限タイマー式だと閉じて押し直すたび15秒ずつ聴けてしまうバグがあったため、
+    //   再生位置ベースのハードキャップに変更。超過検知は onTimeUpdate 側）
+    if (!warawa && previewDoneRef.current) {
+      audioRef.current?.pause();
+      setShowUpgrade(true);
+      return;
+    }
     setPlaying(true);
     if (!posRef.current && navigator.geolocation) {
       posRef.current = await new Promise((resolve) => {
@@ -179,15 +188,6 @@ export function SchumannAudioPlayer() {
     }
     sendBeacon();
     if (!heartbeatRef.current) heartbeatRef.current = setInterval(sendBeacon, 30000);
-    if (!warawa) {
-      // ゲスト・無料会員: 15秒だけ聴けて、プレミアム案内
-      if (previewRef.current) clearTimeout(previewRef.current);
-      previewRef.current = window.setTimeout(() => {
-        const a = audioRef.current;
-        if (a && !a.paused) a.pause();
-        setShowUpgrade(true);
-      }, 15000);
-    }
     if (user && !countedRef.current) {
       countedRef.current = true;
       const supabase = createClient();
@@ -794,7 +794,16 @@ export function SchumannAudioPlayer() {
         onPlay={onPlayStarted}
         onPause={onStopped}
         onEnded={onEnded}
-        onTimeUpdate={(e) => setCur((e.target as HTMLAudioElement).currentTime)}
+        onTimeUpdate={(e) => {
+          const a = e.target as HTMLAudioElement;
+          setCur(a.currentTime);
+          // 無料試聴のハードキャップ: 再生位置15秒で必ず止まる（巻き戻しての聴き直しは可・先へは進めない）
+          if (!warawa && a.currentTime >= 15 && !a.paused) {
+            previewDoneRef.current = true;
+            a.pause();
+            setShowUpgrade(true);
+          }
+        }}
         onLoadedMetadata={(e) => setDur((e.target as HTMLAudioElement).duration)}
       />
     </section>
