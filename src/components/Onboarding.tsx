@@ -28,9 +28,6 @@ const THIS_YEAR = new Date().getFullYear();
 const YEARS: number[] = [];
 for (let y = THIS_YEAR; y >= 1930; y--) YEARS.push(y);
 
-/** 30分刻みの時刻リスト（誕生時刻の選択肢） */
-const TIMES: string[] = [];
-for (let h = 0; h < 24; h++) for (const m of ["00", "30"]) TIMES.push(`${String(h).padStart(2, "0")}:${m}`);
 
 export function Onboarding({ user, onDone }: { user: User; onDone: () => void }) {
   const meta = user.user_metadata ?? {};
@@ -38,8 +35,10 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
   const [bYear, setBYear] = useState(1980);
   const [bMonth, setBMonth] = useState(1);
   const [bDay, setBDay] = useState(1);
-  const [birthTime, setBirthTime] = useState("");
+  const [bHour, setBHour] = useState(""); // "" = 分からない（15時扱い）
+  const [bMin, setBMin] = useState(0);
   const [birthPref, setBirthPref] = useState("");
+  const [birthCity, setBirthCity] = useState("");
   const [geo, setGeo] = useState<"none" | "asking" | "ok" | "ng">("none");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -85,8 +84,10 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
       supabase.from("private_profiles").upsert({
         user_id: user.id,
         birth_date: birthDate,
-        birth_time: birthTime || "15:00", // 分からない人は15時
+        // 分からない人は15時。時を選んだら分まで保存
+        birth_time: bHour === "" ? "15:00" : `${bHour.padStart(2, "0")}:${String(bMin).padStart(2, "0")}`,
         birth_pref: birthPref || null,
+        birth_city: birthCity.trim() || null,
         updated_at: now,
       }),
     ]);
@@ -192,28 +193,51 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
 
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">誕生時刻</label>
-            <select value={birthTime} onChange={(e) => setBirthTime(e.target.value)} className={selCls}>
-              <option value="">分からない人は15時に設定</option>
-              {TIMES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={bHour}
+                onChange={(e) => setBHour(e.target.value)}
+                className={selCls + (bHour === "" ? " flex-[2]" : " flex-1")}
+              >
+                <option value="">分からない人は15時に設定</option>
+                {Array.from({ length: 24 }, (_, h) => (
+                  <option key={h} value={String(h)}>
+                    {h}時
+                  </option>
+                ))}
+              </select>
+              {bHour !== "" && (
+                <select value={bMin} onChange={(e) => setBMin(Number(e.target.value))} className={selCls + " flex-1"}>
+                  {Array.from({ length: 60 }, (_, m) => (
+                    <option key={m} value={m}>
+                      {m}分
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
 
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
-              生まれた都道府県 <span className="font-normal text-[#c0b8a8]">月占いが正確になります</span>
+              生まれた場所 <span className="font-normal text-[#c0b8a8]">月占いが正確になります</span>
             </label>
-            <select value={birthPref} onChange={(e) => setBirthPref(e.target.value)} className={selCls}>
-              <option value="">選択しない</option>
-              {PREFS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-2">
+              <select value={birthPref} onChange={(e) => setBirthPref(e.target.value)} className={selCls}>
+                <option value="">選択しない</option>
+                {PREFS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <input
+                value={birthCity}
+                onChange={(e) => setBirthCity(e.target.value)}
+                placeholder="市町村（例: 那覇市）"
+                className="w-full rounded-xl border border-[#e8dcc4] bg-white p-2.5 text-[14px] outline-none focus:border-[#c94d3a]"
+              />
+            </div>
           </div>
 
           {/* 位置情報はここでまとめて許可 */}
