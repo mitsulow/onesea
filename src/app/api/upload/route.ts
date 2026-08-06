@@ -26,8 +26,13 @@ export async function POST(req: NextRequest) {
   if (file.size > MAX) return NextResponse.json({ error: "too large" }, { status: 413 });
   if (!/^[a-z0-9-]+$/.test(folder)) return NextResponse.json({ error: "bad folder" }, { status: 400 });
 
+  // 画像タイプ以外は拒否: 公開r2.devにHTML等を置かせない（フィッシングホスティング防止）
+  const ALLOWED: Record<string, string> = {
+    "image/webp": "webp", "image/png": "png", "image/jpeg": "jpg", "image/gif": "gif", "image/avif": "avif",
+  };
   const type = file.type || "image/webp";
-  const ext = type.includes("png") ? "png" : type.includes("jpeg") ? "jpg" : "webp";
+  const ext = ALLOWED[type];
+  if (!ext) return NextResponse.json({ error: "images only" }, { status: 415 });
   // ユーザーIDで名前空間を切り、衝突しないキーに（時刻+乱数はクライアント任せにせずここで）
   const rand = crypto.randomUUID().slice(0, 8);
   const key = `${folder}/${user.id}/${Date.now()}-${rand}.${ext}`;
