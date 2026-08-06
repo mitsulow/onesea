@@ -77,13 +77,13 @@ const SERVICES: Service[] = [
     ],
   },
   {
-    match: (p) => p.startsWith("/line"),
-    home: "/line",
+    match: (p) => p.startsWith("/talk"),
+    home: "/talk",
     bg: "linear-gradient(160deg,#0e1e2ef5,#17384ef5)",
     border: "#274a63",
     active: "#f0e6c8",
     inactive: "#7a9ab4",
-    tabs: [{ href: "/line/broadcast", icon: "📢", label: "お知らせ" }],
+    tabs: [{ href: "/talk/broadcast", icon: "📢", label: "お知らせ" }],
   },
   {
     match: (p) => p.startsWith("/za"),
@@ -119,7 +119,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "📖", label: "手帳", ext: true },
   { href: "/my", icon: "🪪", label: "マイページ編集" },
-  { href: "/line", icon: "💬", label: "TALK", talk: true },
+  { href: "/talk", icon: "💬", label: "TALK", talk: true },
 ];
 
 function TabIcon({ icon, active }: { icon: string; active: boolean }) {
@@ -211,7 +211,7 @@ export function BottomNav() {
       {menu && <div className="fixed inset-0 z-40 bg-black/35" onClick={() => setMenu(false)} />}
       {menu && (
         <div
-          className="fixed left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 px-3"
+          className="fixed left-1/2 z-50 w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] -translate-x-1/2 px-3"
           style={{ bottom: "calc(env(safe-area-inset-bottom) + 62px)" }}
         >
           <div
@@ -284,7 +284,7 @@ export function BottomNav() {
       )}
 
       <nav
-        className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 border-t"
+        className="fixed bottom-0 left-1/2 z-50 w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] -translate-x-1/2 border-t"
         style={{ background: svc.bg, borderColor: svc.border, backdropFilter: "blur(6px)", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex h-[54px] items-center justify-around">

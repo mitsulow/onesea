@@ -232,7 +232,7 @@ export default function VillagePage() {
             <button
               onClick={async () => {
                 const chatId = await getOrCreateChat(me.id, village.created_by);
-                if (chatId) router.push(`/line/${chatId}`);
+                if (chatId) router.push(`/talk/${chatId}`);
               }}
               className="rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]"
             >
@@ -258,7 +258,7 @@ export default function VillagePage() {
                   me.id,
                   `🏛 公式拠点の申請\n「${village.name}」（${village.prefecture}）をセカイムラ公式拠点として申請します。よろしくお願いします。`
                 );
-                router.push(`/line/${chatId}`);
+                router.push(`/talk/${chatId}`);
               }
             }}
             className="mx-auto mt-3 block rounded-xl border px-5 py-2.5 text-[12.5px] font-extrabold"

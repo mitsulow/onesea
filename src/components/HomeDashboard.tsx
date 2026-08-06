@@ -398,7 +398,7 @@ export function ServiceDock() {
     { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
     { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
     { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
-    { href: "/line", icon: "💬", label: "TALK", talk: true },
+    { href: "/talk", icon: "💬", label: "TALK", talk: true },
   ];
 
   const go = (m: (typeof ITEMS)[number]) => {

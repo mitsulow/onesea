@@ -436,7 +436,7 @@ export default function UserPage() {
             <button
               onClick={async () => {
                 const chatId = await getOrCreateChat(me.id, profile.id);
-                if (chatId) router.push(`/line/${chatId}`);
+                if (chatId) router.push(`/talk/${chatId}`);
               }}
               className="flex-1 rounded-xl py-3 text-[14px] font-extrabold text-white"
               style={{ background: "#c94d3a" }}

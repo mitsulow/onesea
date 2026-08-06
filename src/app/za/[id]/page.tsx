@@ -57,7 +57,7 @@ export default function ShopDetailPage() {
       if (offerShop) lines.push(`こちらです → https://onesea.vercel.app/za/${offerShop.id}`);
       lines.push("いかがでしょうか？");
       await sendMessage(chatId, me.id, lines.join("\n"));
-      router.push(`/line/${chatId}`);
+      router.push(`/talk/${chatId}`);
     }
     setProposing(false);
   };
@@ -76,7 +76,7 @@ export default function ShopDetailPage() {
     setContacting(true);
     const chatId = await getOrCreateChat(me.id, shop.owner_id);
     setContacting(false);
-    if (chatId) router.push(`/line/${chatId}`);
+    if (chatId) router.push(`/talk/${chatId}`);
   };
 
   const remove = async () => {

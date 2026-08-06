@@ -57,9 +57,12 @@ export default function ChatPage() {
     return () => clearInterval(t);
   }, [load]);
 
-  // 新着で最下部へ
+  // 最下部（最後のメッセージ）へ。初回は瞬間移動 = 開いた瞬間から最新が見える（LINEの秘伝のタレ）
+  const didInitScroll = useRef(false);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0) return;
+    bottomRef.current?.scrollIntoView({ behavior: didInitScroll.current ? "smooth" : "auto", block: "end" });
+    didInitScroll.current = true;
   }, [messages.length]);
 
   const submit = async () => {
@@ -79,7 +82,7 @@ export default function ChatPage() {
         className="sticky top-0 z-40 flex items-center gap-3 px-4 pb-3 pt-3.5"
         style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
       >
-        <Link href="/line" className="text-[15px] font-bold text-[#d4b96a] no-underline">
+        <Link href="/talk" className="text-[15px] font-bold text-[#d4b96a] no-underline">
           ◀
         </Link>
         {partner &&

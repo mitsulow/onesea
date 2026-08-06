@@ -24,7 +24,7 @@ self.addEventListener("push", (event) => {
         icon: "/icon-192.png",
         badge: "/icon-192.png",
         tag: data.tag || "onesea-line",
-        data: { url: data.url || "/line" },
+        data: { url: data.url || "/talk" },
       });
     })()
   );
@@ -32,7 +32,7 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = (event.notification.data && event.notification.data.url) || "/line";
+  const url = (event.notification.data && event.notification.data.url) || "/talk";
   event.waitUntil(
     (async () => {
       const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });

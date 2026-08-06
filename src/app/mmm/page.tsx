@@ -230,7 +230,7 @@ export default function MmmPage() {
             </div>
             <div className="mt-2.5 flex items-center gap-2">
               <Link
-                href={`/line/g/neura/${team.id}`}
+                href={`/talk/g/neura/${team.id}`}
                 className="flex-1 rounded-xl py-2.5 text-center text-[13px] font-extrabold text-[#101a28] no-underline"
                 style={{ background: "linear-gradient(135deg,#b8c8ff,#8a9af0)" }}
               >

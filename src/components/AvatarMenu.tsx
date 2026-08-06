@@ -116,7 +116,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
           createPortal(
             <>
               <div className="fixed inset-0 z-[95] bg-black/45" onClick={() => setOpen(false)} />
-              <div className="fixed inset-x-0 bottom-0 z-[96] mx-auto max-w-[480px] rounded-t-3xl bg-white px-5 pb-8 pt-5">
+              <div className="fixed inset-x-0 bottom-0 z-[96] mx-auto max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] rounded-t-3xl bg-white px-5 pb-8 pt-5">
                 <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#e0d8c8]" />
                 <button
                   onClick={login}
@@ -219,7 +219,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
                 </span>
               )}
             </Link>
-            <Link href="/line" onClick={() => setOpen(false)} className={item + hereCls("/line")}>
+            <Link href="/talk" onClick={() => setOpen(false)} className={item + hereCls("/talk")}>
               <span className="w-[20px] text-center text-[16px]">💬</span> TALK
               {unread > 0 && (
                 <span

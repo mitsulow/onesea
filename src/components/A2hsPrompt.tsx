@@ -69,7 +69,7 @@ export function A2hsPrompt() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[120] mx-auto max-w-[480px] px-3 pb-[70px]">
+    <div className="fixed inset-x-0 bottom-0 z-[120] mx-auto max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] px-3 pb-[70px]">
       <div
         className="rounded-2xl border p-4"
         style={{

@@ -45,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <div className="mx-auto min-h-screen max-w-[480px] bg-washi pb-14">
+        <div className="mx-auto min-h-screen max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] bg-washi pb-14">
           <PullToReload />
           {children}
           <BottomNav />

@@ -67,7 +67,7 @@ export default function BroadcastPage() {
         className="sticky top-0 z-40 flex items-center gap-3 px-4 pb-3 pt-3.5"
         style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
       >
-        <Link href="/line" className="text-[15px] font-bold text-[#d4b96a] no-underline">
+        <Link href="/talk" className="text-[15px] font-bold text-[#d4b96a] no-underline">
           ◀
         </Link>
         <span className="text-[20px]">📢</span>

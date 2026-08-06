@@ -588,13 +588,13 @@ function BottomSheet({
 
   return (
     <>
-      <div onClick={onClose} className="fixed inset-0 z-40 mx-auto max-w-[480px]" style={{ background: "rgba(20,16,10,0.28)" }} />
+      <div onClick={onClose} className="fixed inset-0 z-40 mx-auto max-w-[480px] md:max-w-[820px] lg:max-w-[1080px]" style={{ background: "rgba(20,16,10,0.28)" }} />
       <div
         data-no-pull
         onTouchStart={sTS}
         onTouchMove={sTM}
         onTouchEnd={sTE}
-        className="fixed inset-y-0 left-1/2 z-[80] flex w-full max-w-[480px] flex-col overflow-hidden bg-white"
+        className="fixed inset-y-0 left-1/2 z-[80] flex w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] flex-col overflow-hidden bg-white"
         style={{
           transform: `translateX(calc(-50% + ${hx}px))`,
           transition: hDragging ? "none" : "transform 0.28s cubic-bezier(0.22,1,0.36,1)",
@@ -906,7 +906,7 @@ function BottomSheet({
       {portPick && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40" onClick={() => setPortPick(false)}>
           <div
-            className="flex w-full max-w-[480px] flex-col rounded-t-2xl bg-white"
+            className="flex w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] flex-col rounded-t-2xl bg-white"
             style={{ height: "70dvh" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -962,7 +962,7 @@ function BottomSheet({
       {evEdit && (
         <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/40" onClick={() => setEvEdit(null)}>
           <div
-            className="w-full max-w-[480px] rounded-t-2xl bg-white px-4 pt-3"
+            className="w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] rounded-t-2xl bg-white px-4 pt-3"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
             onClick={(e) => e.stopPropagation()}
           >

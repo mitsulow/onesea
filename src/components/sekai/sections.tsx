@@ -167,7 +167,7 @@ export function useSekaiMe() {
 /** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="pb-44">
+    <main className="pb-16">
       <header className="relative z-[60] border-b border-[#eee] bg-white px-6 py-2 text-center">
         <div className="text-[10px] leading-tight tracking-[3px] text-[#8aa898]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#2a5a38]">セカイムラ</div>
@@ -234,12 +234,9 @@ export function MootsSection({
       className="card"
       style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "none", padding: "10px 8px 12px", scrollMarginTop: 56 }}
     >
-      <div className="mb-2 flex items-baseline justify-between px-1">
-        <span className="text-[13.5px] font-extrabold tracking-[1px] text-[#7aa88a]">
-          📺 オンライン新月会・満月会
-        </span>
-        {me && <span className="text-[10px] text-[#5a7a68]">あなたの参加 {mootCount}回</span>}
-      </div>
+      {me && (
+        <div className="mb-1 px-1 text-right text-[10px] text-[#5a7a68]">あなたの参加 {mootCount}回</div>
+      )}
 
       {/* テレビ画面（当日はここにZoomの導線が出る） */}
       {next && (
@@ -248,6 +245,23 @@ export function MootsSection({
           <div
             className="absolute inset-0"
             style={{ background: "linear-gradient(180deg, rgba(8,16,24,.25) 0%, rgba(8,16,24,.02) 45%, rgba(8,16,24,.55) 100%)" }}
+          />
+          {/* 番組名 — テレビのフチ（上の枠）に乗せる。ツキヨガの半月がチャンネルロゴ */}
+          <div
+            className="absolute left-0 right-0 top-[1.5%] flex items-center justify-center gap-1.5"
+            style={{ textShadow: "0 1px 6px rgba(0,0,0,.95), 0 0 2px rgba(0,0,0,.9)" }}
+          >
+            <img src="/icons/cel-moon.png" alt="" className="h-[16px] w-[16px] object-contain drop-shadow" />
+            <span className="text-[12.5px] font-extrabold tracking-[1.5px] text-[#f0e6c8]">
+              オンライン新月会・満月会
+            </span>
+          </div>
+          {/* スピーカー部分（チャンネルつまみの下）にツキヨガの半月を大きめに */}
+          <img
+            src="/icons/cel-moon.png"
+            alt=""
+            className="absolute object-contain opacity-90 drop-shadow-lg"
+            style={{ right: "3%", bottom: "9%", width: "11%" }}
           />
           {/* 案内パネル（30%の半透明地に文字を重ねる） */}
           <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2.5 text-center" style={{ background: "rgba(8,16,24,.24)" }}>
@@ -729,9 +743,318 @@ export function ActivitySection({ me }: { me: User | null }) {
         className="mb-2 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}
       >
-        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#eae6b8]">📔 村人日記</div>
-        <div className="mt-0.5 text-center text-[10.5px] text-[#8ab89a]">〜 今日、村で何があった？ 〜</div>
+        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#eae6b8]">セカイムラ各地の拠点</div>
+        <div className="mt-0.5 text-center text-[10.5px] text-[#8ab89a]">〜 全国の村と、今日の報告 〜</div>
       </div>
+
+      {/* 🏡 各地のセカイムラ拠点 — 一番左は「参加する」「新しく作る」 */}
+      <div className="hide-scrollbar mb-2 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1">
+        <div className="flex w-[104px] flex-shrink-0 flex-col gap-2">
+          <Link
+            href="/sekai/villages"
+            className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed bg-white px-1 py-2 text-center no-underline"
+            style={{ borderColor: "#4a9a5a" }}
+          >
+            <span className="text-[16px]">🏡</span>
+            <span className="text-[10px] font-extrabold leading-snug" style={{ color: GREEN }}>
+              拠点に
+              <br />
+              参加する
+            </span>
+          </Link>
+          <Link
+            href="/sekai/villages#new"
+            className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-white px-1 py-2 text-center no-underline"
+            style={{ border: "2px solid #d4b96a" }}
+          >
+            <span className="text-[16px]">⛺</span>
+            <span className="text-[10px] font-extrabold leading-snug text-[#a07820]">
+              拠点を
+              <br />
+              新しく作る
+            </span>
+          </Link>
+        </div>
+        {villages.map((v) => (
+          <Link
+            key={v.id}
+            href={`/sekai/village/${v.id}`}
+            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#e2eae0] bg-white no-underline shadow-sm"
+          >
+            <div className="relative h-[86px] bg-[#eaf2ea]">
+              {v.cover_url ? (
+                <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+              ) : (
+                <div
+                  className="flex h-full w-full items-center justify-center text-[22px]"
+                  style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
+                >
+                  🏡
+                </div>
+              )}
+              {v.is_official && (
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-[#d4b96a] px-1.5 py-0.5 text-[8.5px] font-extrabold text-[#1a2432]">
+                  公式
+                </span>
+              )}
+            </div>
+            <div className="px-2 py-1.5">
+              <div className="truncate text-[12px] font-extrabold" style={{ color: GREEN }}>
+                セカイムラ{(v.prefecture ?? "").replace(/[都府県]$/, "")}
+              </div>
+              <div className="truncate text-[10px] text-[#a0aca0]">
+                {v.name}
+                {v.village_members?.[0]?.count ? ` ・ ${v.village_members[0].count}人` : ""}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
+      {me && myVills.length === 0 && (
+        <a
+          href="/sekai/villages"
+          className="mx-2 mb-2 block rounded-2xl border bg-white px-3.5 py-3 text-center text-[12.5px] font-bold no-underline shadow-sm"
+          style={{ borderColor: "#c8dccb", color: GREEN }}
+        >
+          🏡 拠点に入ると、ここから「村人日記」を書けます →
+        </a>
+      )}
+
+      {/* 活動を報告する（自分の村がある人だけ） */}
+      {me && myVills.length > 0 && (
+        writing ? (
+          <div className="mx-2 mb-2 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
+            <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
+              📣 活動を報告する
+            </div>
+            {myVills.length > 1 && (
+              <select
+                value={wVillage}
+                onChange={(e) => setWVillage(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+              >
+                {myVills.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    🏡 {v.name}（{v.prefecture}）
+                  </option>
+                ))}
+              </select>
+            )}
+            <textarea
+              value={wBody}
+              onChange={(e) => setWBody(e.target.value)}
+              rows={2}
+              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
+              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
+            />
+            <div className="mb-2 flex items-center gap-2">
+              {wPhoto && <img src={srcCdn(wPhoto)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
+                {wUploading ? "⏳" : <CameraIcon size={16} />}
+                写真
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me) return;
+                    setWUploading(true);
+                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
+                    setWUploading(false);
+                  }}
+                />
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+                やめる
+              </button>
+              <button
+                onClick={publish}
+                disabled={!wBody.trim() || wSaving || wUploading}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#4a8a5c" }}
+              >
+                {wSaving ? "投稿中..." : "📣 全国に報告する"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setWKind("normal");
+              setWriting(true);
+            }}
+            className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
+            style={{ borderColor: "#c8dccb" }}
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec] text-[16px]">✍️</span>
+              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">今日、村で何があった？</span>
+              <span
+                className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
+                style={{ background: GREEN }}
+              >
+                投稿
+              </span>
+            </div>
+          </button>
+        )
+      )}
+
+
+
+      {/* 活動報告フィード */}
+      {feed === null ? (
+        <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
+      ) : feed.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-[#4a8a5c44] px-4 py-5 text-center">
+          <div className="text-2xl">📣</div>
+          <p className="mt-1 text-[12.5px] font-bold" style={{ color: GREEN }}>
+            まだ活動報告がありません
+          </p>
+          <p className="mt-0.5 text-[11px] text-[#a0aca0]">
+            「今日は田植えをしました」— あなたの拠点のページから、最初の報告を
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {feed.map((p) => (
+            <div key={p.id} className="overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
+              <div className="p-3">
+                {/* ヘッダー: 誰（どの拠点）が投稿したか → 本文 → 写真 の順 */}
+                <Link
+                  href={`/sekai/village/${p.villages?.id}`}
+                  className="flex items-center gap-2.5 no-underline"
+                >
+                  <AvatarSm p={p.profiles} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <div className="min-w-0 truncate text-[14.5px] font-extrabold" style={{ color: GREEN }}>
+                      {p.villages?.name ?? "セカイムラ"}
+                      <span className="ml-1 text-[11.5px] font-bold text-[#9ab3a0]">
+                        {p.villages?.prefecture ? `@${p.villages.prefecture}` : ""}
+                      </span>
+                    </div>
+                    <div className="num text-[10.5px] text-[#b0bcb0]">
+                      {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
+                      {p.profiles?.display_name ? ` ・ ${p.profiles.display_name}` : ""}
+                    </div>
+                  </div>
+                </Link>
+                {/* イベント: 日時 + 参加する（押すと自分の手帳に入る） */}
+                {p.kind === "event" && p.event_at && (
+                  <div
+                    className="mt-1.5 flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5"
+                    style={{ background: "#fdf6e4", border: "1px solid #e8d8a8" }}
+                  >
+                    <span className="num min-w-0 text-[12px] font-extrabold text-[#a07820]">
+                      📅{" "}
+                      {(() => {
+                        const d = new Date(p.event_at);
+                        return `${d.getMonth() + 1}月${d.getDate()}日（${YOBI[d.getDay()]}）${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}〜`;
+                      })()}
+                    </span>
+                    {me &&
+                      (joinedEv.has(p.id) ? (
+                        <button
+                          onClick={() => cancelEvent(p)}
+                          className="flex-shrink-0 rounded-lg border px-3 py-1.5 text-[11.5px] font-bold"
+                          style={{ borderColor: "#c8a030", color: "#a07820", background: "#fff" }}
+                        >
+                          ✓ 参加中（タップで取消）
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => joinEvent(p)}
+                          className="flex-shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-extrabold text-white"
+                          style={{ background: "#c8a030" }}
+                        >
+                          参加する
+                        </button>
+                      ))}
+                  </div>
+                )}
+                <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#3a4438]">
+                  {linkify(String(p.body ?? ""))}
+                </p>
+                {p.photo_url && (
+                  <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-96 w-full rounded-xl object-cover" />
+                )}
+                {/* コメント（5件まで表示、以降は折りたたみ） */}
+                {(() => {
+                  const list = cmts[p.id] ?? [];
+                  const open = cOpen.has(p.id);
+                  const shown = open ? list : list.slice(0, 5);
+                  return (
+                    <div className="mt-2 border-t border-[#eef2ec] pt-2">
+                      {shown.map((c) => (
+                        <div key={c.id} className="mb-1.5 flex items-start gap-1.5">
+                          <AvatarSm p={c.profiles} size={20} />
+                          <div className="min-w-0 flex-1 rounded-lg bg-[#f4f8f2] px-2 py-1">
+                            <span className="mr-1.5 text-[10px] font-bold text-[#5a7a5c]">
+                              {c.profiles?.display_name ?? "むらびと"}
+                            </span>
+                            <span className="break-words text-[12px] leading-relaxed text-[#4a4438]">{c.body}</span>
+                          </div>
+                        </div>
+                      ))}
+                      {list.length > 5 && (
+                        <button
+                          onClick={() =>
+                            setCOpen((s) => {
+                              const n = new Set(s);
+                              if (open) n.delete(p.id);
+                              else n.add(p.id);
+                              return n;
+                            })
+                          }
+                          className="mb-1.5 text-[11px] font-bold underline"
+                          style={{ color: GREEN }}
+                        >
+                          {open ? "たたむ" : `もっと見る（あと${list.length - 5}件）`}
+                        </button>
+                      )}
+                      {me && (
+                        <div className="flex items-end gap-1.5">
+                          <input
+                            value={drafts[p.id] ?? ""}
+                            onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
+                            placeholder="コメントする..."
+                            className="min-w-0 flex-1 rounded-full border border-[#e2eae0] bg-white px-3 py-1.5 text-[12.5px] outline-none focus:border-[#4a8a5c]"
+                          />
+                          <button
+                            onClick={() => sendCmt(p.id)}
+                            disabled={!(drafts[p.id] ?? "").trim() || cSending === p.id}
+                            className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-40"
+                            style={{ background: "#4a8a5c" }}
+                          >
+                            送る
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 10件目以降は折りたたみ — もっと見るでさらに10件（その下にまた出る） */}
+      {hasMore && (
+        <button
+          onClick={showMoreFeed}
+          disabled={loadingMore}
+          className="mt-2 w-full rounded-xl border border-[#d8e4da] bg-white py-2.5 text-[12.5px] font-bold disabled:opacity-50"
+          style={{ color: GREEN }}
+        >
+          {loadingMore ? "読み込み中..." : "▼ もっと見る"}
+        </button>
+      )}
 
       {/* 📅 これからのイベント（横スクロール・旧セカイムラ式） */}
       {events.length > 0 && (
@@ -848,273 +1171,12 @@ export function ActivitySection({ me }: { me: User | null }) {
         </div>
       )}
 
-      {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
-      {me && myVills.length === 0 && (
-        <a
-          href="/sekai/villages"
-          className="mx-2 mb-2 block rounded-2xl border bg-white px-3.5 py-3 text-center text-[12.5px] font-bold no-underline shadow-sm"
-          style={{ borderColor: "#c8dccb", color: GREEN }}
-        >
-          🏡 拠点に入ると、ここから「村人日記」を書けます →
-        </a>
-      )}
-
-      {/* 活動を報告する（自分の村がある人だけ） */}
-      {me && myVills.length > 0 && (
-        writing ? (
-          <div className="mx-2 mb-2 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
-            <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-              📣 活動を報告する
-            </div>
-            {myVills.length > 1 && (
-              <select
-                value={wVillage}
-                onChange={(e) => setWVillage(e.target.value)}
-                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
-              >
-                {myVills.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    🏡 {v.name}（{v.prefecture}）
-                  </option>
-                ))}
-              </select>
-            )}
-            <textarea
-              value={wBody}
-              onChange={(e) => setWBody(e.target.value)}
-              rows={2}
-              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
-              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
-            />
-            <div className="mb-2 flex items-center gap-2">
-              {wPhoto && <img src={srcCdn(wPhoto)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
-              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
-                {wUploading ? "⏳" : <CameraIcon size={16} />}
-                写真
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f || !me) return;
-                    setWUploading(true);
-                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
-                    setWUploading(false);
-                  }}
-                />
-              </label>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
-              </button>
-              <button
-                onClick={publish}
-                disabled={!wBody.trim() || wSaving || wUploading}
-                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
-                style={{ background: "#4a8a5c" }}
-              >
-                {wSaving ? "投稿中..." : "📣 全国に報告する"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => {
-              setWKind("normal");
-              setWriting(true);
-            }}
-            className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
-            style={{ borderColor: "#c8dccb" }}
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec] text-[16px]">✍️</span>
-              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">今日、村で何があった？</span>
-              <span
-                className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
-                style={{ background: GREEN }}
-              >
-                投稿
-              </span>
-            </div>
-          </button>
-        )
-      )}
-
-
-
-      {/* 拠点一覧（横スクロールのチップ） */}
-      {villages.length > 0 && (
-        <div className="hide-scrollbar mb-2 flex gap-1.5 overflow-x-auto px-2">
-          {villages.map((v) => (
-            <Link
-              key={v.id}
-              href={`/sekai/village/${v.id}`}
-              className="flex-shrink-0 rounded-full border border-[#d8e4da] bg-white px-3 py-1.5 text-[11.5px] font-bold no-underline"
-              style={{ color: GREEN }}
-            >
-              🏡 {v.name}
-              <span className="ml-1 font-normal text-[#a0aca0]">{v.prefecture}</span>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {/* 活動報告フィード */}
-      {feed === null ? (
-        <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
-      ) : feed.length === 0 ? (
-        <div className="rounded-xl border-2 border-dashed border-[#4a8a5c44] px-4 py-5 text-center">
-          <div className="text-2xl">📣</div>
-          <p className="mt-1 text-[12.5px] font-bold" style={{ color: GREEN }}>
-            まだ活動報告がありません
-          </p>
-          <p className="mt-0.5 text-[11px] text-[#a0aca0]">
-            「今日は田植えをしました」— あなたの拠点のページから、最初の報告を
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {feed.map((p) => (
-            <div key={p.id} className="overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
-              <div className="p-3">
-                {/* ヘッダー: 誰（どの拠点）が投稿したか → 本文 → 写真 の順 */}
-                <Link
-                  href={`/sekai/village/${p.villages?.id}`}
-                  className="flex items-center gap-2.5 no-underline"
-                >
-                  <AvatarSm p={p.profiles} size={44} />
-                  <div className="min-w-0 flex-1">
-                    <div className="min-w-0 truncate text-[14.5px] font-extrabold" style={{ color: GREEN }}>
-                      {p.villages?.name ?? "セカイムラ"}
-                      <span className="ml-1 text-[11.5px] font-bold text-[#9ab3a0]">
-                        {p.villages?.prefecture ? `@${p.villages.prefecture}` : ""}
-                      </span>
-                    </div>
-                    <div className="num text-[10.5px] text-[#b0bcb0]">
-                      {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
-                      {p.profiles?.display_name ? ` ・ ${p.profiles.display_name}` : ""}
-                    </div>
-                  </div>
-                </Link>
-                {/* イベント: 日時 + 参加する（押すと自分の手帳に入る） */}
-                {p.kind === "event" && p.event_at && (
-                  <div
-                    className="mt-1.5 flex items-center justify-between gap-2 rounded-lg px-2.5 py-1.5"
-                    style={{ background: "#fdf6e4", border: "1px solid #e8d8a8" }}
-                  >
-                    <span className="num min-w-0 text-[12px] font-extrabold text-[#a07820]">
-                      📅{" "}
-                      {(() => {
-                        const d = new Date(p.event_at);
-                        return `${d.getMonth() + 1}月${d.getDate()}日（${YOBI[d.getDay()]}）${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}〜`;
-                      })()}
-                    </span>
-                    {me &&
-                      (joinedEv.has(p.id) ? (
-                        <button
-                          onClick={() => cancelEvent(p)}
-                          className="flex-shrink-0 rounded-lg border px-3 py-1.5 text-[11.5px] font-bold"
-                          style={{ borderColor: "#c8a030", color: "#a07820", background: "#fff" }}
-                        >
-                          ✓ 参加中（タップで取消）
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => joinEvent(p)}
-                          className="flex-shrink-0 rounded-lg px-3 py-1.5 text-[11.5px] font-extrabold text-white"
-                          style={{ background: "#c8a030" }}
-                        >
-                          参加する
-                        </button>
-                      ))}
-                  </div>
-                )}
-                <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#3a4438]">
-                  {linkify(String(p.body ?? ""))}
-                </p>
-                {p.photo_url && (
-                  <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-64 rounded-lg object-cover" />
-                )}
-                {/* コメント（5件まで表示、以降は折りたたみ） */}
-                {(() => {
-                  const list = cmts[p.id] ?? [];
-                  const open = cOpen.has(p.id);
-                  const shown = open ? list : list.slice(0, 5);
-                  return (
-                    <div className="mt-2 border-t border-[#eef2ec] pt-2">
-                      {shown.map((c) => (
-                        <div key={c.id} className="mb-1.5 flex items-start gap-1.5">
-                          <AvatarSm p={c.profiles} size={20} />
-                          <div className="min-w-0 flex-1 rounded-lg bg-[#f4f8f2] px-2 py-1">
-                            <span className="mr-1.5 text-[10px] font-bold text-[#5a7a5c]">
-                              {c.profiles?.display_name ?? "むらびと"}
-                            </span>
-                            <span className="break-words text-[12px] leading-relaxed text-[#4a4438]">{c.body}</span>
-                          </div>
-                        </div>
-                      ))}
-                      {list.length > 5 && (
-                        <button
-                          onClick={() =>
-                            setCOpen((s) => {
-                              const n = new Set(s);
-                              if (open) n.delete(p.id);
-                              else n.add(p.id);
-                              return n;
-                            })
-                          }
-                          className="mb-1.5 text-[11px] font-bold underline"
-                          style={{ color: GREEN }}
-                        >
-                          {open ? "たたむ" : `もっと見る（あと${list.length - 5}件）`}
-                        </button>
-                      )}
-                      {me && (
-                        <div className="flex items-end gap-1.5">
-                          <input
-                            value={drafts[p.id] ?? ""}
-                            onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
-                            placeholder="コメントする..."
-                            className="min-w-0 flex-1 rounded-full border border-[#e2eae0] bg-white px-3 py-1.5 text-[12.5px] outline-none focus:border-[#4a8a5c]"
-                          />
-                          <button
-                            onClick={() => sendCmt(p.id)}
-                            disabled={!(drafts[p.id] ?? "").trim() || cSending === p.id}
-                            className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white disabled:opacity-40"
-                            style={{ background: "#4a8a5c" }}
-                          >
-                            送る
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 10件目以降は折りたたみ — もっと見るでさらに10件（その下にまた出る） */}
-      {hasMore && (
-        <button
-          onClick={showMoreFeed}
-          disabled={loadingMore}
-          className="mt-2 w-full rounded-xl border border-[#d8e4da] bg-white py-2.5 text-[12.5px] font-bold disabled:opacity-50"
-          style={{ color: GREEN }}
-        >
-          {loadingMore ? "読み込み中..." : "▼ もっと見る"}
-        </button>
-      )}
 
       {/* 📅 イベント作成モーダル */}
       {evWriting && me && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => setEvWriting(false)}>
           <div
-            className="w-full max-w-[480px] rounded-t-2xl bg-white px-4 pt-3"
+            className="w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] rounded-t-2xl bg-white px-4 pt-3"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -1216,7 +1278,7 @@ export function WelcomeSection({
     const chatId = await getOrCreateChat(me.id, p.id);
     if (chatId) {
       await sendMessage(chatId, me.id, "ようこそセカイムラへ 🌱 全国に、血のつながらない家族がいます。私もそのひとりです。");
-      router.push(`/line/${chatId}`);
+      router.push(`/talk/${chatId}`);
     }
   };
 
@@ -1292,7 +1354,7 @@ export function CafeBar({ pref }: { pref: string }) {
       <div className="flex items-center gap-3">
         <span className="text-[30px]">☕</span>
         <div className="min-w-0 flex-1">
-          <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">村人ラウンジ喫茶 〜常時オープン〜</div>
+          <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">村人ラウンジ喫茶 〜いつでもオープン〜</div>
           <div className="mt-0.5 text-[10.5px] text-[#a89878]">
             {count > 0 ? (
               <span className="font-bold text-[#8ad8a8]">
@@ -1309,7 +1371,7 @@ export function CafeBar({ pref }: { pref: string }) {
           className="flex-shrink-0 rounded-xl px-3.5 py-2 text-[12px] font-extrabold text-[#241c14] no-underline"
           style={{ background: "linear-gradient(135deg,#e8cc90,#c8a860)" }}
         >
-          入店する
+          ラウンジに入る
         </Link>
       </div>
       {/* 店内の雰囲気（村人待合室） */}
@@ -1482,7 +1544,7 @@ export function LoungeSection({
                 <button
                   onClick={async () => {
                     const chatId = await getOrCreateChat(me.id, p.user_id);
-                    if (chatId) router.push(`/line/${chatId}`);
+                    if (chatId) router.push(`/talk/${chatId}`);
                   }}
                   className="mt-0.5 text-[10.5px] font-bold underline"
                   style={{ color: GREEN }}
@@ -1609,7 +1671,7 @@ export function VillagesSection({
                 onClick={async () => {
                   if (!v.created_by) return;
                   const chatId = await getOrCreateChat(me.id, v.created_by);
-                  if (chatId) router.push(`/line/${chatId}`);
+                  if (chatId) router.push(`/talk/${chatId}`);
                 }}
                 className="rounded-lg border border-[#d8e4da] px-4 py-1.5 text-[12px] font-bold"
                 style={{ color: GREEN }}
@@ -2457,7 +2519,7 @@ export function TasuketeSection({ me, myPref, router }: { me: User | null; myPre
                       const chatId = await getOrCreateChat(me.id, t.user_id);
                       if (chatId) {
                         await sendMessage(chatId, me.id, `「${t.title}」— 助けます 🤝`);
-                        router.push(`/line/${chatId}`);
+                        router.push(`/talk/${chatId}`);
                       }
                     }}
                     className="rounded-lg px-3.5 py-1.5 text-[12px] font-extrabold text-white"

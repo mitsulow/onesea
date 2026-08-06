@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     title: prof?.display_name ?? "OneSea",
     body: body.length > 60 ? body.slice(0, 60) + "…" : body,
     badge: unread,
-    url: `/line/${chatId}`,
+    url: `/talk/${chatId}`,
     tag: `line-${chatId}`,
   });
 

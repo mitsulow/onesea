@@ -154,7 +154,7 @@ export default function LinePage() {
       {/* 📢 事務局からのお知らせ（最上部ピン留め） */}
       {me && !q && (
         <Link
-          href="/line/broadcast"
+          href="/talk/broadcast"
           className="flex items-center gap-3 border-b border-[#e8dcc4] bg-[#fffbef] px-4 py-3 no-underline active:bg-[#faf4e0]"
         >
           <div
@@ -223,7 +223,7 @@ export default function LinePage() {
             {shownGroups.map((g) => (
               <Link
                 key={g.key}
-                href={`/line/g/${g.type}/${g.id}`}
+                href={`/talk/g/${g.type}/${g.id}`}
                 className="flex items-center gap-3 border-b border-[#f0e9dc] bg-[#fffdf8] px-4 py-3 no-underline active:bg-[#faf4ea]"
               >
                 <div
@@ -276,7 +276,7 @@ export default function LinePage() {
           {shownChats.map((c) => (
             <Link
               key={c.id}
-              href={`/line/${c.id}`}
+              href={`/talk/${c.id}`}
               className="flex items-center gap-3 border-b border-[#f0e9dc] bg-[#fffdf8] px-4 py-3 no-underline active:bg-[#faf4ea]"
             >
               <div className="relative flex-shrink-0">

@@ -42,7 +42,7 @@ const MENU_ITEMS: Array<{ href: string; icon: string; label: string; ext?: boole
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "📖", label: "手帳", ext: true },
   { href: "/my", icon: "🪪", label: "マイページ編集" },
-  { href: "/line", icon: "💬", label: "TALK" },
+  { href: "/talk", icon: "💬", label: "TALK" },
 ];
 
 /** 投稿の区切り線（細いティファニーブルー・左右いっぱい） */
@@ -892,7 +892,7 @@ export default function CotozutePage() {
             ref={(el) => {
               if (el) setTimeout(() => el.querySelector("textarea")?.focus(), 60);
             }}
-            className="h-full w-full max-w-[480px] overflow-y-auto bg-white"
+            className="h-full w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] overflow-y-auto bg-white"
             style={{ paddingTop: "calc(env(safe-area-inset-top) + 4px)" }}
           >
             <div className="flex items-center justify-between px-4 py-2.5">

@@ -320,7 +320,7 @@ export async function detectPrefecture(): Promise<string | null> {
 
 /* ============ 拠点（村） ============ */
 const VILLAGE_SELECT =
-  "id, name, prefecture, city, description, policy, is_official, created_by, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
+  "id, name, prefecture, city, description, policy, is_official, created_by, cover_url, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
 
 export async function fetchVillages(pref?: string | null): Promise<Village[]> {
   const supabase = createClient();

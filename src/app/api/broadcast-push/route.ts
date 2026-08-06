@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const payload = JSON.stringify({
     title: "📢 OneSea事務局",
     body: body.length > 80 ? body.slice(0, 80) + "…" : body,
-    url: "/line/broadcast",
+    url: "/talk/broadcast",
     tag: "broadcast",
   });
 
