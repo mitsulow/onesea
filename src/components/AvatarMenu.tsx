@@ -107,22 +107,39 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
           typeof document !== "undefined" &&
           createPortal(
             <>
-              <div className="fixed inset-0 z-[95] bg-black/45" onClick={() => setOpen(false)} />
-              <div className="fixed inset-x-0 bottom-0 z-[96] mx-auto max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] rounded-t-3xl bg-white px-5 pb-8 pt-5">
-                <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[#e0d8c8]" />
-                <button
-                  onClick={login}
-                  className="mb-2.5 w-full rounded-2xl py-3.5 text-[14.5px] font-extrabold text-white"
-                  style={{ background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)" }}
-                >
-                  OneSeaに登録（無料）
-                </button>
-                <button
-                  onClick={login}
-                  className="w-full rounded-2xl border border-[#e0d8c8] py-3 text-[12.5px] font-bold text-[#8a7a5a]"
-                >
-                  会員の方はログイン
-                </button>
+              <div className="fixed inset-0 z-[95] bg-black/55 backdrop-blur-[2px]" onClick={() => setOpen(false)} />
+              <div className="fixed inset-x-0 bottom-0 z-[96] mx-auto max-w-[480px] overflow-hidden rounded-t-3xl bg-white pb-8 shadow-2xl">
+                {/* 海の夜明け（Adobe Stock）で「入りたくなる」ヒーロー */}
+                <div className="relative h-[220px] w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/lp/onesea/hero-sea.webp" alt="" className="h-full w-full object-cover" />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(180deg,rgba(8,17,28,0.15),rgba(8,17,28,0.35) 45%,rgba(255,255,255,0.98) 98%)" }} />
+                  <div className="absolute inset-x-0 bottom-3 text-center">
+                    <div className="text-[11px] font-bold tracking-[5px] text-[#f0e6c8]" style={{ textShadow: "0 1px 8px rgba(0,0,0,.7)" }}>ONESEA</div>
+                    <div className="mt-1 text-[22px] font-extrabold tracking-[2px] text-white" style={{ fontFamily: '"Shippori Mincho",serif', textShadow: "0 2px 12px rgba(0,0,0,.6)" }}>
+                      すべての海は、ひとつ。
+                    </div>
+                  </div>
+                </div>
+                <div className="px-5 pt-4">
+                  <p className="mb-3 text-center text-[12.5px] leading-relaxed text-[#6a6055]">
+                    太陽と月と潮のリズムで生きる、<b className="text-[#2a2622]">無料の手帳アプリ</b>。<br />
+                    暦・シューマン共振・みんなの投稿が、無料で使えます。
+                  </p>
+                  <button
+                    onClick={login}
+                    className="mb-2.5 w-full rounded-2xl py-3.5 text-[15px] font-extrabold text-white"
+                    style={{ background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)", boxShadow: "0 6px 20px rgba(44,183,222,.35)" }}
+                  >
+                    OneSeaに登録（無料・30秒）
+                  </button>
+                  <button
+                    onClick={login}
+                    className="w-full rounded-2xl border border-[#e0d8c8] py-3 text-[12.5px] font-bold text-[#8a7a5a]"
+                  >
+                    会員の方はログイン
+                  </button>
+                </div>
               </div>
             </>,
             document.body
