@@ -80,6 +80,7 @@ export default function CotozutePage() {
   const [showUpgrade, setShowUpgrade] = useState(false); // 投稿はわらわ〜会員専用
   const [isWara, setIsWara] = useState(false);
   const [autoLimit, setAutoLimit] = useState(30); // 無限スクロールは30件ごとに一時停止
+  const [schumannHz, setSchumannHz] = useState<number | null>(null); // 右レール「今日の地球」用
   const [storyText, setStoryText] = useState("");
   const [storyColor, setStoryColor] = useState("#0affd0");
   const [storyPos, setStoryPos] = useState({ x: 0.5, y: 0.5 }); // 文字位置（自由ドラッグ）
@@ -97,6 +98,24 @@ export default function CotozutePage() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef<number | null>(null);
+
+  // 右レール「今日の地球」: 日付・月齢・シューマン共振
+  const todayLabel = (() => {
+    const n = new Date();
+    return `${n.getMonth() + 1}月${n.getDate()}日（${"日月火水木金土"[n.getDay()]}）`;
+  })();
+  const moonAge = (() => {
+    const SYN = 29.530588853;
+    const BASE = Date.UTC(2000, 0, 6, 18, 14);
+    const a = ((Date.now() - BASE) / 86400000) % SYN;
+    return a < 0 ? a + SYN : a;
+  })();
+  useEffect(() => {
+    fetch("/api/sr/schumann_data.json", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setSchumannHz(d?.modes?.F1?.hz ?? null))
+      .catch(() => {});
+  }, []);
 
   const loadLikers = useCallback(async (list: FeedItem[]) => {
     const ids = list.filter((x) => x.kind === "coto").map((x) => (x.kind === "coto" ? x.post.id : ""));
@@ -725,13 +744,19 @@ export default function CotozutePage() {
         {/* 右レール: キャンペーン・イベント・楽市楽座・おすすめ（lgのみ・追従） */}
         <aside className="hidden w-[300px] shrink-0 pt-4 lg:block">
           <div className="sticky top-16 space-y-3">
-            <Link href="/lp/onesea" className="block overflow-hidden rounded-xl no-underline" style={{ background: "linear-gradient(135deg,#0e2230,#123a46)" }}>
-              <div className="px-4 py-4">
-                <div className="text-[11px] font-bold tracking-[2px] text-[#7cf9d4]">ONESEA PREMIUM</div>
-                <div className="mt-1 text-[14px] font-extrabold text-[#f0e6c8]">四つの扉が、ひとつに</div>
-                <div className="mt-1 text-[11.5px] leading-relaxed text-[#a9c3cf]">総額210,000円分が、いま <span className="num font-bold text-[#7cf9d4]">39,600円/年</span></div>
+            {/* 今日の地球（会員も楽しめる暮らしの情報） */}
+            <div className="overflow-hidden rounded-xl border border-[#e4e6e9] bg-white p-4">
+              <div className="text-[12px] font-bold text-[#65676b]">🌏 今日の地球</div>
+              <div className="num mt-2 text-[15px] font-extrabold text-[#1c1e21]">{todayLabel}</div>
+              <div className="mt-1.5 text-[12px] text-[#65676b]">
+                月齢 <b className="num text-[#3a3428]">{moonAge.toFixed(1)}</b>
+                <span className="mx-1.5 text-[#c8ccd1]">・</span>
+                シューマン共振 <b className="num text-[#2CB7DE]">{schumannHz ? schumannHz.toFixed(2) : "—"}</b> Hz
               </div>
-            </Link>
+              <Link href="/mmm" className="mt-2.5 inline-block text-[12px] font-bold text-[#2CB7DE] no-underline">
+                いまの地球の音を聴く →
+              </Link>
+            </div>
 
             {events.length > 0 && (
               <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">

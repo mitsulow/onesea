@@ -178,8 +178,9 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
       <Link href="/lp/sekai" className="block border-b border-[#eee] bg-white py-1.5 text-center text-[11px] font-bold text-[#2a7a38] no-underline">
         セカイムラについて・入会案内 →
       </Link>
-      {/* セクション同士は白地の隙間で区切る */}
-      <div className="space-y-2.5 bg-white">{children}</div>
+      {/* PCでは読みやすい幅に中央寄せ（横いっぱいに引き伸ばさない）。
+          満月会のテレビ等はこの幅で十分見栄えする。 */}
+      <div className="mx-auto max-w-[720px] space-y-2.5 bg-white">{children}</div>
     </main>
   );
 }

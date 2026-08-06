@@ -191,7 +191,8 @@ export default function ZaPage() {
             <p className="mt-1 text-xs text-[#8a8070]">最初のひとつを出して、市場を始めよう</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {/* フリマは スマホ2列 → タブレット3列 → PC4列（Mercari等のPC版と同じ流儀） */}
             {shops.filter((s) => s.market === market).map((shop) => {
               const cat = categoryOf(shop.category);
               return (
