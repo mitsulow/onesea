@@ -7482,7 +7482,7 @@
     <span style="font-size:15px;font-weight:800;letter-spacing:3px;color:#f0e0a8;text-shadow:0 0 8px rgba(240,220,150,.8);">ツキヨガ</span>
   </span>
   <button id="oneseaAvatarBtn" aria-label="サービスメニュー" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;padding:0;cursor:pointer;">
-    <span id="oneseaAvatarInner" style="display:flex;width:30px;height:30px;border-radius:50%;border:2px solid rgba(240,224,168,.6);align-items:center;justify-content:center;font-size:15px;overflow:hidden;">🌊</span>
+    <span id="oneseaAvatarInner" style="display:flex;width:30px;height:30px;border-radius:50%;border:2px solid rgba(240,224,168,.6);align-items:center;justify-content:center;overflow:hidden;"><span style="font-size:8px;font-weight:700;letter-spacing:.5px;color:#f0e0a8;line-height:1;">ゲスト</span></span>
   </button>
 </div>
 <!-- 全サービスメニュー（OneSeaのAvatarMenuと同じ縦リスト） -->
@@ -7496,7 +7496,7 @@
   <a href="/za" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/rakuichi/logo-emblem.webp" style="width:20px;height:20px;border-radius:50%;object-fit:cover;"> 楽市楽座</a>
   <a href="/#techo" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">📖</span> 手帳</a>
   <a href="/my" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">🪪</span> マイページ編集</a>
-  <a href="/line" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">💬</span> TALK</a>
+  <a href="/talk" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;text-align:center;font-size:16px;">💬</span> TALK</a>
   <button id="oneseaLogoutBtn" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:13.5px;color:#a05040;background:none;border:none;text-align:left;cursor:pointer;"><span style="width:20px;text-align:center;font-size:16px;">👋</span> ログアウト</button>
 </div>
 
@@ -13209,84 +13209,97 @@ const COASTLINES = [
     overlay.appendChild(title);
 
     document.body.appendChild(overlay);
-    setTimeout(() => {
-      // ① onDone() で reveal 発火 (月画像 fadeIn 開始)
-      onDone();
-      // ② 結果セクション位置へ即座にスクロール (smooth なし)
+    // タップで即スキップできるヒント
+    const skipHint = document.createElement('div');
+    skipHint.textContent = 'タップでスキップ';
+    skipHint.style.cssText = 'position:absolute;bottom:24px;left:0;right:0;text-align:center;font-size:12px;color:rgba(255,255,255,.7);letter-spacing:2px;';
+    overlay.appendChild(skipHint);
+
+    let done = false;
+    const finish = () => {
+      if (done) return; done = true;
+      onDone(); // reveal 発火 (月画像 fadeIn)
       const resultEl2 = document.getElementById('uranaiResult');
-      if (resultEl2) {
-        resultEl2.scrollIntoView({ behavior: 'auto', block: 'start' });
-      }
-      // ③ 月画像が見え始めるタイミングでオーバーレイをフェードアウト
-      requestAnimationFrame(() => {
-        overlay.style.transition = 'opacity 0.6s ease-out';
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-          overlay.remove();
-          // ④ オーバーレイ完全消失後、ヘッダー類を 0.5s かけて自然にフェードイン
-          if (uranaiView) uranaiView.classList.remove('during-pull-anim');
-        }, 650);
-      });
-    }, 2500);
+      if (resultEl2) resultEl2.scrollIntoView({ behavior: 'auto', block: 'start' });
+      overlay.style.transition = 'opacity 0.4s ease-out';
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.remove();
+        if (uranaiView) uranaiView.classList.remove('during-pull-anim');
+      }, 420);
+    };
+    // タップ/クリックで即終了。自然に待てば2.5秒後に自動で終了
+    overlay.addEventListener('click', finish);
+    overlay.addEventListener('touchstart', (e) => { e.preventDefault(); finish(); }, { passive: false });
+    const timer = setTimeout(finish, 2500);
+    overlay.addEventListener('click', () => clearTimeout(timer));
   }
 
   // (結果表示前のイントロは削除、占うボタン後はそのまま reveal へ)
 
   document.addEventListener('DOMContentLoaded', () => {
-    const PULL_THRESHOLD_NORMAL = 100;
-    const PULL_THRESHOLD_MYPAGE = 320; // ★ マイページ設定中は硬く (誤動作リロード防止)
+    // ★ 閾値を上げ、かつ「指を離した時」だけ発火（軽いスワイプでは更新しない）
+    const PULL_THRESHOLD_NORMAL = 150;
+    const PULL_THRESHOLD_MYPAGE = 340; // マイページ設定中は硬く (誤動作リロード防止)
     function getPullThreshold() {
       if (document.querySelector('.mypage-view.active')) return PULL_THRESHOLD_MYPAGE;
       return PULL_THRESHOLD_NORMAL;
     }
-    let startY = 0, pulling = false, fired = false;
+    let startY = 0, startX = 0, pulling = false, maxDy = 0, canceled = false;
     const getScrollEl = () => {
       const active = document.querySelector('.uranai-view.active, .calendar-view.active, .moonnav-view.active, .main-view.active, .mypage-view.active');
       if (active) return active.querySelector('.uranai-scroll, .cal-container, .mypage-scroll') || active;
       return document.scrollingElement || document.documentElement;
     };
+    const blocked = () => document.querySelector(
+      '.memo-modal.active, .uranai-detail-modal.active, ' +
+      '.uranai-team-pick-modal.active, .uranai-invite-modal.active, ' +
+      '.uranai-qr-modal.active, .uranai-add-form.is-open, ' +
+      '.hanasakari-view.active, .wheel-detail-modal.active'
+    );
+    const pr = document.getElementById('pullRefresh');
     document.addEventListener('touchstart', (e) => {
       const el = getScrollEl();
-      if (el && el.scrollTop === 0) {
+      if (el && el.scrollTop === 0 && !blocked()) {
         startY = e.touches[0].clientY;
-        pulling = true;
-        fired = false;
+        startX = e.touches[0].clientX;
+        pulling = true; maxDy = 0; canceled = false;
+      } else {
+        pulling = false;
       }
     }, { passive: true });
     document.addEventListener('touchmove', (e) => {
-      if (!pulling || fired) return;
-      // ★ モーダル類 + ハナサカリ画面では reload / 演出を完全に無効化
-      //   (memo / 友だち詳細 / チーム / 招待 / QR / 編集 / ハナサカリ)
-      if (document.querySelector(
-        '.memo-modal.active, .uranai-detail-modal.active, ' +
-        '.uranai-team-pick-modal.active, .uranai-invite-modal.active, ' +
-        '.uranai-qr-modal.active, .uranai-add-form.is-open, ' +
-        '.hanasakari-view.active, .wheel-detail-modal.active'
-      )) {
-        return;
-      }
+      if (!pulling) return;
       const dy = e.touches[0].clientY - startY;
-      if (dy > getPullThreshold()) {
-        fired = true;
-        // 占いタブで発火: キャラ歩き回り演出 + 占うボタン再発火 (reload しないので瞑想画像出ない)
-        if (document.querySelector('.uranai-view.active')) {
-          showCharPyunOverlay(() => {
-            const scrollEl = document.querySelector('.uranai-view.active .uranai-scroll');
-            if (scrollEl) scrollEl.scrollTop = 0;
-            const submitBtn = document.getElementById('uranaiSubmit');
-            if (submitBtn) submitBtn.click();
-          });
-        } else if (document.querySelector('.mypage-view.active')) {
-          // マイページでは reload しない (入力中の値が消えるリスク回避)
-          // 320px 引っ張られても、スクロールトップに戻すだけ
-          const scrollEl = document.querySelector('.mypage-view.active .mypage-scroll');
-          if (scrollEl) scrollEl.scrollTop = 0;
-        } else {
-          location.reload();
-        }
+      const dx = e.touches[0].clientX - startX;
+      // 横成分が大きい/上方向は「引っ張り」ではない → キャンセル
+      if (dy < 0 || Math.abs(dx) > Math.abs(dy)) { canceled = true; if (pr) pr.classList.remove('visible','ready'); return; }
+      maxDy = Math.max(maxDy, dy);
+      // インジケータ表示だけ（この時点では更新しない）
+      if (pr) {
+        if (dy > 24) { pr.classList.add('visible'); pr.classList.toggle('ready', dy >= getPullThreshold()); }
+        else pr.classList.remove('visible','ready');
       }
     }, { passive: true });
-    document.addEventListener('touchend', () => { pulling = false; }, { passive: true });
+    document.addEventListener('touchend', () => {
+      const wasPulling = pulling; pulling = false;
+      if (pr) pr.classList.remove('visible','ready');
+      // 指を離した瞬間に、閾値を超えていた時だけ発火
+      if (!wasPulling || canceled || blocked() || maxDy < getPullThreshold()) return;
+      if (document.querySelector('.uranai-view.active')) {
+        showCharPyunOverlay(() => {
+          const scrollEl = document.querySelector('.uranai-view.active .uranai-scroll');
+          if (scrollEl) scrollEl.scrollTop = 0;
+          const submitBtn = document.getElementById('uranaiSubmit');
+          if (submitBtn) submitBtn.click();
+        });
+      } else if (document.querySelector('.mypage-view.active')) {
+        const scrollEl = document.querySelector('.mypage-view.active .mypage-scroll');
+        if (scrollEl) scrollEl.scrollTop = 0;
+      } else {
+        location.reload();
+      }
+    }, { passive: true });
   });
 
   // ============ リロード後のタブ復元 (Pull-to-refresh からの戻り) ============
@@ -16740,10 +16753,15 @@ const COASTLINES = [
 
 <script>
 // ★v6: イントロスプラッシュ終了後にDOMから削除（ポインタイベント干渉防止）
-setTimeout(() => {
+//   ＋ タップですぐ閉じられるように（見終わるまで待たなくていい）
+(function () {
   const splash = document.getElementById('introSplash');
-  if (splash) splash.remove();
-}, 4100);
+  if (!splash) return;
+  const kill = () => { splash.style.transition = 'opacity .3s'; splash.style.opacity = '0'; setTimeout(() => splash.remove(), 320); };
+  splash.addEventListener('click', kill);
+  splash.addEventListener('touchstart', (e) => { e.preventDefault(); kill(); }, { passive: false });
+  setTimeout(() => { if (document.getElementById('introSplash')) splash.remove(); }, 4100);
+})();
 </script>
 
 <script>
@@ -16943,26 +16961,25 @@ if ('serviceWorker' in navigator) {
 <script>
 (function () {
   // OneSea(同一ドメイン)のSupabaseセッションからGoogleアバターを拝借（キー探索+base64対応）
+  // 一致する全キーを試す（最初の1つが空でも次を見る）
   try {
-    var raw = null;
-    for (var i = 0; i < localStorage.length; i++) {
+    var av = null;
+    for (var i = 0; i < localStorage.length && !av; i++) {
       var k = localStorage.key(i);
-      if (k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0) {
-        raw = localStorage.getItem(k);
-        break;
-      }
+      if (!(k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0)) continue;
+      var raw = localStorage.getItem(k);
+      if (!raw) continue;
+      try {
+        if (raw.indexOf('base64-') === 0) raw = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'));
+        var tok = JSON.parse(raw);
+        var u = tok && (tok.user || (tok.currentSession && tok.currentSession.user) || (tok.session && tok.session.user));
+        var meta = u && (u.user_metadata || u.raw_user_meta_data);
+        av = meta && (meta.avatar_url || meta.picture);
+      } catch (e2) {}
     }
-    if (raw) {
-      if (raw.indexOf('base64-') === 0) {
-        raw = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'));
-      }
-      var tok = JSON.parse(raw);
-      var u = tok && (tok.user || (tok.currentSession && tok.currentSession.user));
-      var av = u && u.user_metadata && (u.user_metadata.avatar_url || u.user_metadata.picture);
-      if (av) {
-        document.getElementById('oneseaAvatarInner').innerHTML =
-          '<img src="' + av + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
-      }
+    if (av) {
+      document.getElementById('oneseaAvatarInner').innerHTML =
+        '<img src="' + av + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
     }
   } catch (e) {}
 

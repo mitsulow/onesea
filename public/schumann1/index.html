@@ -1151,14 +1151,17 @@
     border:2px solid rgba(212,185,106,0.7);background:#0e1626;display:flex;
     align-items:center;justify-content:center;font-size:16px}
   .svc-av img{width:100%;height:100%;object-fit:cover;display:block}
-  .svc-menu{position:absolute;top:42px;right:0;min-width:186px;
+  .svc-guest{font-size:8.5px;font-weight:700;letter-spacing:0.5px;color:#e8d5a0;line-height:1}
+  .svc-menu{position:absolute;top:42px;right:0;min-width:196px;
     background:#101826;border:1px solid rgba(140,190,230,0.22);border-radius:14px;
     box-shadow:0 12px 36px rgba(0,0,0,0.5);overflow:hidden;display:none}
   .svc-menu.open{display:block}
-  .svc-menu a{display:block;padding:11px 16px;font-size:13.5px;color:#d8e4ec;text-decoration:none;
-    border-bottom:1px solid rgba(255,255,255,0.05)}
+  .svc-menu a{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13.5px;color:#d8e4ec;
+    text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.05)}
   .svc-menu a:last-child{border-bottom:none}
   .svc-menu a:active,.svc-menu a:hover{background:rgba(44,183,222,0.14)}
+  .svc-menu a img{width:20px;height:20px;object-fit:contain;flex-shrink:0}
+  .svc-menu .svc-mi{width:20px;text-align:center;font-size:15px;flex-shrink:0}
   /* F1ドットグラフの期間切替タブ */
   .dot-tabs{display:flex;gap:8px;padding:0 0.9rem 0.4rem}
   .dot-tab{font:600 0.82rem/1 "Noto Sans JP",sans-serif;color:#9fb2c8;
@@ -1199,16 +1202,16 @@
         <div class="mmm-logo"><span class="bolt">⚡</span><span class="mmm-text">MASTER MIND MEMBERS</span><span class="bolt">⚡</span></div>
       </div>
       <div class="svc-avwrap">
-        <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー"><span id="svcAvFallback">🌊</span></button>
+        <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー"><span id="svcAvFallback" class="svc-guest">ゲスト</span></button>
         <div class="svc-menu" id="svcMenu">
-          <a href="/">🏠 ホーム</a>
-          <a href="/mmm">☀ MMM</a>
-          <a href="/sekai">🌏 セカイムラ</a>
-          <a href="/tsukiyoga-v7/index.html">🌙 ツキヨガ</a>
-          <a href="/cotozute">💬 コトヅテ</a>
-          <a href="/za">🏮 楽市楽座</a>
-          <a href="/#techo">📖 手帳</a>
-          <a href="/my">🪪 マイページ</a>
+          <a href="/"><img src="/icons/tab-home.png" alt="">ホーム</a>
+          <a href="/mmm"><img src="/icons/cel-sun.png" alt="">MMM</a>
+          <a href="/sekai"><img src="/icons/cel-earth.png" alt="">セカイムラ</a>
+          <a href="/tsukiyoga-v7/index.html"><img src="/icons/cel-moon.png" alt="">ツキヨガ</a>
+          <a href="/cotozute"><img src="/icons/tab-cotozute.png" alt="">コトヅテ</a>
+          <a href="/za"><img src="/rakuichi/logo-emblem.webp" alt="">楽市楽座</a>
+          <a href="/#techo"><span class="svc-mi">📖</span>手帳</a>
+          <a href="/my"><span class="svc-mi">🪪</span>マイページ</a>
         </div>
       </div>
     </header>
