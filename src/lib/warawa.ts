@@ -7,8 +7,9 @@ import { createClient } from "@/lib/supabase/client";
  * 後日 Stripe webhook からサーバー側で warawa_until を書く実装に差し替える。
  */
 
-/** 入会LP（GitHub Pages）。後日このURLの中身だけStripe決済ページに差し替え */
-export const WARAWA_LP_URL = "https://mitsulow.github.io/0Lei/warawa_lp.html";
+/** 入会LP（OneSeaキャンペーンの中央ページ・アプリ内）。模擬決済ボタン→/join/complete。
+ * 後日この模擬ボタンをStripe決済に差し替える。 */
+export const WARAWA_LP_URL = "/lp/onesea";
 
 export function isWarawaUntil(until: string | null | undefined): boolean {
   return !!until && new Date(until) > new Date();
