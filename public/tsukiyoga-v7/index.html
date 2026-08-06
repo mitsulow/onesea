@@ -13899,17 +13899,18 @@ const COASTLINES = [
     return d;
   }
 
-  // ★v7.2: 角度の3サンプルメディアン
-  // 磁気センサーは1フレームだけ大きく外れた値を吐くことがあり（金属接近・再校正など）、
-  // それが snap 追従で画面ごと「ぐるん」と回る根本原因。
-  // メディアンなら単発スパイクは完全に消え、本物の回転は1フレーム遅れで素通りする。
-  function angularMedian3(buf) {
-    if (buf.length < 3) return buf[buf.length - 1];
+  // ★v7.3: 角度の N サンプルメディアン（既定5）
+  // 磁気センサーは金属接近・再校正で数フレーム続けて外れた値を吐くことがあり、
+  // それが snap 追従で画面ごと「ぐるん」と回る根本原因。3サンプルだと2連続スパイクを
+  // 取り逃すので5サンプルに拡張（2つまでの連続外れ値を完全に消す。実回転は数フレーム遅れで素通り）。
+  function angularMedianN(buf) {
+    const n = buf.length;
+    if (n === 0) return 0;
+    if (n < 3) return buf[n - 1];
     let best = buf[0], bestCost = Infinity;
     for (const v of buf) {
-      const cost = Math.abs(shortAngle(buf[0], v)) +
-                   Math.abs(shortAngle(buf[1], v)) +
-                   Math.abs(shortAngle(buf[2], v));
+      let cost = 0;
+      for (const u of buf) cost += Math.abs(shortAngle(u, v));
       if (cost < bestCost) { bestCost = cost; best = v; }
     }
     return best;
@@ -14021,14 +14022,16 @@ const COASTLINES = [
     opts = opts || {};
     const diff = shortAngle(target, current);
     const absDiff = Math.abs(diff);
-    // ★v6改: dead zone 追加（センサーノイズ起因のドリフト防止）
-    // 0.4°未満は完全に無視 → 静止時に値が動かない
-    if (absDiff < 0.4) return current;
+    // ★v7.3: dead zone を 0.9° に拡大（磁気センサーの実ノイズは1〜2°あり、
+    // 0.4°では金星などに重ねて静止したときに画面が細かく震えていた）
+    if (absDiff < 0.9) return current;
     let alpha;
-    if (absDiff < 2)       alpha = opts.calm || 0.10;
-    else if (absDiff < 6)  alpha = opts.slow || 0.28;
-    else if (absDiff < 20) alpha = opts.fast || 0.55;
-    else                    alpha = opts.snap || 1.0;
+    if (absDiff < 2)       alpha = opts.calm || 0.08;
+    else if (absDiff < 6)  alpha = opts.slow || 0.22;
+    else if (absDiff < 20) alpha = opts.fast || 0.45;
+    // ★v7.3: 大差でも snap を 0.5 に（従来1.0=瞬間テレポート）。
+    // 2〜3フレームでスッと寄るので「ぐるん」と一気に振れなくなる（体感遅延は約50ms）
+    else                    alpha = opts.snap || 0.5;
     // ★v7.2: gain（天頂減衰など）。スマホを真上に向けると方位が数学的に不定になり
     // コンパス値が大きく振れるため、追従そのものを弱めて画面の「ぐるん」を抑える
     if (typeof opts.gain === 'number') alpha = Math.min(1, alpha * opts.gain);
@@ -14038,12 +14041,12 @@ const COASTLINES = [
     opts = opts || {};
     const diff = target - current;
     const absDiff = Math.abs(diff);
-    if (absDiff < 0.4) return current;  // dead zone
+    if (absDiff < 0.9) return current;  // dead zone（v7.3で0.4→0.9）
     let alpha;
-    if (absDiff < 2)       alpha = opts.calm || 0.10;
-    else if (absDiff < 6)  alpha = opts.slow || 0.28;
-    else if (absDiff < 20) alpha = opts.fast || 0.55;
-    else                    alpha = opts.snap || 1.0;
+    if (absDiff < 2)       alpha = opts.calm || 0.08;
+    else if (absDiff < 6)  alpha = opts.slow || 0.22;
+    else if (absDiff < 20) alpha = opts.fast || 0.45;
+    else                    alpha = opts.snap || 0.5;
     return current + diff * alpha;
   }
 
@@ -14170,10 +14173,10 @@ const COASTLINES = [
     let roll = 0;
 
     if (heading !== null) {
-      // ★v7.2: ① 3サンプル角度メディアンで単発スパイク（「ぐるん」の根本原因）を除去
+      // ★v7.3: ① 5サンプル角度メディアンで連続スパイク（「ぐるん」の根本原因）を除去
       navState.headingBuf.push(heading);
-      if (navState.headingBuf.length > 3) navState.headingBuf.shift();
-      const medHeading = angularMedian3(navState.headingBuf);
+      if (navState.headingBuf.length > 5) navState.headingBuf.shift();
+      const medHeading = angularMedianN(navState.headingBuf);
 
       // ★v7.2: ② 天頂/真下付近では方位が不定になるため追従を減衰（cos(pitch)、下限0.15）
       const zenithGain = Math.max(0.15, Math.cos(pitch * Math.PI / 180));
@@ -14183,19 +14186,19 @@ const COASTLINES = [
       navState.pitch = adaptiveLpfLinear(navState.pitch, pitch);
       navState.roll = adaptiveLpfLinear(navState.roll, roll);
 
-      // ★v7.2: コンパス画面もメディアン済みの同じ値から供給（パイプライン一本化）
-      handleRawCompass(medHeading);
+      // ★v7.3: 空の描画は compassRaw を使うので、そちらにも天頂減衰を渡す
+      // （上空の金星/月に重ねて静止したときのブレを抑える）
+      handleRawCompass(medHeading, zenithGain);
     }
   }
 
   // ★v6: コンパス画面専用の方位平滑化
-  // ★v7.2: 引数をイベントからメディアン済み方位値に変更（handleNavOrientationと供給源を統一）
-  function handleRawCompass(raw) {
-    // ★v6: 適応LPF（コンパス画面の震え対策）
+  // ★v7.3: zenithGain を受け取り、空の追従も天頂付近で減衰させる
+  function handleRawCompass(raw, gain) {
     if (navState.compassRaw === null) {
       navState.compassRaw = raw;
     } else {
-      navState.compassRaw = adaptiveLpfAngle(navState.compassRaw, raw);
+      navState.compassRaw = adaptiveLpfAngle(navState.compassRaw, raw, { gain: gain });
     }
   }
 

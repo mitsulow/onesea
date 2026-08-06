@@ -469,6 +469,27 @@ export function OtohikariGlobe({
     ];
     const pillarGroup = new THREE.Group();
     earth.add(pillarGroup);
+
+    // 滲む光のテクスチャ（放射状グラデ: 中心=白く明るい → 外=透明）。
+    // 固いドットではなくホタルのように霞んで光らせるため、スプライトに貼って使う。
+    const glowTex = (() => {
+      const s = 128;
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = s;
+      const ctx = cv.getContext("2d")!;
+      const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+      g.addColorStop(0.0, "rgba(255,255,255,0.95)");
+      g.addColorStop(0.18, "rgba(200,240,255,0.75)");
+      g.addColorStop(0.45, "rgba(120,210,255,0.30)");
+      g.addColorStop(0.75, "rgba(90,180,255,0.08)");
+      g.addColorStop(1.0, "rgba(90,180,255,0.0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, s, s);
+      const t = new THREE.CanvasTexture(cv);
+      t.needsUpdate = true;
+      return t;
+    })();
+
     let builtKey = "";
     const rebuildPillars = (list: Array<[number, number, number] | null>) => {
       pillarGroup.clear();
@@ -478,21 +499,25 @@ export function OtohikariGlobe({
         const lat = loc ? loc[0] : JP_SPOTS[i % JP_SPOTS.length][0] + ((i * 0.7) % 2) - 1;
         const lng = loc ? loc[1] : JP_SPOTS[i % JP_SPOTS.length][1] + ((i * 1.3) % 3) - 1.5;
         const crowd = Math.min(loc ? loc[2] : 1, 8);
-        const base = ll2v(lat, lng, 1.008);
-        // ホタルのコア（水色）
-        const core = new THREE.Mesh(
-          new THREE.SphereGeometry(0.009 + crowd * 0.0016, 8, 8),
-          new THREE.MeshBasicMaterial({ color: 0xbdeeff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
+        const base = ll2v(lat, lng, 1.006);
+        // 大きく柔らかい滲み（人数で少し広がる）
+        const haze = new THREE.Sprite(
+          new THREE.SpriteMaterial({ map: glowTex, color: 0x8fd8ff, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false })
         );
-        core.position.copy(base);
-        pillarGroup.add(core);
-        // ほのかなハロ
-        const halo = new THREE.Mesh(
-          new THREE.SphereGeometry(0.028 + crowd * 0.005, 12, 12),
-          new THREE.MeshBasicMaterial({ color: 0x6fd0ff, transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false })
+        const hazeR = 0.11 + crowd * 0.02;
+        haze.scale.set(hazeR, hazeR, hazeR);
+        haze.position.copy(base);
+        haze.userData.baseOpacity = 0.5;
+        pillarGroup.add(haze);
+        // 内側の明るい芯（同じグラデを小さく重ねてホタルの核に）
+        const coreS = new THREE.Sprite(
+          new THREE.SpriteMaterial({ map: glowTex, color: 0xeaf8ff, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false })
         );
-        halo.position.copy(base);
-        pillarGroup.add(halo);
+        const coreR = 0.045 + crowd * 0.006;
+        coreS.scale.set(coreR, coreR, coreR);
+        coreS.position.copy(base);
+        coreS.userData.baseOpacity = 0.9;
+        pillarGroup.add(coreS);
       }
     };
 
@@ -653,9 +678,11 @@ export function OtohikariGlobe({
         rebuildPillars(spotsRef.current);
       }
       pillarGroup.children.forEach((c, i) => {
-        const m = (c as THREE.Mesh).material as THREE.Material & { opacity: number };
-        const breath = 0.55 + 0.45 * Math.sin(t * 1.1 + i * 1.9);
-        m.opacity = (i % 2 === 0 ? 0.9 : 0.25) * breath;
+        const m = (c as THREE.Sprite).material as THREE.Material & { opacity: number };
+        const base = (c.userData.baseOpacity as number) ?? 0.6;
+        // ホタルの明滅（芯とハロで位相をずらして柔らかく息づく）
+        const breath = 0.62 + 0.38 * Math.sin(t * 1.1 + i * 1.3);
+        m.opacity = base * breath;
       });
       if (!dragging) {
         velX *= 0.94; velY *= 0.94;
