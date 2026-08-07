@@ -1522,7 +1522,7 @@
     <summary>太陽フレアが出た日、地球の音はどうなった？</summary>
 
     <div class="graph-description">
-      <p>太陽で <b>Xフレア</b> や <b>Mフレア</b> が爆発すると、1〜3日後に太陽風の塊が地球へ届き、磁気圏が大きく揺れます（＝磁気嵐）。その「揺れの強さ」を毎日1つの数字にしたのが <b>Ap指数</b>。つまり <b>Apが高い日 = 太陽が怒った日</b> です。ここでは「太陽が怒った日に、シューマン共振（地球の音）はどう変わったのか」を、実測データで確かめられます。</p>
+      <p>太陽で <b>Xフレア</b> や <b>Mフレア</b> が爆発すると、1〜3日後に太陽風の塊が地球へ届き、磁気圏が大きく揺れます（＝磁気嵐）。その「揺れの強さ」を毎日1つの数字にしたのが <b>Ap指数</b>。つまり <b>Apが高い日 = 太陽が怒った日</b> です。ここでは「太陽が怒った日に、シューマン共振（地球の音）はどう変わったのか」を、実測データで確かめられます。散布図は太陽風の到達遅れ（1〜3日）を考慮して、0〜2日ずらした中で一番相関が強い組み合わせを自動で表示します（Apは世界時・F1は日本時間の日区切りのため最大9時間の時差も吸収）。</p>
     </div>
     <div class="dv-panel">
       <div class="dv-block">
@@ -2524,8 +2524,27 @@
       }
 
       // ⑥ 散布図 + 相関係数
+      // ★太陽の揺れ(Ap)はUTC日区切り・F1はJST日区切りで最大9時間ズレる上、
+      //   フレア由来の太陽風は爆発から1〜3日遅れて届く。そこで0/+1/+2日ずらしを
+      //   全部計算し、相関|r|が一番強いラグを自動で採用して表示する。
       {
-        const pts = all.filter(e => apMap[e.d] != null).map(e => [apMap[e.d], e.f1]);
+        const shift = (d, n) => {
+          if (!n) return d;
+          const t = new Date(d + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() - n);
+          return t.toISOString().slice(0, 10);
+        };
+        const mkPts = lag => all.filter(e => apMap[shift(e.d, lag)] != null).map(e => [apMap[shift(e.d, lag)], e.f1]);
+        const corrOf = ps => {
+          const nn = ps.length; if (nn < 10) return 0;
+          const mx = ps.reduce((a, p) => a + p[0], 0) / nn, my = ps.reduce((a, p) => a + p[1], 0) / nn;
+          let sxy = 0, sxx = 0, syy = 0;
+          ps.forEach(pp => { const dx = pp[0] - mx, dy = pp[1] - my; sxy += dx * dy; sxx += dx * dx; syy += dy * dy; });
+          return sxy / Math.sqrt(sxx * syy || 1);
+        };
+        let bestLag = 0, bestAbs = -1;
+        for (const lg of [0, 1, 2]) { const rr = Math.abs(corrOf(mkPts(lg))); if (rr > bestAbs) { bestAbs = rr; bestLag = lg; } }
+        const pts = mkPts(bestLag);
+        window.__scatterLag = bestLag;
         const g = dvCtx("dv-scatter", 0.5);
         if (g && pts.length > 10) {
           const { ctx, W, H, u, fs } = g;
@@ -2556,7 +2575,7 @@
           ctx.save(); ctx.translate(fs * 0.9, H / 2); ctx.rotate(-Math.PI / 2);
           ctx.fillText("F1 (Hz)", 0, 0); ctx.restore();
           ctx.fillStyle = "#f0c674"; ctx.font = fs * 1.05 + "px monospace"; ctx.textAlign = "right";
-          ctx.fillText("r = " + r.toFixed(3), W - PR - fs * 0.4, PT + fs * 1.2);
+          ctx.fillText("r = " + r.toFixed(3) + (window.__scatterLag ? "（太陽の" + window.__scatterLag + "日後の地球）" : "（同日）"), W - PR - fs * 0.4, PT + fs * 1.2);
           // 説明文
           const note = document.getElementById("solar-note");
           if (note) {
