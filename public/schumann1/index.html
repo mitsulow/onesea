@@ -2433,7 +2433,7 @@
         ctx.beginPath(); ctx.moveTo(PL, Y(avg)); ctx.lineTo(W - PR, Y(avg)); ctx.stroke();
         ctx.setLineDash([]);
         // 本体の線
-        ctx.strokeStyle = COLORS[mode] || "#5ae08a"; ctx.lineWidth = 1.2 * u;
+        ctx.strokeStyle = COLORS[mode] || "#5ae08a"; ctx.lineWidth = 0.9 * u;
         ctx.beginPath();
         let pen = false, prev = null;
         keys.forEach(k => {
