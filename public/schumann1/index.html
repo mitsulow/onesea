@@ -1442,10 +1442,10 @@
       <p>トムスクの実測から得たF1日平均を、1日1点で打った散布図。2012年からだと点が詰まって見えにくいので、<b>3年間</b>に切り替えると2024年以降の濃ゆい記録が見えます。青緑=8.02Hz目標に近い日、金=7.83基準線。</p>
     </div>
     <div class="dot-tabs" id="dot-tabs">
-      <button type="button" class="dot-tab active" data-range="all">全期間</button>
-      <button type="button" class="dot-tab" data-range="3y">3年間</button>
+      <button type="button" class="dot-tab" data-range="all">全期間</button>
+      <button type="button" class="dot-tab active" data-range="3y">3年間</button>
     </div>
-    <div class="dv-block"><canvas id="dv-dot"></canvas></div>
+    <div class="dv-block" id="dotBlock"><canvas id="dv-dot"></canvas></div>
   </details>
 
   <details class="fold" id="fold-target">
@@ -2011,7 +2011,7 @@
   function jstToday() { return new Date(Date.now() + 9 * 3600e3); }
 
   // F1 全記録の散布図 (1日=1点)。range: "all" | "3y"
-  let dotRange = "all";
+  let dotRange = "3y";
   function drawDotGraph(all) {
     window.__dotDays = all; // 全画面表示の再描画用にキャッシュ
     // 時系列は横長が見やすい。縦は最大320pxで頭打ち（広い画面での巨大化を防止）
@@ -2063,13 +2063,10 @@
     }
     // 点（値で色分け・加算合成でホタルのように光らせる）
     const r = dotRange === "3y" ? 2.0 * u : 1.5 * u;
-    ctx.globalCompositeOperation = "lighter";
     pts.forEach(e => {
       const c = [90, 212, 143]; // ★宝の山と同じ単色グリーン #5ad48f
       const x = X(Date.parse(e.d + "T00:00:00Z")), yy = Y(e.f1);
-      const halo = ctx.createRadialGradient(x, yy, 0, x, yy, r * 3);
-      halo.addColorStop(0, "rgba(" + c.join(",") + ",0.55)");
-      halo.addColorStop(1, "rgba(" + c.join(",") + ",0)");
+
       ctx.fillStyle = halo;
       ctx.beginPath(); ctx.arc(x, yy, r * 3, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = "rgba(" + c.join(",") + ",0.95)";
@@ -3361,9 +3358,8 @@
   #dotFsOv .dot-fs-close{position:absolute;top:10px;right:14px;z-index:2;background:rgba(255,255,255,.12);
     border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;cursor:pointer}
   #dotFsOv .dot-fs-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:#5a6a7a;font-size:11px}
-  #dv-dot{cursor:zoom-in;background:#0d0f16;border-radius:10px}
-  .dv-block:has(> #dv-dot){margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);
-    padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%)}
+  #dv-dot{cursor:zoom-in;background:#0d0f16;display:block;width:100%}
+  #dotBlock{margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);width:100vw}
   #dotFsOv #dv-dot{cursor:zoom-out;width:96vw}
 </style>
 <div id="dotFsOv">
