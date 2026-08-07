@@ -131,7 +131,7 @@ export function MyRecoMap({ userId, isMe }: { userId: string; isMe: boolean }) {
     <section className="mt-3">
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       <div className="mb-1.5 flex items-baseline justify-between">
-        <h2 className="text-[13.5px] font-extrabold tracking-wide text-[#3a3428]">📍 私のおススメの店</h2>
+        <h2 className="text-[13.5px] font-extrabold tracking-wide text-[#3a3428]"><img src="/icons/icon-pin.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> 私のおススメの店</h2>
         {shops && shops.length > 0 && <span className="num text-[10.5px] text-[#a09888]">{shops.length}軒</span>}
       </div>
 
@@ -188,7 +188,7 @@ export function MyRecoMap({ userId, isMe }: { userId: string; isMe: boolean }) {
                     disabled={saving}
                     className="block w-full rounded-lg border border-[#e8dcc4] bg-white px-2.5 py-1.5 text-left text-[11.5px] leading-snug text-[#5a5448] disabled:opacity-50"
                   >
-                    📍 {cd.label}
+                    <img src="/icons/icon-pin.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /> {cd.label}
                   </button>
                 ))}
               </div>

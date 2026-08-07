@@ -131,7 +131,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                 <div className="mt-2 min-w-0">
                   {p.life_work && (
                     <div className="line-clamp-2 break-words text-[14px] font-extrabold leading-snug" style={{ color: "#c94d3a" }}>
-                      ❤️ {p.life_work}
+                      <img src="/icons/icon-heart.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> {p.life_work}
                     </div>
                   )}
                   {p.rice_work && (
@@ -145,7 +145,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
               {/* 地域 */}
               {(p.prefecture || p.city) && (
                 <div className="mt-1.5 truncate text-[11.5px] text-[#8a8070]">
-                  📍 {p.prefecture ?? ""}
+                  <img src="/icons/icon-pin.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /> {p.prefecture ?? ""}
                   {p.city ? ` ${p.city}` : ""}
                 </div>
               )}

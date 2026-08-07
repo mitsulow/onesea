@@ -452,7 +452,7 @@ export default function UserPage() {
             href="/settings/profile"
             className="mt-3 block rounded-xl border border-[#e0d6c6] bg-white py-2.5 text-center text-[13px] font-bold text-[#8a7a5a] no-underline"
           >
-            ✏️ プロフィールを編集
+            <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> プロフィールを編集
           </Link>
         )}
 
@@ -503,7 +503,7 @@ export default function UserPage() {
         )}
         {profile.wants_to_do && profile.wants_to_do.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]">✨ やりたいこと</div>
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> やりたいこと</div>
             <div className="flex flex-wrap gap-1.5">
               {profile.wants_to_do.map((w) => (
                 <span key={w} className="rounded-full bg-[#fdf0ee] px-2.5 py-1 text-[11.5px] font-medium text-[#a05040]">
@@ -572,7 +572,7 @@ export default function UserPage() {
         <div className="pt-5" id="recos-sec" style={{ scrollMarginTop: 20 }}>
           <div className="card">
             <div className="sec mb-2.5 flex items-center justify-between">
-              <span>⭐ {isMe ? "わたしのオススメ" : `${profile.display_name ?? "この人"}さんのオススメ`}</span>
+              <span><img src="/icons/icon-star.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {isMe ? "わたしのオススメ" : `${profile.display_name ?? "この人"}さんのオススメ`}</span>
               {isMe && !recoForm && (
                 <button
                   onClick={() => setRecoForm(true)}
@@ -657,7 +657,7 @@ export default function UserPage() {
                             rel="noopener noreferrer"
                             className="mt-1 inline-block max-w-full truncate rounded-full bg-[#f0e6d2] px-2.5 py-1 text-[11px] font-bold text-[#a05040] no-underline"
                           >
-                            🔗 見てみる →
+                            <img src="/icons/icon-link.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 見てみる →
                           </a>
                         )}
                       </div>

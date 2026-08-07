@@ -204,7 +204,7 @@ export function PostCard({
             isLiked ? "font-bold text-[#e0455a]" : "text-[#65676b]"
           }`}
         >
-          {isLiked ? "❤️" : "🤍"} {likeCount > 0 && <span className="num">{likeCount}</span>}
+          <img src="/icons/icon-heart.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3, filter: isLiked ? "none" : "grayscale(1) opacity(.45)" }} /> {likeCount > 0 && <span className="num">{likeCount}</span>}
         </button>
         <Link
           href={`/post/${post.id}`}

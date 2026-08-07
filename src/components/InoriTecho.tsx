@@ -698,7 +698,7 @@ function BottomSheet({
                   }}
                   className="mb-1 rounded-full border border-[#c8d8e8] bg-white px-2 py-0.5 text-[10px] font-bold text-[#3070b0]"
                 >
-                  ⚓ {tide ? `${tide.port}港` : "港を選ぶ"} ▾
+                  <img src="/icons/icon-anchor.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {tide ? `${tide.port}港` : "港を選ぶ"} ▾
                 </button>
                 {tide === null ? (
                   <div className="py-1 text-[10px] text-[#9ab]">現在位置から最寄り港を探しています...</div>
@@ -744,7 +744,7 @@ function BottomSheet({
 
             {/* 24時間スケジュール */}
             <div className="mb-1 flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-[#999]">📅 スケジュール</span>
+              <span className="text-[10.5px] font-bold text-[#999]"><img src="/icons/icon-calendar.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> スケジュール</span>
               {/* ＋ 予定を追加 — 開始時刻〜終了時刻を選んで入れる（一般的な手帳アプリと同じ） */}
               <button
                 onClick={() => {
@@ -927,7 +927,7 @@ function BottomSheet({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="border-b border-[#eee] px-4 py-3">
-              <div className="mb-2 text-center text-[13px] font-extrabold text-[#3070b0]">⚓ 港をえらぶ</div>
+              <div className="mb-2 text-center text-[13px] font-extrabold text-[#3070b0]"><img src="/icons/icon-anchor.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> 港をえらぶ</div>
               <input
                 value={portQ}
                 onChange={(e) => setPortQ(e.target.value)}
@@ -946,7 +946,7 @@ function BottomSheet({
                 }}
                 className="w-full rounded-lg px-3 py-2.5 text-left text-[13px] font-bold text-[#3070b0]"
               >
-                📍 いまの現在位置から最寄り港をえらぶ
+                <img src="/icons/icon-pin.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> いまの現在位置から最寄り港をえらぶ
               </button>
               {ports
                 .filter((pt) => !portQ.trim() || pt.name.includes(portQ.trim()))
@@ -1062,7 +1062,7 @@ function BottomSheet({
                 onClick={() => setPenEdit(!penEdit)}
                 className="ml-auto mt-1 rounded-full border border-[#e0dcd0] px-2 py-1 text-[10px] font-bold text-[#8a8070]"
               >
-                {penEdit ? "完了" : "✎ タグ名"}
+                {penEdit ? "完了" : "タグ名"}
               </button>
             </div>
             <div className="mt-3 flex gap-2">

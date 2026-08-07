@@ -274,10 +274,10 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
             ) : geo === "asking" ? (
               "確認中..."
             ) : geo === "ng" ? (
-              "📍 現在位置を許可（もう一度試す）"
+              "現在位置を許可（もう一度試す）"
             ) : (
               <>
-                📍 現在位置を許可する<span className="text-[10px] font-normal">（手帳アプリに使用）</span>
+                <img src="/icons/icon-pin.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 現在位置を許可する<span className="text-[10px] font-normal">（手帳アプリに使用）</span>
               </>
             )}
           </button>

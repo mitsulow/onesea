@@ -176,7 +176,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
         className="mb-2 w-full rounded-xl border border-[#e8dcc4] px-3.5 py-3 text-left text-[13.5px] text-[#8a8070]"
         style={{ background: "linear-gradient(135deg,#fffaf0 0%,#fdf6e9 100%)" }}
       >
-        ✏️ {todayPrompt()}
+        <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {todayPrompt()}
       </button>
     );
   }
@@ -261,7 +261,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
       {/* SNSリンク貼り付け */}
       <div className="mt-2.5 rounded-xl border-2 border-dashed border-[#c94d3a]/30 bg-[#c94d3a]/5 p-3">
         <div className="mb-1.5 flex items-center gap-1.5">
-          <span className="text-base">🔗</span>
+          <img src="/icons/icon-link.webp" alt="" style={{ width: 17, height: 17 }} />
           <span className="text-xs font-medium text-[#5a5448]">
             SNS取り込めます
           </span>
@@ -308,7 +308,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
             className="rounded-xl px-5 py-2 text-[13px] font-extrabold text-white disabled:opacity-40"
             style={{ background: "#c94d3a" }}
           >
-            {sending ? "投稿中..." : "💭 投稿"}
+            {sending ? "投稿中..." : "投稿"}
           </button>
         </div>
       </div>

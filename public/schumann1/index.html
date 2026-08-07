@@ -537,8 +537,8 @@
     margin-bottom: 0.55rem;
   }
   .gf1-cond.calm { color: #7cf9d4; border-color: rgba(124, 249, 212, 0.45); background: rgba(124, 249, 212, 0.08); }
-  .gf1-cond.active { color: #ffd60a; border-color: rgba(255, 214, 10, 0.45); background: rgba(255, 214, 10, 0.08); }
-  .gf1-cond.storm { color: #ff9db8; border-color: rgba(255, 60, 140, 0.5); background: rgba(255, 60, 140, 0.1); }
+  .gf1-cond.active { color: #ff5c5c; border-color: rgba(255, 92, 92, 0.55); background: rgba(255, 92, 92, 0.08); }
+  .gf1-cond.storm { color: #ff5c5c; border-color: rgba(255, 92, 92, 0.7); background: rgba(255, 92, 92, 0.12); }
   /* ★ 8.02Hzまでの距離ゲージ (常設) */
   .gf1-target {
     margin-top: 0.35rem;
@@ -809,7 +809,7 @@
     12% { opacity: 1; transform: scale(1.5); }
     100% { opacity: 0; transform: scale(0.8); }
   }
-  .rin-btn.m1 { --glow: rgba(0, 255, 200, 0.9); }
+  .rin-btn.m1 { --glow: rgba(255, 60, 140, 0.9); }
   .rin-btn.m2 { --glow: rgba(255, 214, 10, 0.9); }
   .rin-btn.m3 { --glow: rgba(200, 120, 255, 0.9); }
   .rin-btn.m4 { --glow: rgba(255, 60, 140, 0.9); }
@@ -935,10 +935,10 @@
     border-left: 3px solid var(--sr, #52fa8c);
     overflow: hidden;
   }
-  .mode-block.m1 { --sr: #00ffc8; }
+  .mode-block.m1 { --sr: #ff3c8c; }
   .mode-block.m2 { --sr: #ffd60a; }
   .mode-block.m3 { --sr: #c878ff; }
-  .mode-block.m4 { --sr: #ff3c8c; }
+  .mode-block.m4 { --sr: #ff96be; }
   /* 左右の白余白なしでフル幅に (fold の角丸は overflow:hidden が処理) */
   details.fold > .mode-block { margin-left: 0; margin-right: 0; }
   .mode-head {
@@ -962,10 +962,10 @@
     padding: 0.18rem 0.7rem;
     border-radius: 100px;
   }
-  .mh-cur.m1 { background: #00ffc8; }
+  .mh-cur.m1 { background: #ff3c8c; }
   .mh-cur.m2 { background: #ffd60a; }
   .mh-cur.m3 { background: #c878ff; }
-  .mh-cur.m4 { background: #ff3c8c; color: #fff; }
+  .mh-cur.m4 { background: #ff96be; color: #fff; }
   .mh-meta {
     font-size: 0.74rem;
     color: var(--text-muted);
@@ -1020,10 +1020,10 @@
   .sr-card {
     padding: 0.85rem 1rem 0.35rem;
   }
-  .sr-card.m1 { --sr: #00ffc8; }
+  .sr-card.m1 { --sr: #ff3c8c; }
   .sr-card.m2 { --sr: #ffd60a; }
   .sr-card.m3 { --sr: #c878ff; }
-  .sr-card.m4 { --sr: #ff3c8c; }
+  .sr-card.m4 { --sr: #ff96be; }
   .sr-top {
     display: flex;
     justify-content: space-between;
@@ -1265,7 +1265,7 @@
         </div>
         <div class="gf1-live">振幅 <b id="gf1-amp">—</b> pT <span class="gf1-sep">・</span> Q値 <b id="gf1-q">—</b></div>
       </div>
-      <div class="gf1-target" id="gf1-target" style="display:none;">目標 8.02 Hz まで <b id="gf1-dist">—</b> Hz <span class="gf1-sep">・</span> 今週平均 <b id="gf1-dist3">—</b> Hz</div>
+      <div class="gf1-target" id="gf1-target" style="display:none;">目標 8.02 Hz まで <b id="gf1-dist">—</b> Hz <span class="gf1-sep">・</span> 今週の平均値 <b id="gf1-dist3">—</b> Hz</div>
     </div>
 
     <div class="spark-wrap">
@@ -1710,19 +1710,17 @@
           const last = rows[rows.length - 1];
           const kp = Number(last.Kp);
           if (!isFinite(kp)) return;
-          const dev = f1hz != null ? (f1hz - 7.83) : null;
-          const devTxt = dev != null ? (`共振${f1hz.toFixed(2)}Hz` + (Math.abs(dev) < 0.05 ? "・基準どおり" : (dev > 0 ? `・基準+${dev.toFixed(2)}` : `・基準−${Math.abs(dev).toFixed(2)}`))) : "";
           let cls, txt;
           if (kp >= 5) {
             const g = Math.min(5, Math.floor(kp) - 4);
             cls = "storm";
-            txt = `今日の地球: 磁気嵐 G${g}（Kp${kp.toFixed(1)}）— 電離層が揺れています ${devTxt}`;
+            txt = `今日の地球: 磁気嵐 G${g}（Kp${kp.toFixed(1)}）— 電離層が揺れています`;
           } else if (kp >= 3) {
             cls = "active";
-            txt = `今日の地球: ざわつき気味（Kp${kp.toFixed(1)}）— オーロラ帯が活発 ${devTxt}`;
+            txt = `今日の地球: ざわつき気味（Kp${kp.toFixed(1)}）— オーロラ帯が活発`;
           } else {
             cls = "calm";
-            txt = `今日の地球: おだやか（Kp${kp.toFixed(1)}・磁気圏静穏） ${devTxt}`;
+            txt = `今日の地球: おだやか（Kp${kp.toFixed(1)}・磁気圏静穏）`;
           }
           condEl.style.display = "";
           condEl.className = "gf1-cond " + cls;
@@ -1753,7 +1751,7 @@
         // 距離ゲージの今週平均側 (瞬間値だけだとノイズで暴れるため併記)
         if (s.modes.F1 && typeof s.modes.F1.avg === "number") {
           const el = document.getElementById("gf1-dist3");
-          if (el) el.textContent = fmtDist(s.modes.F1.avg - TARGET_HZ);
+          if (el) el.textContent = s.modes.F1.avg.toFixed(2);
         }
       }).catch(() => {});
     if (data.polarization) renderPolarization(data.polarization);
@@ -2364,7 +2362,7 @@
         seriesCache = await r.json();
       }
       const S = seriesCache;
-      const COLORS = { F1: "#e8ecf4", F2: "#ffd60a", F3: "#ff7a6a", F4: "#5ae08a" };
+      const COLORS = { F1: "#ff3c8c", F2: "#ffd60a", F3: "#c878ff", F4: "#ff96be" };
       document.querySelectorAll("canvas.mode-graph").forEach(cv => {
         if (cv.clientWidth < 40) return;
         const parts = (cv.dataset.g || "").split(":");
@@ -2420,7 +2418,7 @@
         ctx.beginPath(); ctx.moveTo(PL, Y(avg)); ctx.lineTo(W - PR, Y(avg)); ctx.stroke();
         ctx.setLineDash([]);
         // 本体の線
-        ctx.strokeStyle = COLORS[mode] || "#e8ecf4"; ctx.lineWidth = 1.8 * u;
+        ctx.strokeStyle = COLORS[mode] || "#ff3c8c"; ctx.lineWidth = 1.5 * u;
         ctx.beginPath();
         let pen = false, prev = null;
         keys.forEach(k => {
@@ -2437,7 +2435,6 @@
         ctx.fillStyle = COLORS[mode] || "#e8ecf4";
         ctx.beginPath(); ctx.arc(X(lk), Y(ser[lk]), 2.6 * u, 0, Math.PI * 2); ctx.fill();
         ctx.font = fs + "px monospace"; ctx.textAlign = "left";
-        ctx.fillText(String(ser[lk]), W - PR + fs * 0.3, PT + fs * 0.9);
       });
     } catch (e) { /* 補助表示 */ }
   }

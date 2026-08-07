@@ -6,7 +6,7 @@
   "start_url": "./tsukiyoga_v7.html?pwa=1",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#030818",
   "theme_color": "#030818",
   "lang": "ja",

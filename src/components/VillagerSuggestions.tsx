@@ -17,7 +17,7 @@ interface Suggestion {
  * sellersOnly: 実際に出品がある人（座主）だけに絞る — 登録しただけの
  * 無料会員が「おすすめの座主」に並ばないように */
 export function VillagerSuggestions({
-  title = "✨ おすすめのむらびと",
+  title = "おすすめのむらびと",
   sellersOnly = false,
   variant = "row",
 }: {

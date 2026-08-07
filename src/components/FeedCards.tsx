@@ -70,7 +70,7 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
 
       {mura.kind === "event" && mura.event_at && (
         <div className="mt-1.5 inline-block rounded-full bg-[#e8f4ec] px-2 py-0.5 text-[10.5px] font-bold text-[#2a7a48]">
-          📅 イベント {new Date(mura.event_at).getMonth() + 1}/{new Date(mura.event_at).getDate()}
+          <img src="/icons/icon-calendar.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> イベント {new Date(mura.event_at).getMonth() + 1}/{new Date(mura.event_at).getDate()}
         </div>
       )}
 

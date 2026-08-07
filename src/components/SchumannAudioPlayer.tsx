@@ -427,7 +427,7 @@ export function SchumannAudioPlayer() {
     program?.kind === "meditation"
       ? `🧘 瞑想モード（${program.course}分）`
       : program?.kind === "idea"
-        ? "💡 アイディアモード"
+        ? "<img src="/icons/icon-bulb.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> アイディアモード"
         : "シンクロモード";
 
   return (
@@ -667,7 +667,7 @@ export function SchumannAudioPlayer() {
               ✕
             </button>
             <div className="text-center text-[16px] font-extrabold text-white">
-              {introKind === "idea" ? "💡 アイディアモード" : "シンクロモード"}
+              {introKind === "idea" ? "<img src="/icons/icon-bulb.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> アイディアモード" : "シンクロモード"}
             </div>
             <div className="mt-0.5 text-center text-[11px] text-[#7ab8d8]">
               {introKind === "idea" ? "全体からアイディアを降ろします" : "今日の「やりたいこと」に許可を出す"}
@@ -768,7 +768,7 @@ export function SchumannAudioPlayer() {
             >
               ✕
             </button>
-            <div className="text-center text-[15px] font-extrabold text-[#7a5ac0]">💡 IDEA</div>
+            <div className="text-center text-[15px] font-extrabold text-[#7a5ac0]"><img src="/icons/icon-bulb.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> IDEA</div>
             <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">叡智から降りてきたものを、逃さないで</div>
             <textarea
               value={ideaBody}
@@ -784,7 +784,7 @@ export function SchumannAudioPlayer() {
               className="mt-2.5 w-full rounded-xl py-2.5 text-[14px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "linear-gradient(135deg,#a070ff,#8a5aff)" }}
             >
-              {ideaSaved ? "刻みました 💡" : ideaSaving ? "保存中..." : "アイディアを保存する"}
+              {ideaSaved ? "刻みました" : ideaSaving ? "保存中..." : "アイディアを保存する"}
             </button>
             <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">あなたのマイページの「アイディア一覧」に貯まっていきます</p>
           </div>

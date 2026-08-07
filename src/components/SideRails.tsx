@@ -115,7 +115,7 @@ export function ThreeCol({
             {rightExtra}
             {showSuggestions && (
               <div className={"rounded-xl p-3 " + s.card}>
-                <VillagerSuggestions title="✨ おすすめのむらびと" variant="list" />
+                <VillagerSuggestions title="おすすめのむらびと" variant="list" />
               </div>
             )}
           </div>

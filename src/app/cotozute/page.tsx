@@ -416,7 +416,7 @@ export default function CotozutePage() {
             {myAvatar ? (
               <img src={srcCdn(myAvatar)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-[28px]">🌿</div>
+              <div className="flex h-full w-full items-center justify-center text-[28px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 30, height: 30 }} /></div>
             )}
           </div>
           <span
@@ -443,7 +443,7 @@ export default function CotozutePage() {
             {st.profiles?.avatar_url ? (
               <img src={srcCdn(st.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
             ) : (
-              <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[13px]">🌿</span>
+              <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[13px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 16, height: 16 }} /></span>
             )}
           </span>
           <span className="absolute bottom-1.5 left-1.5 right-1.5 truncate text-left text-[10px] font-bold text-white">
@@ -478,7 +478,7 @@ export default function CotozutePage() {
   const eventStrip = events.length > 0 && (
     <div className="py-2.5">
       <div className="mb-1.5 flex items-baseline justify-between px-0.5">
-        <span className="text-[13.5px] font-bold text-[#1c1e21]">📅 イベント</span>
+        <span className="text-[13.5px] font-bold text-[#1c1e21]"><img src="/icons/icon-calendar.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> イベント</span>
         <Link href="/sekai" className="text-[12px] font-bold no-underline" style={{ color: TIFFANY }}>
           すべて見る
         </Link>
@@ -556,7 +556,7 @@ export default function CotozutePage() {
         out.push(<BandDouble key={`bd3-${feedKey(it)}`} />);
         out.push(
           <div key="villagers" className="py-2.5">
-            <VillagerSuggestions title="✨ おすすめのむらびと" />
+            <VillagerSuggestions title="おすすめのむらびと" />
           </div>
         );
         out.push(<BandDouble key="villagers-band" />);
@@ -686,7 +686,7 @@ export default function CotozutePage() {
           {myAvatar ? (
             <img src={srcCdn(myAvatar)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
           ) : (
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px]">🌿</span>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 18, height: 18 }} /></span>
           )}
           <button
             onClick={() => (me && isWara ? setComposing(true) : setShowUpgrade(true))}
@@ -715,7 +715,7 @@ export default function CotozutePage() {
             ))}
           </div>
         ) : items.length === 0 ? (
-          <p className="py-12 text-center text-[13px] text-[#8a8d91]">まだ投稿がありません。最初のひとことをどうぞ 🌿</p>
+          <p className="py-12 text-center text-[13px] text-[#8a8d91]">まだ投稿がありません。最初のひとことをどうぞ <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></p>
         ) : (
           <>
             {renderItems()}
@@ -761,7 +761,7 @@ export default function CotozutePage() {
 
             {events.length > 0 && (
               <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
-                <div className="mb-1.5 px-1 text-[12px] font-bold text-[#65676b]">📅 これからのイベント</div>
+                <div className="mb-1.5 px-1 text-[12px] font-bold text-[#65676b]"><img src="/icons/icon-calendar.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -3 }} /> これからのイベント</div>
                 {events.slice(0, 4).map((ev) => (
                   <Link key={ev.id} href={`/sekai/village/${ev.villages?.id}`} className="block rounded-lg px-1 py-1.5 no-underline hover:bg-[#f2f3f5]">
                     <div className="truncate text-[12.5px] font-bold text-[#1c1e21]">{String(ev.body ?? "").split("\n")[0]}</div>
@@ -775,13 +775,13 @@ export default function CotozutePage() {
 
             {shops.length > 0 && (
               <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
-                <div className="mb-1.5 px-1 text-[12px] font-bold text-[#65676b]">🏮 新着の楽市楽座</div>
+                <div className="mb-1.5 px-1 text-[12px] font-bold text-[#65676b]"><img src="/icons/icon-listing.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -3 }} /> 新着の楽市楽座</div>
                 {shops.slice(0, 4).map((sh) => (
                   <Link key={sh.id} href={`/za/${sh.id}`} className="flex items-center gap-2.5 rounded-lg px-1 py-1.5 no-underline hover:bg-[#f2f3f5]">
                     {sh.thumb_urls?.[0] || sh.image_urls?.[0] ? (
                       <img src={srcCdn(sh.thumb_urls?.[0] ?? sh.image_urls[0])} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
                     ) : (
-                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#f0f2f5] text-[15px]">🏮</span>
+                      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#f0f2f5] text-[15px]"><img src="/icons/icon-listing.webp" alt="" style={{ width: 20, height: 20 }} /></span>
                     )}
                     <div className="min-w-0">
                       <div className="truncate text-[12.5px] font-bold text-[#1c1e21]">{sh.name}</div>
@@ -793,7 +793,7 @@ export default function CotozutePage() {
             )}
 
             <div className="rounded-xl border border-[#e4e6e9] bg-white p-3">
-              <VillagerSuggestions title="✨ おすすめのむらびと" variant="list" />
+              <VillagerSuggestions title="おすすめのむらびと" variant="list" />
             </div>
           </div>
         </aside>
@@ -950,7 +950,7 @@ export default function CotozutePage() {
               {stories[storyView].profiles?.avatar_url ? (
                 <img src={srcCdn(stories[storyView].profiles!.avatar_url!)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
               ) : (
-                <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[14px]">🌿</span>
+                <span className="flex h-full w-full items-center justify-center bg-[#cfe8d8] text-[14px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 16, height: 16 }} /></span>
               )}
             </span>
             <div>
