@@ -132,7 +132,7 @@ export default function NeuraPage() {
                 className="flex-1 rounded-xl py-2.5 text-center text-[13px] font-extrabold text-[#101a28] no-underline"
                 style={{ background: "linear-gradient(135deg,#b8c8ff,#8a9af0)" }}
               >
-                💬 班のグループTALK
+                <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 班のグループTALK
               </Link>
               <button
                 onClick={async () => {

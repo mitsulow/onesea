@@ -248,7 +248,7 @@ export default function LinePage() {
               className="mt-4 inline-block rounded-xl px-5 py-2.5 text-[13px] font-extrabold text-white no-underline"
               style={{ background: "#4a8a5c" }}
             >
-              🏡 村をさがす
+              <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 村をさがす
             </Link>
           </div>
         ) : (
@@ -326,7 +326,7 @@ export default function LinePage() {
                     className="flex h-12 w-12 items-center justify-center rounded-full text-xl"
                     style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
                   >
-                    🌿
+                    <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                   </div>
                 )}
               </div>

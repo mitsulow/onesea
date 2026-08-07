@@ -129,7 +129,7 @@ export function ProfileSetup() {
         className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
         style={{ background: "#c94d3a" }}
       >
-        {saved ? "保存しました 🌿" : saving ? "保存中..." : "はじめる"}
+        {saved ? "保存しました " : saving ? "保存中..." : "はじめる"}
       </button>
       <p className="mt-2 text-center text-[10.5px] leading-relaxed text-[#b8ae9c]">
         誕生日・誕生時刻・性別はあなただけが見られるデータです。<br />

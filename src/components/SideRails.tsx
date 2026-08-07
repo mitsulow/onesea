@@ -66,7 +66,7 @@ export function TodayEarthCard({ dark = false }: { dark?: boolean }) {
   if (age < 0) age += SYN;
   return (
     <div className={"overflow-hidden rounded-xl p-4 " + s.card}>
-      <div className={"text-[12px] font-bold " + s.sub}>🌏 今日の地球</div>
+      <div className={"text-[12px] font-bold " + s.sub}><img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 今日の地球</div>
       <div className={"num mt-2 text-[15px] font-extrabold " + s.text}>{label}</div>
       <div className={"mt-1.5 text-[12px] " + s.sub}>
         月齢 <b className={"num " + s.text}>{age.toFixed(1)}</b>

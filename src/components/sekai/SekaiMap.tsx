@@ -26,7 +26,7 @@ const FILTERS = [
   ["all", "すべて"],
   ["base", "拠点"],
   // 村人の「私のおススメの店」（マイページから集計・4セグメント）
-  ["reco_alt_med", "🌿 代替医療"],
+  ["reco_alt_med", "代替医療"],
   ["reco_natural_restaurant", "🍽 ナチュラルなレストラン"],
   ["reco_natural_food", "🌾 自然食品"],
   ["reco_massage", "💆 マッサージ・鍼灸"],
@@ -34,7 +34,7 @@ const FILTERS = [
   ["natural_food", "🌾 たべもの"],
   ["natural_therapy", "💆 いやし"],
   ["natural_goods", "🧺 もの"],
-  ["natural_stay", "🏡 とまる"],
+  ["natural_stay", "とまる"],
   ["natural_learn", "📚 まなぶ"],
 ] as const;
 

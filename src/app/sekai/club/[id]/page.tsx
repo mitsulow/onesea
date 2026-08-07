@@ -145,7 +145,7 @@ export default function ClubPage() {
                   className="flex h-10 w-10 items-center justify-center rounded-full text-lg"
                   style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
                 >
-                  🌿
+                  <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                 </div>
               );
               return p?.username ? (
@@ -214,7 +214,7 @@ export default function ClubPage() {
                   {p.profiles?.avatar_url ? (
                     <img src={p.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
                   ) : (
-                    <span className="text-lg">🌿</span>
+                    <span className="text-lg"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
                   )}
                   <span className="text-[12px] font-bold text-[#3a4a34]">{p.profiles?.display_name ?? "むらびと"}</span>
                   <span className="num ml-auto text-[10px] text-[#c0c8c0]">

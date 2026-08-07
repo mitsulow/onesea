@@ -449,7 +449,7 @@ export default function VillagePage() {
                   {p.profiles?.avatar_url ? (
                     <img src={srcCdn(p.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
                   ) : (
-                    <span className="text-lg">🌿</span>
+                    <span className="text-lg"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
                   )}
                   <span className="text-[12px] font-bold text-[#3a4a34]">{p.profiles?.display_name ?? "むらびと"}</span>
                   <span className="num ml-auto text-[10px] text-[#c0c8c0]">
@@ -473,7 +473,7 @@ export default function VillagePage() {
                           {c.profiles?.avatar_url ? (
                             <img src={srcCdn(c.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-5 w-5 flex-shrink-0 rounded-full object-cover" />
                           ) : (
-                            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#e8f0e4] text-[10px]">🌿</span>
+                            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#e8f0e4] text-[10px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
                           )}
                           <div className="min-w-0 flex-1 rounded-lg bg-[#f4f8f2] px-2 py-1">
                             <span className="mr-1.5 text-[10px] font-bold text-[#5a7a5c]">

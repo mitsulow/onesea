@@ -80,7 +80,7 @@ export default function CotozuteSearchPage() {
       <div className="px-4">
         {results === null ? (
           <p className="py-12 text-center text-[12.5px] leading-relaxed text-[#b8b0a0]">
-            ことば・名前・話題で検索できます 🌿
+            ことば・名前・話題で検索できます <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
           </p>
         ) : searching ? (
           <div className="flex justify-center py-10">

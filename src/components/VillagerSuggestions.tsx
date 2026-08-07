@@ -79,11 +79,11 @@ export function VillagerSuggestions({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={srcCdn(p.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
               ) : (
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[15px]" style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}>🌿</span>
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[15px]" style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
               )}
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[12.5px] font-bold text-[#1c1e21]">{p.display_name ?? "むらびと"}</span>
-                <span className="block truncate text-[10.5px] text-[#a09888]">{p.status_line ?? "よろしくね 🌿"}</span>
+                <span className="block truncate text-[10.5px] text-[#a09888]">{p.status_line ?? "よろしくね "}</span>
               </span>
             </button>
           ))}
@@ -118,7 +118,7 @@ export function VillagerSuggestions({
                   className="flex h-12 w-12 items-center justify-center rounded-full text-xl"
                   style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
                 >
-                  🌿
+                  <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                 </div>
               )}
             </div>
@@ -126,7 +126,7 @@ export function VillagerSuggestions({
               {p.display_name ?? "むらびと"}
             </div>
             <div className="mt-0.5 truncate text-[10px] text-[#a09888]">
-              {p.status_line ?? "よろしくね 🌿"}
+              {p.status_line ?? "よろしくね "}
             </div>
           </button>
         ))}

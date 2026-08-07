@@ -95,7 +95,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                   className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] border-[#c94d3a]/50 text-[26px] shadow-sm"
                   style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
                 >
-                  🌿
+                  <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                 </div>
               )}
             </div>
@@ -115,7 +115,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
               {/* 地球冒険日数（わらわ〜番号は@Warawerでさりげなく） */}
               {p.birthday && (
                 <div className="num mt-1.5 text-[10px] font-bold text-[#a09888]">
-                  🌏 地球冒険 {(Math.floor((Date.now() - new Date(p.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
+                  <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(p.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
                 </div>
               )}
 

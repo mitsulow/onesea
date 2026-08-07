@@ -213,7 +213,7 @@ export default function ShopDetailPage() {
                 className="flex h-10 w-10 items-center justify-center rounded-full text-lg"
                 style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
               >
-                🌿
+                <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
               </div>
             )}
             <div className="min-w-0 flex-1">
@@ -247,7 +247,7 @@ export default function ShopDetailPage() {
               className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "#c94d3a" }}
             >
-              {contacting ? "ひらいています..." : "💬 連絡を取る（TALKで商談）"}
+              {contacting ? "ひらいています..." : " 連絡を取る（TALKで商談）"}
             </button>
           </div>
         ) : (
@@ -348,7 +348,7 @@ export default function ShopDetailPage() {
         {/* コメント欄（ツッコミ歓迎） */}
         <div className="rounded-xl border border-[#ede5d8] bg-white p-3">
           <div className="mb-2 text-[12px] font-extrabold tracking-wider text-[#8a7a5a]">
-            💬 コメント{comments.length > 0 ? `（${comments.length}）` : ""}
+            <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> コメント{comments.length > 0 ? `（${comments.length}）` : ""}
           </div>
           {comments.length === 0 ? (
             <p className="pb-1 text-[12px] text-[#b0a898]">まだコメントがありません。ひとこと目をどうぞ</p>
@@ -366,7 +366,7 @@ export default function ShopDetailPage() {
                     />
                   ) : (
                     <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#f2ede4] text-[12px]">
-                      🌿
+                      <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                     </span>
                   )}
                   <div className="min-w-0 flex-1">

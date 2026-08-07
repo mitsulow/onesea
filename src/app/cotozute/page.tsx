@@ -501,7 +501,7 @@ export default function CotozutePage() {
                     className="flex h-full w-full items-center justify-center text-[12px] font-bold text-white"
                     style={{ background: "linear-gradient(160deg,#4a9a5a,#1e4530)" }}
                   >
-                    🏡 {ev.villages?.name ?? "セカイムラ"}
+                    <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {ev.villages?.name ?? "セカイムラ"}
                   </div>
                 )}
               </div>
@@ -747,7 +747,7 @@ export default function CotozutePage() {
           <div className="sticky top-16 space-y-3">
             {/* 今日の地球（会員も楽しめる暮らしの情報） */}
             <div className="overflow-hidden rounded-xl border border-[#e4e6e9] bg-white p-4">
-              <div className="text-[12px] font-bold text-[#65676b]">🌏 今日の地球</div>
+              <div className="text-[12px] font-bold text-[#65676b]"><img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 今日の地球</div>
               <div className="num mt-2 text-[15px] font-extrabold text-[#1c1e21]">{todayLabel}</div>
               <div className="mt-1.5 text-[12px] text-[#65676b]">
                 月齢 <b className="num text-[#3a3428]">{moonAge.toFixed(1)}</b>

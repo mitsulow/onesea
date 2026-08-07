@@ -103,7 +103,7 @@ export function PostCard({
       className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-[16px]"
       style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
     >
-      🌿
+      <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
     </div>
   );
 
@@ -195,7 +195,7 @@ export function PostCard({
         </div>
       )}
 
-      {/* アクション（❤ 数字 / 💬 数字 / シェア） */}
+      {/* アクション（❤ 数字 / <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 数字 / シェア） */}
       <div className="mt-2 flex items-center border-t border-[#f0f2f5] pt-1.5">
         <button
           onClick={onLike}
@@ -210,7 +210,7 @@ export function PostCard({
           href={`/post/${post.id}`}
           className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] text-[#65676b] no-underline"
         >
-          💬 {commentCount > 0 && <span className="num">{commentCount}</span>}
+          <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {commentCount > 0 && <span className="num">{commentCount}</span>}
         </Link>
         <button
           onClick={() => {
@@ -238,7 +238,7 @@ export function PostCard({
                 />
               ) : (
                 <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full border-2 border-white bg-[#cfe8d8] text-[10px]">
-                  🌿
+                  <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                 </span>
               )}
             </span>

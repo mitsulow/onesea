@@ -109,7 +109,7 @@ export function AvatarSm({ p, size = 34 }: { p: any; size?: number }) {
       style={{ width: size, height: size, background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
       className="flex items-center justify-center rounded-full text-[15px]"
     >
-      🌿
+      <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
     </div>
   );
   return p?.username ? (
@@ -741,7 +741,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         <div className="mt-0.5 text-center text-[10.5px] text-[#8ab89a]">〜 全国の村と、今日の報告 〜</div>
       </div>
 
-      {/* 🏡 各地のセカイムラ拠点 — レジェンドが近い順にズラリ（横スワイプ） */}
+      {/* <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 各地のセカイムラ拠点 — レジェンドが近い順にズラリ（横スワイプ） */}
       <div className="hide-scrollbar mb-2 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1">
         {villages.map((v) => (
           <Link
@@ -789,7 +789,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           className="mx-2 mb-2 block rounded-2xl border bg-white px-3.5 py-3 text-center text-[12.5px] font-bold no-underline shadow-sm"
           style={{ borderColor: "#c8dccb", color: GREEN }}
         >
-          🏡 拠点に入ると、ここから「村人日記」を書けます →
+          <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 拠点に入ると、ここから「村人日記」を書けます →
         </a>
       )}
 
@@ -808,7 +808,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               >
                 {myVills.map((v) => (
                   <option key={v.id} value={v.id}>
-                    🏡 {v.name}（{v.prefecture}）
+                    <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {v.name}（{v.prefecture}）
                   </option>
                 ))}
               </select>
@@ -1077,7 +1077,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                         className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
                         style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
                       >
-                        🏡 {p.villages?.name ?? "セカイムラ"}
+                        <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {p.villages?.name ?? "セカイムラ"}
                       </div>
                     )}
                     <span
@@ -1163,7 +1163,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               >
                 {myVills.map((v) => (
                   <option key={v.id} value={v.id}>
-                    🏡 {v.name}（{v.prefecture}）
+                    <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {v.name}（{v.prefecture}）
                   </option>
                 ))}
               </select>
@@ -1279,7 +1279,7 @@ export function WelcomeSection({
                 className="mt-1.5 w-full rounded-lg py-1.5 text-[10.5px] font-bold text-white disabled:opacity-50"
                 style={{ background: "#4a8a5c" }}
               >
-                {sent.has(p.id) ? "送りました 🌿" : "ようこそを送る"}
+                {sent.has(p.id) ? "送りました " : "ようこそを送る"}
               </button>
             )}
           </div>
@@ -1592,7 +1592,7 @@ export function VillagesSection({
       <div className="rounded-xl border border-[#e2eae0] bg-white p-3">
         <div className="flex items-start justify-between gap-2">
           <Link href={`/sekai/village/${v.id}`} className="min-w-0 no-underline">
-            <div className="text-[14.5px] font-extrabold text-[#2a4a34]">🏡 {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
+            <div className="text-[14.5px] font-extrabold text-[#2a4a34]"><img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
             <div className="mt-0.5 text-[11px] text-[#a0aca0]">
               {v.prefecture}
               {v.city ? ` ${v.city}` : ""} ・ {members}人 ・ 世話人 {v.profiles?.display_name ?? "—"}
@@ -1676,7 +1676,7 @@ export function VillagesSection({
 
       <div className="mb-2.5 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-          🏡 {pref}の拠点
+          <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {pref}の拠点
         </span>
         <span className="text-[10px] text-[#a0aca0]">一つの県に、いくつでも</span>
       </div>
@@ -1803,7 +1803,7 @@ export function VillagesSection({
             className="mt-3 w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
             style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
           >
-            🏡 拠点を立ち上げる
+            <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 拠点を立ち上げる
           </button>
         ))}
 

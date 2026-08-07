@@ -55,7 +55,7 @@ export function CotozuteTeaser() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={srcCdn(me.user_metadata.avatar_url as string)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
         ) : (
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ead9] text-[16px]">🌿</span>
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ead9] text-[16px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
         )}
         <span className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14px] text-[#8a8d91]">
           幸せの波紋を拡げよう
@@ -64,7 +64,7 @@ export function CotozuteTeaser() {
       {posts === null ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>
       ) : posts.length === 0 ? (
-        <p className="py-1.5 text-[13px] text-[#b8b0a0]">まだ言の葉がありません 🌿</p>
+        <p className="py-1.5 text-[13px] text-[#b8b0a0]">まだ言の葉がありません <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></p>
       ) : (
         posts.map((p) => (
           <PostCard key={p.id} post={p} me={me} liked={likedSet.has(p.id)} onDeleted={() => fetchPostsPage(0, 5).then(setPosts)} />

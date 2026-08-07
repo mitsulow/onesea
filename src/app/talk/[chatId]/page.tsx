@@ -135,7 +135,7 @@ export default function ChatPage() {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={partner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full object-cover" />
               ) : (
-                <span className="text-xl">🌿</span>
+                <span className="text-xl"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
               )}
               <span className="text-[15px] font-bold text-[#f0e6c8]">
                 {partner.display_name ?? "むらびと"}

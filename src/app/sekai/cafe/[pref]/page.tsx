@@ -449,14 +449,14 @@ export default function CafePage() {
                 disabled={phase === "joining"}
                 className="rounded-2xl border border-[#c8a86066] py-3 text-[13.5px] font-bold text-[#e8d5a8] disabled:opacity-50"
               >
-                🎙 声だけで話す（顔なし）
+                <img src="/icons/icon-mic.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 声だけで話す（顔なし）
               </button>
               <button
                 onClick={() => join("text")}
                 disabled={phase === "joining"}
                 className="rounded-2xl border border-[#c8a86044] py-3 text-[13.5px] font-bold text-[#c8b088] disabled:opacity-50"
               >
-                💬 文字だけで話す
+                <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 文字だけで話す
               </button>
               {phase === "joining" && <p className="text-[11px] text-[#a89878]">入店中...</p>}
             </div>
@@ -530,7 +530,7 @@ export default function CafePage() {
                         <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-2 border-[#c8a860]">
                           {avatarOf(id)}
                         </span>
-                        <span className="text-[10px] font-bold text-[#c8b088]">🎙 声で参加中</span>
+                        <span className="text-[10px] font-bold text-[#c8b088]"><img src="/icons/icon-mic.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 声で参加中</span>
                       </div>
                     )}
                     <span className="absolute bottom-1.5 left-2 rounded-full bg-black/55 px-2 py-0.5 text-[10.5px] font-bold text-white">
@@ -554,12 +554,12 @@ export default function CafePage() {
             </div>
           )}
 
-          {/* 💬 チャット（文字参加の人の主戦場。全員読める） */}
+          {/* <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> チャット（文字参加の人の主戦場。全員読める） */}
           <div className="mt-2.5 flex max-h-[30vh] min-h-[96px] flex-col rounded-xl border border-[#3a3226] bg-[#1e1811]">
             <div className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
               {textIds.length > 0 && (
                 <div className="pb-0.5 text-[9.5px] text-[#6a5a48]">
-                  💬 文字で参加: {textIds.map((id) => names[id]?.name ?? "むらびと").join("・")}
+                  <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 文字で参加: {textIds.map((id) => names[id]?.name ?? "むらびと").join("・")}
                 </div>
               )}
               {chat.length === 0 && <div className="text-[10.5px] text-[#6a5a48]">ここに文字のおしゃべりが流れます</div>}

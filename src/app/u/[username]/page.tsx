@@ -295,7 +295,7 @@ export default function UserPage() {
               className="flex h-[88px] w-[88px] items-center justify-center rounded-full border-4 border-[#f2ede4] text-3xl shadow-md"
               style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
             >
-              🌿
+              <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
             </div>
           )}
           {isMe && (
@@ -321,7 +321,7 @@ export default function UserPage() {
         <div className="relative mt-1.5">
           {profile.birthday && (
             <span className="num absolute right-0 top-0 text-right text-[11px] font-bold text-[#a09888]">
-              🌏 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
+              <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
             </span>
           )}
           <h1 className="flex items-center gap-1.5 pr-32 text-[21px] font-extrabold leading-snug text-[#3a3428]">
@@ -432,7 +432,7 @@ export default function UserPage() {
               className="flex-1 rounded-xl py-3 text-[14px] font-extrabold text-white"
               style={{ background: "#c94d3a" }}
             >
-              💬 連絡を取る
+              <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 連絡を取る
             </button>
           </div>
         )}

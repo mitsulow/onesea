@@ -142,7 +142,7 @@ export default function PostDetailPage() {
 
           {/* コメント */}
           <div className="mt-3">
-            <div className="sec mb-2">💬 コメント</div>
+            <div className="sec mb-2"><img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> コメント</div>
             {comments.length === 0 ? (
               <p className="pb-2 text-[12.5px] text-[#b8b0a0]">まだコメントはありません</p>
             ) : (
@@ -164,7 +164,7 @@ export default function PostDetailPage() {
                           className="flex h-7 w-7 items-center justify-center rounded-full text-[12px]"
                           style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
                         >
-                          🌿
+                          <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                         </div>
                       )}
                     </div>

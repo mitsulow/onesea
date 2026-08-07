@@ -69,7 +69,7 @@ export function CotozuteFeed() {
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>
       ) : posts.length === 0 ? (
         <p className="py-1.5 text-[13px] text-[#b8b0a0]">
-          まだ言の葉がありません。最初のひとことをどうぞ 🌿
+          まだ言の葉がありません。最初のひとことをどうぞ <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
         </p>
       ) : (
         <>

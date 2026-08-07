@@ -136,12 +136,12 @@ export default function GroupChatPage() {
                         className="h-8 w-8 rounded-full object-cover"
                       />
                     ) : (
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#cfe0d4] text-[14px]">🌿</span>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#cfe0d4] text-[14px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
                     )}
                   </Link>
                 ) : (
                   <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center self-start rounded-full bg-[#cfe0d4] text-[14px]">
-                    🌿
+                    <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
                   </span>
                 ))}
               <div className={`max-w-[72%] ${mine ? "" : ""}`}>

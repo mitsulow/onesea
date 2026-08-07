@@ -145,7 +145,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
     setImages([]);
     lastFetchedUrl.current = null;
     setExpanded(false);
-    setMessage("投稿しました 🌿");
+    setMessage("投稿しました ");
     onPosted?.();
   };
 
