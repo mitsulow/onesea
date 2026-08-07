@@ -36,6 +36,7 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
   const [bMonth, setBMonth] = useState(1);
   const [bDay, setBDay] = useState(1);
   const [bHour, setBHour] = useState(""); // "" = 分からない（15時扱い）
+  const [gender, setGender] = useState(""); // "female" | "male"（必須。ツキヨガZOOM受講判定に使用）
   const [bMin, setBMin] = useState(0);
   const [birthPref, setBirthPref] = useState("");
   const [birthCity, setBirthCity] = useState("");
@@ -90,6 +91,7 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
         user_id: user.id,
         birth_date: birthDate,
         birth_time: bHour === "" ? "15:00" : `${bHour.padStart(2, "0")}:${String(bMin).padStart(2, "0")}`,
+        gender: gender || null,
         birth_pref: birthPref || null,
         birth_city: birthCity || null,
         updated_at: now,
@@ -197,6 +199,27 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
           </div>
 
           <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">性別 *</label>
+            <div className="flex gap-2">
+              {([["female", "女性"], ["male", "男性"]] as const).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setGender(v)}
+                  className="flex-1 rounded-xl border py-2.5 text-[14px] font-bold"
+                  style={
+                    gender === v
+                      ? { background: "#c94d3a", color: "#fff", borderColor: "#c94d3a" }
+                      : { background: "#fff", color: "#8a7a5a", borderColor: "#e8dcc4" }
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
               誕生時刻 {hint("月占いが正確になります")}
             </label>
@@ -286,7 +309,7 @@ export function Onboarding({ user, onDone }: { user: User; onDone: () => void })
 
           <button
             onClick={submit}
-            disabled={!name.trim() || saving}
+            disabled={!name.trim() || !gender || saving}
             className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white disabled:opacity-40"
             style={{ background: "#c94d3a" }}
           >

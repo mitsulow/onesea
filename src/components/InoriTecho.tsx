@@ -440,7 +440,6 @@ function MonthCal({
         </div>
       </div>
 
-      <div className="pb-3" />
     </div>
   );
 }

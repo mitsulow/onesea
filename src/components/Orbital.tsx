@@ -66,13 +66,14 @@ export function Orbital() {
         className="absolute left-1/2 top-1/2 z-[2] -translate-x-1/2 -translate-y-1/2 text-center no-underline"
       >
         <div
-          className="flex h-16 w-16 items-center justify-center rounded-full text-[29px]"
+          className="flex h-16 w-16 items-center justify-center rounded-full"
           style={{
             background: "radial-gradient(circle at 35% 30%,#e86a50,#b03a28)",
             boxShadow: "0 0 26px rgba(230,110,80,.45)",
           }}
         >
-          🏪
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/icon-za-white.svg" alt="" style={{ width: 38, height: 38 }} />
         </div>
         <div className="mt-1 text-[10.5px] font-bold tracking-wider text-[#ffb8a8]">
           楽市楽座
