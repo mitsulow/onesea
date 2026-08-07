@@ -412,7 +412,7 @@ export async function rejectVillageMember(villageId: string, userId: string) {
 
 export async function myVillageIds(userId: string): Promise<Set<string>> {
   const supabase = createClient();
-  const { data } = await supabase.from("village_members").select("village_id").eq("user_id", userId);
+  const { data } = await supabase.from("village_members").select("village_id").eq("user_id", userId).eq("status", "approved");
   return new Set((data ?? []).map((r) => r.village_id as string));
 }
 

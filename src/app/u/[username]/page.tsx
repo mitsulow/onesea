@@ -197,36 +197,32 @@ export default function UserPage() {
   const isMe = me?.id === profile.id;
   const isWara = isWarawaUntil(profile.warawa_until);
 
-  /* シンクロ単語の下に「何％叶ったか」— 本人は左右に動かしてすぐ選べる */
-  const pctRow = (d: { day: string; body: string; fulfilled_pct: number | null }) =>
-    isMe ? (
-      <div className="mt-1.5 flex items-center gap-2">
-        <span className="flex-shrink-0 text-[9px] tracking-wider text-[#a0aca0]">叶った度</span>
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={5}
-          value={d.fulfilled_pct ?? 0}
-          onChange={(e) => setPct(d.day, Number(e.target.value))}
-          className="h-1 min-w-0 flex-1 accent-[#0abab5]"
-          aria-label="叶った度"
-        />
-        <span className="num w-11 flex-shrink-0 text-right text-[12px] font-extrabold text-[#0abab5]">
-          {d.fulfilled_pct != null ? `${d.fulfilled_pct}%` : "—"}
-        </span>
-      </div>
-    ) : d.fulfilled_pct != null ? (
-      <div className="mt-1.5 flex items-center gap-2">
-        <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-[#e4f0ee]">
-          <div
-            className="h-full rounded-full"
-            style={{ width: `${d.fulfilled_pct}%`, background: "linear-gradient(90deg,#0abab5,#7ad8c8)" }}
-          />
+  /* シンクロ単語の下は「叶った？」○×△の3択（%は廃止。○=100/△=50/×=0でDB列は流用） */
+  const pctRow = (d: { day: string; body: string; fulfilled_pct: number | null }) => {
+    const mark = d.fulfilled_pct == null ? null : d.fulfilled_pct >= 80 ? "○" : d.fulfilled_pct >= 30 ? "△" : "×";
+    if (isMe) {
+      return (
+        <div className="mt-1.5 flex items-center gap-2">
+          <span className="flex-shrink-0 text-[9px] tracking-wider text-[#a0aca0]">叶った？</span>
+          {([["○", 100, "#0abab5"], ["△", 50, "#c8a030"], ["×", 0, "#b0a898"]] as const).map(([m, v, c]) => (
+            <button
+              key={m}
+              onClick={() => setPct(d.day, v)}
+              className="flex h-7 w-7 items-center justify-center rounded-full border text-[14px] font-extrabold"
+              style={mark === m ? { background: c, color: "#fff", borderColor: c } : { background: "#fff", color: "#b0aa9c", borderColor: "#e0dcd0" }}
+            >
+              {m}
+            </button>
+          ))}
         </div>
-        <span className="num flex-shrink-0 text-[11px] font-bold text-[#0abab5]">{d.fulfilled_pct}%叶った</span>
+      );
+    }
+    return mark ? (
+      <div className="mt-1.5 text-[12px] font-extrabold" style={{ color: mark === "○" ? "#0abab5" : mark === "△" ? "#c8a030" : "#b0a898" }}>
+        叶った？ {mark}
       </div>
     ) : null;
+  };
 
   return (
     <main className="pb-20">
@@ -701,6 +697,8 @@ export default function UserPage() {
 
       {/* 今日のDDPの積み重ね（タイムライン） */}
       {dailyDdps.length > 0 && (
+        <MyCotozuteSection userId={profile.id} ownerName={profile.display_name ?? "この人"} />
+
         <div className="pt-5">
           <div className="card">
             <div className="sec mb-3">⚡過去のシンクロニシティ⚡</div>
@@ -746,13 +744,13 @@ export default function UserPage() {
       )}
 
       {/* アイディア一覧（本人にだけ見える） */}
-      {ideas.length > 0 && (
+      {isMe && ideas.length > 0 && (
         <div className="pt-5" id="ideas-sec" style={{ scrollMarginTop: 20 }}>
           <div className="card">
             <div className="sec mb-3 flex items-center gap-1.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icons/mode-idea.webp" alt="" className="h-[22px] w-[22px] rounded-md object-contain" />
-              <span>アイディアメモ</span>
+              <span>イデア界からのメッセージ（アイディアメモ）</span>
             </div>
             <div className="space-y-2">
               {(ideasOpen ? ideas : ideas.slice(0, 5)).map((i) => {
@@ -808,5 +806,57 @@ function SekaiBelongBadge({ userId }: { userId: string }) {
     >
       {name ? `${name}所属` : "セカイムラ無所属"}
     </span>
+  );
+}
+
+
+/** ◯◯さんからのCotozute — 過去の投稿を3件だけ表示。「もっと見る」で+10ずつ（パケ死防止） */
+function MyCotozuteSection({ userId, ownerName }: { userId: string; ownerName: string }) {
+  const [posts, setPosts] = useState<Array<{ id: string; body: string | null; photo_url: string | null; created_at: string }>>([]);
+  const [limit, setLimit] = useState(3);
+  const [hasMore, setHasMore] = useState(false);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("posts")
+      .select("id, body, photo_url, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit + 1)
+      .then(({ data }) => {
+        const list = (data ?? []) as typeof posts;
+        setHasMore(list.length > limit);
+        setPosts(list.slice(0, limit));
+      });
+  }, [userId, limit]);
+  if (posts.length === 0) return null;
+  return (
+    <div className="pt-5">
+      <div className="card">
+        <div className="sec mb-2.5 flex items-center gap-1.5">
+          <img src="/icons/tab-cotozute2.webp" alt="" className="h-[18px] w-[18px] object-contain" />
+          <span>{ownerName}さんからのCotozute</span>
+        </div>
+        <div className="space-y-2.5">
+          {posts.map((po) => (
+            <Link key={po.id} href={`/post/${po.id}`} className="block rounded-xl border border-[#f0e9dc] bg-white px-3 py-2.5 no-underline">
+              <div className="num text-[9.5px] text-[#c0b8a8]">
+                {new Date(po.created_at).getMonth() + 1}/{new Date(po.created_at).getDate()}
+              </div>
+              {po.body && <p className="mt-0.5 line-clamp-3 text-[13px] leading-relaxed text-[#3a3428]">{po.body}</p>}
+              {po.photo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={srcCdn(po.photo_url)} alt="" loading="lazy" className="mt-1.5 max-h-40 rounded-lg object-cover" />
+              )}
+            </Link>
+          ))}
+        </div>
+        {hasMore && (
+          <button onClick={() => setLimit((v) => v + 10)} className="mt-2 w-full py-1.5 text-[12px] font-bold text-[#2CB7DE]">
+            もっと見る
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
