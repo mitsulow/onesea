@@ -486,6 +486,16 @@ function MootArchive() {
 export function ActivitySection({ me }: { me: User | null }) {
   const [feed, setFeed] = useState<any[] | null>(null);
   const [seedOpen, setSeedOpen] = useState(false); // 「村を作る」カードで開く
+  const [stripSeeds, setStripSeeds] = useState<any[]>([]); // 村の予備軍（1人でも作ったら並ぶ）
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("village_seeds")
+      .select("id, name, prefecture, cover_url, status")
+      .eq("status", "open")
+      .order("created_at", { ascending: true })
+      .then(({ data }) => setStripSeeds(data ?? []));
+  }, [seedOpen]);
   const [villages, setVillages] = useState<Village[]>([]);
   const [myVills, setMyVills] = useState<Village[]>([]);
   const [writing, setWriting] = useState(false);
@@ -776,6 +786,33 @@ export function ActivitySection({ me }: { me: User | null }) {
               </div>
             </div>
           </Link>
+        ))}
+        {/* 村の予備軍 — 1人でも立ち上げたらここに並ぶ */}
+        {stripSeeds.map((sd) => (
+          <button
+            key={sd.id}
+            onClick={() => setSeedOpen(true)}
+            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#c8dcc0] bg-white text-left shadow-sm"
+          >
+            <div className="relative h-[86px] bg-[#eef6ea]">
+              {sd.cover_url ? (
+                <img src={srcCdn(sd.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#d8ecd0,#a8cca0)" }}>
+                  <img src="/icons/icon-sprout.webp" alt="" style={{ width: 30, height: 30 }} />
+                </div>
+              )}
+              <span className="absolute left-1.5 top-1.5 rounded-full bg-[#4a8a5c] px-1.5 py-0.5 text-[8.5px] font-extrabold text-white">
+                募集中
+              </span>
+            </div>
+            <div className="px-2 py-1.5">
+              <div className="truncate text-[11.5px] font-extrabold" style={{ color: GREEN }}>
+                村を作る人募集{sd.prefecture ? `（${sd.prefecture}）` : ""}
+              </div>
+              <div className="truncate text-[10px] text-[#a0aca0]">{sd.name} ▼</div>
+            </div>
+          </button>
         ))}
         {/* 一番右: 村を作るカード（押すと下に村の種セクションが開く） */}
         <button
@@ -2625,7 +2662,7 @@ export function MapLoader() {
 
 
 /* ═══ 🌱 村の種 — 3人集まったら事務局へ拠点申請できる予備軍 ═══ */
-function SeedSection({ me }: { me: User | null }) {
+export function SeedSection({ me }: { me: User | null }) {
   const [isOffice, setIsOffice] = useState(false);
   useEffect(() => {
     if (!me) return;
@@ -2700,7 +2737,7 @@ function SeedSection({ me }: { me: User | null }) {
   return (
     <div className="mx-2 mb-2 rounded-2xl border border-[#d8e4d0] bg-[#f6faf4] p-3">
       <div className="mb-1 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-        <img src="/icons/icon-sprout.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> 一緒に村を作りたい人へ
+        <img src="/icons/icon-sprout.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> 村を作る
       </div>
       <p className="mb-2 text-[10.5px] leading-relaxed text-[#7a8a74]">
         3人以上で申請し、事務局に認められた場合、他のメンバーを募集できます。
@@ -2764,7 +2801,7 @@ function SeedSection({ me }: { me: User | null }) {
       {msg && <p className="mb-1 text-[10.5px] font-bold text-[#c05030]">{msg}</p>}
 
       <button onClick={() => setOpen((v) => !v)} className="w-full rounded-xl border-2 border-dashed border-[#a8cca0] bg-white py-2 text-[11.5px] font-extrabold" style={{ color: GREEN }}>
-        {open ? "▾ とじる" : "🌱 村の種をまく（新しい拠点をつくる）"}
+        {open ? "▾ とじる" : "一緒に拠点を立ち上げる村長を募集する（村長3人が揃うと事務局に村作りの申請が出来ます）"}
       </button>
       {open && (
         <div className="mt-2 rounded-xl bg-white p-2.5">
