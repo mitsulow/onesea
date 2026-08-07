@@ -625,7 +625,7 @@ function BottomSheet({
             style={{ paddingTop: "calc(env(safe-area-inset-top) + 10px)", background: "linear-gradient(180deg,#faf7f2,#fff)" }}
           >
             <div className="text-center text-[24px] font-extrabold text-[#2a2a2a]">
-              {m}月{d}日（{dow}）
+              {m}月{d}日<span className="text-[0.78em]">({dow})</span>
             </div>
             <div className="text-[10px] text-[#b8a888]">{kyurekiLabel(dk)}</div>
             <button
