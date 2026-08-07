@@ -2899,13 +2899,13 @@
       img.src = "crystal_" + PHI_MODE_CLS[key] + ".png";
       img.alt = key;
       img.draggable = false;
-      btn.appendChild(img);
-      row.appendChild(btn);
-      // ★ボウルの下に F番号と実測Hzを表示
+      // ★ボウルの上に F番号と実測Hzを表示(下だと影に隠れる)
       const lbl = document.createElement("div");
-      lbl.style.cssText = "font-size:11.5px;color:var(--sr,#8b93a8);text-align:center;margin-top:4px;font-weight:700;";
+      lbl.style.cssText = "font-size:11.5px;color:var(--sr,#8b93a8);text-align:center;margin-bottom:4px;font-weight:700;";
       lbl.className = PHI_MODE_CLS[key];
       btn.appendChild(lbl);
+      btn.appendChild(img);
+      row.appendChild(btn);
       const ob = { key, freq: 500, el: btn, bowl: null };
       ob.update = () => {
         const hz = phiHzOf(key);
@@ -3343,12 +3343,13 @@
   })();
 
   // F1ドットグラフの期間切替
-  document.querySelectorAll("#dot-tabs .dot-tab").forEach(btn => {
-    btn.addEventListener("click", () => {
-      dotRange = btn.dataset.range;
-      document.querySelectorAll("#dot-tabs .dot-tab").forEach(b => b.classList.toggle("active", b === btn));
-      loadTrendDays().then(drawDotGraph);
-    });
+  document.addEventListener("click", (ev) => {
+    const btn = ev.target && ev.target.closest ? ev.target.closest("#dot-tabs .dot-tab") : null;
+    if (!btn) return;
+    ev.preventDefault();
+    dotRange = btn.dataset.range;
+    document.querySelectorAll("#dot-tabs .dot-tab").forEach(b => b.classList.toggle("active", b === btn));
+    loadTrendDays().then(drawDotGraph);
   });
   drawMonthlyTrend();
   drawModeGraphs();
