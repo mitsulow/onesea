@@ -427,7 +427,7 @@ export function SchumannAudioPlayer() {
     program?.kind === "meditation"
       ? `🧘 瞑想モード（${program.course}分）`
       : program?.kind === "idea"
-        ? "<img src="/icons/icon-bulb.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> アイディアモード"
+        ? "アイディアモード"
         : "シンクロモード";
 
   return (
@@ -667,7 +667,7 @@ export function SchumannAudioPlayer() {
               ✕
             </button>
             <div className="text-center text-[16px] font-extrabold text-white">
-              {introKind === "idea" ? "<img src="/icons/icon-bulb.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> アイディアモード" : "シンクロモード"}
+              {introKind === "idea" ? "アイディアモード" : "シンクロモード"}
             </div>
             <div className="mt-0.5 text-center text-[11px] text-[#7ab8d8]">
               {introKind === "idea" ? "全体からアイディアを降ろします" : "今日の「やりたいこと」に許可を出す"}
