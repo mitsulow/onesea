@@ -20,19 +20,39 @@ export default function ShopDetailPage() {
   const [comments, setComments] = useState<ShopComment[]>([]);
   const [cBody, setCBody] = useState("");
   const [cSending, setCSending] = useState(false);
-  /* 物々交換の提案 */
+  /* ブツブツ交換の提案 */
   const [barterOpen, setBarterOpen] = useState(false);
   const [myShops, setMyShops] = useState<Shop[] | null>(null);
   const [offerId, setOfferId] = useState<string | null>(null);
   const [offerText, setOfferText] = useState("");
   const [proposing, setProposing] = useState(false);
+  const [offers, setOffers] = useState<any[]>([]); // みんなのブツブツ交換提案（公開）
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => setMe(session?.user ?? null));
     fetchShop(params.id).then((s) => setShop(s));
     fetchShopComments(params.id).then(setComments);
+    loadOffers();
   }, [params.id]);
+
+  const loadOffers = async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("barter_offers")
+      .select("id, user_id, offer, offer_shop_id, created_at, profiles!barter_offers_user_id_fkey(username, display_name, avatar_url)")
+      .eq("shop_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (data) { setOffers(data); return; }
+    const { data: d2 } = await supabase
+      .from("barter_offers")
+      .select("id, user_id, offer, offer_shop_id, created_at")
+      .eq("shop_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setOffers(d2 ?? []);
+  };
 
   const openBarter = async () => {
     setBarterOpen(true);
@@ -51,12 +71,16 @@ export default function ShopDetailPage() {
     const chatId = await getOrCreateChat(me.id, shop.owner_id);
     if (chatId) {
       const lines = [
-        "物々交換の提案",
+        "ブツブツ交換の提案",
         `「${shop.name}」⇄「${offer}」`,
       ];
       if (offerShop) lines.push(`こちらです → https://onesea.vercel.app/za/${offerShop.id}`);
       lines.push("いかがでしょうか？");
       await sendMessage(chatId, me.id, lines.join("\n"));
+      // みんなにも見えるように公開一覧へ
+      const supabase = createClient();
+      await supabase.from("barter_offers").insert({ shop_id: params.id, user_id: me.id, offer, offer_shop_id: offerShop?.id ?? null });
+      loadOffers();
       router.push(`/talk/${chatId}`);
     }
     setProposing(false);
@@ -189,13 +213,13 @@ export default function ShopDetailPage() {
               {shop.market === "ichi"
                 ? shop.is_trial
                   ? "0円（ゆずります）"
-                  : "物々交換で"
+                  : "ブツブツ交換で"
                 : shop.price_jpy != null
                   ? `¥${shop.price_jpy.toLocaleString()}`
                   : "値段相談"}
             </span>
             <span className="flex gap-1 text-[13px] text-[#8a8070]">
-              {shop.accepts_barter && <span><img src="/icons/icon-barter.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 物々交換OK</span>}
+              {shop.accepts_barter && <span><img src="/icons/icon-barter.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換OK</span>}
               {shop.accepts_tip && <span><img src="/icons/icon-coin.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 投げ銭OK</span>}
             </span>
           </div>
@@ -257,8 +281,33 @@ export default function ShopDetailPage() {
                 className="w-full rounded-xl border-2 py-3 text-[14px] font-extrabold"
                 style={{ borderColor: "#5a7d4a", color: "#5a7d4a", background: "#f4f8f0" }}
               >
-                <img src="/icons/icon-barter.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 物々交換を提案する
+                <img src="/icons/icon-barter.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> ブツブツ交換を提案する
               </button>
+            )}
+            {offers.length > 0 && (
+              <div>
+                <div className="mb-1 text-[11px] font-extrabold text-[#5a7d4a]">
+                  いま来ているブツブツ交換の提案（{offers.length}件）
+                </div>
+                <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                  {offers.map((o: any) => (
+                    <div key={o.id} className="w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5">
+                      <div className="flex items-center gap-1.5">
+                        {o.profiles?.avatar_url ? (
+                          <img src={o.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-6 w-6 rounded-full object-cover" />
+                        ) : (
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dce8d4] text-[10px]">?</span>
+                        )}
+                        <span className="truncate text-[10.5px] font-bold text-[#5a7d4a]">{o.profiles?.display_name ?? "むらびと"}</span>
+                      </div>
+                      <div className="mt-1.5 line-clamp-3 text-[12px] font-bold leading-snug text-[#3a3428]">⇄ {o.offer}</div>
+                      {o.offer_shop_id && (
+                        <a href={`/za/${o.offer_shop_id}`} className="mt-1 block text-[10px] font-bold text-[#3070b0] underline">出品を見る →</a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
             <button
               onClick={contact}
@@ -273,7 +322,40 @@ export default function ShopDetailPage() {
           <p className="text-center text-[12px] text-[#a09888]">ログインすると連絡できます</p>
         )}
 
-        {/* 物々交換の提案ダイアログ */}
+        {/* コメント / シェア / 通報 の3ボタン */}
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          <button
+            onClick={() => document.getElementById("shop-comments")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="rounded-xl border border-[#e0d6c6] bg-white py-2 text-[11px] font-bold text-[#5a5448]"
+          >
+            <img src="/icons/icon-chat.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> コメントする
+          </button>
+          <button
+            onClick={() => {
+              const url = `https://onesea.vercel.app/za/${params.id}`;
+              if (navigator.share) navigator.share({ text: shop?.name ?? "", url }).catch(() => {});
+              else { navigator.clipboard?.writeText(url); alert("リンクをコピーしました"); }
+            }}
+            className="rounded-xl border border-[#e0d6c6] bg-white py-2 text-[11px] font-bold text-[#5a5448]"
+          >
+            <img src="/icons/icon-share2.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> シェアする
+          </button>
+          <button
+            onClick={async () => {
+              if (!me) { alert("通報にはログインが必要です"); return; }
+              const reason = prompt("この商品を事務局に通報します。理由を教えてください");
+              if (reason === null) return;
+              const supabase = createClient();
+              await supabase.from("post_reports").insert({ kind: "za", target_id: params.id, target_url: `/za/${params.id}`, excerpt: (shop?.name ?? "").slice(0, 120), reporter: me.id, reason: reason || null });
+              alert("事務局に通報しました");
+            }}
+            className="rounded-xl border border-[#e8c4b8] bg-white py-2 text-[11px] font-bold text-[#c05030]"
+          >
+            ⚑ 通報する
+          </button>
+        </div>
+
+        {/* ブツブツ交換の提案ダイアログ */}
         {barterOpen && shop && (
           <div
             className="fixed inset-0 z-[150] flex items-center justify-center px-5"
@@ -291,7 +373,7 @@ export default function ShopDetailPage() {
               >
                 ✕
               </button>
-              <div className="text-center text-[15px] font-extrabold text-[#5a7d4a]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> 物々交換を提案</div>
+              <div className="text-center text-[15px] font-extrabold text-[#5a7d4a]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> ブツブツ交換を提案</div>
               <div className="mt-0.5 text-center text-[11px] text-[#8a8070]">
                 「{shop.name}」と何を交換しますか？
               </div>
@@ -365,7 +447,7 @@ export default function ShopDetailPage() {
         )}
 
         {/* コメント欄（ツッコミ歓迎） */}
-        <div className="rounded-xl border border-[#ede5d8] bg-white p-3">
+        <div id="shop-comments" className="rounded-xl border border-[#ede5d8] bg-white p-3">
           <div className="mb-2 text-[12px] font-extrabold tracking-wider text-[#8a7a5a]">
             <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> コメント{comments.length > 0 ? `（${comments.length}）` : ""}
           </div>

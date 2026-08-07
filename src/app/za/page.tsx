@@ -11,7 +11,7 @@ import { VillagerSuggestions } from "@/components/VillagerSuggestions";
 import { srcCdn } from "@/lib/images";
 
 function priceLabel(s: Shop): string {
-  if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "物々交換" : "0円";
+  if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "ブツブツ交換" : "0円";
   if (s.price_jpy != null) return `¥${s.price_jpy.toLocaleString()}`;
   return "値段相談";
 }
@@ -93,7 +93,7 @@ export default function ZaPage() {
         <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
           {(
             [
-              ["ichi", "楽市", "0円・物々交換"],
+              ["ichi", "楽市", "0円・ブツブツ交換"],
               ["za", "楽座", "有料・プロの商品"],
             ] as const
           ).map(([id, label, sub]) => (
@@ -159,7 +159,7 @@ export default function ZaPage() {
                 あなたも楽座を出しましょう
               </div>
               <div className="text-[10px] leading-tight text-[#8a8070]">
-                お試し出品（0円）も物々交換もOK
+                お試し出品（0円）もブツブツ交換もOK
               </div>
             </div>
             <div className="flex-shrink-0 text-base text-[#c94d3a]">→</div>
@@ -238,7 +238,7 @@ export default function ZaPage() {
                           {priceLabel(shop)}
                         </span>
                         <span className="flex flex-shrink-0 gap-0.5 text-[10px] text-[#b0a898]">
-                          {shop.accepts_barter && <span title="物々交換可"><img src="/icons/icon-barter.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /></span>}
+                          {shop.accepts_barter && <span title="ブツブツ交換可"><img src="/icons/icon-barter.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /></span>}
                           {shop.accepts_tip && <span title="投げ銭可"><img src="/icons/icon-coin.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /></span>}
                         </span>
                         {(shop.shop_comments?.[0]?.count ?? 0) > 0 && (

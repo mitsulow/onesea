@@ -205,11 +205,23 @@ export default function OfficePage() {
           {reports.length === 0 ? (
             <p className="py-1 text-[12.5px] text-[#a09888]">削除依頼はありません</p>
           ) : (
-            reports.map((r) => (
+            ([
+              ["cotozute", "Cotozuteからの通報"],
+              ["village_post", "セカイムラからの通報"],
+              ["za", "楽市楽座からの通報"],
+            ] as const).map(([kk, ktitle]) => {
+              const list = reports.filter((r) => (kk === "village_post" ? r.kind !== "cotozute" && r.kind !== "za" : r.kind === kk));
+              if (list.length === 0) return null;
+              return (
+                <div key={kk} className="mb-2">
+                  <div className="mb-1 mt-2 border-b border-[#e5dcc8] pb-1 text-[12px] font-extrabold text-[#8a6a42]">
+                    {ktitle}（{list.filter((r) => r.status === "open").length}件対応待ち / 全{list.length}件）
+                  </div>
+                  {list.map((r) => (
               <div key={r.id} className="border-b border-[#f0ece0] py-2.5 last:border-b-0" style={{ opacity: r.status === "open" ? 1 : 0.45 }}>
                 <div className="flex items-center gap-2 text-[11px] text-[#a09888]">
                   <span className="rounded bg-[#f0ece0] px-1.5 py-0.5 font-bold text-[#6a5a3a]">
-                    {r.kind === "cotozute" ? "Cotozute" : "セカイムラ投稿"}
+                    {r.kind === "cotozute" ? "Cotozute" : r.kind === "za" ? "楽市楽座" : "セカイムラ投稿"}
                   </span>
                   <span className="num">{new Date(r.created_at).toLocaleDateString("ja-JP")}</span>
                   {(() => {
@@ -244,7 +256,7 @@ export default function OfficePage() {
                       onClick={async () => {
                         if (!confirm("通報された投稿そのものを削除します。よろしいですか？")) return;
                         const supabase = createClient();
-                        const table = r.kind === "cotozute" ? "posts" : "village_posts";
+                        const table = r.kind === "cotozute" ? "posts" : r.kind === "za" ? "shops" : "village_posts";
                         const { error } = await supabase.from(table).delete().eq("id", r.target_id);
                         if (error) { alert("削除できませんでした: " + error.message); return; }
                         await supabase.from("post_reports").update({ status: "done" }).eq("id", r.id);
@@ -269,7 +281,10 @@ export default function OfficePage() {
                   )}
                 </div>
               </div>
-            ))
+                  ))}
+                </div>
+              );
+            })
           )}
         </section>
 
