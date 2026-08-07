@@ -476,6 +476,7 @@ function BottomSheet({
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
   const [portPick, setPortPick] = useState(false); // 港選択モーダル
   const [celSel, setCelSel] = useState<"sun" | "earth" | "moon" | null>(null); // 天体トリオの選択
+  const [celSeen, setCelSeen] = useState<Set<string>>(new Set()); // 既読(バッジ消し)
   const [penLabels, setPenLabels] = useState<Record<string, string>>({});
   const [penEdit, setPenEdit] = useState(false);
   useEffect(() => setPenLabels(loadPenLabels()), []);
@@ -642,43 +643,52 @@ function BottomSheet({
           </div>
 
           <div className="px-3.5">
-            {/* ★天体トリオ — 宇宙の帯に太陽・地球・月が浮かぶ。タップで下に情報が開く */}
+            {/* ★天体トリオ v2 — 白バックに浮かぶ3つの星。未読①バッジがタップを誘う */}
             <style>{`
               @keyframes celFloat { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-5px); } }
-              @keyframes celGlow { 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
             `}</style>
-            <div className="mb-2 overflow-hidden rounded-2xl" style={{ background: "radial-gradient(ellipse at 50% 120%, #1c2a4a 0%, #0a0f1e 70%)" }}>
-              <div className="flex items-end justify-center gap-9 px-3 pb-2 pt-4">
-                {([
-                  ["sun", "/icons/cel-sun.png", 46, "叶いタイム", "rgba(255,200,80,.8)", "0s"],
-                  ["earth", "/icons/cel-earth.png", 58, "潮", "rgba(90,180,255,.7)", "1.3s"],
-                  ["moon", moonImageOf(moon.age), 46, "月", "rgba(220,220,255,.7)", "2.6s"],
-                ] as const).map(([key, src, size, label, glow, delay]) => {
-                  const on = celSel === key;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setCelSel(on ? null : key)}
-                      className="flex flex-col items-center gap-1.5"
-                      style={{ animation: `celFloat 4.5s ease-in-out ${delay} infinite` }}
-                    >
-                      <span
-                        className="rounded-full transition-all duration-300"
-                        style={{
-                          padding: 3,
-                          border: on ? `2px solid ${glow}` : "2px solid transparent",
-                          filter: `drop-shadow(0 0 ${on ? 16 : 8}px ${glow})`,
+            <div className="-mx-3.5 mb-2 border-y border-[#efe8da] bg-white">
+              <div className="flex items-end justify-center gap-10 px-3 pb-3 pt-4">
+                {(() => {
+                  const holyT = holyTimeOf(dk);
+                  const items = [
+                    { key: "sun" as const, src: "/icons/cel-sun.png", size: 46, glow: "rgba(255,180,40,.55)", delay: "0s", badge: 1 + (best?.sekki ? 1 : 0) },
+                    { key: "earth" as const, src: "/icons/cel-earth.png", size: 58, glow: "rgba(70,150,240,.45)", delay: "1.3s", badge: Math.min(9, tideRows.length) },
+                    { key: "moon" as const, src: "/icons/cel-moon.png", size: 46, glow: "rgba(200,170,60,.5)", delay: "2.6s", badge: 1 + (holyT ? 1 : 0) },
+                  ];
+                  return items.map(({ key, src, size, glow, delay, badge }) => {
+                    const on = celSel === key;
+                    const seen = celSeen.has(key);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setCelSel(on ? null : key);
+                          setCelSeen((prev) => new Set(prev).add(key));
                         }}
+                        className="relative"
+                        style={{ animation: `celFloat 4.5s ease-in-out ${delay} infinite` }}
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={src} alt="" className="rounded-full object-contain" style={{ width: size, height: size }} loading="lazy" />
-                      </span>
-                      <span className="text-[9px] font-bold tracking-[1.5px]" style={{ color: on ? "#f0e6c8" : "#5a6a88" }}>
-                        {label} {on ? "▾" : ""}
-                      </span>
-                    </button>
-                  );
-                })}
+                        <span
+                          className="block rounded-full transition-all duration-300"
+                          style={{
+                            padding: 3,
+                            border: on ? `2px solid ${glow}` : "2px solid transparent",
+                            filter: `drop-shadow(0 ${on ? 4 : 2}px ${on ? 14 : 8}px ${glow})`,
+                          }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt="" className="rounded-full object-contain" style={{ width: size, height: size }} loading="lazy" />
+                        </span>
+                        {!seen && badge > 0 && (
+                          <span className="absolute -right-1 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[10px] font-bold text-white" style={{ lineHeight: 1 }}>
+                            {badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
 
               {/* ── 太陽: 叶いタイム ── */}
@@ -691,6 +701,22 @@ function BottomSheet({
                   <div className="num text-center text-[26px] font-extrabold leading-tight" style={{ color: "#0a9a52", textShadow: "0 0 6px rgba(20,200,110,.35)", letterSpacing: 2 }}>
                     {best ? best.time : "—"}
                   </div>
+                  {(() => {
+                    const dg = best?.deg;
+                    const lv = dg == null ? 1
+                      : dg === 270 ? 360 : dg === 90 ? 180
+                      : dg === 0 || dg === 180 ? 90
+                      : [45, 135, 225, 315].includes(dg) ? 45
+                      : dg % 15 === 0 ? 15 : dg % 5 === 0 ? 5 : 1;
+                    const c = lv >= 180 ? "#c9002a" : lv >= 90 ? "#c94d3a" : lv >= 45 ? "#e07020" : "#a08c50";
+                    return (
+                      <div className="text-right">
+                        <span className="num text-[11px] font-extrabold" style={{ color: c }}>
+                          叶いレベル{lv}{lv === 360 ? " Max" : ""}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   {best?.sekki && (
                     <div className="mt-1.5 border-t pt-1.5" style={{ borderColor: `${ac}20` }}>
                       <div className="flex items-baseline gap-2">
