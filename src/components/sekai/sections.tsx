@@ -655,7 +655,28 @@ export function ActivitySection({ me }: { me: User | null }) {
 
   useEffect(() => {
     loadFeed();
-    fetchVillages(null).then(setVillages);
+    fetchVillages(null).then(async (list) => {
+      // 現在地(onesea-pos)から近い順に並べる。座標は県の代表点(municipalities先頭)
+      try {
+        const pos = JSON.parse(localStorage.getItem("onesea-pos") ?? "null");
+        if (pos && typeof pos.lat === "number") {
+          const muni = await fetch("/data-municipalities.json").then((r) => r.json());
+          const center = (pref: string | null) => {
+            const arr = pref ? muni[pref] : null;
+            return arr && arr[0] ? { lat: arr[0][1], lng: arr[0][2] } : null;
+          };
+          const dist = (v: Village) => {
+            const c = center(v.prefecture);
+            if (!c) return 9e9;
+            const dx = (c.lng - pos.lon) * Math.cos((pos.lat * Math.PI) / 180);
+            const dy = c.lat - pos.lat;
+            return dx * dx + dy * dy;
+          };
+          list = [...list].sort((a, b) => dist(a) - dist(b));
+        }
+      } catch {}
+      setVillages(list);
+    });
   }, [loadFeed]);
 
   useEffect(() => {
@@ -720,34 +741,8 @@ export function ActivitySection({ me }: { me: User | null }) {
         <div className="mt-0.5 text-center text-[10.5px] text-[#8ab89a]">〜 全国の村と、今日の報告 〜</div>
       </div>
 
-      {/* 🏡 各地のセカイムラ拠点 — 一番左は「参加する」「新しく作る」 */}
+      {/* 🏡 各地のセカイムラ拠点 — レジェンドが近い順にズラリ（横スワイプ） */}
       <div className="hide-scrollbar mb-2 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1">
-        <div className="flex w-[104px] flex-shrink-0 flex-col gap-2">
-          <Link
-            href="/sekai/villages"
-            className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed bg-white px-1 py-2 text-center no-underline"
-            style={{ borderColor: "#4a9a5a" }}
-          >
-            <span className="text-[16px]">🏡</span>
-            <span className="text-[10px] font-extrabold leading-snug" style={{ color: GREEN }}>
-              拠点に
-              <br />
-              参加する
-            </span>
-          </Link>
-          <Link
-            href="/sekai/villages#new"
-            className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-white px-1 py-2 text-center no-underline"
-            style={{ border: "2px solid #d4b96a" }}
-          >
-            <img src="/icons/icon-tent.webp" alt="" style={{ width: 18, height: 18 }} />
-            <span className="text-[10px] font-extrabold leading-snug text-[#a07820]">
-              拠点を
-              <br />
-              新しく作る
-            </span>
-          </Link>
-        </div>
         {villages.map((v) => (
           <Link
             key={v.id}
@@ -773,16 +768,19 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
             <div className="px-2 py-1.5">
               <div className="truncate text-[12px] font-extrabold" style={{ color: GREEN }}>
-                セカイムラ{(v.prefecture ?? "").replace(/[都府県]$/, "")}
+                {v.name}
               </div>
               <div className="truncate text-[10px] text-[#a0aca0]">
-                {v.name}
+                {v.prefecture ?? ""}
                 {v.village_members?.[0]?.count ? ` ・ ${v.village_members[0].count}人` : ""}
               </div>
             </div>
           </Link>
         ))}
       </div>
+
+      {/* 🌱 一緒に村を作りたい人へ（村の種） */}
+      <SeedSection me={me} />
 
       {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
       {me && myVills.length === 0 && (
@@ -2584,8 +2582,200 @@ export function TasuketeSection({ me, myPref, router }: { me: User | null; myPre
 export function MapLoader() {
   const [villages, setVillages] = useState<Village[] | null>(null);
   useEffect(() => {
-    fetchVillages(null).then(setVillages);
+    fetchVillages(null).then(async (list) => {
+      // 現在地(onesea-pos)から近い順に並べる。座標は県の代表点(municipalities先頭)
+      try {
+        const pos = JSON.parse(localStorage.getItem("onesea-pos") ?? "null");
+        if (pos && typeof pos.lat === "number") {
+          const muni = await fetch("/data-municipalities.json").then((r) => r.json());
+          const center = (pref: string | null) => {
+            const arr = pref ? muni[pref] : null;
+            return arr && arr[0] ? { lat: arr[0][1], lng: arr[0][2] } : null;
+          };
+          const dist = (v: Village) => {
+            const c = center(v.prefecture);
+            if (!c) return 9e9;
+            const dx = (c.lng - pos.lon) * Math.cos((pos.lat * Math.PI) / 180);
+            const dy = c.lat - pos.lat;
+            return dx * dx + dy * dy;
+          };
+          list = [...list].sort((a, b) => dist(a) - dist(b));
+        }
+      } catch {}
+      setVillages(list);
+    });
   }, []);
   if (villages === null) return <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>;
   return <SekaiMap villages={villages} />;
+}
+
+
+/* ═══ 🌱 村の種 — 3人集まったら事務局へ拠点申請できる予備軍 ═══ */
+function SeedSection({ me }: { me: User | null }) {
+  const [seeds, setSeeds] = useState<any[]>([]);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [checked, setChecked] = useState<null | boolean>(null); // null=未チェック true=使える false=欠番
+  const [checking, setChecking] = useState(false);
+  const [pref, setPref] = useState("");
+  const [cover, setCover] = useState<string | null>(null);
+  const [up, setUp] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("village_seeds")
+      .select("id, name, prefecture, city, cover_url, status, created_by, village_seed_members(user_id)")
+      .order("created_at", { ascending: false })
+      .limit(30);
+    setSeeds(data ?? []);
+  };
+  useEffect(() => { load(); }, []);
+
+  const checkName = async () => {
+    if (!name.trim() || checking) return;
+    setChecking(true);
+    const supabase = createClient();
+    const { data } = await supabase.rpc("village_name_taken", { nm: name.trim() });
+    setChecking(false);
+    setChecked(data === false);
+  };
+
+  const plant = async () => {
+    if (!me || saving || checked !== true) return;
+    setSaving(true);
+    setMsg(null);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("village_seeds")
+      .insert({ name: name.trim(), prefecture: pref || null, cover_url: cover, created_by: me.id })
+      .select("id")
+      .single();
+    if (!error && data) {
+      await supabase.from("village_seed_members").insert({ seed_id: data.id, user_id: me.id });
+      setName(""); setChecked(null); setCover(null); setOpen(false);
+      load();
+    } else {
+      setMsg(error?.message?.includes("row-level") ? "種をまけるのは、マイページ登録済みのわらわ〜会員だけです" : "保存できませんでした");
+    }
+    setSaving(false);
+  };
+
+  const joinSeed = async (seedId: string) => {
+    if (!me) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("village_seed_members").insert({ seed_id: seedId, user_id: me.id });
+    if (error) setMsg("賛同できるのは、マイページ登録済みのわらわ〜会員だけです");
+    load();
+  };
+
+  const applyOffice = async (seedId: string) => {
+    const supabase = createClient();
+    await supabase.from("village_seeds").update({ status: "applied" }).eq("id", seedId);
+    load();
+  };
+
+  return (
+    <div className="mx-2 mb-2 rounded-2xl border border-[#d8e4d0] bg-[#f6faf4] p-3">
+      <div className="mb-1 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
+        <img src="/icons/icon-sprout.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> 一緒に村を作りたい人へ
+      </div>
+      <p className="mb-2 text-[10.5px] leading-relaxed text-[#7a8a74]">
+        3人以上で申請し、事務局に認められた場合、他のメンバーを募集できます。
+      </p>
+
+      {seeds.length > 0 && (
+        <div className="hide-scrollbar mb-2 flex gap-2 overflow-x-auto pb-1">
+          {seeds.map((sd) => {
+            const n = sd.village_seed_members?.length ?? 0;
+            const left = Math.max(0, 3 - n);
+            const mine = me && sd.village_seed_members?.some((x: any) => x.user_id === me.id);
+            return (
+              <div key={sd.id} className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#dce8d8] bg-white shadow-sm">
+                <div className="h-[76px] bg-[#eaf2ea]">
+                  {sd.cover_url ? (
+                    <img src={srcCdn(sd.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#d8ecd0,#a8cca0)" }}>
+                      <img src="/icons/icon-sprout.webp" alt="" style={{ width: 26, height: 26 }} />
+                    </div>
+                  )}
+                </div>
+                <div className="px-2 py-1.5">
+                  <div className="truncate text-[11.5px] font-extrabold" style={{ color: GREEN }}>{sd.name}</div>
+                  <div className="text-[9.5px] text-[#a0aca0]">{sd.prefecture ?? ""} ・ {n}人</div>
+                  {sd.status === "applied" ? (
+                    <div className="mt-1 rounded bg-[#f0e8d0] px-1.5 py-0.5 text-center text-[9.5px] font-bold text-[#8a7020]">事務局審査中</div>
+                  ) : left > 0 ? (
+                    <div className="mt-1 text-[9.5px] font-bold text-[#c07a30]">あと{left}人で拠点申請できます</div>
+                  ) : me && sd.created_by === me.id ? (
+                    <button onClick={() => applyOffice(sd.id)} className="mt-1 w-full rounded bg-[#c94d3a] py-1 text-[9.5px] font-extrabold text-white">
+                      事務局へ拠点申請する
+                    </button>
+                  ) : (
+                    <div className="mt-1 text-[9.5px] font-bold" style={{ color: GREEN }}>3人そろいました！</div>
+                  )}
+                  {me && !mine && sd.status !== "applied" && (
+                    <button onClick={() => joinSeed(sd.id)} className="mt-1 w-full rounded border border-[#4a9a5a] py-1 text-[9.5px] font-extrabold" style={{ color: GREEN }}>
+                      一緒に作りたい
+                    </button>
+                  )}
+                  {mine && <div className="mt-1 text-center text-[9px] text-[#a0aca0]">✓ 賛同済み</div>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {msg && <p className="mb-1 text-[10.5px] font-bold text-[#c05030]">{msg}</p>}
+
+      <button onClick={() => setOpen((v) => !v)} className="w-full rounded-xl border-2 border-dashed border-[#a8cca0] bg-white py-2 text-[11.5px] font-extrabold" style={{ color: GREEN }}>
+        {open ? "▾ とじる" : "🌱 村の種をまく（新しい拠点をつくる）"}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-xl bg-white p-2.5">
+          <div className="mb-1 text-[11px] font-extrabold text-[#5a6a54]">① 拠点名を決める</div>
+          <p className="mb-1.5 text-[9.5px] leading-relaxed text-[#8a9a84]">
+            畑や田んぼにはあまり興味が無く、都会で集まりたい人は「トカイムラ○○」をお使いください。
+            畑や田んぼなど自給自足に興味がある村を作る際は「セカイムラ○○」をお使いください。
+            既に使われているセカイムラ○○県がある場合は使えませんので、セカイムラ○○市やトカイムラ○○市となります。
+          </p>
+          <div className="flex gap-1.5">
+            <input
+              value={name}
+              onChange={(e) => { setName(e.target.value); setChecked(null); }}
+              placeholder="例: トカイムラ那覇 / セカイムラ京都"
+              className="min-w-0 flex-1 rounded-lg border border-[#d8e4d0] px-2.5 py-2 text-[12px] outline-none focus:border-[#4a9a5a]"
+            />
+            <button onClick={checkName} disabled={!name.trim() || checking} className="flex-shrink-0 rounded-lg px-2.5 py-2 text-[10.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#4a9a5a" }}>
+              {checking ? "確認中" : "使われている拠点名かをチェックします"}
+            </button>
+          </div>
+          {checked === false && <p className="mt-1 text-[10px] font-bold text-[#c05030]">この名前はすでに使われています（永久欠番）。市町村名などで変えてみてください</p>}
+          {checked === true && (
+            <>
+              <p className="mt-1 text-[10px] font-bold" style={{ color: GREEN }}>「{name.trim()}」は使えます！</p>
+              <div className="mt-2 mb-1 text-[11px] font-extrabold text-[#5a6a54]">② 集まる場所の写真（古民家・アパートなど）</div>
+              <label className="block cursor-pointer rounded-lg border border-dashed border-[#a8cca0] py-2 text-center text-[10.5px] font-bold" style={{ color: GREEN }}>
+                {up ? "アップ中..." : cover ? "✓ 写真を設定しました（変更）" : "写真を選ぶ（あとからでもOK）"}
+                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f || !me) return;
+                  setUp(true);
+                  try { setCover(await uploadImage("post-images", me.id, f, 1600, 0.75)); } catch {}
+                  setUp(false);
+                }} />
+              </label>
+              <input value={pref} onChange={(e) => setPref(e.target.value)} placeholder="都道府県（例: 沖縄県）" className="mt-2 w-full rounded-lg border border-[#d8e4d0] px-2.5 py-2 text-[12px] outline-none focus:border-[#4a9a5a]" />
+              <button onClick={plant} disabled={saving} className="mt-2 w-full rounded-xl py-2.5 text-[12.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c94d3a" }}>
+                {saving ? "まいています..." : "🌱 この名前で種をまく（自分が1人目）"}
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
