@@ -148,7 +148,7 @@ export function PostCard({
           </div>
         </div>
         {me?.id === post.user_id && (
-          <button onClick={onDelete} className="flex-shrink-0 px-1 text-[12px] text-[#b0b3b8]" aria-label="削除">
+          <button onClick={onDelete} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px] font-bold text-[#65676b] active:bg-[#e4e6e9]" aria-label="自分の投稿を削除">
             ×
           </button>
         )}

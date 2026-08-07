@@ -57,7 +57,7 @@ const SERVICES: Service[] = [
     bg: "linear-gradient(160deg,#0a1410f5,#12251af5)",
     border: "#1e4530",
     active: "#7de0a0",
-    inactive: "#4a7a5a",
+    inactive: "#c8dcd0",
     tabs: [
       { href: "/mmm/neura", icon: "/icons/icon-neura5.webp", label: "ニューラFIVE" },
       { href: "/schumann1/index.html", icon: "/icons/icon-schumann.webp", label: "シューマン共振", ext: true },
