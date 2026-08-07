@@ -1696,22 +1696,39 @@
       if (ga && typeof f1m.amp === "number") ga.textContent = f1m.amp.toFixed(1);
       if (gq && typeof f1m.q === "number") gq.textContent = f1m.q.toFixed(1);
     }
-    // ★ 今日の共振コンディション (スペクトログラム解析。unknown 時は非表示で安全に劣化)
+    // ★ 今日の地球コンディション (NOAA宇宙天気センターの惑星Kp指数×シューマンF1)
+    //   旧スペクトログラム輝度判定は常時stormに固着していたため廃止 (2026-08-07)。
+    //   NOAA SWPC は無料・認証不要・CORS対応の公的API。
     const condEl = document.getElementById("gf1-cond");
     if (condEl) {
-      const condMap = {
-        calm: ["calm", "今日の共振: 穏やか"],
-        active: ["active", "今日の共振: 活発"],
-        storm: ["storm", "今日の共振: 荒れ模様（雷活動バースト検出）"],
-      };
-      const cm = condMap[data.condition];
-      if (cm) {
-        condEl.style.display = "";
-        condEl.className = "gf1-cond " + cm[0];
-        condEl.textContent = cm[1];
-      } else {
-        condEl.style.display = "none";
-      }
+      condEl.style.display = "none";
+      const f1hz = (data.modes && data.modes.F1 && typeof data.modes.F1.hz === "number") ? data.modes.F1.hz : null;
+      fetch("https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json")
+        .then(r => r.ok ? r.json() : null)
+        .then(rows => {
+          if (!rows || !rows.length) return;
+          const last = rows[rows.length - 1];
+          const kp = Number(last.Kp);
+          if (!isFinite(kp)) return;
+          const dev = f1hz != null ? (f1hz - 7.83) : null;
+          const devTxt = dev != null ? (`共振${f1hz.toFixed(2)}Hz` + (Math.abs(dev) < 0.05 ? "・基準どおり" : (dev > 0 ? `・基準+${dev.toFixed(2)}` : `・基準−${Math.abs(dev).toFixed(2)}`))) : "";
+          let cls, txt;
+          if (kp >= 5) {
+            const g = Math.min(5, Math.floor(kp) - 4);
+            cls = "storm";
+            txt = `今日の地球: 磁気嵐 G${g}（Kp${kp.toFixed(1)}）— 電離層が揺れています ${devTxt}`;
+          } else if (kp >= 3) {
+            cls = "active";
+            txt = `今日の地球: ざわつき気味（Kp${kp.toFixed(1)}）— オーロラ帯が活発 ${devTxt}`;
+          } else {
+            cls = "calm";
+            txt = `今日の地球: おだやか（Kp${kp.toFixed(1)}・磁気圏静穏） ${devTxt}`;
+          }
+          condEl.style.display = "";
+          condEl.className = "gf1-cond " + cls;
+          condEl.textContent = txt;
+        })
+        .catch(() => {});
     }
     // ★ 8.02Hzまでの距離ゲージ (瞬間値。API v1 の distance_to_target_hz を優先)
     const fmtDist = d => (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(2);
