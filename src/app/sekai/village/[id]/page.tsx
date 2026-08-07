@@ -7,6 +7,8 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
+import { SnsIcon } from "@/components/SnsIcon";
+import { EmbedCard } from "@/components/EmbedCard";
 import {
   joinVillage,
   approveVillageMember,
@@ -208,8 +210,12 @@ export default function VillagePage() {
         {village.description && (
           <p className="mx-auto mt-2 max-w-[340px] text-[12px] leading-relaxed text-[#c8dcc8]">{village.description}</p>
         )}
+        <VillageSns village={village} isLeader={!!me && village.created_by === me.id} onSaved={load} villageId={villageId} />
         <div className="mt-3 flex justify-center gap-2">
-          {me && !joined && !members.some((mm: any) => mm.user_id === me.id) && (
+          {village.recruiting === false && !joined && (
+            <span className="rounded-xl border border-white/20 px-4 py-2.5 text-[12px] font-bold text-[#a8b8a8]">現在は募集を締め切っています</span>
+          )}
+          {village.recruiting !== false && me && !joined && !members.some((mm: any) => mm.user_id === me.id) && (
             <button
               onClick={async () => {
                 await joinVillage(me.id, villageId);
@@ -239,6 +245,18 @@ export default function VillagePage() {
                 }
               }} />
             </label>
+          )}
+          {me && village.created_by === me.id && (
+            <button
+              onClick={async () => {
+                const supabase = createClient();
+                await supabase.rpc("set_village_recruiting", { vid: villageId, r: village.recruiting === false });
+                load();
+              }}
+              className="rounded-xl border border-white/25 px-3 py-2.5 text-[12px] font-bold text-[#c8dcc8]"
+            >
+              {village.recruiting === false ? "募集を再開する" : "募集を締め切る"}
+            </button>
           )}
           {me && village.created_by === me.id && (
             <button
@@ -460,6 +478,7 @@ export default function VillagePage() {
                   {linkify(String(p.body ?? ""))}
                 </p>
                 {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-1.5 max-h-72 rounded-lg object-cover" />}
+                {(() => { const eu = bodyEmbedUrl(p.body); return eu ? <EmbedCard embed={{ url: eu }} /> : null; })()}
 
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
                 {(() => {
@@ -527,4 +546,75 @@ export default function VillagePage() {
       </div>
     </main>
   );
+}
+
+
+/** 村のSNSリンク（表示は全員・編集は村長） */
+function VillageSns({ village, isLeader, onSaved, villageId }: { village: any; isLeader: boolean; onSaved: () => void; villageId: string }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const sns = (village.sns as Record<string, string>) ?? {};
+  const keys = ["instagram", "x", "youtube", "line", "website"] as const;
+  const labels: Record<string, string> = { instagram: "Instagram", x: "X", youtube: "YouTube", line: "LINE公式", website: "ウェブサイト" };
+  const entries = Object.entries(sns).filter(([, v]) => v);
+  if (!isLeader && entries.length === 0) return null;
+  return (
+    <div className="mx-auto mt-2 max-w-[340px]">
+      {entries.length > 0 && (
+        <div className="flex items-center justify-center gap-3">
+          {entries.map(([k, v]) => (
+            <a key={k} href={v} target="_blank" rel="noopener noreferrer" className="opacity-90">
+              <SnsIcon platform={k} size={22} />
+            </a>
+          ))}
+        </div>
+      )}
+      {isLeader && !editing && (
+        <button onClick={() => { setDraft({ ...sns }); setEditing(true); }} className="mx-auto mt-1.5 block text-[10.5px] font-bold text-[#8ab89a] underline">
+          この村のSNSを編集
+        </button>
+      )}
+      {editing && (
+        <div className="mt-2 space-y-1.5 rounded-xl bg-black/25 p-2.5 text-left">
+          {keys.map((k) => (
+            <div key={k} className="flex items-center gap-2">
+              <span className="flex w-20 flex-shrink-0 items-center gap-1 text-[10px] text-[#c8dcc8]">
+                <SnsIcon platform={k} size={14} />{labels[k]}
+              </span>
+              <input
+                value={draft[k] ?? ""}
+                onChange={(e) => setDraft({ ...draft, [k]: e.target.value })}
+                placeholder="https://..."
+                className="min-w-0 flex-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1.5 text-[11px] text-white outline-none"
+              />
+            </div>
+          ))}
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => setEditing(false)} className="flex-1 rounded-lg border border-white/20 py-1.5 text-[11px] font-bold text-[#c8dcc8]">やめる</button>
+            <button
+              onClick={async () => {
+                const clean: Record<string, string> = {};
+                for (const [k, v] of Object.entries(draft)) if (v.trim()) clean[k] = v.trim();
+                const supabase = createClient();
+                await supabase.rpc("set_village_sns", { vid: villageId, s: clean });
+                setEditing(false);
+                onSaved();
+              }}
+              className="flex-1 rounded-lg bg-[#d4b96a] py-1.5 text-[11px] font-extrabold text-[#1a2432]"
+            >保存する</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 本文中の最初のURLをインスタ/X/YouTube埋め込みに（コトヅテと同じEmbedCard） */
+export function bodyEmbedUrl(body: string | null): string | null {
+  if (!body) return null;
+  const m = body.match(/https?:\/\/[^\s]+/);
+  if (!m) return null;
+  const u = m[0];
+  if (/instagram\.com|youtu\.be|youtube\.com|twitter\.com|x\.com/.test(u)) return u;
+  return null;
 }
