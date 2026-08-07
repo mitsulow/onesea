@@ -169,7 +169,7 @@ export function useSekaiMe() {
 /** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="pb-16">
+    <main className="pb-[58px]">
       <TopTone color="#ffffff" />
       <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#eee] bg-white px-6 text-center">
         <div className="text-[10px] leading-tight tracking-[3px] text-[#8aa898]">世界は一つの村になる。</div>
@@ -204,6 +204,7 @@ export function MootsSection({
   void myPref;
   const [moots] = useState<Moot[]>(() => upcomingMoots(11));
   const [futureOpen, setFutureOpen] = useState(false);
+  const [pastOpen, setPastOpen] = useState(false);
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -333,15 +334,23 @@ export function MootsSection({
         </div>
       )}
 
-      {/* 今後の月例会開催予定（折りたたみ） */}
-      <button
-        onClick={() => setFutureOpen((v) => !v)}
-        className="mt-1.5 w-full py-1 text-center text-[10.5px] font-bold text-[#5a7a68]"
-      >
-        {futureOpen ? "▾" : "▸"} 今後の新月会・満月会
-      </button>
+      {/* 今後/過去 を左右に並べた折りたたみ（押すと下に開く） */}
+      <div className="mt-2 grid grid-cols-2 gap-2 px-1">
+        <button
+          onClick={() => setFutureOpen((v) => !v)}
+          className="rounded-xl border border-white/10 bg-white/5 py-2 text-center text-[11.5px] font-bold text-[#a8c8b0]"
+        >
+          今後の新月会/満月会 {futureOpen ? "▾" : "▸"}
+        </button>
+        <button
+          onClick={() => setPastOpen((v) => !v)}
+          className="rounded-xl border border-white/10 bg-white/5 py-2 text-center text-[11.5px] font-bold text-[#a8c8b0]"
+        >
+          過去の新月会/満月会 {pastOpen ? "▾" : "▸"}
+        </button>
+      </div>
       {futureOpen && (
-        <div className="rounded-xl bg-white/5 px-3 py-2">
+        <div className="mt-1.5 rounded-xl bg-white/5 px-3 py-2">
           {moots.slice(1, 11).map((m) => (
             <div key={m.dateKey} className="flex items-baseline justify-between border-b border-white/5 py-1.5 last:border-0">
               <span className="text-[12px] font-bold text-[#a8c8b0]">
@@ -354,63 +363,25 @@ export function MootsSection({
           ))}
         </div>
       )}
-
-      {/* 開催されたら、今回の動画がここに */}
-      {LATEST_MOOT_VIDEO && (
-        <a
-          href={LATEST_MOOT_VIDEO.url ?? "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mb-2 mt-2 block overflow-hidden rounded-xl border border-[#4a9a6a]/40 no-underline"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={srcCdn(LATEST_MOOT_VIDEO.thumb)} alt="" className="w-full object-cover" />
-          <div className="bg-white/5 px-3 py-2 text-[12.5px] font-extrabold text-[#a8d8b8]">
-            ▶ {LATEST_MOOT_VIDEO.title} — 今回の会の動画
-          </div>
-        </a>
-      )}
-
-      {/* 過去の新月会・満月会 動画（サムネ） */}
-      {PAST_MOOT_VIDEOS.length > 0 && (
-        <div className="mb-1 mt-2 px-1">
-          <div className="mb-1 text-[10px] tracking-[2px] text-[#5a7a68]">過去の新月会・満月会 動画</div>
-          <div className="hide-scrollbar flex gap-1.5 overflow-x-auto pb-0.5">
-            {PAST_MOOT_VIDEOS.map((v, i) =>
-              v.url ? (
-                <a
-                  key={i}
-                  href={v.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative w-[104px] flex-shrink-0 overflow-hidden rounded-lg no-underline"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={srcCdn(v.thumb)} alt={v.title} className="aspect-video w-full object-cover" />
-                  <span className="absolute inset-0 flex items-center justify-center">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-[9px] text-white">
-                      ▶
-                    </span>
-                  </span>
-                </a>
-              ) : (
-                <div key={i} className="w-[104px] flex-shrink-0 overflow-hidden rounded-lg opacity-70">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={srcCdn(v.thumb)} alt={v.title} className="aspect-video w-full object-cover" />
-                </div>
-              )
-            )}
-          </div>
+      {pastOpen && (
+        <div className="mt-1.5">
+          {LATEST_MOOT_VIDEO && (
+            <a
+              href={LATEST_MOOT_VIDEO.url ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-2 block overflow-hidden rounded-xl border border-[#4a9a6a]/40 no-underline"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={srcCdn(LATEST_MOOT_VIDEO.thumb)} alt="" className="w-full object-cover" />
+              <div className="bg-white/5 px-3 py-2 text-[12.5px] font-extrabold text-[#a8d8b8]">
+                ▶ {LATEST_MOOT_VIDEO.title} — 今回の会の動画
+              </div>
+            </a>
+          )}
+          <MootArchive />
         </div>
       )}
-
-      {/* 過去の新月満月会（折りたたみ） */}
-      <details className="mt-2 px-1">
-        <summary className="cursor-pointer list-none text-[11.5px] font-bold text-[#7aa88a]">
-          📁 過去の新月満月会 ▾
-        </summary>
-        <MootArchive />
-      </details>
     </section>
   );
 }
@@ -1248,10 +1219,6 @@ export function ActivitySection({ me }: { me: User | null }) {
         </div>
       )}
 
-      {/* おわりの帯（セクションの終わりが一目で分かる） */}
-      <div className="mt-2 px-4 py-1.5 text-center" style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}>
-        <span className="text-[9.5px] tracking-[3px] text-[#8ab89a]">〜 村人日記 ここまで 〜</span>
-      </div>
     </section>
   );
 }
