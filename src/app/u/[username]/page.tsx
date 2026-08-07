@@ -251,16 +251,9 @@ export default function UserPage() {
             style={{ background: "linear-gradient(160deg,#0e1e2e 0%,#17384e 60%,#1e4a66 100%)" }}
           />
         )}
-        <button
-          onClick={() => {
-            // 直前のページへ（履歴がなければホームへ）
-            if (window.history.length > 1) router.back();
-            else router.push("/");
-          }}
-          className="absolute left-3 top-3 z-10 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-sm"
-        >
-          ◀ もどる
-        </button>
+        <span className="absolute left-3 top-3 z-10 rounded-full bg-black/40 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-sm">
+          Myページ
+        </span>
         <span className="absolute right-3 top-3 z-10">
           <AvatarMenu />
         </span>
@@ -329,8 +322,13 @@ export default function UserPage() {
           )}
         </div>
 
-        <div className="mt-1.5">
-          <h1 className="flex items-center gap-1.5 text-[21px] font-extrabold leading-snug text-[#3a3428]">
+        <div className="relative mt-1.5">
+          {profile.birthday && (
+            <span className="num absolute right-0 top-0 text-right text-[11px] font-bold text-[#a09888]">
+              🌏 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
+            </span>
+          )}
+          <h1 className="flex items-center gap-1.5 pr-32 text-[21px] font-extrabold leading-snug text-[#3a3428]">
             {profile.display_name ?? "むらびと"}
             {isWara && <WarawaBadge size={17} />}
           </h1>
@@ -347,11 +345,7 @@ export default function UserPage() {
                 わらわ〜No.{String(profile.member_no).padStart(7, "0")}
               </span>
             )}
-            {profile.birthday && (
-              <span className="num text-[11px] font-bold text-[#a09888]">
-                🌏 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
-              </span>
-            )}
+            <SekaiBelongBadge userId={profile.id} />
           </div>
           {profile.status_line && (
             <div className="mt-0.5 text-[13px] font-medium text-[#5a5448]">{profile.status_line}</div>
@@ -782,5 +776,37 @@ export default function UserPage() {
         </div>
       )}
     </main>
+  );
+}
+
+
+/** セカイムラ所属バッジ（マイページ内のみ）: 承認済みの村があれば「◯◯所属」、なければ「セカイムラ無所属」 */
+function SekaiBelongBadge({ userId }: { userId: string }) {
+  const [name, setName] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("village_members")
+      .select("status, villages!village_members_village_id_fkey(name)")
+      .eq("user_id", userId)
+      .eq("status", "approved")
+      .limit(1)
+      .then(({ data }) => {
+        const v = data?.[0] as { villages?: { name?: string } } | undefined;
+        setName(v?.villages?.name ?? null);
+      });
+  }, [userId]);
+  if (name === undefined) return null;
+  return (
+    <span
+      className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+      style={
+        name
+          ? { background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }
+          : { background: "#f0ede6", color: "#a09888", border: "1px solid #e0dcd0" }
+      }
+    >
+      {name ? `${name}所属` : "セカイムラ無所属"}
+    </span>
   );
 }
