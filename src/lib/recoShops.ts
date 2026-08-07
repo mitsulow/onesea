@@ -23,7 +23,8 @@ export const RECO_CATS = [
   { id: "alt_med", label: "代替医療", emoji: "🌿", color: "#8a5aa0" },
   { id: "natural_restaurant", label: "ナチュラルなレストラン", emoji: "🍽", color: "#c94d3a" },
   { id: "natural_food", label: "自然食品のお店", emoji: "🌾", color: "#5a7d4a" },
-  { id: "massage", label: "マッサージ・鍼灸", emoji: "💆", color: "#3070b0" },
+  { id: "massage", label: "整体・マッサージ", emoji: "💆", color: "#3070b0" },
+  { id: "other", label: "その他", emoji: "✨", color: "#8a8070" },
 ] as const;
 
 export const recoCat = (id: string) => RECO_CATS.find((c) => c.id === id) ?? RECO_CATS[0];

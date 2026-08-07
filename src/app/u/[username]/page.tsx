@@ -512,7 +512,7 @@ export default function UserPage() {
       {shops.length > 0 && (
         <div className="pt-5">
           <div className="card">
-            <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>{isMe ? "わたしの出品一覧" : `${profile.display_name ?? "この人"}さんの出品一覧`}</span></div>
+            <div className="sec mb-2.5 flex items-center gap-1.5"><img src="/rakuichi/logo-emblem.webp" alt="" className="inline-block h-[18px] w-[18px] rounded-full object-cover align-[-3px]" /><span>{`${profile.display_name ?? "この人"}さんの出品一覧`}</span></div>
             <div className="grid grid-cols-2 gap-3">
               {shops.map((shop) => {
                 const cat = categoryOf(shop.category);
@@ -558,7 +558,7 @@ export default function UserPage() {
 
       {/* 私のおススメの店 — 地図（全員分はセカイムラのおススメマップに集計される） */}
       <div className="px-4">
-        <MyRecoMap userId={profile.id} isMe={isMe} />
+        <MyRecoMap userId={profile.id} isMe={isMe} ownerName={profile.display_name ?? "この人"} />
       </div>
 
       {/* わたしのおススメ（好きな農家さんのお米など外部リンク紹介） */}
@@ -566,7 +566,7 @@ export default function UserPage() {
         <div className="pt-5" id="recos-sec" style={{ scrollMarginTop: 20 }}>
           <div className="card">
             <div className="sec mb-2.5 flex items-center justify-between">
-              <span><img src="/icons/icon-star.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {isMe ? "わたしのオススメ" : `${profile.display_name ?? "この人"}さんのオススメ`}</span>
+              <span><img src="/icons/icon-star.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {`${profile.display_name ?? "この人"}さんのおススメの商品`}</span>
               {isMe && !recoForm && (
                 <button
                   onClick={() => setRecoForm(true)}
