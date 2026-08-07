@@ -684,8 +684,16 @@ function BottomSheet({
               )}
             </div>
 
-            {/* 潮汐＋月 */}
-            <div className="mb-2 grid grid-cols-2 gap-2">
+            {/* 潮汐＋月 — 折りたたみスタート(見えるのは地球と月のマークだけ) */}
+            <details className="mb-2">
+              <summary className="flex cursor-pointer list-none items-center justify-center gap-3 rounded-xl border border-[#e4e0d8] bg-[#faf8f4] py-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/cel-earth.png" alt="潮" className="h-[20px] w-[20px] object-contain" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/cel-moon.png" alt="月" className="h-[20px] w-[20px] object-contain" />
+                <span className="text-[9px] text-[#b0aa9c]">▾</span>
+              </summary>
+              <div className="mt-2 grid grid-cols-2 gap-2">
               <div className="rounded-xl border border-[#d8e4f0] bg-[#f4f8fc] p-2.5">
                 <div className="mb-1 flex items-center gap-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -739,7 +747,8 @@ function BottomSheet({
                   <div className="flex justify-between"><span>月の入</span><span className="num text-white">{mt.set ?? "—"}</span></div>
                 </div>
               </div>
-            </div>
+              </div>
+            </details>
 
 
             {/* 24時間スケジュール */}

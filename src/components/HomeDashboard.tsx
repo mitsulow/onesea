@@ -389,26 +389,6 @@ export function HomeDashboard() {
         );
       })()}
 
-      {/* 潮と月 — いまに一番近い満/干 1つ + 月齢（小さく1行） */}
-      {(() => {
-        const nowM = new Date().getHours() * 60 + new Date().getMinutes();
-        let bestTide: [string, string] | null = null;
-        let bestDiff = 1e9;
-        for (const [lb, t] of tideRows) {
-          const [hh, mm2] = t.split(":").map(Number);
-          const diff = Math.abs(hh * 60 + mm2 - nowM);
-          if (diff < bestDiff) { bestDiff = diff; bestTide = [lb, t]; }
-        }
-        return (
-          <button onClick={openToday} className="mx-4 mb-3 mt-2 flex w-[calc(100%-2rem)] items-center justify-between rounded-xl px-3.5 py-1.5" style={{ background: "#faf7f0", border: "1px solid #eee6d4" }}>
-            <span className="num text-[10.5px] text-[#8ea8c0]">
-              {bestTide ? `${bestTide[0]}潮 ${bestTide[1]}` : "潮 —"}
-              {tide ? `（${tide.port}）` : ""}
-            </span>
-            <span className="num text-[10.5px] text-[#a08c50]">月齢 {moon.age.toFixed(1)}</span>
-          </button>
-        );
-      })()}
     </section>
   );
 }
