@@ -22,14 +22,12 @@ export default function ZaPage() {
   const [category, setCategory] = useState<string | null>(null);
   const [market, setMarket] = useState<Market>("ichi");
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     // 未ログインでも閲覧できる公開ページ（URLシェア用）。
     // ログイン中ならアイコンを出してマイページへ飛べるようにする
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setLoggedIn(!!session?.user);
       setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
     });
   }, []);
@@ -76,16 +74,8 @@ export default function ZaPage() {
               日本人総フリーランス化計画
             </span>
           </span>
-          {loggedIn ? (
-            <AvatarMenu ring="#c94d3a" />
-          ) : (
-            <Link
-              href="/"
-              className="rounded-full bg-[#c94d3a] px-3 py-1.5 text-[11px] font-bold text-white no-underline"
-            >
-              ログイン
-            </Link>
-          )}
+          {/* 他ページと同じ: 未ログインでも丸「ゲスト」のAvatarMenu(中でログイン導線あり) */}
+          <AvatarMenu ring="#c94d3a" />
         </div>
         <Link href="/lp/za" className="block border-t border-[#f0e6dc] py-1.5 text-center text-[11px] font-bold text-[#c94d3a] no-underline">
           楽市楽座に出品するには・入会案内 →
