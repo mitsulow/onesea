@@ -92,7 +92,7 @@ export default function MmmPage() {
   };
 
   return (
-    <main className="pb-16" style={{ background: "#070b0a", minHeight: "100dvh" }}>
+    <main style={{ background: "#070b0a", minHeight: "100dvh" }}>
       <TopTone color="#0a1410" />
       {/* 朝一: その日はじめてなら「今日の地球を、どう楽しむ？」→ 地球儀に着地 */}
       <MorningOpening />
