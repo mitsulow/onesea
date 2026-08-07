@@ -119,6 +119,8 @@ export function HomeDashboard() {
           keys.push(k);
         }
       }
+      // 今日は予定が無くてもスワイプ経路に必ず入れる(過去から戻れなくなる問題の防止)
+      if (!keys.includes(tk)) keys.push(tk);
       keys.sort();
       setDayPlans(byDay);
       setPlanKeys(keys);
@@ -223,7 +225,7 @@ export function HomeDashboard() {
         return (
           <button onClick={openToday} className="mt-1.5 block w-full overflow-hidden border-y border-[#eee2c8] bg-[#fffcf3] py-1.5" aria-label="今日のこよみ">
             <style>{`@keyframes tickerX { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
-            <div className="flex w-max whitespace-nowrap" style={{ animation: "tickerX 26s linear infinite" }}>
+            <div className="flex w-max whitespace-nowrap" style={{ animation: "tickerX 40s linear infinite" }}>
               {[0, 1].map((k) => (
                 <span key={k} className="num flex items-center text-[12px] font-bold text-[#6a5a3a]">
                   <IconSpan src="/icons/cel-sun.png" />
@@ -233,8 +235,12 @@ export function HomeDashboard() {
                   <IconSpan src={moonImageOf(moon.age)} />
                   今日の月は月齢{moon.age.toFixed(1)}、月の出は{mt.rise ?? "—"}
                   {holy && <span className="ml-1 font-extrabold text-[#b8912a]">本日は{holy.name}（{holy.label}）{holy.time}です</span>}
-                  <IconSpan src="/icons/cel-earth.png" />
-                  {nearTide ? `本日の${nearTide[0]}潮時刻は${nearTide[1]}です` : "潮データを読み込み中"}
+                  {nearTide && (
+                    <>
+                      <IconSpan src="/icons/cel-earth.png" />
+                      本日の{nearTide[0]}潮時刻は{nearTide[1]}です
+                    </>
+                  )}
                   <span className="mx-6 text-[#d8c9a0]">✦</span>
                 </span>
               ))}
