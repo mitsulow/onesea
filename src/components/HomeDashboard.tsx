@@ -167,13 +167,14 @@ export function HomeDashboard() {
       </div>
 
       {/* 日付 — 主役。曜日まで同じ書体・同じ色で一体。右上に地球冒険(小) */}
-      {advDays != null && (
-        <div className="relative">
-          <span className="num absolute right-2 top-1 text-[10px] font-bold text-[#a09880]">
-            🌏 今日は{advDays.toLocaleString()}回目の地球冒険の日
-          </span>
-        </div>
-      )}
+      <div className="flex items-center justify-between px-3 pt-1.5">
+        <span className="num text-[10px] font-bold text-[#a09880]">
+          {advDays != null ? `🌏 ${advDays.toLocaleString()}回目の地球冒険` : ""}
+        </span>
+        <a href="/schumann1/index.html" className="num text-[10px] font-bold text-[#3aa890] no-underline">
+          今日の周波数 {schumann != null ? schumann.toFixed(2) : "—"}Hz
+        </a>
+      </div>
       <div className="pt-4" style={{ fontFamily: MINCHO }}>
         <span className="text-[27px] font-bold tracking-wide text-[#2a2622]">
           {y}年{m}月{d}日（{dow}）
@@ -201,7 +202,7 @@ export function HomeDashboard() {
           : deg % 5 === 0 ? 5
           : 1;
         return (
-          <div className="mx-4 mt-3">
+          <div className="mt-3">
             <Link
               href={isNow ? "/mmm/ddp" : "/#techo"}
               onClick={(e) => {
@@ -210,11 +211,11 @@ export function HomeDashboard() {
                   openToday();
                 }
               }}
-              className="relative block rounded-2xl px-4 py-4 no-underline"
+              className="relative block px-5 py-4 no-underline"
               style={
                 isNow
                   ? { background: "linear-gradient(120deg,#3a2c08,#6a5010)", boxShadow: "0 0 24px rgba(212,185,106,.5)" }
-                  : { background: "linear-gradient(120deg,#faf6ec,#f4ecd8)", border: "1.5px solid #e0d0a8" }
+                  : { background: "linear-gradient(120deg,#f6eed6,#efe2bc)" }
               }
             >
               <div className="text-[12px] font-extrabold tracking-[5px]" style={{ color: isNow ? "#e8cc80" : "#8b6914" }}>
@@ -248,28 +249,35 @@ export function HomeDashboard() {
               ) : (
                 <div className="mt-2 text-[12px] text-[#c0b8a8]">—</div>
               )}
-              <div className="absolute bottom-2 right-3 text-right">
-                <span className="num text-[10px] font-extrabold" style={{ color: lv >= 45 ? "#c94d3a" : "#a08c50" }}>
-                  叶いレベル{lv}
-                </span>
-                {lv === 360 && <div className="text-[10px] font-extrabold leading-none text-[#c94d3a]">Max</div>}
+              <div className="absolute bottom-2 right-3.5 text-right">
+                {(() => {
+                  const st =
+                    lv === 360 ? { color: "#e8001e", fontSize: 16, textShadow: "0 0 10px rgba(232,0,30,.55)" }
+                    : lv === 180 ? { color: "#c9002a", fontSize: 14, textShadow: "0 0 8px rgba(201,0,42,.4)" }
+                    : lv === 90 ? { color: "#c94d3a", fontSize: 13 }
+                    : lv === 45 ? { color: "#e07020", fontSize: 12.5 }
+                    : lv === 15 ? { color: "#2CB7DE", fontSize: 11 }
+                    : lv === 5 ? { color: "#5a8a3a", fontSize: 10.5 }
+                    : { color: "#a08c50", fontSize: 10 };
+                  return (
+                    <>
+                      <span className="num font-extrabold leading-none" style={st}>
+                        叶いレベル{lv}
+                      </span>
+                      {lv === 360 && (
+                        <div className="font-extrabold leading-tight" style={{ color: "#e8001e", fontSize: 15, textShadow: "0 0 10px rgba(232,0,30,.55)" }}>
+                          Max
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </Link>
           </div>
         );
       })()}
 
-      {/* シューマン共振 — 小さな1行（タップで詳細ページ） */}
-      <a
-        href="/schumann1/index.html"
-        className="mx-4 mt-2 flex items-center justify-between rounded-xl px-3.5 py-2 no-underline"
-        style={{ background: "#0d2724" }}
-      >
-        <span className="text-[10px] font-bold tracking-[2px] text-[#7ac8b8]">シューマン共振</span>
-        <span className="num text-[13px] font-bold" style={{ color: "#35e0b8" }}>
-          今日の周波数 {schumann != null ? schumann.toFixed(2) : "—"}Hz
-        </span>
-      </a>
 
       {/* 予定 — 予定が入っている日だけをスワイプ/矢印で前後に渡れる */}
       {(() => {
@@ -334,7 +342,7 @@ export function HomeDashboard() {
               >
                 ‹ {prevKey ? shortD(prevKey) : "前"}
               </button>
-              <span className="text-[10px] font-bold tracking-[3px] text-[#7ba05b]">{label}</span>
+              <span className="text-[11.5px] font-bold tracking-[3px] text-[#7ba05b]">{label}</span>
               <button
                 onClick={() => go(nextKey)}
                 disabled={!nextKey}
@@ -358,9 +366,9 @@ export function HomeDashboard() {
                 {plans.length ? (
                   plans.map((p, i) => (
                     <div key={i} className="flex items-baseline gap-2.5">
-                      <span className="num flex-shrink-0 text-[12px] text-[#a09880]">{p.time}</span>
+                      <span className="num flex-shrink-0 text-[13px] text-[#a09880]">{p.time}</span>
                       {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
-                      <span className="truncate text-[16.5px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
+                      <span className="truncate text-[18px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
                         {p.text}
                       </span>
                     </div>
