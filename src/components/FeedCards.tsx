@@ -62,9 +62,9 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
         {/* 右上: ムラビトの投稿バッジ（塗りつぶし） */}
         <span
           className="flex-shrink-0 self-start rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white"
-          style={{ background: "#4a8a5c" }}
+          style={{ background: "#8a6a42" }}
         >
-          ムラビトの投稿
+          ムラビト投稿
         </span>
       </div>
 
