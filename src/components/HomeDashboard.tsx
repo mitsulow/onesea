@@ -185,7 +185,7 @@ export function HomeDashboard() {
       </div>
       <div className="pt-4" style={{ fontFamily: MINCHO }}>
         <span className="text-[27px] font-bold tracking-wide text-[#2a2622]">
-          {y}年{m}月{d}日（{dow}）
+          {m}月{d}日（{dow}）
         </span>
       </div>
       <div className="mt-1 text-[11.5px] tracking-[1px] text-[#a09880]">
