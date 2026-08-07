@@ -707,10 +707,11 @@ function BottomSheet({
                       : [45, 135, 225, 315].includes(dg) ? 45
                       : dg % 15 === 0 ? 15 : dg % 5 === 0 ? 5 : 1;
                     const c = lv >= 180 ? "#c9002a" : lv >= 90 ? "#c94d3a" : lv >= 45 ? "#e07020" : "#a08c50";
+                    const word = lv === 360 ? "最強" : lv === 180 ? "超すごい" : lv === 90 ? "凄い" : lv === 45 ? "かなり強い" : lv === 15 ? "強い" : lv === 5 ? "少し強い" : "普通";
                     return (
                       <div className="text-right">
                         <span className="num text-[11px] font-extrabold" style={{ color: c }}>
-                          叶いレベル{lv}{lv === 360 ? " Max" : ""}
+                          叶いレベル{lv}（{word}）
                         </span>
                       </div>
                     );

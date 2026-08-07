@@ -230,7 +230,7 @@ export function HomeDashboard() {
                 <span key={k} className="num flex items-center text-[12px] font-bold text-[#6a5a3a]">
                   <IconSpan src="/icons/cel-sun.png" />
                   今日の叶いタイム <b className="mx-1 text-[14px] text-[#c94d3a]">{best?.time ?? "—"}</b>
-                  <span style={{ color: lv >= 90 ? "#c9002a" : lv >= 45 ? "#e07020" : "#a08c50" }}>（叶いレベル{lv}{lv === 360 ? " Max" : ""}）</span>
+                  <span style={{ color: lv >= 90 ? "#c9002a" : lv >= 45 ? "#e07020" : "#a08c50" }}>（叶いレベル{lv}・{lv === 360 ? "最強" : lv === 180 ? "超すごい" : lv === 90 ? "凄い" : lv === 45 ? "かなり強い" : lv === 15 ? "強い" : lv === 5 ? "少し強い" : "普通"}）</span>
                   {best?.sekki && <span className="ml-1 font-extrabold" style={{ color: accent }}>「{best.sekki[0]}」の日です</span>}
                   <IconSpan src={moonImageOf(moon.age)} />
                   今日の月は月齢{moon.age.toFixed(1)}、月の出は{mt.rise ?? "—"}
