@@ -372,7 +372,7 @@ export default function VillagePage() {
         {/* 村人 */}
         <section className="card">
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-            この村の村人
+            {village.name}の村人
           </div>
           <div className="flex flex-wrap gap-2">
             {members.map((m: any, i) => {
@@ -399,7 +399,7 @@ export default function VillagePage() {
         {/* 囲炉裏 */}
         <section className="card">
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-            この村の活動
+            {village.name}の活動
           </div>
           {posts.length === 0 ? (
             <p className="py-1 text-[12.5px] text-[#a0aca0]">まだ活動の記録がありません。村人日記から投稿すると、ここに並びます</p>
