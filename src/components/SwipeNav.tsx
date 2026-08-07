@@ -35,7 +35,7 @@ function ringIndex(pathname: string): number {
   // ツキヨガは別ページなのでここには来ない (4)
   if (pathname === "/za") return 5;
   if (pathname === "/talk") return 6;
-  if (pathname === "/my") return 7;
+  if (pathname === "/my" || pathname.startsWith("/u/")) return 7; // マイページ(名刺)は /u/xxx に居る
   return -1;
 }
 

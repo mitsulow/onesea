@@ -3209,15 +3209,8 @@
         } catch (e) { return null; }
       };
       let url = null;
-      for (let i = 0; i < localStorage.length && !url; i++) {
-        const k = localStorage.key(i);
-        if (k && k.startsWith("sb-") && k.includes("-auth-token") && !k.includes("verifier")) {
-          const s = parseTok(localStorage.getItem(k) || "");
-          const u = s && (s.user || s.currentSession?.user || s.session?.user);
-          url = u?.user_metadata?.avatar_url || u?.user_metadata?.picture || null;
-        }
-      }
-      if (!url) {
+      // ★Cookie優先(Next側の現行セッション=正)。localStorageは古い別アカウントが残り得る
+      {
         const jar = {};
         document.cookie.split(/;\s*/).forEach(kv => { const i2 = kv.indexOf("="); if (i2 > 0) jar[kv.slice(0, i2)] = decodeURIComponent(kv.slice(i2 + 1)); });
         const bases = {};
@@ -3231,6 +3224,15 @@
           const u2 = s2 && (s2.user || s2.currentSession?.user || s2.session?.user);
           url = u2?.user_metadata?.avatar_url || u2?.user_metadata?.picture || null;
           if (url) break;
+        }
+      }
+      // フォールバック: localStorage
+      for (let i = 0; i < localStorage.length && !url; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith("sb-") && k.includes("-auth-token") && !k.includes("verifier")) {
+          const s = parseTok(localStorage.getItem(k) || "");
+          const u = s && (s.user || s.currentSession?.user || s.session?.user);
+          url = u?.user_metadata?.avatar_url || u?.user_metadata?.picture || null;
         }
       }
       if (url) {

@@ -17061,14 +17061,8 @@ if ('serviceWorker' in navigator) {
   }
   window.oneseaReadSession = function () {
     try {
-      // 1) localStorage
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (!(k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0)) continue;
-        var t = parseTok(localStorage.getItem(k) || '');
-        if (t) return t;
-      }
-      // 2) Cookie (sb-xxx-auth-token / .0 .1 分割)
+      // 1) Cookie が最優先 (Next側 @supabase/ssr の現行セッション = 正)
+      //    ※localStorage には昔の別アカウントのセッションが残っていることがある
       var jar = {};
       document.cookie.split(/;\s*/).forEach(function (kv) {
         var i2 = kv.indexOf('=');
@@ -17083,6 +17077,13 @@ if ('serviceWorker' in navigator) {
       for (var b in bases) {
         var t2 = parseTok(bases[b].join(''));
         if (t2) return t2;
+      }
+      // 2) フォールバック: localStorage
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!(k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0)) continue;
+        var t = parseTok(localStorage.getItem(k) || '');
+        if (t) return t;
       }
     } catch (e) {}
     return null;
