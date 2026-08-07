@@ -207,7 +207,7 @@ export function InoriTecho() {
   return (
     <div className="relative overflow-hidden bg-white" style={{ margin: "0 -16px" }}>
       <SignupDialog open={showSignup} onClose={() => setShowSignup(false)} feature="手帳に書き込めるように" />
-      <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={tryOpenDay} openKey={sheetKey} />
+      <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={tryOpenDay} openKey={sheetKey} waraCloud={waraCloud} />
       {sheetKey && (
         <BottomSheet
           dk={sheetKey}
@@ -234,6 +234,7 @@ function MonthCal({
   todayK,
   onOpenDay,
   openKey,
+  waraCloud,
 }: {
   mi: number;
   setMi: (n: number) => void;
@@ -241,6 +242,7 @@ function MonthCal({
   todayK: string;
   onOpenDay: (k: string) => void;
   openKey: string | null;
+  waraCloud: "warawa" | "free" | null;
 }) {
   const [dragX, setDragX] = useState(0);
   const [swiping, setSwiping] = useState(false);
