@@ -22,7 +22,7 @@ export default function Home() {
         <div className="px-4">
           <HomeDashboard />
           <MoonMootBanner />
-          <div id="techo" style={{ scrollMarginTop: 40 }}>
+          <div id="techo" data-noswipe style={{ scrollMarginTop: 40 }}>
             <InoriTecho />
           </div>
         </div>

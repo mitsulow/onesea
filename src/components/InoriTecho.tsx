@@ -649,7 +649,7 @@ function BottomSheet({
               <div className="relative flex items-center justify-center gap-1.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/cel-sun.png" alt="" className="h-[16px] w-[16px] object-contain" />
-                <span className="text-[10.5px] tracking-widest text-[#b07a30]">節分かれつ刻</span>
+                <span className="text-[10.5px] tracking-widest text-[#b07a30]">叶いタイム</span>
                 <span className="num absolute right-0 text-[11px] text-[#b8b0a0]">{best ? `${best.deg}°` : "—"}</span>
               </div>
               <div

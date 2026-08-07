@@ -157,6 +157,7 @@ export function HomeDashboard() {
       {/* 題字 — ここだけ黒帯（「い」を小さくする元のバージョン）。右にアバター＝他サービスの入口
           統一規格: 高さ52px・サービス名センター・アバター右 */}
       <div className="relative flex h-[52px] items-center justify-center" style={{ background: "#0e1116" }}>
+        <img src={moonImageOf(moon.age)} alt="" className="absolute left-3 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full" loading="lazy" />
         <span className="text-[16px] font-extrabold tracking-[3px] text-[#e8d5a0]">
           願<span style={{ fontSize: "70%" }}>い</span>叶<span style={{ fontSize: "70%" }}>い</span>手帳
         </span>
@@ -188,85 +189,87 @@ export function HomeDashboard() {
         {moon.holy && <span className="ml-2 font-bold text-[#c09030]">{moon.holy}</span>}
       </div>
 
-      {/* 計器 — フシワカレツトキ / シューマン共振。左右同格の2枚、数字が主役 */}
-      <div className="mx-5 mt-5 grid grid-cols-2 gap-3">
-        <Link
-          href={isNow ? "/mmm/ddp" : "/#techo"}
-          onClick={(e) => {
-            if (!isNow) {
-              e.preventDefault();
-              openToday();
-            }
-          }}
-          className="block rounded-2xl px-3 py-4 no-underline"
-          style={
-            isNow
-              ? { background: "linear-gradient(120deg,#3a2c08,#6a5010)", boxShadow: "0 0 24px rgba(212,185,106,.5)" }
-              : { background: "#faf7f0", border: "1px solid #eee6d4" }
-          }
-        >
-          <div className="text-[10px] font-bold tracking-[3px] text-[#a09070]">
-            フシワカレツトキ
-          </div>
-          {target ? (
-            isNow ? (
-              <>
-                <div className="mt-2 text-[17px] font-bold leading-snug text-[#f6e9c4]" style={{ fontFamily: MINCHO }}>
-                  いま、願いを
-                  <br />
-                  書き換える時
-                </div>
-                <div className="mt-2 text-[10.5px] text-[#e8cc80]">ひらく</div>
-              </>
-            ) : (
-              (() => {
-                const nd = new Date(target.t);
-                const isTomorrow = nd.getDate() !== d || nd.getMonth() + 1 !== m;
-                return (
-                  <>
-                    <div className="num mt-1.5 text-[40px] leading-none text-[#6a5010]" style={{ fontWeight: 300 }}>
-                      {nd.getHours()}
-                      <span className="text-[22px] text-[#b0a080]">:</span>
-                      {String(nd.getMinutes()).padStart(2, "0")}
-                    </div>
-                    <div className="num mt-2 text-[11px] text-[#b0a080]">
-                      {isTomorrow ? "明日 ・ " : ""}あと {hrs > 0 ? hrs + "時間" : ""}
-                      {mins}分
-                    </div>
-                  </>
-                );
-              })()
-            )
-          ) : (
-            <div className="mt-3 text-[12px] text-[#c0b8a8]">—</div>
-          )}
-        </Link>
-
-        <a
-          href="/schumann1/index.html"
-          className="block rounded-2xl px-3 py-4 no-underline"
-          style={{ background: "linear-gradient(120deg,#0d2724,#10332e)" }}
-        >
-          <div className="text-[10px] font-bold tracking-[3px] text-[#7ac8b8]">
-            シューマン共振
-          </div>
-          {schumann != null ? (
-            <>
-              <div className="num mt-1.5 text-[40px] leading-none" style={{ fontWeight: 300, color: "#35e0b8", textShadow: "0 0 14px rgba(53,224,184,.45)" }}>
-                {schumann.toFixed(2)}
-                <span className="ml-0.5 text-[14px]" style={{ color: "rgba(53,224,184,.6)" }}>
-                  Hz
+      {/* ★叶いタイム — この手帳の一番の売り。1枚で大きく、右下に叶いレベル */}
+      {(() => {
+        const deg = best?.deg;
+        const lv = deg == null ? 1
+          : deg === 270 ? 360
+          : deg === 90 ? 180
+          : deg === 0 || deg === 180 ? 90
+          : [45, 135, 225, 315].includes(deg) ? 45
+          : deg % 15 === 0 ? 15
+          : deg % 5 === 0 ? 5
+          : 1;
+        return (
+          <div className="mx-4 mt-3">
+            <Link
+              href={isNow ? "/mmm/ddp" : "/#techo"}
+              onClick={(e) => {
+                if (!isNow) {
+                  e.preventDefault();
+                  openToday();
+                }
+              }}
+              className="relative block rounded-2xl px-4 py-4 no-underline"
+              style={
+                isNow
+                  ? { background: "linear-gradient(120deg,#3a2c08,#6a5010)", boxShadow: "0 0 24px rgba(212,185,106,.5)" }
+                  : { background: "linear-gradient(120deg,#faf6ec,#f4ecd8)", border: "1.5px solid #e0d0a8" }
+              }
+            >
+              <div className="text-[12px] font-extrabold tracking-[5px]" style={{ color: isNow ? "#e8cc80" : "#8b6914" }}>
+                叶いタイム
+              </div>
+              {target ? (
+                isNow ? (
+                  <div className="mt-1.5 text-[19px] font-bold leading-snug text-[#f6e9c4]" style={{ fontFamily: MINCHO }}>
+                    いま、願いを書き換える時 <span className="text-[11px] text-[#e8cc80]">ひらく</span>
+                  </div>
+                ) : (
+                  (() => {
+                    const nd = new Date(target.t);
+                    const isTomorrow = nd.getDate() !== d || nd.getMonth() + 1 !== m;
+                    return (
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <span className="num text-[46px] leading-none text-[#6a5010]" style={{ fontWeight: 300 }}>
+                            {nd.getHours()}
+                            <span className="text-[24px] text-[#b0a080]">:</span>
+                            {String(nd.getMinutes()).padStart(2, "0")}
+                          </span>
+                          <span className="num ml-2 text-[11px] text-[#b0a080]">
+                            {isTomorrow ? "明日 ・ " : ""}あと {hrs > 0 ? hrs + "時間" : ""}{mins}分
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()
+                )
+              ) : (
+                <div className="mt-2 text-[12px] text-[#c0b8a8]">—</div>
+              )}
+              <div className="absolute bottom-2 right-3 text-right">
+                <span className="num text-[10px] font-extrabold" style={{ color: lv >= 45 ? "#c94d3a" : "#a08c50" }}>
+                  叶いレベル{lv}
                 </span>
+                {lv === 360 && <div className="text-[10px] font-extrabold leading-none text-[#c94d3a]">Max</div>}
               </div>
-              <div className="mt-2 text-[11px] text-[#5aa896]">
-                いまの地球の音 ・ くわしく
-              </div>
-            </>
-          ) : (
-            <div className="mt-3 text-[12px] text-[#3a5a50]">—</div>
-          )}
-        </a>
-      </div>
+            </Link>
+          </div>
+        );
+      })()}
+
+      {/* シューマン共振 — 小さな1行（タップで詳細ページ） */}
+      <a
+        href="/schumann1/index.html"
+        className="mx-4 mt-2 flex items-center justify-between rounded-xl px-3.5 py-2 no-underline"
+        style={{ background: "#0d2724" }}
+      >
+        <span className="text-[10px] font-bold tracking-[2px] text-[#7ac8b8]">シューマン共振</span>
+        <span className="num text-[13px] font-bold" style={{ color: "#35e0b8" }}>
+          今日の周波数 {schumann != null ? schumann.toFixed(2) : "—"}Hz
+        </span>
+      </a>
 
       {/* 予定 — 予定が入っている日だけをスワイプ/矢印で前後に渡れる */}
       {(() => {
@@ -292,6 +295,7 @@ export function HomeDashboard() {
         };
         return (
           <div
+            data-noswipe
             className="relative mx-5 mt-3 overflow-hidden rounded-2xl"
             style={{ background: "#faf7f0", border: "1px solid #eee6d4" }}
             onTouchStart={(e) => {
@@ -356,7 +360,7 @@ export function HomeDashboard() {
                     <div key={i} className="flex items-baseline gap-2.5">
                       <span className="num flex-shrink-0 text-[12px] text-[#a09880]">{p.time}</span>
                       {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
-                      <span className="truncate text-[15px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
+                      <span className="truncate text-[16.5px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
                         {p.text}
                       </span>
                     </div>
@@ -377,57 +381,26 @@ export function HomeDashboard() {
         );
       })()}
 
-      {/* 潮と月 */}
-      <div className="mx-5 mb-4 mt-3 grid grid-cols-2 gap-3">
-        <button
-          onClick={openToday}
-          className="rounded-2xl px-4 py-3 text-left"
-          style={{ background: "#faf7f0", border: "1px solid #eee6d4" }}
-        >
-          <div className="text-[10px] font-bold tracking-[3px] text-[#8ea8c0]">
-            潮{tide ? " ・ " + tide.port : ""}
-          </div>
-          <div className="mt-2 space-y-1">
-            {tideRows.length ? (
-              tideRows.map(([lb, t], i) => (
-                <div key={i} className="flex justify-between text-[11.5px]">
-                  <span style={{ color: lb === "満" ? "#3070b0" : "#88aac8", fontWeight: lb === "満" ? 700 : 400 }}>
-                    {lb}
-                  </span>
-                  <span className="num text-[#4a4438]">{t}</span>
-                </div>
-              ))
-            ) : (
-              <div className="text-[11px] text-[#c0b8a8]">—</div>
-            )}
-          </div>
-        </button>
-        <button
-          onClick={openToday}
-          className="rounded-2xl px-4 py-3 text-left"
-          style={{ background: "#14161e", border: "1px solid #24283a" }}
-        >
-          <div className="text-[10px] font-bold tracking-[3px] text-[#a89860]">
-            月
-          </div>
-          <div className="mt-2 flex items-center gap-2.5">
-            <img src={moonImageOf(moon.age)} alt="" className="h-9 w-9 rounded-full" loading="lazy" />
-            <span className="num text-[11.5px]" style={{ color: "rgba(233,228,218,.8)" }}>
-              月齢 {moon.age.toFixed(1)}
+      {/* 潮と月 — いまに一番近い満/干 1つ + 月齢（小さく1行） */}
+      {(() => {
+        const nowM = new Date().getHours() * 60 + new Date().getMinutes();
+        let bestTide: [string, string] | null = null;
+        let bestDiff = 1e9;
+        for (const [lb, t] of tideRows) {
+          const [hh, mm2] = t.split(":").map(Number);
+          const diff = Math.abs(hh * 60 + mm2 - nowM);
+          if (diff < bestDiff) { bestDiff = diff; bestTide = [lb, t]; }
+        }
+        return (
+          <button onClick={openToday} className="mx-4 mb-3 mt-2 flex w-[calc(100%-2rem)] items-center justify-between rounded-xl px-3.5 py-1.5" style={{ background: "#faf7f0", border: "1px solid #eee6d4" }}>
+            <span className="num text-[10.5px] text-[#8ea8c0]">
+              {bestTide ? `${bestTide[0]}潮 ${bestTide[1]}` : "潮 —"}
+              {tide ? `（${tide.port}）` : ""}
             </span>
-          </div>
-          <div className="mt-1.5 space-y-1 text-[11px]">
-            <div className="flex justify-between">
-              <span style={{ color: "rgba(233,228,218,.4)" }}>出</span>
-              <span className="num" style={{ color: "rgba(233,228,218,.8)" }}>{mt.rise ?? "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span style={{ color: "rgba(233,228,218,.4)" }}>入</span>
-              <span className="num" style={{ color: "rgba(233,228,218,.8)" }}>{mt.set ?? "—"}</span>
-            </div>
-          </div>
-        </button>
-      </div>
+            <span className="num text-[10.5px] text-[#a08c50]">月齢 {moon.age.toFixed(1)}</span>
+          </button>
+        );
+      })()}
     </section>
   );
 }
