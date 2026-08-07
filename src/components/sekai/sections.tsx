@@ -1594,7 +1594,7 @@ export function VillagesSection({
             <div className="text-[14.5px] font-extrabold text-[#2a4a34]"><img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
             <div className="mt-0.5 text-[11px] text-[#a0aca0]">
               {v.prefecture}
-              {v.city ? ` ${v.city}` : ""} ・ {members}人 ・ 世話人 {v.profiles?.display_name ?? "—"}
+              {v.city ? ` ${v.city}` : ""} ・ {members}人 ・ 村長 {v.profiles?.display_name ?? "—"}
             </div>
           </Link>
           <span className="flex flex-shrink-0 items-center gap-1">
@@ -1710,7 +1710,7 @@ export function VillagesSection({
           <div className="mt-0.5 text-[14px] font-extrabold" style={{ color: GREEN }}>
             「{born}」が生まれました
           </div>
-          <div className="mt-0.5 text-[11px] text-[#8a968a]">あなたが世話人です。地図にも灯りました</div>
+          <div className="mt-0.5 text-[11px] text-[#8a968a]">あなたが村長です。地図にも灯りました</div>
         </div>
       )}
       {villages === null ? (
@@ -1793,7 +1793,7 @@ export function VillagesSection({
               </button>
             </div>
             <p className="mt-1.5 text-[10px] leading-relaxed text-[#a0aca0]">
-              あなたが世話人になります。場所の形は自由 — 自宅の開放も、ドネーション制も、古民家も。
+              あなたが村長になります。場所の形は自由 — 自宅の開放も、ドネーション制も、古民家も。
             </p>
           </div>
         ) : (

@@ -35,7 +35,7 @@ const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
 
 const GREEN = "#3a7a4c";
 
-/** 村のページ — 村人・囲炉裏（掲示板）・世話人への連絡 */
+/** 村のページ — 村人・囲炉裏（掲示板）・村長への連絡 */
 export default function VillagePage() {
   const params = useParams<{ id: string }>();
   const villageId = params.id;
@@ -205,7 +205,7 @@ export default function VillagePage() {
         {!village.cover_url && <div className="mt-3 text-[40px] leading-none">🏡</div>}
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{village.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
-          {village.prefecture} ・ 村人 {members.length}人 ・ 世話人 {steward?.display_name ?? "—"}
+          {village.prefecture} ・ 村人 {members.length}人 ・ 村長 {steward?.display_name ?? "—"}
         </div>
         {village.description && (
           <p className="mx-auto mt-2 max-w-[340px] text-[12px] leading-relaxed text-[#c8dcc8]">{village.description}</p>
