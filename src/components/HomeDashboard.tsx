@@ -168,8 +168,13 @@ export function HomeDashboard() {
 
       {/* 日付 — 主役。曜日まで同じ書体・同じ色で一体。右上に地球冒険(小) */}
       <div className="flex items-center justify-between px-3 pt-1.5">
-        <span className="num text-[10px] font-bold text-[#a09880]">
-          {advDays != null ? `<img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> ${advDays.toLocaleString()}回目の地球冒険` : ""}
+        <span className="num flex items-center gap-1 text-[10px] font-bold text-[#a09880]">
+          {advDays != null && (
+            <>
+              <img src="/icons/cel-earth.png" alt="" style={{ width: 13, height: 13 }} />
+              {advDays.toLocaleString()}回目の地球冒険
+            </>
+          )}
         </span>
         <a href="/schumann1/index.html" className="num text-[10px] font-bold text-[#3aa890] no-underline">
           今日の周波数 {schumann != null ? schumann.toFixed(2) : "—"}Hz
