@@ -218,12 +218,12 @@ export function HomeDashboard() {
                   : { background: "linear-gradient(120deg,#f6eed6,#efe2bc)" }
               }
             >
-              <div className="text-[12px] font-extrabold tracking-[5px]" style={{ color: isNow ? "#e8cc80" : "#8b6914" }}>
+              <div className="text-center text-[12px] font-extrabold tracking-[5px]" style={{ color: isNow ? "#e8cc80" : "#8b6914" }}>
                 叶いタイム
               </div>
               {target ? (
                 isNow ? (
-                  <div className="mt-1.5 text-[19px] font-bold leading-snug text-[#f6e9c4]" style={{ fontFamily: MINCHO }}>
+                  <div className="mt-1.5 text-center text-[19px] font-bold leading-snug text-[#f6e9c4]" style={{ fontFamily: MINCHO }}>
                     いま、願いを書き換える時 <span className="text-[11px] text-[#e8cc80]">ひらく</span>
                   </div>
                 ) : (
@@ -231,8 +231,8 @@ export function HomeDashboard() {
                     const nd = new Date(target.t);
                     const isTomorrow = nd.getDate() !== d || nd.getMonth() + 1 !== m;
                     return (
-                      <div className="flex items-end justify-between">
-                        <div>
+                      <div className="flex items-end justify-center">
+                        <div className="text-center">
                           <span className="num text-[46px] leading-none text-[#6a5010]" style={{ fontWeight: 300 }}>
                             {nd.getHours()}
                             <span className="text-[24px] text-[#b0a080]">:</span>
@@ -247,7 +247,7 @@ export function HomeDashboard() {
                   })()
                 )
               ) : (
-                <div className="mt-2 text-[12px] text-[#c0b8a8]">—</div>
+                <div className="mt-2 text-center text-[12px] text-[#c0b8a8]">—</div>
               )}
               <div className="absolute bottom-2 right-3.5 text-right">
                 {(() => {
