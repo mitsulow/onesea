@@ -389,7 +389,7 @@ export default function CafePage() {
     names[id]?.avatar ? (
       <img src={srcCdn(names[id]!.avatar!) ?? undefined} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
     ) : (
-      <span className="text-[34px]">🍵</span>
+      <img src="/icons/icon-tea.webp" alt="" style={{ width: 36, height: 36 }} />
     );
 
   return (
@@ -399,7 +399,7 @@ export default function CafePage() {
           ◀ セカイムラ
         </Link>
         <div className="text-center">
-          <div className="text-[14px] font-extrabold tracking-[1px] text-[#f0e2c8]">☕ {roomKey ?? pref} 村人ラウンジ喫茶</div>
+          <div className="text-[14px] font-extrabold tracking-[1px] text-[#f0e2c8]"><img src="/icons/icon-tea.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> {roomKey ?? pref} 村人ラウンジ喫茶</div>
           <div className="text-[9.5px] tracking-[2px] text-[#8a7a60]">〜いつでもオープン〜</div>
         </div>
         <span className="w-16 text-right text-[11px] text-[#8a7a60]">{phase === "in" ? `${count}人` : ""}</span>
@@ -408,7 +408,7 @@ export default function CafePage() {
       {phase !== "in" ? (
         /* ─── ロビー: 参加のかたちを選ぶ ─── */
         <div className="flex flex-1 flex-col items-center justify-center px-8 pb-24 text-center">
-          <div className="text-[56px]">☕</div>
+          <div className="flex justify-center"><img src="/icons/icon-tea.webp" alt="" style={{ width: 56, height: 56 }} /></div>
           <h1 className="mt-3 text-[18px] font-extrabold leading-relaxed text-[#f0e2c8]">
             {pref}のラウンジは
             <br />
@@ -544,7 +544,7 @@ export default function CafePage() {
                 <div className="relative overflow-hidden rounded-2xl bg-black" style={{ aspectRatio: "3/4", opacity: 0.95 }}>
                   <video ref={localRef} autoPlay playsInline muted className="h-full w-full object-cover" style={{ transform: "scaleX(-1)" }} />
                   {(mode === "voice" || !camOn) && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-[#2a2118] text-[34px]">🍵</div>
+                    <div className="absolute inset-0 flex items-center justify-center bg-[#2a2118]"><img src="/icons/icon-tea.webp" alt="" style={{ width: 36, height: 36 }} /></div>
                   )}
                   <span className="absolute bottom-1.5 left-2 rounded-full bg-black/55 px-2 py-0.5 text-[10.5px] font-bold text-[#e8cc90]">
                     あなた{micOn ? "" : "（ミュート中）"}

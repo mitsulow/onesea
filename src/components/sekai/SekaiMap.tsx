@@ -24,7 +24,7 @@ const CAT_COLOR: Record<string, string> = {
 };
 const FILTERS = [
   ["all", "すべて"],
-  ["base", "⛺ 拠点"],
+  ["base", "拠点"],
   // 村人の「私のおススメの店」（マイページから集計・4セグメント）
   ["reco_alt_med", "🌿 代替医療"],
   ["reco_natural_restaurant", "🍽 ナチュラルなレストラン"],

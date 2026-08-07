@@ -213,17 +213,17 @@ export default function NewShopPage() {
                 <>
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="accent-[#c94d3a]" />
-                    <span className="text-[13.5px]">🌱 0円でゆずる</span>
+                    <span className="text-[13.5px]"><img src="/icons/icon-sprout.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 0円でゆずる</span>
                   </label>
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
-                    <span className="text-[13.5px]">🔄 物々交換で</span>
+                    <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 物々交換で</span>
                   </label>
                 </>
               ) : (
                 <>
                   <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2">
-                    <span className="text-[13.5px]">💴</span>
+                    <span className="text-[13.5px]"><img src="/icons/icon-yen.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /></span>
                     <input
                       type="number"
                       value={price}
@@ -235,11 +235,11 @@ export default function NewShopPage() {
                   </div>
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
-                    <span className="text-[13.5px]">🔄 物々交換もOK</span>
+                    <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 物々交換もOK</span>
                   </label>
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={tip} onChange={(e) => setTip(e.target.checked)} className="accent-[#c94d3a]" />
-                    <span className="text-[13.5px]">🪙 投げ銭もOK</span>
+                    <span className="text-[13.5px]"><img src="/icons/icon-coin.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 投げ銭もOK</span>
                   </label>
                 </>
               )}

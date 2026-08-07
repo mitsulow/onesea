@@ -146,7 +146,7 @@ export default function MeditationPage() {
         <>
           {/* イヤホン専用の案内（スピーカーでは左右が空気中で混ざりバイノーラルビートは消える） */}
           <div className="mb-4 rounded-2xl border border-[#d4b96a]/40 bg-[#d4b96a]/10 p-4 text-center">
-            <div className="text-[34px]">🎧</div>
+            <div className="flex justify-center"><img src="/icons/icon-headphone.webp" alt="" style={{ width: 38, height: 38 }} /></div>
             <div className="mt-1 text-[14px] font-extrabold">イヤホン・ヘッドホン専用です</div>
             <div className="mt-1 text-[11.5px] leading-relaxed text-white/70">
               左右の耳にわずかに違う周波数を届け、その差 8.02Hz を脳に作らせます。
@@ -168,7 +168,7 @@ export default function MeditationPage() {
                       : { background: "transparent", borderColor: "rgba(255,255,255,.18)", color: "rgba(255,255,255,.65)" }
                   }
                 >
-                  {m === "random" ? "🎲" : m}
+                  {m === "random" ? <img src="/icons/icon-dice.webp" alt="おまかせ" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> : m}
                 </button>
               ))}
             </div>

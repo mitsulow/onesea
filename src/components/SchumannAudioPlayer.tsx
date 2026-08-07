@@ -425,7 +425,7 @@ export function SchumannAudioPlayer() {
 
   const programLabel =
     program?.kind === "meditation"
-      ? `🧘 瞑想モード（${program.course}分）`
+      ? `瞑想モード（${program.course}分）`
       : program?.kind === "idea"
         ? "アイディアモード"
         : "シンクロモード";
@@ -574,7 +574,7 @@ export function SchumannAudioPlayer() {
                     : { background: "rgba(255,255,255,.12)", borderColor: "rgba(255,255,255,.25)", color: "rgba(255,255,255,.85)" }
                 }
               >
-                {m === "random" ? "🎲" : m}
+                {m === "random" ? <img src="/icons/icon-dice.webp" alt="おまかせ" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> : m}
               </button>
             ))}
           </div>
@@ -582,7 +582,7 @@ export function SchumannAudioPlayer() {
             href="/meditation"
             className="block pl-12 text-[10px] font-bold text-white/75 no-underline"
           >
-            🎧 新・音響エンジン（β）を試す →
+            <img src="/icons/icon-headphone.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 新・音響エンジン（β）を試す →
           </a>
           <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
             <div className="flex min-w-0 items-center gap-2">

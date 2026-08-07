@@ -51,7 +51,7 @@ export default function ShopDetailPage() {
     const chatId = await getOrCreateChat(me.id, shop.owner_id);
     if (chatId) {
       const lines = [
-        "🔄 物々交換の提案",
+        "物々交換の提案",
         `「${shop.name}」⇄「${offer}」`,
       ];
       if (offerShop) lines.push(`こちらです → https://onesea.vercel.app/za/${offerShop.id}`);
@@ -189,8 +189,8 @@ export default function ShopDetailPage() {
                   : "値段相談"}
             </span>
             <span className="flex gap-1 text-[13px] text-[#8a8070]">
-              {shop.accepts_barter && <span>🔄 物々交換OK</span>}
-              {shop.accepts_tip && <span>🪙 投げ銭OK</span>}
+              {shop.accepts_barter && <span><img src="/icons/icon-barter.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 物々交換OK</span>}
+              {shop.accepts_tip && <span><img src="/icons/icon-coin.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 投げ銭OK</span>}
             </span>
           </div>
         </div>
@@ -238,7 +238,7 @@ export default function ShopDetailPage() {
                 className="w-full rounded-xl border-2 py-3 text-[14px] font-extrabold"
                 style={{ borderColor: "#5a7d4a", color: "#5a7d4a", background: "#f4f8f0" }}
               >
-                🔄 物々交換を提案する
+                <img src="/icons/icon-barter.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 物々交換を提案する
               </button>
             )}
             <button
@@ -272,7 +272,7 @@ export default function ShopDetailPage() {
               >
                 ✕
               </button>
-              <div className="text-center text-[15px] font-extrabold text-[#5a7d4a]">🔄 物々交換を提案</div>
+              <div className="text-center text-[15px] font-extrabold text-[#5a7d4a]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> 物々交換を提案</div>
               <div className="mt-0.5 text-center text-[11px] text-[#8a8070]">
                 「{shop.name}」と何を交換しますか？
               </div>
@@ -305,7 +305,7 @@ export default function ShopDetailPage() {
                           <img src={srcCdn(s.image_urls[0])} alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
                         ) : (
                           <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2ede4] text-[16px]">
-                            🎁
+                            <img src="/icons/icon-gift.webp" alt="" style={{ width: 20, height: 20, display: "inline", verticalAlign: -4 }} />
                           </span>
                         )}
                         <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#3a3428]">{s.name}</span>

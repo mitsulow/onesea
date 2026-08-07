@@ -319,7 +319,7 @@ export function TalkCall({
         <div className="absolute bottom-3 right-3 w-[104px] overflow-hidden rounded-xl border border-white/25 bg-black shadow-lg" style={{ aspectRatio: "3/4" }}>
           <video ref={localRef} autoPlay playsInline muted className="h-full w-full object-cover" style={{ transform: "scaleX(-1)" }} />
           {(audioOnly || !camOn) && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[#1a2230] text-[22px]">🍵</div>
+            <div className="absolute inset-0 flex items-center justify-center bg-[#1a2230]"><img src="/icons/icon-tea.webp" alt="" style={{ width: 24, height: 24 }} /></div>
           )}
         </div>
       </div>

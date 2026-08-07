@@ -238,8 +238,8 @@ export default function ZaPage() {
                           {priceLabel(shop)}
                         </span>
                         <span className="flex flex-shrink-0 gap-0.5 text-[10px] text-[#b0a898]">
-                          {shop.accepts_barter && <span title="物々交換可">🔄</span>}
-                          {shop.accepts_tip && <span title="投げ銭可">🪙</span>}
+                          {shop.accepts_barter && <span title="物々交換可"><img src="/icons/icon-barter.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /></span>}
+                          {shop.accepts_tip && <span title="投げ銭可"><img src="/icons/icon-coin.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /></span>}
                         </span>
                         {(shop.shop_comments?.[0]?.count ?? 0) > 0 && (
                           <span className="num ml-auto flex-shrink-0 text-[10px] font-bold text-[#8a8070]">

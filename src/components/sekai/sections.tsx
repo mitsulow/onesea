@@ -740,7 +740,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             className="flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl bg-white px-1 py-2 text-center no-underline"
             style={{ border: "2px solid #d4b96a" }}
           >
-            <span className="text-[16px]">⛺</span>
+            <img src="/icons/icon-tent.webp" alt="" style={{ width: 18, height: 18 }} />
             <span className="text-[10px] font-extrabold leading-snug text-[#a07820]">
               拠点を
               <br />
@@ -1259,7 +1259,7 @@ export function WelcomeSection({
     <section className="card">
       <div className="mb-2.5 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-          🔰 私の県の新しい村人
+          <img src="/icons/icon-wakaba.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 私の県の新しい村人
         </span>
         <span className="text-[10px] text-[#a0aca0]">入った人を、ひとりにしない</span>
       </div>
@@ -1321,7 +1321,7 @@ export function CafeBar({ pref }: { pref: string }) {
       style={{ background: "linear-gradient(135deg,#241c14,#3a2e1e)", border: "1px solid #c8a86055" }}
     >
       <div className="flex items-center gap-3">
-        <span className="text-[30px]">☕</span>
+        <img src="/icons/icon-tea.webp" alt="" style={{ width: 32, height: 32 }} />
         <div className="min-w-0 flex-1">
           <div className="text-[13.5px] font-extrabold text-[#f0e2c8]">村人ラウンジ喫茶 〜いつでもオープン〜</div>
           <div className="mt-0.5 text-[10.5px] text-[#a89878]">
@@ -1419,11 +1419,11 @@ export function LoungeSection({
     <section id="lounge" className="card" style={{ scrollMarginTop: 56 }}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-          🗣 {pref}ラウンジ
+          <img src="/icons/icon-tea.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {pref}ラウンジ
         </span>
         {travelMode && (
           <span className="rounded-full bg-[#fdf0e0] px-2 py-0.5 text-[10px] font-bold text-[#c08030]">
-            🧳 旅先モード
+            <img src="/icons/icon-trunk.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 旅先モード
           </span>
         )}
       </div>
@@ -1493,7 +1493,7 @@ export function LoungeSection({
         <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
       ) : posts.length === 0 ? (
         <p className="py-2 text-[12.5px] leading-relaxed text-[#a0aca0]">
-          まだ誰も書いていません。最初のひとことが、この地域の火種になります 🔥
+          まだ誰も書いていません。最初のひとことが、この地域の火種になります <img src="/icons/icon-torch.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
         </p>
       ) : (
         posts.map((p) => (
@@ -2145,13 +2145,13 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
     <section id="jinja" className="card" style={{ scrollMarginTop: 56 }}>
       <div className="mb-2 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-          ⛩ セカイムラ神社町
+          <img src="/icons/icon-torii.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> セカイムラ神社町
         </span>
         <span className="text-[10px] text-[#a0aca0]">ミソカの日、近所の神社をそうじする</span>
       </div>
 
       <div className="mb-2.5 flex items-center gap-3 rounded-xl bg-[#f4f0e8] px-3.5 py-2.5">
-        <span className="text-[26px]">🧹</span>
+        <img src="/icons/icon-broom.webp" alt="" style={{ width: 28, height: 28 }} />
         <div>
           <div className="text-[10.5px] tracking-wider text-[#a09060]">次のミソカ（晦日）</div>
           <div className="num text-[17px] font-extrabold leading-snug text-[#6a5a20]">
@@ -2171,7 +2171,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
                 <img src={srcCdn(r.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
               ) : (
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[#f4f0e8] text-xl">
-                  ⛩
+                  <img src="/icons/icon-torii.webp" alt="" style={{ width: 28, height: 28, display: "inline", verticalAlign: -5 }} />
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -2189,7 +2189,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
       {me &&
         (adding ? (
           <div className="mt-3 rounded-xl border border-[#c8b86a88] bg-[#fbf9f0] p-3">
-            <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]">⛩ そうじの奉告</div>
+            <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]"><img src="/icons/icon-torii.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> そうじの奉告</div>
             <div className="mb-2 flex gap-2">
               <input
                 value={shrine}
@@ -2252,7 +2252,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
             className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
             style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
           >
-            🧹 そうじを奉告する
+            <img src="/icons/icon-broom.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> そうじを奉告する
           </button>
         ))}
     </section>
