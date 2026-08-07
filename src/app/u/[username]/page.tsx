@@ -631,23 +631,25 @@ export default function UserPage() {
                 好きな農家さんのお米など、みんなに紹介したいものを並べられます
               </p>
             ) : (
-              <div className="space-y-2">
+              <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                 {recos.map((r) => (
-                  <div key={r.id} className="rounded-xl border border-[#ede5d8] bg-[#fffaf0] px-3 py-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="text-[13.5px] font-bold leading-snug text-[#3a3428]">{r.title}</div>
-                        {r.comment && (
-                          <div className="mt-0.5 text-[12px] leading-relaxed text-[#8a7a5a]">{r.comment}</div>
-                        )}
+                  <div key={r.id} className="relative w-[136px] flex-shrink-0 overflow-hidden rounded-xl border border-[#e0c890] bg-[#fffaf0] shadow-sm">
+                    <div className="flex items-center gap-1 px-2 py-1 text-[9.5px] font-extrabold text-white" style={{ background: "linear-gradient(120deg,#d4a940,#b8862a)" }}>
+                      <img src="/icons/icon-star.webp" alt="" style={{ width: 11, height: 11 }} />
+                      <span>おススメ</span>
+                    </div>
+                    <div className="px-2 py-2">
+                      <div className="min-w-0">
+                        <div className="line-clamp-2 text-[12px] font-extrabold leading-snug text-[#3a3428]">{r.title}</div>
+                        {r.comment && <div className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-[#8a7a5a]">{r.comment}</div>}
                         {r.url && (
                           <a
                             href={r.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-1 inline-block max-w-full truncate rounded-full bg-[#f0e6d2] px-2.5 py-1 text-[11px] font-bold text-[#a05040] no-underline"
+                            className="mt-1 inline-block max-w-full truncate rounded-full bg-[#f0e6d2] px-2 py-0.5 text-[10px] font-bold text-[#a05040] no-underline"
                           >
-                            <img src="/icons/icon-link.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 見てみる →
+                            <img src="/icons/icon-link.webp" alt="" style={{ width: 11, height: 11, display: "inline", verticalAlign: -2 }} /> 見てみる
                           </a>
                         )}
                       </div>
@@ -659,7 +661,7 @@ export default function UserPage() {
                             setRecos(await fetchRecos(me.id));
                           }}
                           aria-label="削除"
-                          className="flex-shrink-0 px-1 text-[13px] text-[#c0b8a8]"
+                          className="absolute right-1 top-[26px] flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-[11px] text-[#8a8070]"
                         >
                           ×
                         </button>

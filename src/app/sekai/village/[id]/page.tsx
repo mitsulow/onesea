@@ -225,6 +225,21 @@ export default function VillagePage() {
             <span className="rounded-xl border border-[#c8a860] px-4 py-2.5 text-[12.5px] font-bold text-[#e8d5a0]">申請中（村長の承認待ち）</span>
           )}
           {joined && <span className="rounded-xl border border-[#4a9a6a] px-4 py-2.5 text-[12.5px] font-bold text-[#a8d8b8]">✓ あなたの村</span>}
+          {joined && me && village.created_by !== me.id && (
+            <label className="cursor-pointer rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]">
+              背景を変更
+              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f || !me) return;
+                const url = await uploadImage("post-images", me.id, f, 1600, 0.75);
+                if (url) {
+                  const supabase = createClient();
+                  await supabase.rpc("set_village_cover", { vid: villageId, url });
+                  load();
+                }
+              }} />
+            </label>
+          )}
           {me && village.created_by === me.id && (
             <button
               onClick={openEdit}

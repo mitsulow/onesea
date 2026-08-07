@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MuraPost } from "@/lib/feed";
 import type { Shop } from "@/lib/za";
 import { srcCdn } from "@/lib/images";
+import { createClient } from "@/lib/supabase/client";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -68,6 +69,7 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
         </span>
       </div>
 
+      {mura.kind === "event" && mura.event_at && <EventJoinButton postId={mura.id} />}
       {mura.kind === "event" && mura.event_at && (
         <div className="mt-1.5 inline-block rounded-full bg-[#e8f4ec] px-2 py-0.5 text-[10.5px] font-bold text-[#2a7a48]">
           <img src="/icons/icon-calendar.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> イベント {new Date(mura.event_at).getMonth() + 1}/{new Date(mura.event_at).getDate()}
@@ -137,6 +139,45 @@ export function ShopStripCard({ shop }: { shop: Shop }) {
           {shop.market === "ichi" ? "0円" : shop.price_jpy != null ? `¥${shop.price_jpy.toLocaleString()}` : "値段相談"}
         </div>
       </div>
+    </button>
+  );
+}
+
+
+/** イベント呼びかけの「参加する」ボタン（Cotozuteフィード用・event_rsvps） */
+function EventJoinButton({ postId }: { postId: string }) {
+  const [me, setMe] = useState<string | null>(null);
+  const [joined, setJoined] = useState(false);
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => setMe(session?.user?.id ?? null));
+    supabase.from("event_rsvps").select("user_id").eq("post_id", postId).then(({ data }) => setCount(data?.length ?? 0));
+  }, [postId]);
+  useEffect(() => {
+    if (!me) return;
+    const supabase = createClient();
+    supabase.from("event_rsvps").select("user_id").eq("post_id", postId).eq("user_id", me).maybeSingle().then(({ data }) => setJoined(!!data));
+  }, [me, postId]);
+  const toggle = async () => {
+    if (!me) return;
+    const supabase = createClient();
+    if (joined) {
+      await supabase.from("event_rsvps").delete().eq("post_id", postId).eq("user_id", me);
+      setJoined(false); setCount((c) => Math.max(0, c - 1));
+    } else {
+      await supabase.from("event_rsvps").upsert({ post_id: postId, user_id: me });
+      setJoined(true); setCount((c) => c + 1);
+    }
+  };
+  if (!me) return null;
+  return (
+    <button
+      onClick={toggle}
+      className="mr-2 mt-1.5 inline-block rounded-full px-3 py-1 text-[11px] font-extrabold"
+      style={joined ? { background: "#e8f4ec", color: "#2a7a48", border: "1px solid #8cc8a0" } : { background: "#2a7a48", color: "#fff" }}
+    >
+      {joined ? `✓ 参加します（${count}人）` : `参加する${count ? `（${count}人）` : ""}`}
     </button>
   );
 }

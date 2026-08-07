@@ -2612,6 +2612,12 @@ export function MapLoader() {
 
 /* ═══ 🌱 村の種 — 3人集まったら事務局へ拠点申請できる予備軍 ═══ */
 function SeedSection({ me }: { me: User | null }) {
+  const [isOffice, setIsOffice] = useState(false);
+  useEffect(() => {
+    if (!me) return;
+    const supabase = createClient();
+    supabase.from("talk_admins").select("user_id").eq("user_id", me.id).maybeSingle().then(({ data }) => setIsOffice(!!data));
+  }, [me]);
   const [seeds, setSeeds] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -2707,7 +2713,19 @@ function SeedSection({ me }: { me: User | null }) {
                   <div className="truncate text-[11.5px] font-extrabold" style={{ color: GREEN }}>{sd.name}</div>
                   <div className="text-[9.5px] text-[#a0aca0]">{sd.prefecture ?? ""} ・ {n}人</div>
                   {sd.status === "applied" ? (
-                    <div className="mt-1 rounded bg-[#f0e8d0] px-1.5 py-0.5 text-center text-[9.5px] font-bold text-[#8a7020]">事務局審査中</div>
+                    isOffice ? (
+                      <button
+                        onClick={async () => {
+                          const supabase = createClient();
+                          const { error } = await supabase.rpc("promote_seed", { seed: sd.id });
+                          if (error) setMsg("昇格できませんでした: " + error.message);
+                          load();
+                        }}
+                        className="mt-1 w-full rounded bg-[#1e4530] py-1 text-[9.5px] font-extrabold text-white"
+                      >事務局承認 → 村に昇格</button>
+                    ) : (
+                      <div className="mt-1 rounded bg-[#f0e8d0] px-1.5 py-0.5 text-center text-[9.5px] font-bold text-[#8a7020]">事務局審査中</div>
+                    )
                   ) : left > 0 ? (
                     <div className="mt-1 text-[9.5px] font-bold text-[#c07a30]">あと{left}人で拠点申請できます</div>
                   ) : me && sd.created_by === me.id ? (
