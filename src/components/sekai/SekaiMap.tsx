@@ -25,6 +25,7 @@ const CAT_COLOR: Record<string, string> = {
 const FILTERS = [
   ["all", "すべて"],
   ["base", "拠点"],
+  ["power", "⛩ パワースポット"],
   // 村人の「私のおススメの店」（マイページから集計・4セグメント）
   ["reco_alt_med", "代替医療"],
   ["reco_natural_restaurant", "🍽 ナチュラルなレストラン"],
@@ -42,6 +43,7 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState<string>("読み込み中...");
   const [filter, setFilter] = useState<string>("all");
+  const [powerList, setPowerList] = useState<Array<{ name: string; area: string; desc: string | null; lat: number; lng: number }>>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layersRef = useRef<Array<{ cat: string; mk: any }>>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,14 +92,16 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
         const rows = await res.json();
         if (disposed) return;
         let n = 0;
+        const pw: Array<{ name: string; area: string; desc: string | null; lat: number; lng: number }> = [];
         for (const s of rows ?? []) {
           if (s.latitude == null || s.longitude == null) continue;
           n++;
+          const isPower = s.category === "shrine";
           const mk = L.circleMarker([s.latitude, s.longitude], {
             radius: 7,
             color: "#ffffff",
             weight: 1.5,
-            fillColor: CAT_COLOR[s.category] ?? "#4a8a5c",
+            fillColor: isPower ? "#2a8a4a" : (CAT_COLOR[s.category] ?? "#4a8a5c"),
             fillOpacity: 0.9,
           })
             .addTo(map)
@@ -106,8 +110,10 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
                 s.description ? `<br><span style="color:#888">${s.description}</span>` : ""
               }`
             );
-          layersRef.current.push({ cat: s.category ?? "other", mk });
+          layersRef.current.push({ cat: isPower ? "power" : (s.category ?? "other"), mk });
+          if (isPower) pw.push({ name: s.name ?? "", area: (s.prefecture ?? "") + (s.city ? " " + s.city : ""), desc: s.description ?? null, lat: s.latitude, lng: s.longitude });
         }
+        setPowerList(pw);
         setCount(`拠点 ${villages.length} ・ おすすめ ${n}件`);
       } catch {
         setCount(`拠点 ${villages.length}`);
@@ -131,7 +137,10 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
             .bindPopup(
               `<b>${s.name}</b><br>${c.emoji} ${c.label}${s.comment ? `<br><span style="color:#888">${s.comment}</span>` : ""}`
             );
-          layersRef.current.push({ cat: `reco_${s.category}`, mk });
+          layersRef.current.push({ cat: s.category === "power_spot" ? "power" : `reco_${s.category}`, mk });
+          if (s.category === "power_spot") {
+            setPowerList((prev) => [...prev, { name: s.name, area: s.address ?? "", desc: s.comment ?? null, lat: s.lat, lng: s.lng }]);
+          }
         }
       } catch {}
     })();
@@ -159,6 +168,27 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
     setCount(f === "all" ? `全 ${n}件` : `${n}件を表示中`);
   };
 
+  const powerListView = filter === "power" && powerList.length > 0 && (
+    <div className="mt-2 rounded-xl border border-[#c8dcc0] bg-[#f6faf4] p-2.5">
+      <div className="mb-1 text-[11.5px] font-extrabold text-[#2a6a3a]">⛩ パワースポット一覧（{powerList.length}ヶ所）</div>
+      {powerList.map((sp, i) => (
+        <a
+          key={i}
+          href={`https://www.google.com/maps?q=${sp.lat},${sp.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-start gap-2 border-b border-[#e4eee0] py-1.5 no-underline last:border-b-0"
+        >
+          <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ background: "#2a8a4a", border: "1.5px solid #fff", boxShadow: "0 0 0 1px #2a8a4a55" }} />
+          <span className="min-w-0">
+            <span className="block text-[12.5px] font-bold text-[#2a4a34]">{sp.name}</span>
+            <span className="block text-[10.5px] text-[#8a9a84]">{sp.area}{sp.desc ? ` — ${sp.desc}` : ""}</span>
+          </span>
+        </a>
+      ))}
+    </div>
+  );
+
   return (
     <div>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -180,6 +210,7 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
       </div>
       <div ref={hostRef} style={{ height: 400, borderRadius: 14, zIndex: 1 }} />
       <p className="pt-2 text-center text-[11px] text-[#8a968a]">{count}</p>
+      {powerListView}
     </div>
   );
 }

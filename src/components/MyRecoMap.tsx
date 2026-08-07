@@ -20,9 +20,10 @@ import { DragScroll } from "@/components/DragScroll";
  *   ② それが無理でも「店名+市町村」検索 → 候補タップの3手
  * ここで登録した店は、セカイムラ地図の「おススメの店」レイヤーにも載る。
  */
-export function MyRecoMap({ userId, isMe, ownerName }: { userId: string; isMe: boolean; ownerName?: string }) {
+export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: string; isMe: boolean; ownerName?: string; mode?: "shop" | "power" }) {
+  const isPower = mode === "power";
   const [shops, setShops] = useState<RecoShop[] | null>(null);
-  const [cat, setCat] = useState<string>(RECO_CATS[0].id);
+  const [cat, setCat] = useState<string>(isPower ? "power_spot" : RECO_CATS[0].id);
   const [paste, setPaste] = useState("");
   const [resolving, setResolving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -33,8 +34,10 @@ export function MyRecoMap({ userId, isMe, ownerName }: { userId: string; isMe: b
   const [manualOpen, setManualOpen] = useState(false);
 
   useEffect(() => {
-    fetchRecoShops(userId).then(setShops);
-  }, [userId]);
+    fetchRecoShops(userId).then((list) =>
+      setShops(list.filter((x) => (isPower ? x.category === "power_spot" : x.category !== "power_spot")))
+    );
+  }, [userId, isPower]);
 
   /* ① Googleマップ共有リンクを貼るだけ登録 */
   const resolveLink = async (raw: string) => {
@@ -50,7 +53,7 @@ export function MyRecoMap({ userId, isMe, ownerName }: { userId: string; isMe: b
         setMsg("リンクを読めませんでした。Googleマップの「共有→リンクをコピー」の形で貼ってください");
       } else {
         const created = await addRecoShop(userId, {
-          name: (d.name as string) || "お店",
+          name: (d.name as string) || (isPower ? "パワースポット" : "お店"),
           category: cat,
           lat: (d.lat as number) ?? 35.68,
           lng: (d.lng as number) ?? 139.76,
@@ -103,7 +106,7 @@ export function MyRecoMap({ userId, isMe, ownerName }: { userId: string; isMe: b
 
   if (shops !== null && shops.length === 0 && !isMe) return null;
 
-  const title = `${ownerName ?? "この人"}さんのおススメの店`;
+  const title = `${ownerName ?? "この人"}さんのおススメの${isPower ? "パワースポット" : "お店"}`;
 
   return (
     <section className="mt-3">
@@ -111,13 +114,13 @@ export function MyRecoMap({ userId, isMe, ownerName }: { userId: string; isMe: b
         <h2 className="text-[13.5px] font-extrabold tracking-wide text-[#3a3428]">
           <img src="/icons/icon-pin.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> {title}
         </h2>
-        {shops && shops.length > 0 && <span className="num text-[10.5px] text-[#a09888]">{shops.length}軒</span>}
+        {shops && shops.length > 0 && <span className="num text-[10.5px] text-[#a09888]">{shops.length}{isPower ? "ヶ所" : "軒"}</span>}
       </div>
 
       {isMe && (
         <div className="mb-2 rounded-xl border border-[#ede5d8] bg-[#fffaf0] p-2.5">
-          {/* カテゴリ */}
-          <div className="hide-scrollbar mb-2 flex gap-1.5 overflow-x-auto">
+          {/* カテゴリ（パワースポットは1種なので非表示） */}
+          <div className="hide-scrollbar mb-2 flex gap-1.5 overflow-x-auto" style={isPower ? { display: "none" } : undefined}>
             {RECO_CATS.map((c) => (
               <button
                 key={c.id}

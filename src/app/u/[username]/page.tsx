@@ -675,6 +675,9 @@ export default function UserPage() {
         </div>
       )}
 
+      {/* おススメのパワースポット（神社・聖地。セカイムラ地図の⛩タブに集計される） */}
+      <MyRecoMap userId={profile.id} isMe={isMe} ownerName={profile.display_name ?? "この人"} mode="power" />
+
       {/* 言の葉 */}
       <div className="pt-5">
         <div className="card">

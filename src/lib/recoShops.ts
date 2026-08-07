@@ -27,7 +27,11 @@ export const RECO_CATS = [
   { id: "other", label: "その他", emoji: "✨", color: "#8a8070" },
 ] as const;
 
-export const recoCat = (id: string) => RECO_CATS.find((c) => c.id === id) ?? RECO_CATS[0];
+/** パワースポット（お店とは別セクション。地図では緑のマル） */
+export const POWER_CAT = { id: "power_spot", label: "パワースポット", emoji: "⛩", color: "#2a8a4a" } as const;
+
+export const recoCat = (id: string) =>
+  id === POWER_CAT.id ? POWER_CAT : (RECO_CATS.find((c) => c.id === id) ?? RECO_CATS[0]);
 
 export async function fetchRecoShops(userId?: string): Promise<RecoShop[]> {
   const supabase = createClient();

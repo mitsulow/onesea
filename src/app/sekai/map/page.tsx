@@ -48,6 +48,7 @@ function RecoFinder() {
     const { data } = await supabase
       .from("reco_shops")
       .select("id, name, category, comment, lat, lng, address")
+      .neq("category", "power_spot")
       .gte("lat", lat - dLat)
       .lte("lat", lat + dLat)
       .gte("lng", lng - dLng)
