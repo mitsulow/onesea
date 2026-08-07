@@ -19,6 +19,8 @@ import {
 import { TideDay, Port, fetchTideDay, listPorts, setChosenPort, clearPositionCache } from "@/lib/tide";
 import { createClient } from "@/lib/supabase/client";
 import { scheduleTechoBackup, restoreTechoIfEmpty } from "@/lib/techoBackup";
+import { hasConsent } from "@/lib/consents";
+import { ConsentDialog } from "@/components/ConsentDialog";
 import { SignupDialog } from "@/components/SignupDialog";
 
 /**
@@ -113,6 +115,9 @@ export function InoriTecho() {
   const uidRef = useRef<string | null>(null);
   const [waraCloud, setWaraCloud] = useState<"warawa" | "free" | null>(null); // バックアップ表示用
   const [showSignup, setShowSignup] = useState(false);
+  const consentOk = useRef<boolean | null>(null); // 初回書き込み前の法的同意
+  const [consentDlg, setConsentDlg] = useState(false);
+  const pendingOpen = useRef<string | null>(null);
 
   useEffect(() => {
     setMemos(loadMemos());
@@ -122,6 +127,7 @@ export function InoriTecho() {
       const u = session?.user;
       if (!u) return;
       uidRef.current = u.id;
+      hasConsent(u.id, "techo").then((v) => { consentOk.current = v; });
       const { data: prof } = await supabase.from("profiles").select("warawa_until").eq("id", u.id).maybeSingle();
       const wara = !!prof?.warawa_until && new Date(prof.warawa_until as string) > new Date();
       setWaraCloud(wara ? "warawa" : "free");
@@ -136,6 +142,12 @@ export function InoriTecho() {
   const tryOpenDay = (k: string | null) => {
     if (k !== null && loggedIn.current === false) {
       setShowSignup(true);
+      return;
+    }
+    // 初回だけ: データ消失の了承を取ってから書き込み開始
+    if (k !== null && uidRef.current && consentOk.current === false) {
+      pendingOpen.current = k;
+      setConsentDlg(true);
       return;
     }
     setSheetKey(k);
@@ -207,6 +219,19 @@ export function InoriTecho() {
   return (
     <div className="relative overflow-hidden bg-white" style={{ margin: "0 -16px" }}>
       <SignupDialog open={showSignup} onClose={() => setShowSignup(false)} feature="手帳に書き込めるように" />
+      {consentDlg && uidRef.current && (
+        <ConsentDialog
+          kind="techo"
+          userId={uidRef.current}
+          onAgreed={() => {
+            consentOk.current = true;
+            setConsentDlg(false);
+            if (pendingOpen.current) setSheetKey(pendingOpen.current);
+            pendingOpen.current = null;
+          }}
+          onClose={() => setConsentDlg(false)}
+        />
+      )}
       <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={tryOpenDay} openKey={sheetKey} waraCloud={waraCloud} />
       {sheetKey && (
         <BottomSheet

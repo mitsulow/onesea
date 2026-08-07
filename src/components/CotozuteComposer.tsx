@@ -1,5 +1,7 @@
 "use client";
 
+import { hasConsent } from "@/lib/consents";
+import { ConsentDialog } from "@/components/ConsentDialog";
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -67,6 +69,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
   const [loadingOGP, setLoadingOGP] = useState(false);
   const [images, setImages] = useState<ImagePair[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [consentDlg, setConsentDlg] = useState(false); // 初投稿前の利用ポリシー同意
   const lastFetchedUrl = useRef<string | null>(null);
 
   useEffect(() => {
@@ -120,6 +123,11 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
 
   const submit = async () => {
     if (!user || (!body.trim() && !embed && images.length === 0) || sending) return;
+    // 初投稿だけ: 利用ポリシーの同意を取る
+    if (!(await hasConsent(user.id, "cotozute"))) {
+      setConsentDlg(true);
+      return;
+    }
     setSending(true);
     setMessage(null);
     const supabase = createClient();
@@ -312,6 +320,17 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
           </button>
         </div>
       </div>
+      {consentDlg && user && (
+        <ConsentDialog
+          kind="cotozute"
+          userId={user.id}
+          onAgreed={() => {
+            setConsentDlg(false);
+            submit();
+          }}
+          onClose={() => setConsentDlg(false)}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { hasConsent } from "@/lib/consents";
+import { ConsentDialog } from "@/components/ConsentDialog";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -29,6 +31,7 @@ export default function NewShopPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [gateReady, setGateReady] = useState(false); // 出品はわらわ〜会員専用
   const [isWara, setIsWara] = useState(false);
+  const [consentDlg, setConsentDlg] = useState(false); // 初出店前の法令遵守の同意
 
   useEffect(() => {
     const supabase = createClient();
@@ -54,6 +57,11 @@ export default function NewShopPage() {
 
   const submit = async () => {
     if (!me || !name.trim() || saving) return;
+    // 初出店だけ: 法令遵守の同意を取る
+    if (!(await hasConsent(me.id, "za"))) {
+      setConsentDlg(true);
+      return;
+    }
     setSaving(true);
     setMessage(null);
     const supabase = createClient();
@@ -259,6 +267,17 @@ export default function NewShopPage() {
         </div>
       )}
     </main>
+    {consentDlg && me && (
+      <ConsentDialog
+        kind="za"
+        userId={me.id}
+        onAgreed={() => {
+          setConsentDlg(false);
+          submit();
+        }}
+        onClose={() => setConsentDlg(false)}
+      />
+    )}
     </>
   );
 }
