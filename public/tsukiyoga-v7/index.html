@@ -474,7 +474,8 @@
     background: #030818;
     overflow: hidden;
     animation: introFadeOut 0.8s ease-in 3.2s forwards;
-    pointer-events: none;
+    pointer-events: auto; /* ★タップでスキップできるように（none だと反応しなかった） */
+    cursor: pointer;
   }
   .intro-splash-img {
     position: absolute;
@@ -6538,7 +6539,7 @@
     opacity: 0.9;
   }
 
-  /* ★v6: 月ナビ用イントロ（Step 1） */
+  /* ★v6: 月ナビ用イントロ（Step 1） ※v7で廃止・既定は非表示 */
   .nav-intro {
     position: absolute;
     inset: 0;
@@ -6547,6 +6548,7 @@
     pointer-events: none;
     opacity: 1;
     transition: opacity 0.6s ease-in;
+    display: none;
   }
   .nav-intro.fade-out {
     opacity: 0;
@@ -6870,6 +6872,12 @@
     padding: 1.5rem 1.2rem 2rem;
     color: var(--ink);
   }
+  /* ★カレンダーの格子だけ左右いっぱいに（コンテナの横paddingを打ち消す） */
+  .cal-grid {
+    margin-left: -1.2rem;
+    margin-right: -1.2rem;
+    width: auto;
+  }
 
   /* ★v6改: cal-header は廃止 */
 
@@ -7124,21 +7132,26 @@
   .cal-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 2px;
+    gap: 1px;
+    /* ★マスの線を薄く見せる（セル間ギャップにこの色が覗く） */
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    padding: 1px;
     width: 100%;
   }
 
   .cal-weekday {
     text-align: center;
-    padding: 0.35rem 0;
-    font-size: 0.6rem;
+    padding: 0.4rem 0;
+    font-size: 0.66rem;
+    font-weight: 700;
     letter-spacing: 0.1em;
-    color: var(--ink-faint);
-    background: #000;
+    color: #e8ecf4; /* ★背景と同化して読めなかったので白に */
+    background: #0a0e18;
   }
+  /* 日曜=淡い朱、土曜=淡い青（一般的なカレンダーの色分け） */
+  .cal-weekday:first-child { color: #ff9a9a; }
+  .cal-weekday:last-child { color: #9ac4ff; }
 
   .cal-day {
     aspect-ratio: 1;
@@ -13296,6 +13309,11 @@ const COASTLINES = [
       } else if (document.querySelector('.mypage-view.active')) {
         const scrollEl = document.querySelector('.mypage-view.active .mypage-scroll');
         if (scrollEl) scrollEl.scrollTop = 0;
+      } else if (document.querySelector('.moonnav-view.active') ||
+                 document.querySelector('.calendar-view.active')) {
+        // ★月ナビは更新しない（reload→デフォルト暦タブに戻る誤動作を防ぐ）。
+        //   暦は専用ハンドラ(下の pullRefresh IIFE)が担当するので、ここでは何もしない。
+        return;
       } else {
         location.reload();
       }
@@ -14545,9 +14563,47 @@ const COASTLINES = [
       const illum = SunCalc.getMoonIllumination(now);
       const phase = illum.phase;
 
+      // ★v7.3: 「実際の空と欠けの向きを一致」させる。
+      //   月の明るい側は常に太陽の方を向く。太陽の“画面上の方向”を求め、
+      //   その向きに影（ターミネーター）を回転させる。月と太陽を同じ
+      //   skyToScreen 投影に通すので、端末の傾き(heading/pitch/roll)も自動で織り込まれる。
+      //   → 東京の今の空で「下半分が欠けた月」なら、画面でも下半分が欠ける。
+      let brightAngle = (phase < 0.5) ? 0 : Math.PI; // フォールバック(旧: 明部=画面右/左)
+      {
+        const D2R = Math.PI / 180;
+        const enu = (azDeg, altDeg) => {
+          const a = azDeg * D2R, e = altDeg * D2R, ce = Math.cos(e);
+          return { e: ce * Math.sin(a), n: ce * Math.cos(a), u: Math.sin(e) };
+        };
+        const M = enu(moonAz, moonAlt);
+        const S = enu(sunAz, sunAlt);
+        const dot = M.e * S.e + M.n * S.n + M.u * S.u;
+        // 月→太陽 の接平面方向（月の視位置での「太陽の向き」）
+        let t = { e: S.e - dot * M.e, n: S.n - dot * M.n, u: S.u - dot * M.u };
+        const tl = Math.hypot(t.e, t.n, t.u);
+        if (tl > 1e-6) {
+          t = { e: t.e / tl, n: t.n / tl, u: t.u / tl };
+          const eps = 8 * D2R, ce = Math.cos(eps), se = Math.sin(eps);
+          const P = { e: M.e * ce + t.e * se, n: M.n * ce + t.n * se, u: M.u * ce + t.u * se };
+          const altP = Math.asin(Math.max(-1, Math.min(1, P.u))) / D2R;
+          const azP = norm360(Math.atan2(P.e, P.n) / D2R);
+          const pSun = skyToScreen(azP, altP, heading, pitch, roll, w, h, fov);
+          if (pSun && mp) {
+            const bdx = pSun.x - mp.x, bdy = pSun.y - mp.y;
+            if (Math.hypot(bdx, bdy) > 0.5) brightAngle = Math.atan2(bdy, bdx);
+          }
+        }
+      }
+      // 描画は「明部=ローカル+x(waxing) / -x(waning)」を前提に作られているので、
+      // その前提の向きが実際の太陽方向(brightAngle)に一致するよう回転させる。
+      const assumedBright = (phase < 0.5) ? 0 : Math.PI;
+      const rot = brightAngle - assumedBright;
+
       navCtx.save();
+      navCtx.translate(mp.x, mp.y);
+      navCtx.rotate(rot);
       navCtx.beginPath();
-      navCtx.arc(mp.x, mp.y, moonR, 0, Math.PI * 2);
+      navCtx.arc(0, 0, moonR, 0, Math.PI * 2);
       navCtx.clip();
 
       // ★v6: 影をより濃く（半月の境界が明瞭に）
@@ -14556,19 +14612,14 @@ const COASTLINES = [
 
       const termR = Math.cos(phase * 2 * Math.PI) * moonR;
 
-      // ★v6 bugfix: 楕円の半円（左/右）の描画方向を修正
-      //  waxing (phase<0.5): 月の左半分は影
-      //   - 0〜0.25 (waxing crescent): 楕円の右半分も影で塗る → 細い三日月
-      //   - 0.25〜0.5 (waxing gibbous): 楕円の左半分の影を削る → 光を広げる
-      //  waning (phase>=0.5): 月の右半分は影
-      //   - 0.5〜0.75 (waning gibbous): 楕円の右半分の影を削る
-      //   - 0.75〜1 (waning crescent): 楕円の左半分も影で塗る
+      // ★v6 bugfix: 楕円の半円（左/右）の描画方向を修正（座標は月中心=原点）
+      //  waxing (phase<0.5): 月の左半分は影 / waning: 右半分は影
       if (phase < 0.5) {
-        navCtx.fillRect(mp.x - moonR - 2, mp.y - moonR - 2, moonR + 2, moonR * 2 + 4);
+        navCtx.fillRect(-moonR - 2, -moonR - 2, moonR + 2, moonR * 2 + 4);
         if (termR > 0) {
           // waxing crescent: 楕円の右半分を塗る（影を広げて細い光だけ残す）
           navCtx.beginPath();
-          navCtx.ellipse(mp.x, mp.y, termR, moonR, 0, -Math.PI / 2, Math.PI / 2, false);
+          navCtx.ellipse(0, 0, termR, moonR, 0, -Math.PI / 2, Math.PI / 2, false);
           navCtx.closePath();
           navCtx.fill();
         } else if (termR < 0) {
@@ -14576,26 +14627,26 @@ const COASTLINES = [
           navCtx.save();
           navCtx.globalCompositeOperation = 'destination-out';
           navCtx.beginPath();
-          navCtx.ellipse(mp.x, mp.y, -termR, moonR, 0, -Math.PI / 2, Math.PI / 2, true);
+          navCtx.ellipse(0, 0, -termR, moonR, 0, -Math.PI / 2, Math.PI / 2, true);
           navCtx.closePath();
           navCtx.fill();
           navCtx.restore();
         }
       } else {
-        navCtx.fillRect(mp.x, mp.y - moonR - 2, moonR + 2, moonR * 2 + 4);
+        navCtx.fillRect(0, -moonR - 2, moonR + 2, moonR * 2 + 4);
         if (termR < 0) {
           // waning gibbous: 楕円の右半分の影を削る（光を広げる）
           navCtx.save();
           navCtx.globalCompositeOperation = 'destination-out';
           navCtx.beginPath();
-          navCtx.ellipse(mp.x, mp.y, -termR, moonR, 0, -Math.PI / 2, Math.PI / 2, false);
+          navCtx.ellipse(0, 0, -termR, moonR, 0, -Math.PI / 2, Math.PI / 2, false);
           navCtx.closePath();
           navCtx.fill();
           navCtx.restore();
         } else if (termR > 0) {
           // waning crescent: 楕円の左半分を塗る（影を広げる）
           navCtx.beginPath();
-          navCtx.ellipse(mp.x, mp.y, termR, moonR, 0, -Math.PI / 2, Math.PI / 2, true);
+          navCtx.ellipse(0, 0, termR, moonR, 0, -Math.PI / 2, Math.PI / 2, true);
           navCtx.closePath();
           navCtx.fill();
         }
@@ -14763,8 +14814,10 @@ const COASTLINES = [
     }
     loop();
 
-    // 新フロー：イントロ → 許可 → キャリブ → 北合わせ
-    showNavIntro();
+    // ★イントロ（「スマホでツキ探し」アニメ）は廃止 → いきなり許可ステップへ。
+    const introEl = document.getElementById('navIntro');
+    if (introEl) { introEl.classList.add('hidden'); introEl.style.display = 'none'; }
+    proceedToPermission();
   }
 
   function deactivateMoonNav() {}
@@ -16771,9 +16824,11 @@ const COASTLINES = [
   const iconEl = document.getElementById('pullRefreshIcon');
   const textEl = document.getElementById('pullRefreshText');
   let startY = 0;
+  let startX = 0;
   let currentY = 0;
   let pulling = false;
-  const THRESHOLD = 80;  // このpxまで引いたらリロード
+  let hCancel = false;
+  const THRESHOLD = 150;  // ★軽いスワイプで誤更新しないよう、しっかり引いた時だけ（80→150）
 
   // スクロール可能なコンテナを見つける（calendar-view等）
   function getScrollableTarget(e) {
@@ -16804,15 +16859,19 @@ const COASTLINES = [
       return;
     }
     startY = e.touches[0].clientY;
+    startX = e.touches[0].clientX;
     pulling = true;
+    hCancel = false;
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
     if (!pulling) return;
     currentY = e.touches[0].clientY;
     const diff = currentY - startY;
-    if (diff <= 0) {
-      // 上に引いてる場合は無視
+    const dx = e.touches[0].clientX - startX;
+    // 横方向が勝っている（横スワイプ）なら更新ジェスチャではない → キャンセル
+    if (Math.abs(dx) > Math.abs(diff)) { hCancel = true; }
+    if (diff <= 0 || hCancel) {
       pullEl.classList.remove('visible', 'ready');
       return;
     }
@@ -16841,7 +16900,7 @@ const COASTLINES = [
   document.addEventListener('touchend', () => {
     if (!pulling) return;
     const diff = currentY - startY;
-    if (diff > THRESHOLD) {
+    if (diff > THRESHOLD && !hCancel) {
       // リロード実行
       pullEl.classList.add('loading');
       textEl.textContent = '更 新 し て い ま す';
