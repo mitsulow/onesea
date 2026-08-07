@@ -121,7 +121,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
                   <div className="absolute inset-x-0 bottom-3 text-center">
                     <div className="text-[11px] font-bold tracking-[5px] text-[#f0e6c8]" style={{ textShadow: "0 1px 8px rgba(0,0,0,.7)" }}>ONESEA</div>
                     <div className="mt-1 text-[22px] font-extrabold tracking-[2px] text-white" style={{ fontFamily: '"Shippori Mincho",serif', textShadow: "0 2px 12px rgba(0,0,0,.6)" }}>
-                      すべての海は、ひとつ。
+                      海は7つに分かれていない。OneSea
                     </div>
                   </div>
                 </div>

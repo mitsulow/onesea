@@ -1,6 +1,6 @@
 /** OneSea について（Google OAuth ブランディング検証のホームページ要件を満たす静的ページ） */
 export const metadata = {
-  title: "OneSea — すべての海は、ひとつ。",
+  title: "OneSea — 海は7つに分かれていない。OneSea",
   description:
     "OneSeaは、太陽と月と潮のリズムで生きるための無料の手帳アプリです。暦・潮汐・シューマン共振の表示、投稿コミュニティCotoZute、マーケット楽市楽座、セカイムラ、MMMをひとつにつなぎます。",
 };
@@ -12,7 +12,7 @@ export default function AboutPage() {
   return (
     <main className="mx-auto max-w-[640px] px-6 py-12">
       <h1 className="text-[28px] font-extrabold tracking-[2px] text-[#2a2622]">OneSea</h1>
-      <p className="mt-1 text-[13px] tracking-[3px] text-[#8aa8bc]">すべての海は、ひとつ。</p>
+      <p className="mt-1 text-[13px] tracking-[3px] text-[#8aa8bc]">海は7つに分かれていない。OneSea</p>
 
       <p className={P + " mt-5"}>
         OneSea（ワンシー）は、太陽と月と潮のリズムで生きるための<b>無料の手帳アプリ</b>です。

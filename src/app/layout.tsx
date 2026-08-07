@@ -5,12 +5,12 @@ import SwipeNav from "@/components/SwipeNav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "OneSea — すべての海は、ひとつ。",
+  title: "OneSea — 海は7つに分かれていない。OneSea",
   description:
     "太陽と月と潮のリズムで生きる、無料の手帳アプリ。360の節分かれつ刻と、四つの扉（セカイムラ・MMM・楽市楽座・ツキヨガ）。",
   metadataBase: new URL("https://onesea.vercel.app"),
   openGraph: {
-    title: "OneSea — すべての海は、ひとつ。",
+    title: "OneSea — 海は7つに分かれていない。OneSea",
     description: "太陽と月と潮のリズムで生きる、無料の手帳アプリ。",
     url: "https://onesea.vercel.app",
     siteName: "OneSea",
