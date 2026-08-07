@@ -7511,6 +7511,21 @@
   <a href="/talk" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/icon-chat.webp" style="width:20px;height:20px;object-fit:contain;"> TALK</a>
   <button id="oneseaLogoutBtn" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:13.5px;color:#a05040;background:none;border:none;text-align:left;cursor:pointer;"><img src="/icons/icon-logout.webp" style="width:20px;height:20px;object-fit:contain;"> ログアウト</button>
 </div>
+<!-- ゲスト用シート（他ページのAvatarMenuと同じ見た目/挙動） -->
+<div id="oneseaGuestOv" style="display:none;position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);"></div>
+<div id="oneseaGuestSheet" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:951;width:calc(100% - 40px);max-width:340px;overflow:hidden;border-radius:20px;background:#fffdf8;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+  <div style="position:relative;height:120px;">
+    <img src="/lp/onesea/hero-sea.webp" alt="" style="width:100%;height:100%;object-fit:cover;">
+    <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.45));">
+      <span style="font-size:14px;font-weight:800;letter-spacing:3px;color:#fff;">すべての海は、ひとつ。</span>
+    </div>
+  </div>
+  <div style="padding:16px 20px 20px;">
+    <p style="margin:0 0 12px;text-align:center;font-size:12.5px;line-height:1.7;color:#6a6055;">太陽と月と潮のリズムで生きる、<b style="color:#2a2622;">無料の手帳アプリ</b>。<br>暦・シューマン共振・みんなの投稿が、無料で使えます。</p>
+    <a href="/login?return=/tsukiyoga-v7/index.html" style="display:block;margin-bottom:10px;border-radius:16px;padding:13px 0;text-align:center;font-size:15px;font-weight:800;color:#fff;text-decoration:none;background:linear-gradient(120deg,#2CB7DE,#1B8FB5);box-shadow:0 6px 20px rgba(44,183,222,.35);">OneSeaに登録（無料・30秒）</a>
+    <a href="/login?return=/tsukiyoga-v7/index.html" style="display:block;border-radius:16px;border:1px solid #e0d8c8;padding:11px 0;text-align:center;font-size:12.5px;font-weight:700;color:#8a7a5a;text-decoration:none;">会員の方はログイン</a>
+  </div>
+</div>
 
 
 <!-- ★v6: 起動時のイントロスプラッシュ -->
@@ -17036,28 +17051,60 @@ if ('serviceWorker' in navigator) {
 
 <script>
 (function () {
-  // OneSea(同一ドメイン)のSupabaseセッションからGoogleアバターを拝借（キー探索+base64対応）
-  // 一致する全キーを試す（最初の1つが空でも次を見る）
+  // ★OneSeaセッション読取り(共通): Next側は @supabase/ssr が Cookie に保存するため、
+  //   localStorage と Cookie(分割チャンク .0/.1 対応)の両方を探す。
+  function parseTok(raw) {
+    try {
+      if (raw.indexOf('base64-') === 0) raw = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  }
+  window.oneseaReadSession = function () {
+    try {
+      // 1) localStorage
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!(k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0)) continue;
+        var t = parseTok(localStorage.getItem(k) || '');
+        if (t) return t;
+      }
+      // 2) Cookie (sb-xxx-auth-token / .0 .1 分割)
+      var jar = {};
+      document.cookie.split(/;\s*/).forEach(function (kv) {
+        var i2 = kv.indexOf('=');
+        if (i2 > 0) jar[kv.slice(0, i2)] = decodeURIComponent(kv.slice(i2 + 1));
+      });
+      var bases = {};
+      Object.keys(jar).forEach(function (k2) {
+        var m = k2.match(/^(sb-.*-auth-token)(?:\.(\d+))?$/);
+        if (!m || k2.indexOf('verifier') >= 0) return;
+        (bases[m[1]] = bases[m[1]] || [])[m[2] ? +m[2] : 0] = jar[k2];
+      });
+      for (var b in bases) {
+        var t2 = parseTok(bases[b].join(''));
+        if (t2) return t2;
+      }
+    } catch (e) {}
+    return null;
+  };
+  window.oneseaSessionUser = function () {
+    var tok = window.oneseaReadSession();
+    if (!tok) return null;
+    var u = tok.user || (tok.currentSession && tok.currentSession.user) || (tok.session && tok.session.user);
+    var access = tok.access_token || (tok.currentSession && tok.currentSession.access_token) || (tok.session && tok.session.access_token);
+    return u ? { user: u, token: access } : null;
+  };
+
   try {
-    var av = null;
-    for (var i = 0; i < localStorage.length && !av; i++) {
-      var k = localStorage.key(i);
-      if (!(k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0)) continue;
-      var raw = localStorage.getItem(k);
-      if (!raw) continue;
-      try {
-        if (raw.indexOf('base64-') === 0) raw = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'));
-        var tok = JSON.parse(raw);
-        var u = tok && (tok.user || (tok.currentSession && tok.currentSession.user) || (tok.session && tok.session.user));
-        var meta = u && (u.user_metadata || u.raw_user_meta_data);
-        av = meta && (meta.avatar_url || meta.picture);
-      } catch (e2) {}
-    }
+    var sess = window.oneseaSessionUser();
+    var meta = sess && (sess.user.user_metadata || sess.user.raw_user_meta_data);
+    var av = meta && (meta.avatar_url || meta.picture);
     if (av) {
       document.getElementById('oneseaAvatarInner').innerHTML =
         '<img src="' + av + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
     }
-  } catch (e) {}
+    window.__oneseaLoggedIn = !!sess;
+  } catch (e) { window.__oneseaLoggedIn = false; }
 
   var menu = document.getElementById('oneseaSvcMenu');
   var ov = document.getElementById('oneseaSvcOverlay');
@@ -17068,7 +17115,20 @@ if ('serviceWorker' in navigator) {
   }
   ov.addEventListener('click', function () { toggleMenu(false); });
   var btn = document.getElementById('oneseaAvatarBtn');
-  if (btn) btn.addEventListener('click', function () { toggleMenu(); });
+  if (btn) btn.addEventListener('click', function () {
+    if (window.__oneseaLoggedIn) { toggleMenu(); }
+    else {
+      // ★他ページ(AvatarMenu)と同じ挙動: ゲストは登録/ログイン案内シート
+      var sh = document.getElementById('oneseaGuestSheet');
+      var so = document.getElementById('oneseaGuestOv');
+      if (sh && so) { sh.style.display = 'block'; so.style.display = 'block'; }
+    }
+  });
+  var gOv = document.getElementById('oneseaGuestOv');
+  if (gOv) gOv.addEventListener('click', function () {
+    document.getElementById('oneseaGuestSheet').style.display = 'none';
+    gOv.style.display = 'none';
+  });
   var lo = document.getElementById('oneseaLogoutBtn');
   if (lo) lo.addEventListener('click', function () {
     try {
@@ -17091,31 +17151,40 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
-// ★サービス間スワイプ周回ナビ（ツキヨガ版）:
-//   ページ内は日送り等の横スワイプが既にあるため、上のヒーロー帯から始めた時だけ発動。
+// ★サービス間スワイプ周回ナビ（ツキヨガ版・ページ全体）:
+//   他サービスと同じく画面のどこからでも。ただしページ内の既存横ジェスチャと衝突する
+//   ゾーン(カレンダー格子=月送り/canvas=宙・月ナビ/占いホイール/入力欄/タブバー/メニュー)は除外。
 //   左スワイプ→次(楽市楽座) / 右スワイプ→前(セカイムラ)。指に追従して途中まで動く。
 (function () {
-  var hero = document.getElementById('oneseaHero');
-  if (!hero) return;
-  var startX = 0, startY = 0, dx = 0, dragging = false;
+  var startX = 0, startY = 0, dx = 0, dragging = false, canceled = false;
   var body = document.body;
-  hero.addEventListener('touchstart', function (e) {
-    if (e.target && e.target.closest && e.target.closest('#oneseaAvatarBtn')) { dragging = false; return; }
+  var EXCLUDE = 'canvas, input, textarea, select, .cal-grid, .tab-bar, ' +
+    '#oneseaSvcMenu, #oneseaGuestSheet, #oneseaAvatarBtn, ' +
+    '.memo-modal, .uranai-detail-modal, .wheel-detail-modal, .today-pane, ' +
+    '.uranai-scroll .roulette, .hanasakari-view, .moonnav-view';
+  document.addEventListener('touchstart', function (e) {
+    canceled = false; dragging = false; dx = 0;
+    var t = e.target;
+    if (t && t.closest && t.closest(EXCLUDE)) { canceled = true; return; }
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    dx = 0; dragging = true;
   }, { passive: true });
   document.addEventListener('touchmove', function (e) {
-    if (!dragging) return;
+    if (canceled) return;
+    if (e.defaultPrevented) { if (dragging) { body.style.transform = ''; } canceled = true; return; }
     dx = e.touches[0].clientX - startX;
     var dy = e.touches[0].clientY - startY;
-    if (Math.abs(dy) > 50 && Math.abs(dy) > Math.abs(dx)) { dragging = false; body.style.transform = ''; return; }
+    if (!dragging) {
+      if (Math.abs(dy) > 44 && Math.abs(dy) > Math.abs(dx)) { canceled = true; return; }
+      if (Math.abs(dx) > 36 && Math.abs(dx) > 2.2 * Math.abs(dy)) dragging = true;
+      else return;
+    }
     var follow = Math.max(-160, Math.min(160, dx * 0.45));
     body.style.transition = '';
     body.style.transform = 'translateX(' + follow + 'px)';
   }, { passive: true });
   document.addEventListener('touchend', function () {
-    if (!dragging) return;
+    if (!dragging) { canceled = false; return; }
     dragging = false;
     if (Math.abs(dx) > 110) {
       var next = dx < 0 ? '/za' : '/sekai';
@@ -17139,20 +17208,9 @@ if ('serviceWorker' in navigator) {
   var SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZ29mamt4cWd1emdycHRjaHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MTE4ODEsImV4cCI6MjEwMDk4Nzg4MX0.RUJeAih2h08bfOPiM6DJfm-_cbTx3X4FCheJ8ZUJhKY';
 
   function getSession() {
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (!(k && k.indexOf('sb-') === 0 && k.indexOf('-auth-token') > 0 && k.indexOf('verifier') < 0)) continue;
-        var raw = localStorage.getItem(k);
-        if (!raw) continue;
-        if (raw.indexOf('base64-') === 0) raw = atob(raw.slice(7).replace(/-/g, '+').replace(/_/g, '/'));
-        var tok = JSON.parse(raw);
-        var access = tok.access_token || (tok.currentSession && tok.currentSession.access_token) || (tok.session && tok.session.access_token);
-        var u = tok.user || (tok.currentSession && tok.currentSession.user) || (tok.session && tok.session.user);
-        if (access && u) return { token: access, uid: u.id };
-      }
-    } catch (e) {}
-    return null;
+    // Cookie/localStorage 両対応の共通関数(oneseaSessionUser)を利用
+    var se = window.oneseaSessionUser ? window.oneseaSessionUser() : null;
+    return (se && se.token) ? { token: se.token, uid: se.user.id } : null;
   }
 
   function setVal(id, v) {

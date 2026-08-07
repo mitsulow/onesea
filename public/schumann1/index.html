@@ -3201,12 +3201,35 @@
     const fb = document.getElementById("svcAvFallback");
     if (!btn || !menu) return;
     try {
+      // ★Next側は @supabase/ssr が Cookie 保存のため、localStorage + Cookie の両対応
+      const parseTok = (raw) => {
+        try {
+          if (raw.startsWith("base64-")) raw = atob(raw.slice(7).replace(/-/g, "+").replace(/_/g, "/"));
+          return JSON.parse(raw);
+        } catch (e) { return null; }
+      };
       let url = null;
-      for (let i = 0; i < localStorage.length; i++) {
+      for (let i = 0; i < localStorage.length && !url; i++) {
         const k = localStorage.key(i);
-        if (k && k.startsWith("sb-") && k.endsWith("-auth-token")) {
-          const s = JSON.parse(localStorage.getItem(k) || "null");
-          url = s?.user?.user_metadata?.avatar_url || s?.currentSession?.user?.user_metadata?.avatar_url || null;
+        if (k && k.startsWith("sb-") && k.includes("-auth-token") && !k.includes("verifier")) {
+          const s = parseTok(localStorage.getItem(k) || "");
+          const u = s && (s.user || s.currentSession?.user || s.session?.user);
+          url = u?.user_metadata?.avatar_url || u?.user_metadata?.picture || null;
+        }
+      }
+      if (!url) {
+        const jar = {};
+        document.cookie.split(/;\s*/).forEach(kv => { const i2 = kv.indexOf("="); if (i2 > 0) jar[kv.slice(0, i2)] = decodeURIComponent(kv.slice(i2 + 1)); });
+        const bases = {};
+        Object.keys(jar).forEach(k2 => {
+          const m = k2.match(/^(sb-.*-auth-token)(?:\.(\d+))?$/);
+          if (!m || k2.includes("verifier")) return;
+          (bases[m[1]] = bases[m[1]] || [])[m[2] ? +m[2] : 0] = jar[k2];
+        });
+        for (const b in bases) {
+          const s2 = parseTok(bases[b].join(""));
+          const u2 = s2 && (s2.user || s2.currentSession?.user || s2.session?.user);
+          url = u2?.user_metadata?.avatar_url || u2?.user_metadata?.picture || null;
           if (url) break;
         }
       }
