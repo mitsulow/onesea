@@ -9,6 +9,8 @@ import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
 import {
   joinVillage,
+  approveVillageMember,
+  rejectVillageMember,
   updateVillage,
   POLICY_LABEL,
   PREFS,
@@ -100,7 +102,7 @@ export default function VillagePage() {
         .maybeSingle(),
       supabase
         .from("village_members")
-        .select("user_id, profiles!village_members_user_id_fkey(username, display_name, avatar_url)")
+        .select("user_id, status, profiles!village_members_user_id_fkey(username, display_name, avatar_url)")
         .eq("village_id", villageId)
         .limit(80),
       supabase
@@ -121,7 +123,7 @@ export default function VillagePage() {
     setCmts(map);
     const u = session?.user ?? null;
     setMe(u);
-    if (u) setJoined((m ?? []).some((x: any) => x.user_id === u.id));
+    if (u) setJoined((m ?? []).some((x: any) => x.user_id === u.id && x.status === "approved"));
   }, [villageId]);
 
   useEffect(() => {
@@ -207,7 +209,7 @@ export default function VillagePage() {
           <p className="mx-auto mt-2 max-w-[340px] text-[12px] leading-relaxed text-[#c8dcc8]">{village.description}</p>
         )}
         <div className="mt-3 flex justify-center gap-2">
-          {me && !joined && village.policy === "open" && (
+          {me && !joined && !members.some((mm: any) => mm.user_id === me.id) && (
             <button
               onClick={async () => {
                 await joinVillage(me.id, villageId);
@@ -216,8 +218,11 @@ export default function VillagePage() {
               className="rounded-xl px-6 py-2.5 text-[13.5px] font-extrabold"
               style={{ background: "#d4b96a", color: "#1a2432" }}
             >
-              この村に入る
+              この村に参加したいので村長へ申請
             </button>
+          )}
+          {me && !joined && members.some((mm: any) => mm.user_id === me.id && mm.status === "pending") && (
+            <span className="rounded-xl border border-[#c8a860] px-4 py-2.5 text-[12.5px] font-bold text-[#e8d5a0]">申請中（村長の承認待ち）</span>
           )}
           {joined && <span className="rounded-xl border border-[#4a9a6a] px-4 py-2.5 text-[12.5px] font-bold text-[#a8d8b8]">✓ あなたの村</span>}
           {me && village.created_by === me.id && (
@@ -377,19 +382,38 @@ export default function VillagePage() {
           <div className="flex flex-wrap gap-2">
             {members.map((m: any, i) => {
               const p = m.profiles;
-              const inner = p?.avatar_url ? (
-                <img src={srcCdn(p.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" />
-              ) : (
-                <div className="flex h-10 w-10 items-center justify-center rounded-full text-lg" style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}>
-                  🌿
-                </div>
+              const pending = m.status === "pending";
+              const isLeader = me && village.created_by === me.id;
+              const inner = (
+                <span className="relative inline-block">
+                  {p?.avatar_url ? (
+                    <img src={srcCdn(p.avatar_url)} alt="" referrerPolicy="no-referrer" className={"h-10 w-10 rounded-full object-cover" + (pending ? " opacity-50 grayscale" : "")} />
+                  ) : (
+                    <span className={"flex h-10 w-10 items-center justify-center rounded-full" + (pending ? " opacity-50" : "")} style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}>
+                      <img src="/icons/icon-leaf.webp" alt="" style={{ width: 18, height: 18 }} />
+                    </span>
+                  )}
+                  {pending && (
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-[#c8a860] px-1 text-[7.5px] font-bold text-white">申請中</span>
+                  )}
+                </span>
               );
-              return p?.username ? (
-                <Link key={i} href={`/u/${p.username}`}>
-                  {inner}
-                </Link>
-              ) : (
-                <span key={i}>{inner}</span>
+              return (
+                <span key={i} className="flex flex-col items-center gap-0.5">
+                  {p?.username ? <Link href={`/u/${p.username}`}>{inner}</Link> : inner}
+                  {pending && isLeader && (
+                    <span className="flex gap-1">
+                      <button
+                        onClick={async () => { await approveVillageMember(villageId, m.user_id); load(); }}
+                        className="rounded bg-[#4a9a6a] px-1.5 py-0.5 text-[9px] font-bold text-white"
+                      >承認</button>
+                      <button
+                        onClick={async () => { await rejectVillageMember(villageId, m.user_id); load(); }}
+                        className="rounded bg-[#8a8070] px-1.5 py-0.5 text-[9px] font-bold text-white"
+                      >却下</button>
+                    </span>
+                  )}
+                </span>
               );
             })}
             {members.length === 0 && <p className="text-[12px] text-[#a0aca0]">まだ村人がいません</p>}

@@ -395,8 +395,19 @@ export async function createVillage(
 }
 
 export async function joinVillage(userId: string, villageId: string) {
+  // 参加は「村長へ申請」= pending で入る（村長が承認して村人になる）
   const supabase = createClient();
-  return supabase.from("village_members").insert({ village_id: villageId, user_id: userId });
+  return supabase.from("village_members").insert({ village_id: villageId, user_id: userId, status: "pending" });
+}
+
+export async function approveVillageMember(villageId: string, userId: string) {
+  const supabase = createClient();
+  return supabase.from("village_members").update({ status: "approved" }).eq("village_id", villageId).eq("user_id", userId);
+}
+
+export async function rejectVillageMember(villageId: string, userId: string) {
+  const supabase = createClient();
+  return supabase.from("village_members").delete().eq("village_id", villageId).eq("user_id", userId);
 }
 
 export async function myVillageIds(userId: string): Promise<Set<string>> {
