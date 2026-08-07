@@ -17076,7 +17076,16 @@ if ('serviceWorker' in navigator) {
       });
       for (var b in bases) {
         var t2 = parseTok(bases[b].join(''));
-        if (t2) return t2;
+        if (t2) {
+          // ★Cookieに現行セッションがある時は、昔の別アカウントが残るlocalStorageのsbトークンを掃除
+          try {
+            for (var li = localStorage.length - 1; li >= 0; li--) {
+              var lk = localStorage.key(li);
+              if (lk && lk.indexOf('sb-') === 0 && lk.indexOf('-auth-token') > 0) localStorage.removeItem(lk);
+            }
+          } catch (ce) {}
+          return t2;
+        }
       }
       // 2) フォールバック: localStorage
       for (var i = 0; i < localStorage.length; i++) {

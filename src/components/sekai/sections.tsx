@@ -260,13 +260,14 @@ export function MootsSection({
             className="absolute left-2.5 top-[1.5%] flex items-center gap-1.5"
             style={{ textShadow: "0 1px 6px rgba(0,0,0,.95), 0 0 2px rgba(0,0,0,.9)" }}
           >
-            <img src="/icons/cel-moon.png" alt="" className="h-[22px] w-[22px] object-contain drop-shadow" />
+            <img src="/icons/cel-moon.png" alt="" className="h-[22px] w-[22px] object-contain drop-shadow" style={{ transform: "scaleX(-1)" }} />
             <span className="text-[15px] font-extrabold tracking-[1px] text-[#f0e6c8]">
               セカイムラオンライン新月/満月会
             </span>
           </div>
           {/* 案内パネル（30%の半透明地に文字を重ねる） */}
           <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2.5 text-center" style={{ background: "rgba(8,16,24,.24)" }}>
+            <div className="text-left text-[10px] font-bold tracking-[2px] text-[#a8d8b8]">Next</div>
             <div className="text-[27px] font-extrabold leading-snug text-[#ffd66a]" style={{ textShadow: "0 2px 14px rgba(0,0,0,.95)" }}>
               第{mootNoOf(next.dateKey) ?? "—"}回セカイムラ{next.kind === "new" ? "新月会" : "満月会"}
             </div>

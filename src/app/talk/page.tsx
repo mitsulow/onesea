@@ -106,10 +106,10 @@ export default function LinePage() {
       <TopTone color="#06C755" />
       {/* 統一規格ヘッダー: 高さ52px・サービス名・アバター右 / TALKのイメージカラー=緑 */}
       <header
-        className="relative flex h-[52px] items-center justify-end px-5"
+        className="relative flex h-[52px] items-center justify-start px-4"
         style={{ background: "#06C755" }}
       >
-        <h1 className="mr-12 flex items-center gap-2 text-[17px] font-extrabold tracking-[4px] text-white">
+        <h1 className="flex items-center gap-2 text-[17px] font-extrabold tracking-[4px] text-white">
           <img src="/icons/icon-chat.webp" alt="" className="h-6 w-6 object-contain" />
           TaLK
         </h1>
