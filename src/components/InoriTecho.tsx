@@ -694,12 +694,10 @@ function BottomSheet({
               {/* ── 太陽: 叶いタイム ── */}
               {celSel === "sun" && (
                 <div className="mx-2 mb-2 rounded-xl p-3" style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fdf3e4", border: `2px solid ${ac}35` }}>
-                  <div className="relative flex items-center justify-center gap-1.5">
-                    <span className="text-[10.5px] tracking-widest text-[#b07a30]">叶いタイム</span>
-                    <span className="num absolute right-0 text-[11px] text-[#b8b0a0]">{best ? `${best.deg}°` : "—"}</span>
-                  </div>
-                  <div className="num text-center text-[26px] font-extrabold leading-tight" style={{ color: "#0a9a52", textShadow: "0 0 6px rgba(20,200,110,.35)", letterSpacing: 2 }}>
-                    {best ? best.time : "—"}
+                  <div className="flex items-baseline justify-between text-[12px]">
+                    <span className="tracking-widest text-[#b07a30]">叶いタイム</span>
+                    <span className="mx-2 flex-1 border-b border-dotted border-[#d8c9a0]" style={{ transform: "translateY(-3px)" }} />
+                    <span className="num font-extrabold" style={{ color: "#0a9a52" }}>{best ? best.time : "—"}</span>
                   </div>
                   {(() => {
                     const dg = best?.deg;
