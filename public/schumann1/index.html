@@ -1129,7 +1129,7 @@
     background: #000;
     margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
     padding-left: calc(50vw - 50%); padding-right: calc(50vw - 50%);
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2.2rem);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 2.2rem + 58px); /* 下固定タブバーぶん */
     font-family: "JetBrains Mono", monospace;
     font-size: 0.7rem; color: var(--text-dim);
     letter-spacing: 0.15em; line-height: 1.8;
@@ -3234,13 +3234,16 @@
 
 <!-- ★左下: 卵HOMEボタン + 9メニュー（BottomNavと同配色・同配置） -->
 <style>
-  .egg-home-btn{position:fixed;left:14px;bottom:calc(env(safe-area-inset-bottom, 0px) + 86px);z-index:900; /* ★MASTER MIND MEMBERSを隠さない高さ */
-    display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;border-radius:16px;
-    /* ★黒背景に溶けないよう明るい金色系＋発光 */
-    background:linear-gradient(160deg,#f7eecf,#e5c67e);border:1.5px solid #d4b96a;
-    box-shadow:0 0 14px rgba(212,185,106,.55), 0 4px 18px rgba(0,0,0,.5);cursor:pointer;text-decoration:none}
+  /* ★下固定タブバー(他サービスのBottomNavと同じ見た目)。卵=一番左 */
+  .egg-tab-bar{position:fixed;left:0;right:0;bottom:0;z-index:900;
+    display:flex;align-items:center;justify-content:flex-start;
+    height:54px;padding-bottom:env(safe-area-inset-bottom, 0px);
+    background:linear-gradient(160deg,#0e1e2ef5,#17384ef5);
+    border-top:1px solid #274a63;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .egg-home-btn{display:flex;flex-direction:column;align-items:center;gap:2px;
+    padding:4px 22px;background:none;border:none;cursor:pointer;text-decoration:none}
   .egg-home-btn img{width:17px;height:21px;object-fit:contain}
-  .egg-home-btn span{font-size:9px;font-weight:800;color:#4a3a14;line-height:1}
+  .egg-home-btn span{font-size:9px;font-weight:700;color:#e8d5a0;line-height:1}
   .egg-menu-ov{display:none;position:fixed;inset:0;z-index:901;background:rgba(0,0,0,.35)}
   .egg-menu{display:none;position:fixed;left:50%;transform:translateX(-50%);z-index:902;
     bottom:calc(env(safe-area-inset-bottom, 0px) + 66px);width:calc(100% - 24px);max-width:480px;
@@ -3253,10 +3256,12 @@
   .egg-menu a img{width:26px;height:26px;object-fit:contain}
   .egg-menu a span{font-size:10.5px;font-weight:800;color:#c8d2e4}
 </style>
-<a class="egg-home-btn" href="/" id="eggHomeBtn">
-  <img src="/icons/tab-home.png" alt="">
-  <span>OneSea ▴</span>
-</a>
+<nav class="egg-tab-bar">
+  <a class="egg-home-btn" href="/" id="eggHomeBtn">
+    <img src="/icons/tab-home.png" alt="">
+    <span>OneSea ▴</span>
+  </a>
+</nav>
 <div class="egg-menu-ov" id="eggMenuOv"></div>
 <div class="egg-menu" id="eggMenu">
   <a href="/mmm"><img src="/icons/cel-sun.png" alt=""><span>MMM</span></a>
