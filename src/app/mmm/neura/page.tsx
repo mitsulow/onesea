@@ -184,6 +184,9 @@ export default function NeuraPage() {
       <p className="px-5 pt-2 text-[12px] leading-relaxed text-[#8a9ab8]">
         近くの5人でチームを組み（事務局が自動編成）、<b className="text-[#c8d4f8]">11月末までにお互いのDDPを叶え合う</b>活動。
         あなたの役目は自分のDDPを詳細に描いて伝えること。あなたの夢は、残りの4人が叶えてくれる。
+        チーム名はヤマトコトバ——<b className="text-[#c8d4f8]">0=レ 1=ヒ 2=フ 3=ミ 4=ヨ 5=イ 6=ム 7=ナ 8=ヤ 9=コ</b>。
+        事務局が「東京001〜東京123」のように5人ずつ組んでいき、東京の123番目なら<b className="text-[#c8d4f8]">「東京ひふみ（123）」</b>、
+        大阪の3番目なら「大阪れれみ（003）」と呼ぶ。
       </p>
 
       {team === undefined ? (
@@ -231,6 +234,13 @@ export default function NeuraPage() {
           {/* ── 仲間タブ ── */}
           {tab === "members" && (
             <div className="px-4 pt-3">
+              {team.name && (
+                <div className="mb-2.5 text-center">
+                  <span className="rounded-full border border-[#8a9af0]/50 bg-white/5 px-4 py-1 text-[13.5px] font-extrabold tracking-[2px] text-[#c8d4f8]">
+                    {team.name}
+                  </span>
+                </div>
+              )}
               {/* 5人のアイコンならび */}
               <div className="mb-3 flex items-center justify-center gap-3">
                 {team.members.map((m) => (

@@ -34,6 +34,7 @@ export interface NeuraMember {
 
 export interface NeuraTeam {
   id: string;
+  name?: string | null; // 例: 東京ひふみ（123）
   prefecture: string;
   city: string | null;
   season: string;
@@ -45,7 +46,7 @@ export async function myNeuraTeam(userId: string): Promise<NeuraTeam | null> {
   const supabase = createClient();
   const { data: mem } = await supabase
     .from("neura_members")
-    .select("team_id, neura_teams(id, prefecture, city, season)")
+    .select("team_id, neura_teams(id, name, prefecture, city, season)")
     .eq("user_id", userId)
     .maybeSingle();
   /* eslint-disable @typescript-eslint/no-explicit-any */

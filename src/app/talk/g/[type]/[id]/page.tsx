@@ -39,10 +39,10 @@ export default function GroupChatPage() {
       if (!u) return;
       if (type === "neura") {
         const [{ data: t }, { count }] = await Promise.all([
-          supabase.from("neura_teams").select("prefecture, city").eq("id", id).maybeSingle(),
+          supabase.from("neura_teams").select("name, prefecture, city").eq("id", id).maybeSingle(),
           supabase.from("neura_members").select("user_id", { count: "exact", head: true }).eq("team_id", id),
         ]);
-        setName(`ニューラ班（${t?.city ?? t?.prefecture ?? ""}）`);
+        setName((t as any)?.name ?? `ニューラ班（${t?.city ?? t?.prefecture ?? ""}）`);
         setEmoji("🧠");
         setMemberCount(count ?? null);
       } else if (type === "village") {

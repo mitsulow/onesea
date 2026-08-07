@@ -301,7 +301,7 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   const [vm, cm, nm] = await Promise.all([
     supabase.from("village_members").select("village_id, villages(name)").eq("user_id", myId).eq("status", "approved"),
     supabase.from("club_members").select("club_id, clubs(name, emoji)").eq("user_id", myId),
-    supabase.from("neura_members").select("team_id, neura_teams(prefecture, city)").eq("user_id", myId),
+    supabase.from("neura_members").select("team_id, neura_teams(name, prefecture, city)").eq("user_id", myId),
   ]);
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const groups: Array<{ type: "village" | "club" | "neura"; id: string; name: string; emoji: string }> = [
@@ -320,7 +320,7 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
     ...((nm.data ?? []) as any[]).map((r) => ({
       type: "neura" as const,
       id: r.team_id as string,
-      name: `ニューラ班（${(r.neura_teams?.city as string) ?? (r.neura_teams?.prefecture as string) ?? ""}）`,
+      name: (r.neura_teams?.name as string) ?? `ニューラ班（${(r.neura_teams?.city as string) ?? (r.neura_teams?.prefecture as string) ?? ""}）`,
       emoji: "🧠",
     })),
   ];
