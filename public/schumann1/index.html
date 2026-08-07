@@ -102,6 +102,7 @@
   .wrap > * { width: 100%; }
   /* 表示順: 観測グラフ (source順のまま=0) → 音とシューマン電磁波 → 磁場の回転 → footer */
   #fold-sound { order: 1; }
+  #fold-sound .f1-hero, #fold-sound .modes-grid { display: none; }
   #fold-mag { order: 2; }
   footer { order: 3; }
   header { text-align: center; padding: 0.15rem 0 0.4rem; }
@@ -1282,11 +1283,10 @@
   <div class="error-banner" id="error-banner">データ取得中にエラーが発生しました。</div>
 
   <details class="fold" id="fold-sound">
-    <summary>音とシューマン電磁波</summary>
-
-  <div class="fold-subh">音で聴くシューマン共振</div>
+    <summary>音で遊ぶシューマン共振</summary>
 
   <div class="oct-row" id="oct-row"></div>
+  <div style="text-align:center;font-size:11px;color:#8b93a8;margin:4px 0 14px;">※可聴域変換済み（6オクターブ）</div>
 
   <!-- ★ F1 ヒーロー: このサイトの主役 = 第一次モード -->
   <section class="f1-hero">
@@ -2868,9 +2868,16 @@
       img.draggable = false;
       btn.appendChild(img);
       row.appendChild(btn);
+      // ★ボウルの下に F番号と実測Hzを表示
+      const lbl = document.createElement("div");
+      lbl.style.cssText = "font-size:11.5px;color:var(--sr,#8b93a8);text-align:center;margin-top:4px;font-weight:700;";
+      lbl.className = PHI_MODE_CLS[key];
+      btn.appendChild(lbl);
       const ob = { key, freq: 500, el: btn, bowl: null };
       ob.update = () => {
-        ob.freq = phiHzOf(key) * 64; // 6オクターブ上
+        const hz = phiHzOf(key);
+        ob.freq = hz * 64; // 6オクターブ上
+        lbl.textContent = key + " (" + (hz ? hz.toFixed(2) : "—") + "Hz)";
         if (ob.bowl) retuneBowl(ob.bowl, ob.freq);
       };
       ob.update();
