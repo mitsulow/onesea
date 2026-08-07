@@ -475,6 +475,7 @@ function BottomSheet({
   const [tide, setTide] = useState<TideDay | null>(null);
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
   const [portPick, setPortPick] = useState(false); // 港選択モーダル
+  const [celSel, setCelSel] = useState<"sun" | "earth" | "moon" | null>(null); // 天体トリオの選択
   const [penLabels, setPenLabels] = useState<Record<string, string>>({});
   const [penEdit, setPenEdit] = useState(false);
   useEffect(() => setPenLabels(loadPenLabels()), []);
@@ -641,114 +642,123 @@ function BottomSheet({
           </div>
 
           <div className="px-3.5">
-            {/* 節分かれつ刻（天文計算） */}
-            <div
-              className="mb-2 rounded-xl p-3"
-              style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fdf3e4", border: `2px solid ${ac}35` }}
-            >
-              <div className="relative flex items-center justify-center gap-1.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/cel-sun.png" alt="" className="h-[16px] w-[16px] object-contain" />
-                <span className="text-[10.5px] tracking-widest text-[#b07a30]">叶いタイム</span>
-                <span className="num absolute right-0 text-[11px] text-[#b8b0a0]">{best ? `${best.deg}°` : "—"}</span>
+            {/* ★天体トリオ — 宇宙の帯に太陽・地球・月が浮かぶ。タップで下に情報が開く */}
+            <style>{`
+              @keyframes celFloat { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-5px); } }
+              @keyframes celGlow { 0%,100%{ opacity:.55; } 50%{ opacity:1; } }
+            `}</style>
+            <div className="mb-2 overflow-hidden rounded-2xl" style={{ background: "radial-gradient(ellipse at 50% 120%, #1c2a4a 0%, #0a0f1e 70%)" }}>
+              <div className="flex items-end justify-center gap-9 px-3 pb-2 pt-4">
+                {([
+                  ["sun", "/icons/cel-sun.png", 46, "叶いタイム", "rgba(255,200,80,.8)", "0s"],
+                  ["earth", "/icons/cel-earth.png", 58, "潮", "rgba(90,180,255,.7)", "1.3s"],
+                  ["moon", moonImageOf(moon.age), 46, "月", "rgba(220,220,255,.7)", "2.6s"],
+                ] as const).map(([key, src, size, label, glow, delay]) => {
+                  const on = celSel === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setCelSel(on ? null : key)}
+                      className="flex flex-col items-center gap-1.5"
+                      style={{ animation: `celFloat 4.5s ease-in-out ${delay} infinite` }}
+                    >
+                      <span
+                        className="rounded-full transition-all duration-300"
+                        style={{
+                          padding: 3,
+                          border: on ? `2px solid ${glow}` : "2px solid transparent",
+                          filter: `drop-shadow(0 0 ${on ? 16 : 8}px ${glow})`,
+                        }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="" className="rounded-full object-contain" style={{ width: size, height: size }} loading="lazy" />
+                      </span>
+                      <span className="text-[9px] font-bold tracking-[1.5px]" style={{ color: on ? "#f0e6c8" : "#5a6a88" }}>
+                        {label} {on ? "▾" : ""}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <div
-                className="num text-center text-[26px] font-extrabold leading-tight"
-                style={{
-                  color: "#0a9a52",
-                  textShadow: "0 0 6px rgba(20,200,110,.35)",
-                  letterSpacing: 2,
-                }}
-              >
-                {best ? best.time : "—"}
-              </div>
-              {best?.sekki && (
-                <div className="mt-1.5 border-t pt-1.5" style={{ borderColor: `${ac}20` }}>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-lg font-extrabold" style={{ color: ac }}>
-                      {best.sekki[0]}
-                    </span>
-                    <span className="text-xs text-[#999]">{best.sekki[1]}</span>
+
+              {/* ── 太陽: 叶いタイム ── */}
+              {celSel === "sun" && (
+                <div className="mx-2 mb-2 rounded-xl p-3" style={{ background: best && isSh ? SHISHI_BG[best.deg] : "#fdf3e4", border: `2px solid ${ac}35` }}>
+                  <div className="relative flex items-center justify-center gap-1.5">
+                    <span className="text-[10.5px] tracking-widest text-[#b07a30]">叶いタイム</span>
+                    <span className="num absolute right-0 text-[11px] text-[#b8b0a0]">{best ? `${best.deg}°` : "—"}</span>
                   </div>
-                  <div className="mt-1 text-xs leading-relaxed text-[#555]">{best.sekki[2]}</div>
+                  <div className="num text-center text-[26px] font-extrabold leading-tight" style={{ color: "#0a9a52", textShadow: "0 0 6px rgba(20,200,110,.35)", letterSpacing: 2 }}>
+                    {best ? best.time : "—"}
+                  </div>
+                  {best?.sekki && (
+                    <div className="mt-1.5 border-t pt-1.5" style={{ borderColor: `${ac}20` }}>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-lg font-extrabold" style={{ color: ac }}>{best.sekki[0]}</span>
+                        <span className="text-xs text-[#999]">{best.sekki[1]}</span>
+                      </div>
+                      <div className="mt-1 text-xs leading-relaxed text-[#555]">{best.sekki[2]}</div>
+                    </div>
+                  )}
+                  {best?.kou && (
+                    <div className="mt-1.5 border-t border-[#3a9a8a25] pt-1.5">
+                      <div className="text-[14.5px] font-bold text-[#2a7a6a]">{best.kou[0]}</div>
+                      <div className="mt-[1px] text-[11.5px] text-[#5aaa9a]">{best.kou[1]}</div>
+                      <div className="mt-1 rounded-lg border-l-[3px] border-[#3a9a8a] bg-[#eef6f4] px-2 py-1.5 text-[11.5px] leading-normal text-[#555]">{best.kou[2]}</div>
+                    </div>
+                  )}
                 </div>
               )}
-              {best?.kou && (
-                <div className="mt-1.5 border-t border-[#3a9a8a25] pt-1.5">
-                  <div className="text-[14.5px] font-bold text-[#2a7a6a]">{best.kou[0]}</div>
-                  <div className="mt-[1px] text-[11.5px] text-[#5aaa9a]">{best.kou[1]}</div>
-                  <div className="mt-1 rounded-lg border-l-[3px] border-[#3a9a8a] bg-[#eef6f4] px-2 py-1.5 text-[11.5px] leading-normal text-[#555]">
-                    {best.kou[2]}
+
+              {/* ── 地球: 潮 ── */}
+              {celSel === "earth" && (
+                <div className="mx-2 mb-2 rounded-xl border border-[#d8e4f0] bg-[#f4f8fc] p-2.5">
+                  <button
+                    onClick={async () => {
+                      setPortPick(true);
+                      if (!ports.length) setPorts(await listPorts());
+                    }}
+                    className="mb-1 rounded-full border border-[#c8d8e8] bg-white px-2 py-0.5 text-[10px] font-bold text-[#3070b0]"
+                  >
+                    <img src="/icons/icon-anchor.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {tide ? `${tide.port}港` : "港を選ぶ"} ▾
+                  </button>
+                  {tide === null ? (
+                    <div className="py-1 text-[10px] text-[#9ab]">現在位置から最寄り港を探しています...</div>
+                  ) : tideRows.length === 0 ? (
+                    <div className="py-1 text-[10px] text-[#9ab]">この日のデータがありません</div>
+                  ) : (
+                    <div className="text-[12px]">
+                      {tideRows.map(([lb, t], i) => (
+                        <div key={i} className="mb-[1.5px] flex justify-between">
+                          <span style={{ color: lb === "満" ? "#3070b0" : "#80a8c8", fontWeight: lb === "満" ? 700 : 400 }}>{lb}潮</span>
+                          <span className="num text-[#444]">{t}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── 月: 月齢と出入り ── */}
+              {celSel === "moon" && (
+                <div className="mx-2 mb-2 rounded-xl border border-[#26262e] p-2.5 text-center" style={{ background: "#000005" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-1 h-14 w-14" loading="lazy" />
+                  <div className="num text-[12px] text-[#e8e4f0]">月齢 {moon.age.toFixed(1)}</div>
+                  {(() => {
+                    const ht = holyTimeOf(dk);
+                    return ht ? (
+                      <div className="mt-[1px] text-[10.5px] font-extrabold text-[#e8c860]">✦{ht.name}（{ht.label}）{ht.time}</div>
+                    ) : null;
+                  })()}
+                  <div className="mx-auto mt-1 max-w-[220px] border-t border-[#2a2a35] pt-1 text-[10.5px] leading-relaxed text-[#b8b4c8]">
+                    <div className="flex justify-between"><span>月の出</span><span className="num text-white">{mt.rise ?? "—"}</span></div>
+                    <div className="flex justify-between"><span>南中</span><span className="num text-white">{mt.transit ?? "—"}</span></div>
+                    <div className="flex justify-between"><span>月の入</span><span className="num text-white">{mt.set ?? "—"}</span></div>
                   </div>
                 </div>
               )}
             </div>
-
-            {/* 潮汐＋月 — 折りたたみスタート(見えるのは地球と月のマークだけ) */}
-            <details className="mb-2">
-              <summary className="flex cursor-pointer list-none items-center justify-center gap-3 rounded-xl border border-[#e4e0d8] bg-[#faf8f4] py-1.5">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/cel-earth.png" alt="潮" className="h-[20px] w-[20px] object-contain" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/cel-moon.png" alt="月" className="h-[20px] w-[20px] object-contain" />
-                <span className="text-[9px] text-[#b0aa9c]">▾</span>
-              </summary>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="rounded-xl border border-[#d8e4f0] bg-[#f4f8fc] p-2.5">
-                <div className="mb-1 flex items-center gap-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/cel-earth.png" alt="" className="h-[15px] w-[15px] object-contain" />
-                </div>
-                <button
-                  onClick={async () => {
-                    setPortPick(true);
-                    if (!ports.length) setPorts(await listPorts());
-                  }}
-                  className="mb-1 rounded-full border border-[#c8d8e8] bg-white px-2 py-0.5 text-[10px] font-bold text-[#3070b0]"
-                >
-                  <img src="/icons/icon-anchor.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {tide ? `${tide.port}港` : "港を選ぶ"} ▾
-                </button>
-                {tide === null ? (
-                  <div className="py-1 text-[10px] text-[#9ab]">現在位置から最寄り港を探しています...</div>
-                ) : tideRows.length === 0 ? (
-                  <div className="py-1 text-[10px] text-[#9ab]">この日のデータがありません</div>
-                ) : (
-                  <div className="text-[11px]">
-                    {tideRows.map(([lb, t], i) => (
-                      <div key={i} className="mb-[1.5px] flex justify-between">
-                        <span style={{ color: lb === "満" ? "#3070b0" : "#80a8c8", fontWeight: lb === "満" ? 700 : 400 }}>
-                          {lb}潮
-                        </span>
-                        <span className="num text-[#444]">{t}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="rounded-xl border border-[#26262e] p-2.5 text-center" style={{ background: "#000005" }}>
-                <div className="flex items-center justify-end">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/cel-moon.png" alt="" className="h-[15px] w-[15px] object-contain" />
-                </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-1 h-11 w-11" loading="lazy" />
-                <div className="num text-[10.5px] text-[#e8e4f0]">月齢 {moon.age.toFixed(1)}</div>
-                {(() => {
-                  const ht = holyTimeOf(dk);
-                  return ht ? (
-                    <div className="mt-[1px] text-[10.5px] font-extrabold text-[#e8c860]">
-                      ✦{ht.name}（{ht.label}）{ht.time}
-                    </div>
-                  ) : null;
-                })()}
-                <div className="mt-1 border-t border-[#2a2a35] pt-1 text-[9.5px] leading-relaxed text-[#b8b4c8]">
-                  <div className="flex justify-between"><span>月の出</span><span className="num text-white">{mt.rise ?? "—"}</span></div>
-                  <div className="flex justify-between"><span>南中</span><span className="num text-white">{mt.transit ?? "—"}</span></div>
-                  <div className="flex justify-between"><span>月の入</span><span className="num text-white">{mt.set ?? "—"}</span></div>
-                </div>
-              </div>
-              </div>
-            </details>
 
 
             {/* 24時間スケジュール */}
