@@ -1727,6 +1727,26 @@
           condEl.textContent = txt;
         })
         .catch(() => {});
+      // ★2行目: M/Xクラスの太陽フレア速報 (直近24時間に出た時だけ表示)
+      fetch("https://services.swpc.noaa.gov/json/goes/primary/xray-flares-latest.json")
+        .then(r => r.ok ? r.json() : null)
+        .then(fl => {
+          const f = fl && fl[0];
+          if (!f || !f.max_class || !/^[MX]/.test(f.max_class)) return;
+          const t = new Date(f.max_time || f.begin_time);
+          if (!(t.getTime() > Date.now() - 24 * 3600 * 1000)) return;
+          const hh = String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");
+          let el = document.getElementById("gf1-flare");
+          if (!el) {
+            el = document.createElement("div");
+            el.id = "gf1-flare";
+            el.className = "gf1-cond storm";
+            el.style.marginTop = "6px";
+            condEl.parentNode.insertBefore(el, condEl.nextSibling);
+          }
+          el.textContent = "⚡ " + f.max_class + "フレアが出ています（" + hh + "）— 由来の太陽風は1〜3日後に地球到達の可能性";
+        })
+        .catch(() => {});
     }
     // ★ 8.02Hzまでの距離ゲージ (瞬間値。API v1 の distance_to_target_hz を優先)
     const fmtDist = d => (d >= 0 ? "+" : "−") + Math.abs(d).toFixed(2);

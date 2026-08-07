@@ -71,10 +71,35 @@ export default function LinePage() {
   const groupUnread = (groups ?? []).reduce((s, g) => s + g.unread, 0);
 
   const q = query.trim().toLowerCase();
+
+  /* ★メッセージ本文検索: 名前だけでなく、過去のトーク本文からも探す（300msデバウンス） */
+  const [hits, setHits] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const qq = query.trim();
+    if (!qq || !me) { setHits({}); return; }
+    const t = setTimeout(async () => {
+      const supabase = createClient();
+      const esc = qq.replace(/[%_]/g, "\\$&");
+      const [dm, gm] = await Promise.all([
+        supabase.from("messages").select("chat_id, body").ilike("body", `%${esc}%`).order("created_at", { ascending: false }).limit(60),
+        supabase.from("group_messages").select("scope_type, scope_id, body").ilike("body", `%${esc}%`).order("created_at", { ascending: false }).limit(60),
+      ]);
+      const h: Record<string, string> = {};
+      for (const r of (dm.data ?? []) as Array<{ chat_id: string; body: string }>) if (!h[r.chat_id]) h[r.chat_id] = r.body;
+      for (const r of (gm.data ?? []) as Array<{ scope_type: string; scope_id: string; body: string }>) {
+        const k = `${r.scope_type}:${r.scope_id}`;
+        if (!h[k]) h[k] = r.body;
+      }
+      setHits(h);
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, me]);
+
   const shownChats = (chats ?? []).filter(
-    (c) => !q || (c.partner.display_name ?? "").toLowerCase().includes(q)
+    (c) => !q || (c.partner.display_name ?? "").toLowerCase().includes(q) || hits[c.id]
   );
-  const shownGroups = (groups ?? []).filter((g) => !q || g.name.toLowerCase().includes(q));
+  const shownGroups = (groups ?? []).filter((g) => !q || g.name.toLowerCase().includes(q) || hits[g.key]);
 
   return (
     <main className="pb-20">
@@ -250,7 +275,7 @@ export default function LinePage() {
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="line-clamp-2 text-[12.5px] leading-snug text-[#a09888]">
-                      {g.lastBody ?? "みんなに、ひとこと目をどうぞ"}
+                      {q && hits[g.key] ? <>🔍 {hits[g.key]}</> : (g.lastBody ?? "みんなに、ひとこと目をどうぞ")}
                     </span>
                     {g.unread > 0 && (
                       <span
@@ -316,7 +341,7 @@ export default function LinePage() {
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="line-clamp-2 text-[12.5px] leading-snug text-[#a09888]">
-                    {c.lastBody ?? "トークを始めましょう"}
+                    {q && hits[c.id] ? <>🔍 {hits[c.id]}</> : (c.lastBody ?? "トークを始めましょう")}
                   </span>
                   {c.unread > 0 && (
                     <span
