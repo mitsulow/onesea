@@ -560,6 +560,10 @@
   .dv-panel {
     background: linear-gradient(165deg, #14161d, #0b0d13);
     padding: 1.05rem 0 1.25rem;
+    /* ★ドットグラフと同じく画面の左右いっぱいまで(白いスキマを埋める) */
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    width: 100vw;
   }
   .dv-block + .dv-block { margin-top: 1.7rem; }
   .dv-title {
