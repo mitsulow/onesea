@@ -119,7 +119,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
-  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TaLK", talk: true },
+  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK", talk: true },
 ];
 
 function TabIcon({ icon, active }: { icon: string; active: boolean }) {

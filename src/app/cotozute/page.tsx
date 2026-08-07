@@ -43,7 +43,7 @@ const MENU_ITEMS: Array<{ href: string; icon: string; label: string; ext?: boole
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
-  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TaLK" },
+  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
 ];
 
 /** 投稿の区切り線（細いティファニーブルー・左右いっぱい） */

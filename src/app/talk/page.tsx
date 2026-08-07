@@ -111,7 +111,7 @@ export default function LinePage() {
       >
         <h1 className="flex items-center gap-2 text-[17px] font-extrabold tracking-[4px] text-white">
           <img src="/icons/icon-chat.webp" alt="" className="h-6 w-6 object-contain" />
-          TaLK
+          TalK
         </h1>
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           <AvatarMenu ring="#7dd8a0" />
@@ -144,8 +144,8 @@ export default function LinePage() {
         <div className="grid grid-cols-2 border-b border-[#e8e0d0] bg-[#fffdf8]">
           {(
             [
-              ["dm", "👤 個人TaLK", dmUnread],
-              ["group", "👥 グループTaLK", groupUnread],
+              ["dm", "👤 個人TalK", dmUnread],
+              ["group", "👥 グループTalK", groupUnread],
             ] as const
           ).map(([id, label, n]) => (
             <button
