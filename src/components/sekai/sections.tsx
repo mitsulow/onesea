@@ -272,7 +272,7 @@ export function MootsSection({
               第{mootNoOf(next.dateKey) ?? "—"}回セカイムラ{next.kind === "new" ? "新月会" : "満月会"}
             </div>
             <div className="num mt-1 text-[16px] font-extrabold text-[#eef8f0]" style={{ textShadow: "0 1px 8px rgba(0,0,0,.9)" }}>
-              {next.label}{next.hour}時〜（⏳{today ? "今日" : next.dday === 1 ? "あと1日" : `あと${next.dday}日`}）
+              {next.label}{next.hour}時〜（<img src="/icons/icon-hourglass.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2 }} />{today ? "今日" : next.dday === 1 ? "あと1日" : `あと${next.dday}日`}）
             </div>
             <div className="num mt-0.5 text-[10.5px] text-[#b8d8c8]" style={{ textShadow: "0 1px 6px rgba(0,0,0,.85)" }}>
               {counts.get(next.dateKey) ?? 0}人が参加予定
