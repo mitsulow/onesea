@@ -305,7 +305,7 @@ function MonthCal({
   const best = (d: number) => bestOfComputed(dk(d));
 
   return (
-    <div className="min-h-[60vh] bg-white" onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}>
+    <div className="bg-white" onTouchStart={onTS} onTouchMove={onTM} onTouchEnd={onTE}>
       {/* 金の題字 */}
       <div className="px-4 pt-1" style={{ background: "#fff" }}>
       </div>
