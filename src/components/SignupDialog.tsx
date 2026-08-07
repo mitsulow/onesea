@@ -41,9 +41,9 @@ export function SignupDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-[15.5px] font-extrabold leading-relaxed tracking-wide text-[#f0e6c8]">
-          OneSea（無料）会員になると
+          OneSea会員（無料）になると
           <br />
-          {feature ?? "この機能"}が使えます
+          {feature ?? "この機能が使えるように"}なります
         </div>
         <button
           onClick={login}

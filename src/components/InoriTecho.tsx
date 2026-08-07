@@ -191,7 +191,7 @@ export function InoriTecho() {
 
   return (
     <div className="relative overflow-hidden bg-white" style={{ margin: "0 -16px" }}>
-      <SignupDialog open={showSignup} onClose={() => setShowSignup(false)} feature="手帳への書き込み" />
+      <SignupDialog open={showSignup} onClose={() => setShowSignup(false)} feature="手帳に書き込めるように" />
       <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={tryOpenDay} openKey={sheetKey} />
       {sheetKey && (
         <BottomSheet
