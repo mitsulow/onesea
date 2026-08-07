@@ -157,8 +157,8 @@ export function HomeDashboard() {
       {/* 題字 — ここだけ黒帯（「い」を小さくする元のバージョン）。右にアバター＝他サービスの入口
           統一規格: 高さ52px・サービス名センター・アバター右 */}
       <div className="relative flex h-[52px] items-center justify-center" style={{ background: "#0e1116" }}>
-        <img src={moonImageOf(moon.age)} alt="" className="absolute left-3 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full" loading="lazy" />
-        <span className="text-[16px] font-extrabold tracking-[3px] text-[#e8d5a0]">
+        <span className="flex items-center gap-2 text-[16px] font-extrabold tracking-[3px] text-[#e8d5a0]">
+          <img src={moonImageOf(moon.age)} alt="" className="h-7 w-7 rounded-full" loading="lazy" />
           願<span style={{ fontSize: "70%" }}>い</span>叶<span style={{ fontSize: "70%" }}>い</span>手帳
         </span>
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
