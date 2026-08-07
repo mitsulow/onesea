@@ -144,8 +144,8 @@ export default function LinePage() {
         <div className="grid grid-cols-2 border-b border-[#e8e0d0] bg-[#fffdf8]">
           {(
             [
-              ["dm", "👤 個人TalK", dmUnread],
-              ["group", "👥 グループTalK", groupUnread],
+              ["dm", "個人TalK", dmUnread],
+              ["group", "グループTalK", groupUnread],
             ] as const
           ).map(([id, label, n]) => (
             <button
@@ -235,7 +235,7 @@ export default function LinePage() {
           </div>
         ) : groups.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <div className="text-4xl">👥</div>
+            <div className="flex justify-center"><img src="/icons/icon-people.webp" alt="" style={{ width: 44, height: 44 }} /></div>
             <p className="mt-3 text-sm leading-relaxed text-[#8a8070]">
               まだグループがありません。
               <br />
@@ -297,7 +297,7 @@ export default function LinePage() {
         </div>
       ) : chats.length === 0 ? (
         <div className="px-6 py-12 text-center">
-          <div className="text-4xl">💬</div>
+          <div className="flex justify-center"><img src="/icons/icon-chat.webp" alt="" style={{ width: 44, height: 44 }} /></div>
           <p className="mt-3 text-sm leading-relaxed text-[#8a8070]">
             まだトークがありません。
             <br />

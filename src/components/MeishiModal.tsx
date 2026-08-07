@@ -136,7 +136,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                   )}
                   {p.rice_work && (
                     <div className="mt-0.5 line-clamp-1 break-words text-[11.5px] text-[#8a8070]">
-                      🍚 {p.rice_work}
+                      <img src="/icons/icon-rice-bowl.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> {p.rice_work}
                     </div>
                   )}
                 </div>

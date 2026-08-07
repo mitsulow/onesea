@@ -481,7 +481,7 @@ export default function UserPage() {
         )}
         {profile.skills && profile.skills.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]">🛠 SKILL</div>
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> SKILL</div>
             <div className="flex flex-wrap gap-1.5">
               {profile.skills.map((sk) => (
                 <span key={sk} className="rounded-full bg-[#eaf1e6] px-2.5 py-1 text-[11.5px] font-medium text-[#4a6a3c]">

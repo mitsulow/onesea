@@ -220,7 +220,7 @@ export function PostCard({
           }}
           className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] text-[#65676b]"
         >
-          ↗
+          <img src="/icons/icon-share2.webp" alt="シェア" style={{ width: 16, height: 16 }} />
         </button>
       </div>
 

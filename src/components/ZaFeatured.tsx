@@ -81,7 +81,7 @@ export function ZaFeatured({ shops }: { shops: Shop[] }) {
           </div>
         )}
         <span className="whitespace-nowrap text-[11px] font-bold tracking-widest text-white">
-          🌟 本日のパワープッシュ楽座 🌟
+          <img src="/icons/icon-goldstar.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> 本日のパワープッシュ楽座 <img src="/icons/icon-goldstar.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} />
         </span>
       </div>
 

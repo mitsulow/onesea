@@ -1707,7 +1707,7 @@ export function VillagesSection({
           className="mb-2.5 rounded-xl px-4 py-3 text-center"
           style={{ background: "linear-gradient(135deg,#eaf6ee,#fdf8ec)", border: "1.5px solid #4a8a5c66" }}
         >
-          <div className="text-[22px]">🎉🔥🎉</div>
+          <div className="flex justify-center gap-1"><img src="/icons/icon-cracker.webp" alt="" style={{ width: 26, height: 26 }} /><img src="/icons/icon-fire.webp" alt="" style={{ width: 26, height: 26 }} /><img src="/icons/icon-cracker.webp" alt="" style={{ width: 26, height: 26 }} /></div>
           <div className="mt-0.5 text-[14px] font-extrabold" style={{ color: GREEN }}>
             「{born}」が生まれました
           </div>
