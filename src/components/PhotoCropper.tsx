@@ -84,7 +84,7 @@ export function PhotoCropper({
   };
 
   return (
-    <div className="fixed inset-0 z-[97] flex flex-col items-center justify-center bg-black/85 px-6">
+    <div data-noswipe className="fixed inset-0 z-[97] flex flex-col items-center justify-center bg-black/85 px-6">
       <div className="mb-3 text-[13.5px] font-bold text-white">{title}</div>
       <div
         ref={frameRef}
