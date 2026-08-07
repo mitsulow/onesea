@@ -485,6 +485,7 @@ function MootArchive() {
 /* ═══ 各地の活動報告（村ブログ横断フィード）═══ */
 export function ActivitySection({ me }: { me: User | null }) {
   const [feed, setFeed] = useState<any[] | null>(null);
+  const [seedOpen, setSeedOpen] = useState(false); // 「村を作る」カードで開く
   const [villages, setVillages] = useState<Village[]>([]);
   const [myVills, setMyVills] = useState<Village[]>([]);
   const [writing, setWriting] = useState(false);
@@ -776,10 +777,24 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
           </Link>
         ))}
+        {/* 一番右: 村を作るカード（押すと下に村の種セクションが開く） */}
+        <button
+          onClick={() => setSeedOpen((o) => !o)}
+          className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border-2 border-dashed bg-white text-left shadow-sm"
+          style={{ borderColor: seedOpen ? "#4a8a5c" : "#c8dccb" }}
+        >
+          <div className="flex h-[86px] w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#eaf6ec,#d8ecdc)" }}>
+            <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
+          </div>
+          <div className="px-2 py-1.5">
+            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作る</div>
+            <div className="truncate text-[10px] text-[#a0aca0]">{seedOpen ? "閉じる ▲" : "3人集めて申請 ▼"}</div>
+          </div>
+        </button>
       </div>
 
-      {/* 🌱 一緒に村を作りたい人へ（村の種） */}
-      <SeedSection me={me} />
+      {/* 🌱 一緒に村を作りたい人へ（村の種）— 「村を作る」カードで開閉 */}
+      {seedOpen && <SeedSection me={me} />}
 
       {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
       {me && myVills.length === 0 && (
