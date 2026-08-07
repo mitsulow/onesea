@@ -37,7 +37,7 @@ function getTweetId(url: string): string | null {
 }
 
 const IG_HEADER = 54; // 埋め込み上部（アバター+名前）の高さ
-const IG_FOOTER = 102; // 下部（♡💬↗ボタン列+リンク行）の高さ
+const IG_FOOTER = 168; // ★「Instagramでもっと見る」リンク行まで含めて切り落とす // 下部（♡💬↗ボタン列+リンク行）の高さ
 
 /** Instagramのメディア部分だけを見せる埋め込み */
 function InstagramMediaOnly({ igId }: { igId: string }) {
