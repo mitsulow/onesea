@@ -1265,7 +1265,7 @@
         </div>
         <div class="gf1-live">振幅 <b id="gf1-amp">—</b> pT <span class="gf1-sep">・</span> Q値 <b id="gf1-q">—</b></div>
       </div>
-      <div class="gf1-target" id="gf1-target" style="display:none;">目標 8.02 Hz まで <b id="gf1-dist">—</b> Hz <span class="gf1-sep">・</span> 今週の平均値 <b id="gf1-dist3">—</b> Hz</div>
+      <div class="gf1-target" id="gf1-target" style="display:none;"><span id="gf1-goal">目標 8.02 Hz まで <b id="gf1-dist">—</b> Hz</span> <span class="gf1-sep">・</span> 今週の平均値 <b id="gf1-dist3">—</b> Hz</div>
     </div>
 
     <div class="spark-wrap">
@@ -1756,7 +1756,13 @@
       : (f1m && typeof f1m.hz === "number" ? f1m.hz - TARGET_HZ : null);
     if (distRow && distNow != null) {
       distRow.style.display = "";
-      document.getElementById("gf1-dist").textContent = fmtDist(distNow);
+      // 「まで」= 残り距離なので符号なしの絶対値。超えていたら「到達中」
+      const goalEl = document.getElementById("gf1-goal");
+      if (distNow >= 0) {
+        if (goalEl) goalEl.innerHTML = '目標 8.02 Hz に<b>到達中</b>';
+      } else {
+        if (goalEl) goalEl.innerHTML = '目標 8.02 Hz まで <b>' + Math.abs(distNow).toFixed(2) + '</b> Hz';
+      }
     }
     // 今週平均=今日までの7日 (graph_stats.json / 0Lei側で7日窓に変更済み)
     fetch("/api/sr/graph_stats.json", { cache: "no-store" })
