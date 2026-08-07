@@ -809,10 +809,10 @@
     12% { opacity: 1; transform: scale(1.5); }
     100% { opacity: 0; transform: scale(0.8); }
   }
-  .rin-btn.m1 { --glow: rgba(255, 60, 140, 0.9); }
+  .rin-btn.m1 { --glow: rgba(90, 224, 138, 0.9); }
   .rin-btn.m2 { --glow: rgba(255, 214, 10, 0.9); }
   .rin-btn.m3 { --glow: rgba(200, 120, 255, 0.9); }
-  .rin-btn.m4 { --glow: rgba(255, 60, 140, 0.9); }
+  .rin-btn.m4 { --glow: rgba(90, 224, 138, 0.9); }
   .rin-btn img {
     width: 100%;
     display: block;
@@ -935,7 +935,7 @@
     border-left: 3px solid var(--sr, #52fa8c);
     overflow: hidden;
   }
-  .mode-block.m1 { --sr: #ff3c8c; }
+  .mode-block.m1 { --sr: #5ae08a; }
   .mode-block.m2 { --sr: #ffd60a; }
   .mode-block.m3 { --sr: #c878ff; }
   .mode-block.m4 { --sr: #ff96be; }
@@ -962,7 +962,7 @@
     padding: 0.18rem 0.7rem;
     border-radius: 100px;
   }
-  .mh-cur.m1 { background: #ff3c8c; }
+  .mh-cur.m1 { background: #5ae08a; }
   .mh-cur.m2 { background: #ffd60a; }
   .mh-cur.m3 { background: #c878ff; }
   .mh-cur.m4 { background: #ff96be; color: #fff; }
@@ -1020,7 +1020,7 @@
   .sr-card {
     padding: 0.85rem 1rem 0.35rem;
   }
-  .sr-card.m1 { --sr: #ff3c8c; }
+  .sr-card.m1 { --sr: #5ae08a; }
   .sr-card.m2 { --sr: #ffd60a; }
   .sr-card.m3 { --sr: #c878ff; }
   .sr-card.m4 { --sr: #ff96be; }
@@ -2382,7 +2382,7 @@
         seriesCache = await r.json();
       }
       const S = seriesCache;
-      const COLORS = { F1: "#ff3c8c", F2: "#ffd60a", F3: "#c878ff", F4: "#ff96be" };
+      const COLORS = { F1: "#5ae08a", F2: "#ffd60a", F3: "#c878ff", F4: "#ff96be" };
       document.querySelectorAll("canvas.mode-graph").forEach(cv => {
         if (cv.clientWidth < 40) return;
         const parts = (cv.dataset.g || "").split(":");
@@ -2438,7 +2438,7 @@
         ctx.beginPath(); ctx.moveTo(PL, Y(avg)); ctx.lineTo(W - PR, Y(avg)); ctx.stroke();
         ctx.setLineDash([]);
         // 本体の線
-        ctx.strokeStyle = COLORS[mode] || "#ff3c8c"; ctx.lineWidth = 1.5 * u;
+        ctx.strokeStyle = COLORS[mode] || "#5ae08a"; ctx.lineWidth = 1.5 * u;
         ctx.beginPath();
         let pen = false, prev = null;
         keys.forEach(k => {
