@@ -30,11 +30,11 @@ export function CotozuteTeaser() {
   return (
     <section
       className="card"
-      style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none" }}
+      style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", margin: "0 -16px", borderRadius: 0, borderLeft: "none", borderRight: "none", paddingTop: 8 }}
     >
       <Link href="/cotozute" className="no-underline">
         <span
-          className="mb-1 inline-flex items-center gap-1.5 rounded-full px-3.5 pb-[6px] pt-[7px]"
+          className="mb-1.5 inline-flex items-center gap-1.5 rounded-full px-3.5 pb-[6px] pt-[7px]"
           style={{
             background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)",
             boxShadow: "0 4px 14px rgba(44,183,222,.35)",
