@@ -165,7 +165,14 @@ export function HomeDashboard() {
         </span>
       </div>
 
-      {/* 日付 — 主役。曜日まで同じ書体・同じ色で一体 */}
+      {/* 日付 — 主役。曜日まで同じ書体・同じ色で一体。右上に地球冒険(小) */}
+      {advDays != null && (
+        <div className="relative">
+          <span className="num absolute right-2 top-1 text-[10px] font-bold text-[#a09880]">
+            🌏 今日は{advDays.toLocaleString()}回目の地球冒険の日
+          </span>
+        </div>
+      )}
       <div className="pt-4" style={{ fontFamily: MINCHO }}>
         <span className="text-[27px] font-bold tracking-wide text-[#2a2622]">
           {y}年{m}月{d}日（{dow}）
@@ -180,11 +187,6 @@ export function HomeDashboard() {
         )}
         {moon.holy && <span className="ml-2 font-bold text-[#c09030]">{moon.holy}</span>}
       </div>
-      {advDays != null && (
-        <div className="mt-1.5 text-[12.5px] text-[#6a604a]" style={{ fontFamily: MINCHO }}>
-          今日は <span className="num text-[15px] font-bold text-[#8b6914]">{advDays.toLocaleString()}</span> 回目の地球冒険の日
-        </div>
-      )}
 
       {/* 計器 — フシワカレツトキ / シューマン共振。左右同格の2枚、数字が主役 */}
       <div className="mx-5 mt-5 grid grid-cols-2 gap-3">
