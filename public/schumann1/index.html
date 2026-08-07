@@ -2062,7 +2062,7 @@
       }
     }
     // 点（宝の山方式: 単色グリーンの素のドット）
-    const r = dotRange === "3y" ? 2.0 * u : 1.5 * u;
+    const r = dotRange === "3y" ? 1.4 * u : 1.05 * u; // 面積を半分に(半径x0.7)
     pts.forEach(e => {
       const c = [90, 212, 143]; // ★宝の山と同じ単色グリーン #5ad48f
       const x = X(Date.parse(e.d + "T00:00:00Z")), yy = Y(e.f1);
