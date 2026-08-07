@@ -1211,7 +1211,7 @@
     padding:0 0.9rem 0.8rem}
   .dvs-item{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
     border-radius:12px;padding:10px 6px;text-align:center}
-  .dvs-num{font:700 1.05rem/1.2 "SF Mono",Consolas,monospace;color:#7cf9d4}
+  .dvs-num{font:700 1.05rem/1.2 "SF Mono",Consolas,monospace;color:#2CB7DE}
   .dvs-label{margin-top:3px;font-size:0.66rem;color:#8b93a8;letter-spacing:0.04em}
   /* MMM誘導カード */
   .dv-mmm-cta{display:block;margin:1rem 0.9rem 0.4rem;padding:16px 18px;border-radius:16px;
@@ -1436,66 +1436,57 @@
 
   </details>
 
-  <details class="fold" id="fold-dot" open>
-    <summary>F1の全記録（1日 = 1点）</summary>
+  <details class="fold" id="fold-target">
+    <summary>過去のデータ</summary>
+
     <div class="graph-description">
-      <p>トムスクの実測から得たF1日平均を、1日1点で打った散布図。2012年からだと点が詰まって見えにくいので、<b>3年間</b>に切り替えると2024年以降の濃ゆい記録が見えます。青緑=8.02Hz目標に近い日、金=7.83基準線。</p>
+      <p>2011年からの実測値アーカイブ 全<b id="dv-count">—</b>日分を無料公開中（トムスク研究所のグラフより）</p>
+    </div>
+    <div class="dv-stats" id="dv-stats" style="display:none">
+      <div class="dvs-item"><div class="dvs-num" id="dvs-avg">—</div><div class="dvs-label">全期間平均F1値</div></div>
+      <div class="dvs-item"><div class="dvs-num" id="dvs-target">—</div><div class="dvs-label">8.02Hz到達日数</div></div>
+      <div class="dvs-item"><div class="dvs-num" id="dvs-max">—</div><div class="dvs-label" id="dvs-max-label">歴代最高F1</div></div>
     </div>
     <div class="dot-tabs" id="dot-tabs">
       <button type="button" class="dot-tab" data-range="all">全期間</button>
       <button type="button" class="dot-tab active" data-range="3y">3年間</button>
     </div>
     <div class="dv-block" id="dotBlock"><canvas id="dv-dot"></canvas></div>
-  </details>
-
-  <details class="fold" id="fold-target">
-    <summary>データ一覧（シューマン共振）</summary>
-
-    <div class="graph-description">
-      <p>2011年からの実測アーカイブ、全<b id="dv-count">—</b>日ぶん。トムスクの折れ線グラフを5分刻みで読み取ったF1〜F4の生データが土台。基準線は従来値 7.83 Hz と目標 8.02 Hz。</p>
-    </div>
-    <div class="dv-stats" id="dv-stats" style="display:none">
-      <div class="dvs-item"><div class="dvs-num" id="dvs-days">—</div><div class="dvs-label">観測日数</div></div>
-      <div class="dvs-item"><div class="dvs-num" id="dvs-avg">—</div><div class="dvs-label">全期間平均 Hz</div></div>
-      <div class="dvs-item"><div class="dvs-num" id="dvs-above">—</div><div class="dvs-label">7.83Hz以上の日</div></div>
-      <div class="dvs-item"><div class="dvs-num" id="dvs-target">—</div><div class="dvs-label">8.02Hz到達日数</div></div>
-      <div class="dvs-item"><div class="dvs-num" id="dvs-max">—</div><div class="dvs-label" id="dvs-max-label">歴代最高</div></div>
-    </div>
     <div class="dv-panel">
       <div class="dv-block">
-        <div class="dv-title">一週間 <span>過去7日間・1日 = 1本</span></div>
+        <div class="dv-title">■一週間 <span>過去7日間</span></div>
         <canvas id="dv-week"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">一カ月 <span>過去30日間・1日 = 1本</span></div>
+        <div class="dv-title">■1カ月 <span>過去30日間</span></div>
         <canvas id="dv-recent"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">今年 <span>冬至(12月21日)から・空きはデータの無い日</span></div>
+        <div class="dv-title">■今年 <span>冬至(12月21日)から</span></div>
         <canvas id="dv-year"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">全期間 <span>月平均・2011年10月から</span></div>
+        <div class="dv-title">■全期間 <span>月平均値・空きはデータなし</span></div>
         <canvas id="dv-all"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">カレンダーマップ <span>1日 = 1マス・明るいほど8.02Hzに近い</span></div>
+        <div class="dv-title">■カレンダーマップ <span>1日 = 1マス・明るいほど8.02Hzに近い</span></div>
         <canvas id="dv-heat"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">月ごとの傾向 <span>全期間の同じ月を平均 — 地球の音の季節変化</span></div>
+        <div class="dv-title">■四季の傾向 <span>全期間の同じ月を平均 — 地球の音の季節変化</span></div>
         <canvas id="dv-month"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">月の満ち欠けとの関係 <span>新月〜満月の8区間で平均</span></div>
+        <div class="dv-title">■月のみちかけとの関係 <span>新月〜満月の8区間で平均</span></div>
         <canvas id="dv-moon"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">値の分布 <span>全記録はどんな音程で鳴っていたか</span></div>
+        <div class="dv-title">■値の分布 <span>全記録はどんな音程で鳴っていたか</span></div>
         <canvas id="dv-hist"></canvas>
       </div>
       <div class="dv-block">
-        <div class="dv-title">過去の上位データ <span>日平均での上位・下位</span></div>
+        <div class="dv-title">■過去の上位データ <span>日平均での上位・下位</span></div>
         <div id="dv-records" style="padding:0 0.9rem"></div>
       </div>
       <div class="dv-block">
@@ -1941,14 +1932,15 @@
     const fs = Math.max(10, Math.min(13, W / u / 36)) * u;
     return { cv, ctx, W, H, u, fs };
   }
-  function dvRule(g, y, color, label, PL, PR) {
+  function dvRule(g, y, color, label, PL, PR, align) {
     const { ctx, W, u, fs } = g;
     ctx.strokeStyle = color; ctx.lineWidth = u; ctx.setLineDash([5 * u, 5 * u]);
     ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke();
     ctx.setLineDash([]);
     if (label) {
-      ctx.fillStyle = color; ctx.font = fs * 0.85 + "px monospace"; ctx.textAlign = "right";
-      ctx.fillText(label, W - PR - fs * 0.3, y - fs * 0.35);
+      ctx.fillStyle = color; ctx.font = fs * 0.85 + "px monospace";
+      if (align === "left") { ctx.textAlign = "left"; ctx.fillText(label, PL + fs * 0.3, y - fs * 0.35); }
+      else { ctx.textAlign = "right"; ctx.fillText(label, W - PR - fs * 0.3, y - fs * 0.35); }
     }
   }
 
@@ -1977,7 +1969,7 @@
       ctx.beginPath(); ctx.moveTo(PL, y(v)); ctx.lineTo(W - PR, y(v)); ctx.stroke();
     }
     dvRule(g, y(BASELINE_HZ), "rgba(240,198,116,0.5)", "7.83", PL, PR);
-    dvRule(g, y(TARGET_HZ), "rgba(82,250,140,0.85)", "8.02 目標", PL, PR);
+    dvRule(g, y(TARGET_HZ), "rgba(82,250,140,0.85)", "8.02 目標", PL, PR, "left");
     const bw = Math.max(u, Math.min(plotW / n * (opt.barFrac || 0.66), fs * 2.6));
     let lastIdx = -1;
     bars.forEach((b, i) => { if (b.v != null) lastIdx = i; });
@@ -1992,8 +1984,9 @@
     if (opt.avg != null) {
       ctx.strokeStyle = "#f0c674"; ctx.lineWidth = 2 * u;
       ctx.beginPath(); ctx.moveTo(PL, y(opt.avg)); ctx.lineTo(W - PR, y(opt.avg)); ctx.stroke();
-      ctx.fillStyle = "#f0c674"; ctx.font = fs * 0.85 + "px monospace"; ctx.textAlign = "right";
-      ctx.fillText((opt.avgLabel || "平均") + " " + opt.avg.toFixed(2), W - PR - fs * 0.3, y(opt.avg) + fs * 1.05);
+      ctx.fillStyle = "#f0c674"; ctx.font = fs * 0.85 + "px monospace";
+      if (opt.avgAlign === "center") { ctx.textAlign = "center"; ctx.fillText((opt.avgLabel || "平均") + " " + opt.avg.toFixed(2), (PL + W - PR) / 2, y(opt.avg) + fs * 1.05); }
+      else { ctx.textAlign = "right"; ctx.fillText((opt.avgLabel || "平均") + " " + opt.avg.toFixed(2), W - PR - fs * 0.3, y(opt.avg) + fs * 1.05); }
     }
     if (opt.marker != null && bars[opt.marker]) {
       const mx = xc(opt.marker);
@@ -2090,10 +2083,8 @@
         const above = all.filter(e => e.f1 >= BASELINE_HZ).length;
         const hitTarget = all.filter(e => (typeof e.hi === "number" ? e.hi : e.f1) >= TARGET_HZ).length;
         const top = all.reduce((a, e) => (e.f1 > a.f1 ? e : a), all[0]);
-        if ($("dvs-days")) {
-          $("dvs-days").textContent = all.length.toLocaleString();
-          $("dvs-avg").textContent = avg.toFixed(2);
-          $("dvs-above").textContent = Math.round(above / all.length * 100) + "%";
+        if ($("dvs-avg")) {
+          $("dvs-avg").textContent = avg.toFixed(2) + "Hz";
           $("dvs-target").textContent = hitTarget.toLocaleString() + "日";
           $("dvs-max").textContent = top.f1.toFixed(2);
           $("dvs-max-label").textContent = "歴代最高 " + top.d.slice(0, 4) + "年";
@@ -2108,13 +2099,13 @@
       // ① 一週間 (過去7日) — 縦軸を0〜9Hz固定にして日々の高さを素直に比べられるように
       dvBars("dv-week", all.slice(-7).map(e => ({
         v: e.f1, label: Number(e.d.slice(5, 7)) + "/" + Number(e.d.slice(8, 10)),
-      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true, fixedLo: 0, fixedHi: 9 });
+      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true, fixedLo: 7.0, fixedHi: 9.0 });
 
       // ② 一カ月 (過去30日)
       dvBars("dv-recent", all.slice(-30).map(e => ({
         v: e.f1, label: Number(e.d.slice(5, 7)) + "/" + Number(e.d.slice(8, 10)),
       })).map((b, i, arr) => (i % Math.ceil(arr.length / 8) && i !== arr.length - 1 ? { ...b, label: null } : b)),
-        { hRatio: 0.42, hotLast: true, avg: yearAvg, avgLabel: todayY + "平均" });
+        { hRatio: 0.42, hotLast: true, avg: yearAvg, avgLabel: todayY + "年平均", avgAlign: "center" });
 
       // ③ 今年 (冬至=12月21日スタート)
       {
@@ -2129,7 +2120,7 @@
           const d = new Date(t).toISOString().slice(0, 10);
           bars.push({ v: map[d] ?? null, label: d.slice(8, 10) === "01" ? Number(d.slice(5, 7)) + "月" : null });
         }
-        dvBars("dv-year", bars, { hRatio: 0.34, barFrac: 0.85, hotLast: true, avg: yearAvg, avgLabel: todayY + "平均" });
+        dvBars("dv-year", bars, { hRatio: 0.34, barFrac: 0.85, hotLast: true, avg: yearAvg, avgLabel: todayY + "年平均", avgAlign: "center" });
       }
 
       // ③ 全期間 (月平均)
