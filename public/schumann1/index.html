@@ -2013,8 +2013,9 @@
   // F1 全記録の散布図 (1日=1点)。range: "all" | "3y"
   let dotRange = "all";
   function drawDotGraph(all) {
+    window.__dotDays = all; // 全画面表示の再描画用にキャッシュ
     // 時系列は横長が見やすい。縦は最大320pxで頭打ち（広い画面での巨大化を防止）
-    const g = dvCtx("dv-dot", 0.46, 320);
+    const g = dvCtx("dv-dot", 0.46, window.__dotFS ? 100000 : 320);
     if (!g || !all || !all.length) return;
     const { ctx, W, H, u, fs } = g;
     // 背景（宇宙の黒）
@@ -3356,5 +3357,52 @@
 })();
 </script>
 
+
+<style>
+  #dotFsOv{display:none;position:fixed;inset:0;z-index:990;background:#000;}
+  #dotFsOv.open{display:flex;align-items:center;justify-content:center;}
+  #dotFsOv .dot-fs-close{position:absolute;top:10px;right:14px;z-index:2;background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;cursor:pointer}
+  #dotFsOv .dot-fs-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:#5a6a7a;font-size:11px}
+  #dv-dot{cursor:zoom-in}
+  #dotFsOv #dv-dot{cursor:zoom-out;width:96vw}
+</style>
+<div id="dotFsOv">
+  <button class="dot-fs-close" id="dotFsClose">✕</button>
+  <div class="dot-fs-hint">タップで戻る ・ 端末を横にすると見やすいよ</div>
+</div>
+<script>
+(function () {
+  var cv = document.getElementById("dv-dot");
+  var ov = document.getElementById("dotFsOv");
+  if (!cv || !ov) return;
+  var home = cv.parentNode;
+  function redraw() { if (window.__dotDays) try { drawDotGraph(window.__dotDays); } catch (e) {} }
+  function openFS() {
+    window.__dotFS = true;
+    ov.insertBefore(cv, ov.firstChild);
+    ov.classList.add("open");
+    var p = ov.requestFullscreen ? ov.requestFullscreen() : Promise.resolve();
+    Promise.resolve(p).then(function () {
+      if (screen.orientation && screen.orientation.lock) return screen.orientation.lock("landscape");
+    }).catch(function () {}).finally ? void 0 : void 0;
+    setTimeout(redraw, 250);
+  }
+  function closeFS() {
+    window.__dotFS = false;
+    ov.classList.remove("open");
+    home.appendChild(cv);
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+    try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+    setTimeout(redraw, 250);
+  }
+  cv.addEventListener("click", function () { window.__dotFS ? closeFS() : openFS(); });
+  document.getElementById("dotFsClose").addEventListener("click", closeFS);
+  document.addEventListener("fullscreenchange", function () {
+    if (!document.fullscreenElement && window.__dotFS) closeFS();
+  });
+  window.addEventListener("resize", function () { if (window.__dotFS) setTimeout(redraw, 200); });
+})();
+</script>
 </body>
 </html>
