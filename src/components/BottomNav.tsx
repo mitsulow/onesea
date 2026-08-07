@@ -119,7 +119,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
-  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TALK", talk: true },
+  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TaLK", talk: true },
 ];
 
 function TabIcon({ icon, active }: { icon: string; active: boolean }) {
@@ -235,7 +235,7 @@ export function BottomNav() {
                 >
                   <span className="relative leading-none">
                     {m.icon.startsWith("/") ? (
-                      <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
+                      <img src={m.icon} alt="" className={"h-[26px] w-[26px] " + (m.icon.includes("logo-emblem") ? "rounded-full object-cover" : "object-contain")} />
                     ) : (
                       <span className="text-[24px] leading-none">{m.icon}</span>
                     )}
@@ -258,7 +258,7 @@ export function BottomNav() {
                 >
                   <span className="relative leading-none">
                     {m.icon.startsWith("/") ? (
-                      <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
+                      <img src={m.icon} alt="" className={"h-[26px] w-[26px] " + (m.icon.includes("logo-emblem") ? "rounded-full object-cover" : "object-contain")} />
                     ) : (
                       <span className="text-[24px] leading-none">{m.icon}</span>
                     )}

@@ -1184,7 +1184,7 @@
     border-bottom:none;box-shadow:none} /* 下の宇宙(黒)と一体化: 線なし */
   .svc-titles{min-width:0;text-align:center}
   .svc-avwrap{position:absolute;right:10px;top:50%;transform:translateY(-50%);flex-shrink:0}
-  .svc-av{width:34px;height:34px;border-radius:50%;overflow:hidden;padding:0;cursor:pointer;
+  .svc-av{width:32px;height:32px;border-radius:50%;overflow:hidden;padding:0;cursor:pointer;
     border:2px solid rgba(212,185,106,0.7);background:#0e1626;display:flex;
     align-items:center;justify-content:center;font-size:16px}
   .svc-av img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1248,7 +1248,20 @@
           <a href="/za"><img src="/rakuichi/logo-emblem.webp" alt="">楽市楽座</a>
           <a href="/#techo"><img src="/icons/icon-techo.webp" alt="">手帳</a>
           <a href="/my"><img src="/icons/icon-profile.webp" alt="">マイページ</a>
+          <a href="/talk"><img src="/icons/icon-chat.webp" alt="">TaLK</a>
+          <a href="#" id="svcLogout" style="color:#e08a8a"><img src="/icons/icon-logout.webp" alt="">ログアウト</a>
         </div>
+<div id="svcGuestOv" style="display:none;position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);"></div>
+<div id="svcGuestSheet" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:951;width:calc(100% - 40px);max-width:340px;overflow:hidden;border-radius:20px;background:#fffdf8;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+  <div style="position:relative;height:120px;"><img src="/lp/onesea/hero-sea.webp" alt="" style="width:100%;height:100%;object-fit:cover;">
+    <div style="position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.45));"><span style="font-size:14px;font-weight:800;letter-spacing:3px;color:#fff;">すべての海は、ひとつ。</span></div>
+  </div>
+  <div style="padding:16px 20px 20px;">
+    <p style="margin:0 0 12px;text-align:center;font-size:12.5px;line-height:1.7;color:#6a6055;">太陽と月と潮のリズムで生きる、<b style="color:#2a2622;">無料の手帳アプリ</b>。<br>暦・シューマン共振・みんなの投稿が、無料で使えます。</p>
+    <a href="/login?return=/schumann1/index.html" style="display:block;margin-bottom:10px;border-radius:16px;padding:13px 0;text-align:center;font-size:15px;font-weight:800;color:#fff;text-decoration:none;background:linear-gradient(120deg,#2CB7DE,#1B8FB5);">OneSeaに登録（無料・30秒）</a>
+    <a href="/login?return=/schumann1/index.html" style="display:block;border-radius:16px;border:1px solid #e0d8c8;padding:11px 0;text-align:center;font-size:12.5px;font-weight:700;color:#8a7a5a;text-decoration:none;">会員の方はログイン</a>
+  </div>
+</div>
       </div>
     </header>
 
@@ -3282,7 +3295,27 @@
         if (fb) fb.replaceWith(img); else btn.appendChild(img);
       }
     } catch (e) {}
-    btn.addEventListener("click", (e) => { e.stopPropagation(); menu.classList.toggle("open"); });
+    window.__svcLoggedIn = !!url;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (window.__svcLoggedIn) { menu.classList.toggle("open"); }
+      else {
+        document.getElementById("svcGuestSheet").style.display = "block";
+        document.getElementById("svcGuestOv").style.display = "block";
+      }
+    });
+    const gOv = document.getElementById("svcGuestOv");
+    if (gOv) gOv.addEventListener("click", () => {
+      document.getElementById("svcGuestSheet").style.display = "none";
+      gOv.style.display = "none";
+    });
+    const lo = document.getElementById("svcLogout");
+    if (lo) lo.addEventListener("click", (e) => {
+      e.preventDefault();
+      try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && k.startsWith("sb-")) localStorage.removeItem(k); } } catch (err) {}
+      document.cookie.split(/;\s*/).forEach(kv => { const n = kv.split("=")[0]; if (n && n.startsWith("sb-")) document.cookie = n + "=;path=/;max-age=0"; });
+      location.href = "/";
+    });
     document.addEventListener("click", () => menu.classList.remove("open"));
   })();
 
@@ -3338,7 +3371,7 @@
   <a href="/za"><img src="/rakuichi/logo-emblem.webp" alt="" style="border-radius:50%;object-fit:cover;"><span>楽市楽座</span></a>
   <a href="/#techo"><img src="/icons/icon-techo.webp" alt=""><span>手帳</span></a>
   <a href="/my"><img src="/icons/icon-profile.webp" alt=""><span>マイページ編集</span></a>
-  <a href="/talk"><img src="/icons/icon-chat.webp" alt=""><span>TALK</span></a>
+  <a href="/talk"><img src="/icons/icon-chat.webp" alt=""><span>TaLK</span></a>
 </div>
 <script>
 (function () {

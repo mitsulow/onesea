@@ -103,15 +103,15 @@ export default function LinePage() {
 
   return (
     <main className="pb-20">
-      <TopTone color="#0a2416" />
+      <TopTone color="#06C755" />
       {/* 統一規格ヘッダー: 高さ52px・サービス名・アバター右 / TALKのイメージカラー=緑 */}
       <header
-        className="relative flex h-[52px] items-center justify-center px-5"
-        style={{ background: "linear-gradient(160deg,#0a2416 0%,#14532d 60%,#16804a 100%)" }}
+        className="relative flex h-[52px] items-center justify-end px-5"
+        style={{ background: "#06C755" }}
       >
-        <h1 className="flex items-center gap-2 text-[17px] font-extrabold tracking-[4px] text-[#d8f5c8]">
+        <h1 className="mr-12 flex items-center gap-2 text-[17px] font-extrabold tracking-[4px] text-white">
           <img src="/icons/icon-chat.webp" alt="" className="h-6 w-6 object-contain" />
-          TALK
+          TaLK
         </h1>
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           <AvatarMenu ring="#7dd8a0" />
@@ -144,8 +144,8 @@ export default function LinePage() {
         <div className="grid grid-cols-2 border-b border-[#e8e0d0] bg-[#fffdf8]">
           {(
             [
-              ["dm", "👤 個人TALK", dmUnread],
-              ["group", "👥 グループTALK", groupUnread],
+              ["dm", "👤 個人TaLK", dmUnread],
+              ["group", "👥 グループTaLK", groupUnread],
             ] as const
           ).map(([id, label, n]) => (
             <button

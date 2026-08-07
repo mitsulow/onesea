@@ -16,7 +16,7 @@ const NAV: Array<{ href: string; icon: string; label: string; ext?: boolean }> =
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ" },
-  { href: "/talk", icon: "💬", label: "TALK" },
+  { href: "/talk", icon: "💬", label: "TaLK" },
 ];
 
 interface RailStyle {

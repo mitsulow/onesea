@@ -7508,7 +7508,7 @@
   <a href="/za" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/rakuichi/logo-emblem.webp" style="width:20px;height:20px;border-radius:50%;object-fit:cover;"> 楽市楽座</a>
   <a href="/#techo" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/icon-techo.webp" style="width:20px;height:20px;object-fit:contain;"> 手帳</a>
   <a href="/my" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/icon-profile.webp" style="width:20px;height:20px;object-fit:contain;"> マイページ編集</a>
-  <a href="/talk" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/icon-chat.webp" style="width:20px;height:20px;object-fit:contain;"> TALK</a>
+  <a href="/talk" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/icon-chat.webp" style="width:20px;height:20px;object-fit:contain;"> TaLK</a>
   <button id="oneseaLogoutBtn" style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 16px;font-size:13.5px;color:#a05040;background:none;border:none;text-align:left;cursor:pointer;"><img src="/icons/icon-logout.webp" style="width:20px;height:20px;object-fit:contain;"> ログアウト</button>
 </div>
 <!-- ゲスト用シート（他ページのAvatarMenuと同じ見た目/挙動） -->
@@ -17142,6 +17142,23 @@ if ('serviceWorker' in navigator) {
     } catch (e) {}
     location.href = '/';
   });
+  // 卵(OneSea)ボタン: 他サービスと同じく1回目はメニューを開く(タブバーの上に表示)。
+  var egg = document.querySelector('.tab-home-egg');
+  if (egg) egg.addEventListener('click', function (e) {
+    e.preventDefault();
+    var open = menu.style.display !== 'none';
+    if (open) { toggleMenu(false); return; }
+    menu.style.top = 'auto';
+    menu.style.bottom = '74px';
+    toggleMenu(true);
+  });
+  // アバターから開いた時は従来位置(右上)に戻す
+  var avBtnPos = document.getElementById('oneseaAvatarBtn');
+  if (avBtnPos) avBtnPos.addEventListener('click', function () {
+    menu.style.top = '48px';
+    menu.style.bottom = 'auto';
+  }, true);
+
   // 暦タブ: 1回目はホーム(暦)に戻るだけ。すでに暦に居る時にもう一回押すとメニュー
   var calTab = document.querySelector('.tab-btn[data-view="calendar"]');
   if (calTab) calTab.addEventListener('click', function () {
