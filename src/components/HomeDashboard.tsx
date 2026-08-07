@@ -251,7 +251,7 @@ export function HomeDashboard() {
         const nextKey = planKeys.find((k) => k > viewKey) ?? null;
         const shortD = (k: string) => `${Number(k.split("-")[1])}/${Number(k.split("-")[2])}`;
         const label = (() => {
-          if (viewKey === tk) return "今日の予定";
+          if (viewKey === tk) return "本日の予定";
           const [yy, mm, dd] = viewKey.split("-").map(Number);
           const diff = Math.round((new Date(yy, mm - 1, dd).getTime() - new Date(y, m - 1, d).getTime()) / 86400000);
           const dw = YOBI[new Date(yy, mm - 1, dd).getDay()];
@@ -343,16 +343,13 @@ export function HomeDashboard() {
                     </div>
                   ))
                 ) : (
-                  <div className="py-1 text-[13.5px] text-[#b0a890]" style={{ fontFamily: MINCHO }}>
-                    今日の予定はまだありません — <span className="text-[#7ba05b]">タップして書く</span>
+                  <div className="py-1 text-center text-[13.5px] leading-relaxed text-[#b0a890]" style={{ fontFamily: MINCHO }}>
+                    今日の予定はありません
+                    <br />
+                    <span className="text-[#7ba05b]">タップして書く ✎</span>
                   </div>
                 )}
               </div>
-              {(prevKey || nextKey) && (
-                <div className="mt-2 text-center text-[9px] tracking-[1px] text-[#c8c0ac]">
-                  ‹ スワイプで予定のある日だけを渡れます ›
-                </div>
-              )}
             </button>
           </div>
         );
