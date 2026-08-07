@@ -190,7 +190,7 @@ export function HomeDashboard() {
         {moon.holy && <span className="ml-2 font-bold text-[#c09030]">{moon.holy}</span>}
       </div>
 
-      {/* ★叶いタイム — この手帳の一番の売り。1枚で大きく、右下に叶いレベル */}
+      {/* ★叶いタイム — 日付の右下に赤枠バッジでコンパクトに（浮かない・分かりやすい） */}
       {(() => {
         const deg = best?.deg;
         const lv = deg == null ? 1
@@ -201,8 +201,11 @@ export function HomeDashboard() {
           : deg % 15 === 0 ? 15
           : deg % 5 === 0 ? 5
           : 1;
+        const lvColor = lv >= 180 ? "#c9002a" : lv >= 90 ? "#c94d3a" : lv >= 45 ? "#e07020" : "#b0532e";
+        const nd = target ? new Date(target.t) : null;
+        const isTomorrow = nd ? nd.getDate() !== d || nd.getMonth() + 1 !== m : false;
         return (
-          <div className="mt-3">
+          <div className="mt-1.5 flex justify-end px-4">
             <Link
               href={isNow ? "/mmm/ddp" : "/#techo"}
               onClick={(e) => {
@@ -211,68 +214,26 @@ export function HomeDashboard() {
                   openToday();
                 }
               }}
-              className="relative block px-5 py-4 no-underline"
+              className="inline-flex items-baseline gap-1.5 rounded-lg border-2 px-2.5 py-1 no-underline"
               style={
                 isNow
-                  ? { background: "linear-gradient(120deg,#3a2c08,#6a5010)", boxShadow: "0 0 24px rgba(212,185,106,.5)" }
-                  : { background: "linear-gradient(120deg,#f6eed6,#efe2bc)" }
+                  ? { borderColor: "#d4b96a", background: "linear-gradient(120deg,#3a2c08,#6a5010)", boxShadow: "0 0 16px rgba(212,185,106,.5)" }
+                  : { borderColor: "#c94d3a", background: "#fff8f5" }
               }
             >
-              <div className="text-center text-[12px] font-extrabold tracking-[5px]" style={{ color: isNow ? "#e8cc80" : "#8b6914" }}>
-                叶いタイム
-              </div>
-              {target ? (
-                isNow ? (
-                  <div className="mt-1.5 text-center text-[19px] font-bold leading-snug text-[#f6e9c4]" style={{ fontFamily: MINCHO }}>
-                    いま、願いを書き換える時 <span className="text-[11px] text-[#e8cc80]">ひらく</span>
-                  </div>
-                ) : (
-                  (() => {
-                    const nd = new Date(target.t);
-                    const isTomorrow = nd.getDate() !== d || nd.getMonth() + 1 !== m;
-                    return (
-                      <div className="flex items-end justify-center">
-                        <div className="text-center">
-                          <span className="num text-[46px] leading-none text-[#6a5010]" style={{ fontWeight: 300 }}>
-                            {nd.getHours()}
-                            <span className="text-[24px] text-[#b0a080]">:</span>
-                            {String(nd.getMinutes()).padStart(2, "0")}
-                          </span>
-                          <span className="num ml-2 text-[11px] text-[#b0a080]">
-                            {isTomorrow ? "明日 ・ " : ""}あと {hrs > 0 ? hrs + "時間" : ""}{mins}分
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })()
-                )
+              {isNow ? (
+                <span className="text-[13px] font-extrabold text-[#f6e9c4]">いま、叶いタイム！ ひらく</span>
               ) : (
-                <div className="mt-2 text-center text-[12px] text-[#c0b8a8]">—</div>
+                <>
+                  <span className="text-[10px] font-extrabold tracking-[1px] text-[#c94d3a]">叶いタイム</span>
+                  <span className="num text-[17px] font-extrabold leading-none text-[#a03020]">
+                    {nd ? `${isTomorrow ? "明日" : ""}${nd.getHours()}:${String(nd.getMinutes()).padStart(2, "0")}` : "—"}
+                  </span>
+                  <span className="num text-[10px] font-extrabold" style={{ color: lvColor }}>
+                    Lv{lv}{lv === 360 ? " Max" : ""}
+                  </span>
+                </>
               )}
-              <div className="absolute bottom-2 right-3.5 text-right">
-                {(() => {
-                  const st =
-                    lv === 360 ? { color: "#e8001e", fontSize: 16, textShadow: "0 0 10px rgba(232,0,30,.55)" }
-                    : lv === 180 ? { color: "#c9002a", fontSize: 14, textShadow: "0 0 8px rgba(201,0,42,.4)" }
-                    : lv === 90 ? { color: "#c94d3a", fontSize: 13 }
-                    : lv === 45 ? { color: "#e07020", fontSize: 12.5 }
-                    : lv === 15 ? { color: "#2CB7DE", fontSize: 11 }
-                    : lv === 5 ? { color: "#5a8a3a", fontSize: 10.5 }
-                    : { color: "#a08c50", fontSize: 10 };
-                  return (
-                    <>
-                      <span className="num font-extrabold leading-none" style={st}>
-                        叶いレベル{lv}
-                      </span>
-                      {lv === 360 && (
-                        <div className="font-extrabold leading-tight" style={{ color: "#e8001e", fontSize: 15, textShadow: "0 0 10px rgba(232,0,30,.55)" }}>
-                          Max
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
             </Link>
           </div>
         );
@@ -304,8 +265,12 @@ export function HomeDashboard() {
         return (
           <div
             data-noswipe
-            className="relative mx-5 mt-3 overflow-hidden rounded-2xl"
-            style={{ background: "#faf7f0", border: "1px solid #eee6d4" }}
+            className="relative mt-3 overflow-hidden"
+            style={{
+              background: "repeating-linear-gradient(0deg, #f6efdf, #f6efdf 30px, #e9dcc0 31px)",
+              borderTop: "1px solid #e0d4b8",
+              borderBottom: "1px solid #e0d4b8",
+            }}
             onTouchStart={(e) => {
               planTouch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: false, dir: null };
             }}
