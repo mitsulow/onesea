@@ -34,7 +34,7 @@ export function CotozuteTeaser() {
     >
       <Link href="/cotozute" className="no-underline">
         <span
-          className="mb-1 inline-flex items-center gap-1.5 rounded-full px-3.5 py-[3px]"
+          className="mb-1 inline-flex items-center gap-1.5 rounded-full px-3.5 pb-[6px] pt-[7px]"
           style={{
             background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)",
             boxShadow: "0 4px 14px rgba(44,183,222,.35)",
@@ -43,7 +43,8 @@ export function CotozuteTeaser() {
           <span className="relative text-[14px] leading-none text-white">
             ✦<span className="absolute -right-1.5 -top-1 text-[8px]">✦</span>
           </span>
-          <span className="text-[15px] font-extrabold leading-none text-white" style={{ letterSpacing: 0 }}>
+          {/* 文字が下詰まりに見えるため、行ボックスを締めて1px持ち上げる */}
+          <span className="relative top-[-1px] text-[15px] font-extrabold leading-none text-white" style={{ letterSpacing: 0 }}>
             CotoZute<span style={{ marginLeft: "-0.08em" }}>→</span>
           </span>
         </span>
