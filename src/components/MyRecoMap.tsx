@@ -8,16 +8,14 @@ import {
   fetchRecoShops,
   addRecoShop,
   deleteRecoShop,
-  geocode,
-  GeoCandidate,
 } from "@/lib/recoShops";
 import { DragScroll } from "@/components/DragScroll";
 
 /**
  * 「◯◯さんのおススメの店」— トレーディングカード式（右スワイプでズラリ）。
  * 登録は死ぬほど簡単に:
- *   ① Googleマップで店を開く → 共有 → リンクをコピー → ここに貼る → 自動でカード完成
- *   ② それが無理でも「店名+市町村」検索 → 候補タップの3手
+ *   Googleマップ/Google検索で店を開く → 共有（またはリンクをコピー） → ここに貼る → 自動でカード完成
+ *   共有文に店名が混ざっていてもOK。名前・位置・写真1枚を自動取得する。
  * ここで登録した店は、セカイムラ地図の「おススメの店」レイヤーにも載る。
  */
 export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: string; isMe: boolean; ownerName?: string; mode?: "shop" | "power" }) {
@@ -27,11 +25,6 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
   const [paste, setPaste] = useState("");
   const [resolving, setResolving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [cands, setCands] = useState<GeoCandidate[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [manualOpen, setManualOpen] = useState(false);
 
   useEffect(() => {
     fetchRecoShops(userId).then((list) =>
@@ -39,25 +32,32 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
     );
   }, [userId, isPower]);
 
-  /* ① Googleマップ共有リンクを貼るだけ登録 */
+  /* Google共有（マップ/検索）を貼るだけ登録。共有テキストに店名が混ざっていてもOK */
   const resolveLink = async (raw: string) => {
-    const url = raw.trim();
-    if (!url || resolving) return;
-    if (!/^https?:\/\//.test(url)) return;
+    if (resolving) return;
+    const text = raw.trim();
+    const mUrl = text.match(/https?:\/\/[^\s]+/);
+    if (!mUrl) return;
+    const url = mUrl[0];
+    // URL以外の部分（店名などの共有文）はヒントとしてサーバーへ
+    const hint = text.replace(url, "").replace(/[\n\r"']+/g, " ").trim().slice(0, 100);
     setResolving(true);
     setMsg(null);
     try {
-      const r = await fetch("/api/reco/resolve?url=" + encodeURIComponent(url));
+      const r = await fetch(
+        "/api/reco/resolve?url=" + encodeURIComponent(url) + (hint ? "&hint=" + encodeURIComponent(hint) : "")
+      );
       const d = await r.json();
       if (!r.ok || (!d.name && d.lat == null)) {
-        setMsg("リンクを読めませんでした。Googleマップの「共有→リンクをコピー」の形で貼ってください");
+        setMsg("リンクを読めませんでした。Googleマップ/Google検索の共有ボタンからコピーしたものを貼ってください");
       } else {
         const created = await addRecoShop(userId, {
-          name: (d.name as string) || (isPower ? "パワースポット" : "お店"),
+          name: (d.name as string) || hint || (isPower ? "パワースポット" : "お店"),
           category: cat,
           lat: (d.lat as number) ?? 35.68,
           lng: (d.lng as number) ?? 139.76,
           address: null,
+          image_url: (d.image as string) ?? null,
         });
         if (created) {
           setShops((prev) => [created, ...(prev ?? [])]);
@@ -70,33 +70,6 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
       setMsg("通信に失敗しました");
     }
     setResolving(false);
-  };
-
-  /* ② 店名検索フォールバック */
-  const search = async () => {
-    if (!q.trim() || searching) return;
-    setSearching(true);
-    setCands(null);
-    const list = await geocode(q.trim());
-    setSearching(false);
-    setCands(list);
-  };
-  const pick = async (cand: GeoCandidate) => {
-    if (saving) return;
-    setSaving(true);
-    const created = await addRecoShop(userId, {
-      name: q.trim(),
-      category: cat,
-      lat: cand.lat,
-      lng: cand.lng,
-      address: cand.label,
-    });
-    setSaving(false);
-    if (created) {
-      setShops((prev) => [created, ...(prev ?? [])]);
-      setQ("");
-      setCands(null);
-    }
   };
 
   const remove = async (s: RecoShop) => {
@@ -141,58 +114,14 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
             value={paste}
             onChange={(e) => {
               setPaste(e.target.value);
-              // 貼り付けた瞬間に自動で解決（ボタン押し不要）
-              if (/^https?:\/\//.test(e.target.value.trim())) resolveLink(e.target.value);
+              // 貼り付けた瞬間に自動で解決（ボタン押し不要）。共有文に店名が混ざっていてもOK
+              if (/https?:\/\//.test(e.target.value)) resolveLink(e.target.value);
             }}
-            placeholder="Googleマップの共有リンクを貼るだけ（共有→リンクをコピー）"
+            placeholder="GoogleマップかGoogle検索の「共有」からコピーして、ここに貼るだけ"
             className="w-full rounded-xl border border-[#2CB7DE55] bg-white px-3 py-2.5 text-[13px] outline-none focus:border-[#2CB7DE]"
           />
           {resolving && <p className="mt-1 text-[11px] text-[#2CB7DE]">カードを作っています…</p>}
           {msg && <p className="mt-1 text-[11px] text-[#8a7a5a]">{msg}</p>}
-          {/* フォールバック: 店名で探す */}
-          <button onClick={() => setManualOpen((v) => !v)} className="mt-1.5 text-[11px] font-bold text-[#a09888]">
-            {manualOpen ? "▾" : "▸"} リンクが無い時は店名で探す
-          </button>
-          {manualOpen && (
-            <div className="mt-1.5">
-              <div className="flex gap-1.5">
-                <input
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.nativeEvent.isComposing) search();
-                  }}
-                  placeholder="店名 + 市町村（例: 浮島ガーデン 那覇）"
-                  className="min-w-0 flex-1 rounded-xl border border-[#e8dcc4] bg-white px-3 py-2 text-[13px] outline-none focus:border-[#c94d3a]"
-                />
-                <button
-                  onClick={search}
-                  disabled={!q.trim() || searching}
-                  className="flex-shrink-0 rounded-xl px-3.5 py-2 text-[12.5px] font-extrabold text-white disabled:opacity-40"
-                  style={{ background: "#2CB7DE" }}
-                >
-                  {searching ? "検索中" : "探す"}
-                </button>
-              </div>
-              {cands !== null &&
-                (cands.length === 0 ? (
-                  <p className="mt-1.5 text-[11px] text-[#a09888]">見つかりませんでした。「店名 市町村」の形でもう一度どうぞ</p>
-                ) : (
-                  <div className="mt-1.5 space-y-1">
-                    {cands.map((cd, i) => (
-                      <button
-                        key={i}
-                        onClick={() => pick(cd)}
-                        disabled={saving}
-                        className="block w-full rounded-lg border border-[#e8dcc4] bg-white px-2.5 py-1.5 text-left text-[11.5px] leading-snug text-[#5a5448] disabled:opacity-50"
-                      >
-                        {cd.label}
-                      </button>
-                    ))}
-                  </div>
-                ))}
-            </div>
-          )}
         </div>
       )}
 
@@ -211,6 +140,10 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
                   <span>{c.emoji}</span>
                   <span className="truncate">{c.label}</span>
                 </div>
+                {s.image_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={s.image_url} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-[64px] w-full object-cover" />
+                )}
                 <div className="flex h-[74px] flex-col justify-between p-2">
                   <div className="line-clamp-3 text-[12px] font-extrabold leading-snug text-[#3a3428]">{s.name}</div>
                   {s.comment && <div className="truncate text-[9.5px] text-[#a09888]">{s.comment}</div>}

@@ -15,6 +15,7 @@ export interface RecoShop {
   lat: number;
   lng: number;
   address: string | null;
+  image_url?: string | null;
   created_at: string;
 }
 
@@ -43,7 +44,7 @@ export async function fetchRecoShops(userId?: string): Promise<RecoShop[]> {
 
 export async function addRecoShop(
   userId: string,
-  shop: { name: string; category: string; lat: number; lng: number; address?: string | null; comment?: string | null }
+  shop: { name: string; category: string; lat: number; lng: number; address?: string | null; comment?: string | null; image_url?: string | null }
 ): Promise<RecoShop | null> {
   const supabase = createClient();
   const { data, error } = await supabase

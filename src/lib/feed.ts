@@ -19,7 +19,7 @@ export interface MuraPost {
   created_at: string;
   user_id: string;
   villages: { id: string; name: string; prefecture: string | null } | null;
-  profiles: { username: string | null; display_name: string | null; avatar_url: string | null; member_no?: number | null } | null;
+  profiles: { username: string | null; display_name: string | null; avatar_url: string | null; member_no?: number | null; warawa_until?: string | null } | null;
 }
 
 export type FeedItem =
@@ -32,7 +32,7 @@ export function feedKey(it: FeedItem): string {
 }
 
 const POST_SELECT =
-  "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url, member_no), likes(count), comments(count)";
+  "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url, member_no, warawa_until), likes(count), comments(count)";
 const MURA_SELECT =
   "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)";
 const SHOP_SELECT =
