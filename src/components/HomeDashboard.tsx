@@ -10,6 +10,7 @@ import {
   moonOf,
   moonImageOf,
   moonTimesOf,
+  holyTimeOf,
   kyurekiLabel,
   todayKey,
   keyOf,
@@ -195,7 +196,7 @@ export function HomeDashboard() {
         {moon.holy && <span className="ml-2 font-bold text-[#c09030]">{moon.holy}</span>}
       </div>
 
-      {/* ★叶いタイム — 日付の右下に赤枠バッジでコンパクトに（浮かない・分かりやすい） */}
+      {/* ★今日のティッカー — 太陽・月・地球の情報が右から左へ流れる */}
       {(() => {
         const deg = best?.deg;
         const lv = deg == null ? 1
@@ -206,41 +207,39 @@ export function HomeDashboard() {
           : deg % 15 === 0 ? 15
           : deg % 5 === 0 ? 5
           : 1;
-        const lvColor = lv >= 180 ? "#c9002a" : lv >= 90 ? "#c94d3a" : lv >= 45 ? "#e07020" : "#b0532e";
-        const nd = target ? new Date(target.t) : null;
-        const isTomorrow = nd ? nd.getDate() !== d || nd.getMonth() + 1 !== m : false;
+        const holy = holyTimeOf(tk);
+        const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+        let nearTide: [string, string] | null = null;
+        let nd2 = 1e9;
+        for (const [lb, t2] of tideRows) {
+          const [hh, mm2] = t2.split(":").map(Number);
+          const df = Math.abs(hh * 60 + mm2 - nowMin);
+          if (df < nd2) { nd2 = df; nearTide = [lb, t2]; }
+        }
+        const IconSpan = ({ src }: { src: string }) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" className="mx-1.5 inline-block h-[15px] w-[15px] rounded-full object-contain align-[-3px]" />
+        );
         return (
-          <div className="mt-1.5 flex justify-end px-4">
-            <Link
-              href={isNow ? "/mmm/ddp" : "/#techo"}
-              onClick={(e) => {
-                if (!isNow) {
-                  e.preventDefault();
-                  openToday();
-                }
-              }}
-              className="inline-flex items-baseline gap-1.5 rounded-lg border-2 px-2.5 py-1 no-underline"
-              style={
-                isNow
-                  ? { borderColor: "#d4b96a", background: "linear-gradient(120deg,#3a2c08,#6a5010)", boxShadow: "0 0 16px rgba(212,185,106,.5)" }
-                  : { borderColor: "#c94d3a", background: "#fff8f5" }
-              }
-            >
-              {isNow ? (
-                <span className="text-[13px] font-extrabold text-[#f6e9c4]">いま、叶いタイム！ ひらく</span>
-              ) : (
-                <>
-                  <span className="text-[10px] font-extrabold tracking-[1px] text-[#c94d3a]">叶いタイム</span>
-                  <span className="num text-[17px] font-extrabold leading-none text-[#a03020]">
-                    {nd ? `${isTomorrow ? "明日" : ""}${nd.getHours()}:${String(nd.getMinutes()).padStart(2, "0")}` : "—"}
-                  </span>
-                  <span className="num text-[10px] font-extrabold" style={{ color: lvColor }}>
-                    Lv{lv}{lv === 360 ? " Max" : ""}
-                  </span>
-                </>
-              )}
-            </Link>
-          </div>
+          <button onClick={openToday} className="mt-1.5 block w-full overflow-hidden border-y border-[#eee2c8] bg-[#fffcf3] py-1.5" aria-label="今日のこよみ">
+            <style>{`@keyframes tickerX { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
+            <div className="flex w-max whitespace-nowrap" style={{ animation: "tickerX 26s linear infinite" }}>
+              {[0, 1].map((k) => (
+                <span key={k} className="num flex items-center text-[12px] font-bold text-[#6a5a3a]">
+                  <IconSpan src="/icons/cel-sun.png" />
+                  今日の叶いタイム <b className="mx-1 text-[14px] text-[#c94d3a]">{best?.time ?? "—"}</b>
+                  <span style={{ color: lv >= 90 ? "#c9002a" : lv >= 45 ? "#e07020" : "#a08c50" }}>（叶いレベル{lv}{lv === 360 ? " Max" : ""}）</span>
+                  {best?.sekki && <span className="ml-1 font-extrabold" style={{ color: accent }}>「{best.sekki[0]}」の日です</span>}
+                  <IconSpan src={moonImageOf(moon.age)} />
+                  今日の月は月齢{moon.age.toFixed(1)}、月の出は{mt.rise ?? "—"}
+                  {holy && <span className="ml-1 font-extrabold text-[#b8912a]">本日は{holy.name}（{holy.label}）{holy.time}です</span>}
+                  <IconSpan src="/icons/cel-earth.png" />
+                  {nearTide ? `本日の${nearTide[0]}潮時刻は${nearTide[1]}です` : "潮データを読み込み中"}
+                  <span className="mx-6 text-[#d8c9a0]">✦</span>
+                </span>
+              ))}
+            </div>
+          </button>
         );
       })()}
 
