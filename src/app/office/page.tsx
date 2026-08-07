@@ -33,13 +33,21 @@ export default function OfficePage() {
       supabase.from("post_reports").select("*, profiles!post_reports_reporter_fkey(display_name)").order("created_at", { ascending: false }).limit(100),
     ]);
     setSeeds(sd.data ?? []);
+    let reps: any[] = [];
     if (rp.error) {
-      // reporter の FK 名が違う場合は join なしで
       const { data } = await supabase.from("post_reports").select("*").order("created_at", { ascending: false }).limit(100);
-      setReports(data ?? []);
+      reps = data ?? [];
     } else {
-      setReports(rp.data ?? []);
+      reps = rp.data ?? [];
     }
+    // 依頼者のアバター・名前・usernameをまとめて取得（マイページで人柄チェックできるように）
+    const ids = Array.from(new Set(reps.map((r) => r.reporter).filter(Boolean)));
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids);
+      const by = new Map((profs ?? []).map((pp: any) => [pp.id, pp]));
+      reps = reps.map((r) => ({ ...r, reporterProf: by.get(r.reporter) ?? null }));
+    }
+    setReports(reps);
     void uid;
   };
 
@@ -204,7 +212,23 @@ export default function OfficePage() {
                     {r.kind === "cotozute" ? "Cotozute" : "セカイムラ投稿"}
                   </span>
                   <span className="num">{new Date(r.created_at).toLocaleDateString("ja-JP")}</span>
-                  <span>依頼: {r.profiles?.display_name ?? "会員"}</span>
+                  {(() => {
+                    const rp2 = r.reporterProf;
+                    const inner = (
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>依頼:</span>
+                        {rp2?.avatar_url ? (
+                          <img src={rp2.avatar_url} alt="" referrerPolicy="no-referrer" className="h-5 w-5 rounded-full object-cover" />
+                        ) : (
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#e5dcc8] text-[9px] text-[#8a8070]">?</span>
+                        )}
+                        <span className="font-bold text-[#3070b0] underline">{rp2?.display_name ?? "会員"}</span>
+                      </span>
+                    );
+                    return rp2?.username ? (
+                      <Link href={`/u/${rp2.username}`} className="no-underline">{inner}</Link>
+                    ) : inner;
+                  })()}
                   {r.status !== "open" && <span className="font-bold text-[#2a7a4a]">対応済み</span>}
                 </div>
                 {r.reason && <div className="mt-1 text-[12.5px] font-bold text-[#c94d3a]">理由: {r.reason}</div>}
