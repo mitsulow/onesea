@@ -99,7 +99,7 @@ export default function LinePage() {
           disabled={bellBusy}
           className="flex w-full items-center gap-2.5 border-b border-[#e8e0d0] bg-[#fdf8ec] px-4 py-2.5 text-left"
         >
-          <span className="text-[18px]">🔔</span>
+          <img src="/icons/icon-bell.webp" alt="" style={{ width: 22, height: 22 }} />
           <span className="min-w-0 flex-1">
             <span className="block text-[12.5px] font-bold text-[#8a6a20]">
               {bellBusy ? "設定中..." : "新着の通知と、アイコンの未読バッジをオンにする"}
@@ -148,7 +148,7 @@ export default function LinePage() {
       {me && (
         <div className="border-b border-[#f0e9dc] bg-[#fffdf8] px-4 py-2">
           <div className="flex items-center gap-2 rounded-xl bg-[#f0ead9] px-3 py-1.5">
-            <span className="text-[13px] text-[#a09888]">🔍</span>
+            <img src="/icons/icon-search.webp" alt="" style={{ width: 16, height: 16 }} />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -169,7 +169,7 @@ export default function LinePage() {
             className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[20px]"
             style={{ background: "linear-gradient(140deg,#17384e,#0e1e2e)" }}
           >
-            📢
+            <img src="/icons/icon-megaphone.webp" alt="" style={{ width: 26, height: 26 }} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-2">
@@ -238,7 +238,7 @@ export default function LinePage() {
                   className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[22px]"
                   style={{ background: "linear-gradient(140deg,#d8e8cf,#a8cca8)" }}
                 >
-                  {g.emoji === "🧠" ? <img src="/icons/icon-neura.webp" alt="" style={{ width: 22, height: 22 }} /> : g.emoji}
+                  {g.emoji === "🧠" ? <img src="/icons/icon-neura5.webp" alt="" style={{ width: 22, height: 22 }} /> : g.emoji}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">

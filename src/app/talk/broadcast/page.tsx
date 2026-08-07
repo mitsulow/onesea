@@ -70,7 +70,7 @@ export default function BroadcastPage() {
         <Link href="/talk" className="text-[15px] font-bold text-[#d4b96a] no-underline">
           ◀
         </Link>
-        <span className="text-[20px]">📢</span>
+        <img src="/icons/icon-megaphone.webp" alt="" style={{ width: 22, height: 22 }} />
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-bold leading-tight text-[#f0e6c8]">事務局からのお知らせ</div>
           <div className="text-[10px] text-[#7a9ab4]">OneSea全員に届く公式TALK</div>
@@ -89,7 +89,7 @@ export default function BroadcastPage() {
           return (
             <div key={m.id} className="flex items-end gap-1.5">
               <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center self-start rounded-full bg-[#17384e] text-[14px]">
-                📢
+                <img src="/icons/icon-megaphone.webp" alt="" style={{ width: 26, height: 26 }} />
               </span>
               <div className="max-w-[80%]">
                 <div className="mb-0.5 pl-1 text-[10px] text-[#8a8070]">
@@ -111,7 +111,7 @@ export default function BroadcastPage() {
       {admin ? (
         <div className="sticky bottom-14 border-t border-[#e5dccb] bg-[#fffdf8] px-3 py-2">
           <div className="mb-1 text-[10px] font-bold text-[#c94d3a]">
-            📢 事務局として全員に送ります（全員にプッシュ通知が届きます）
+            事務局として全員に送ります（全員にプッシュ通知が届きます）
           </div>
           <div className="flex items-end gap-2">
             <textarea

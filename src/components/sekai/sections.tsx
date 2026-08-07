@@ -835,7 +835,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         writing ? (
           <div className="mx-2 mb-2 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
             <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-              📣 活動を報告する
+              <img src="/icons/icon-megaphone.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> 活動を報告する
             </div>
             {myVills.length > 1 && (
               <select
@@ -886,7 +886,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >
-                {wSaving ? "投稿中..." : "📣 全国に報告する"}
+                {wSaving ? "投稿中..." : "全国に報告する"}
               </button>
             </div>
           </div>
@@ -920,7 +920,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
       ) : feed.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-[#4a8a5c44] px-4 py-5 text-center">
-          <div className="text-2xl">📣</div>
+          <div className="flex justify-center"><img src="/icons/icon-megaphone.webp" alt="" style={{ width: 30, height: 30 }} /></div>
           <p className="mt-1 text-[12.5px] font-bold" style={{ color: GREEN }}>
             まだ活動報告がありません
           </p>

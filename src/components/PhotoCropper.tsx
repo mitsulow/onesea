@@ -115,7 +115,7 @@ export function PhotoCropper({
         )}
       </div>
       <div className="mt-4 flex w-full max-w-[340px] items-center gap-3">
-        <span className="text-[16px] text-white/70">🔍</span>
+        <img src="/icons/icon-search.webp" alt="" style={{ width: 18, height: 18 }} />
         <input
           type="range"
           min={1}

@@ -57,7 +57,7 @@ export default function CotozuteSearchPage() {
       <header className="sticky top-0 z-40 border-b border-[#f0e9dc] bg-[#fffdf8]/95 backdrop-blur-sm">
         <div className="relative flex h-12 items-center px-4">
           <div className="mr-12 flex flex-1 items-center gap-2 rounded-xl bg-[#f0ead9] px-3 py-1.5">
-            <span className="text-[13px] text-[#a09888]">🔍</span>
+            <img src="/icons/icon-search.webp" alt="" style={{ width: 16, height: 16 }} />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}

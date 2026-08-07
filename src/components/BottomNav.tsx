@@ -43,12 +43,12 @@ const SERVICES: Service[] = [
     active: "#eae6b8",
     inactive: "#8ab89a",
     tabs: [
-      { href: "/sekai/villages", icon: "🏡", label: "拠点" },
-      { href: "/sekai/clubs", icon: "🎌", label: "部活" },
-      { href: "/sekai/kome", icon: "🌾", label: "米部" },
-      { href: "/sekai/meister", icon: "🫙", label: "講座" },
-      { href: "/sekai/tasukete", icon: "🤝", label: "助けて" },
-      { href: "/sekai/map", icon: "🗾", label: "地図" },
+      { href: "/sekai/villages", icon: "/icons/icon-base.webp", label: "拠点" },
+      { href: "/sekai/clubs", icon: "/icons/icon-club.webp", label: "部活" },
+      { href: "/sekai/kome", icon: "/icons/icon-rice.webp", label: "米部" },
+      { href: "/sekai/meister", icon: "/icons/icon-course.webp", label: "講座" },
+      { href: "/sekai/tasukete", icon: "/icons/icon-tasukete.webp", label: "助けて" },
+      { href: "/sekai/map", icon: "/icons/icon-japanmap.webp", label: "地図" },
     ],
   },
   {
@@ -59,9 +59,9 @@ const SERVICES: Service[] = [
     active: "#7de0a0",
     inactive: "#4a7a5a",
     tabs: [
-      { href: "/mmm/neura", icon: "/icons/icon-neura.webp", label: "ニューラFIVE" },
-      { href: "/schumann1/index.html", icon: "⚡", label: "シューマン共振", ext: true },
-      { href: "/mmm/ddp", icon: "/icons/icon-wave.webp", label: "DDP設定" },
+      { href: "/mmm/neura", icon: "/icons/icon-neura5.webp", label: "ニューラFIVE" },
+      { href: "/schumann1/index.html", icon: "/icons/icon-schumann.webp", label: "シューマン共振", ext: true },
+      { href: "/mmm/ddp", icon: "/icons/icon-ddp.webp", label: "DDP設定" },
     ],
   },
   {
@@ -83,7 +83,7 @@ const SERVICES: Service[] = [
     border: "#274a63",
     active: "#f0e6c8",
     inactive: "#7a9ab4",
-    tabs: [{ href: "/talk/broadcast", icon: "📢", label: "お知らせ" }],
+    tabs: [{ href: "/talk/broadcast", icon: "/icons/icon-megaphone.webp", label: "お知らせ" }],
   },
   {
     match: (p) => p.startsWith("/za"),
@@ -93,7 +93,7 @@ const SERVICES: Service[] = [
     active: "#c94d3a",
     inactive: "#a09888",
     tabs: [
-      { href: "/za/new", icon: "🏮", label: "出品する" },
+      { href: "/za/new", icon: "/icons/icon-listing.webp", label: "出品する" },
       { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
     ],
   },

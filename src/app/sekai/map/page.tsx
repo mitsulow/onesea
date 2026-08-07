@@ -7,7 +7,7 @@ export default function SekaiMapPage() {
   return (
     <SekaiShell>
       <section className="card">
-        <SectionTitle>🗾 セカイムラ地図 — 旅先でも家族を見つける</SectionTitle>
+        <SectionTitle><img src="/icons/icon-japanmap.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3 }} /> セカイムラ地図 — 旅先でも家族を見つける</SectionTitle>
         <MapLoader />
       </section>
     </SekaiShell>

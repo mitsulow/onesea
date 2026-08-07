@@ -95,7 +95,7 @@ export default function GroupChatPage() {
         <Link href="/talk" className="text-[15px] font-bold text-[#d4b96a] no-underline">
           ◀
         </Link>
-        <span className="text-[20px]">{emoji === "🧠" ? <img src="/icons/icon-neura.webp" alt="" style={{ width: 22, height: 22 }} /> : emoji}</span>
+        <span className="text-[20px]">{emoji === "🧠" ? <img src="/icons/icon-neura5.webp" alt="" style={{ width: 22, height: 22 }} /> : emoji}</span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[15px] font-bold leading-tight text-[#f0e6c8]">{name}</div>
           {memberCount != null && <div className="num text-[10px] text-[#7a9ab4]">{memberCount}人のグループ</div>}
