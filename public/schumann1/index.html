@@ -1506,10 +1506,10 @@
   </details>
 
   <details class="fold" id="fold-solar">
-    <summary>太陽活動との相関</summary>
+    <summary>太陽フレアが出た日、地球の音はどうなった？</summary>
 
     <div class="graph-description">
-      <p>シューマン共振が下がる日は、太陽が騒いだ日なのか。地磁気じょう乱指数 <b>Ap</b>（太陽活動が地球にどれだけ効いたかの日別指数・GFZポツダム・CC BY 4.0）を、F1日平均と同じ時間軸に重ねます。</p>
+      <p>太陽で <b>Xフレア</b> や <b>Mフレア</b> が爆発すると、1〜3日後に太陽風の塊が地球へ届き、磁気圏が大きく揺れます（＝磁気嵐）。その「揺れの強さ」を毎日1つの数字にしたのが <b>Ap指数</b>。つまり <b>Apが高い日 = 太陽が怒った日</b> です。ここでは「太陽が怒った日に、シューマン共振（地球の音）はどう変わったのか」を、実測データで確かめられます。</p>
     </div>
     <div class="dv-panel">
       <div class="dv-block">
@@ -1539,6 +1539,12 @@
         JST --:--<br>TOMSK --:--
       </div>
     </div>
+    <p style="margin:10px 0.9rem 0;font-size:0.78rem;line-height:1.85;color:#8b93a8;">
+      地球には「三大雷源」があります — <b style="color:#a9c3cf">東南アジア</b>・<b style="color:#a9c3cf">アフリカ</b>・<b style="color:#a9c3cf">南米アマゾン</b>。
+      太陽が地球を一周するのを追いかけるように、この3つの雷源が順番に午後の雷雨を鳴らし、地球の「音」を24時間絶やしません。
+      どの雷源が今いちばん鳴っているか、その位置と観測地との関係で磁場の回る向きが決まり、
+      日本付近では<b style="color:#c9b8ff">午前3時ごろに左回転がいちばん深く</b>なります。
+    </p>
 
     <div class="observation" id="observation" style="display:none;">
       <strong>自動観察メモ：</strong>
@@ -3060,12 +3066,17 @@
     banner.classList.add(isDay ? "day" : "night");
     viz.classList.remove("rotate-right", "rotate-left");
     viz.classList.add(isDay ? "rotate-right" : "rotate-left");
+    const jh = typeof pol.japan_hour === "number" ? pol.japan_hour : 12;
     if (isDay) {
       state.textContent = "いま磁場は、右に回っている";
-      desc.textContent = "日本は昼。シューマン共振の磁場偏光は右回転優位の状態です（Sentman 1987）。";
+      if (jh < 9) desc.textContent = "夜が明けました。磁場が寝返りを打つように、左回転から右回転へ切り替わる時間です（Sentman 1987）。";
+      else if (jh < 15) desc.textContent = "日本は昼。お隣の三大雷源・東南アジアの雷が鳴りはじめ、右回転が優位。波は太陽を追いかけて西へ進みます。";
+      else desc.textContent = "夕暮れどき。地球の主役はアフリカの雷へ交代中。回転もゆっくり夜の向きへ傾きはじめます。";
     } else {
       state.textContent = "いま磁場は、左に回っている";
-      desc.textContent = "日本は夜。シューマン共振の磁場偏光は左回転優位の状態です。夜中の3時は、最も深くなる時間。";
+      if (jh >= 1 && jh < 5) desc.textContent = "日本は深夜 — 左回転がいちばん深まる時間（底は午前3時ごろ）。地球の裏側では南米アマゾンの雷雲が真っ盛りで、その鼓動が波になって、いま足元を通り過ぎています。";
+      else if (jh >= 5) desc.textContent = "夜明け前。深い左回転から、少しずつ浮上していく時間です。";
+      else desc.textContent = "日本は夜。左回転が深まっていきます — いちばん深い底は午前3時ごろ。地球の裏側の雷たちの時間です。";
     }
     const fmtHour = (h) => {
       const hh = Math.floor(h);
