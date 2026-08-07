@@ -737,8 +737,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         className="mb-2 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}
       >
-        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#eae6b8]">セカイムラ各地の拠点</div>
-        <div className="mt-0.5 text-center text-[10.5px] text-[#8ab89a]">〜 全国の村と、今日の報告 〜</div>
+        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#eae6b8]">全国セカイムラ一覧</div>
       </div>
 
       {/* <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 各地のセカイムラ拠点 — レジェンドが近い順にズラリ（横スワイプ） */}

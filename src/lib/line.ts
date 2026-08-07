@@ -187,6 +187,7 @@ export interface BroadcastRow {
   id: string;
   sender_id: string;
   body: string;
+  audience?: string; // 'all' | 'warawa'
   created_at: string;
   profiles: (CotozuteProfile & { username: string | null }) | null;
 }
@@ -212,10 +213,13 @@ export async function fetchBroadcastSummary(myId: string): Promise<BroadcastSumm
   ]);
   let unread = 0;
   if (last && last.sender_id !== myId) {
+    const { data: prof } = await supabase.from("profiles").select("warawa_until").eq("id", myId).maybeSingle();
+    const isWara = !!prof?.warawa_until && new Date(prof.warawa_until as string) > new Date();
     let q = supabase
       .from("broadcast_messages")
       .select("id", { count: "exact", head: true })
       .neq("sender_id", myId);
+    if (!isWara) q = q.eq("audience", "all");
     if (read?.last_read_at) q = q.gt("created_at", read.last_read_at);
     const { count } = await q;
     unread = count ?? 0;
@@ -223,21 +227,28 @@ export async function fetchBroadcastSummary(myId: string): Promise<BroadcastSumm
   return { lastBody: last?.body ?? null, lastAt: last?.created_at ?? null, unread };
 }
 
-export async function fetchBroadcasts(): Promise<BroadcastRow[]> {
+export async function fetchBroadcasts(myId?: string): Promise<BroadcastRow[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  let isWara = false;
+  if (myId) {
+    const { data: prof } = await supabase.from("profiles").select("warawa_until").eq("id", myId).maybeSingle();
+    isWara = !!prof?.warawa_until && new Date(prof.warawa_until as string) > new Date();
+  }
+  let q = supabase
     .from("broadcast_messages")
-    .select("id, sender_id, body, created_at, profiles!broadcast_messages_sender_id_fkey(username, display_name, avatar_url)")
+    .select("id, sender_id, body, audience, created_at, profiles!broadcast_messages_sender_id_fkey(username, display_name, avatar_url)")
     .order("created_at", { ascending: true })
     .limit(200);
+  if (!isWara) q = q.eq("audience", "all");
+  const { data } = await q;
   return (data as unknown as BroadcastRow[]) ?? [];
 }
 
 /** 事務局だけが送れる。全会員へのWeb Pushも発火する */
-export async function sendBroadcast(myId: string, body: string) {
+export async function sendBroadcast(myId: string, body: string, audience: "all" | "warawa" = "all") {
   const supabase = createClient();
-  const { error } = await supabase.from("broadcast_messages").insert({ sender_id: myId, body });
-  if (!error) {
+  const { error } = await supabase.from("broadcast_messages").insert({ sender_id: myId, body, audience });
+  if (!error && audience === "all") {
     try {
       const {
         data: { session },
@@ -288,7 +299,7 @@ export interface GroupMessageRow {
 export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   const supabase = createClient();
   const [vm, cm, nm] = await Promise.all([
-    supabase.from("village_members").select("village_id, villages(name)").eq("user_id", myId),
+    supabase.from("village_members").select("village_id, villages(name)").eq("user_id", myId).eq("status", "approved"),
     supabase.from("club_members").select("club_id, clubs(name, emoji)").eq("user_id", myId),
     supabase.from("neura_members").select("team_id, neura_teams(prefecture, city)").eq("user_id", myId),
   ]);

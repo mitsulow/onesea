@@ -28,6 +28,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [waraMissing, setWaraMissing] = useState(0); // わらわ〜会員の未入力数（0で消える）
+  const [isAdmin, setIsAdmin] = useState(false); // 事務局
   const btnRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<{ top: number; right: number }>({ top: 52, right: 12 });
 
@@ -47,6 +48,9 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
       setUser(session?.user ?? null);
       userId = session?.user?.id ?? null;
       refreshMissing();
+      if (userId) {
+        import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(userId!).then(setIsAdmin)).catch(() => {});
+      }
       // 未読は共有ポーラー（1タブ1本・非表示中は止まる）から受け取る
       if (userId) {
         unsub = subscribeUnread(userId, (n) => {
@@ -239,6 +243,11 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
                 </span>
               )}
             </Link>
+            {isAdmin && (
+              <Link href="/office" onClick={() => setOpen(false)} className={item + hereCls("/office")}>
+                {icon("/icons/icon-megaphone.webp")} 事務局
+              </Link>
+            )}
             <button onClick={logout} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13.5px] font-medium text-[#a05040] active:bg-[#faf4ea]">
               {icon("/icons/icon-logout.webp")} ログアウト
             </button>

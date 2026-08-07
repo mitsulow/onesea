@@ -25,7 +25,7 @@ export default function BroadcastPage() {
   const meRef = useRef<User | null>(null);
 
   const load = useCallback(async () => {
-    const list = await fetchBroadcasts();
+    const list = await fetchBroadcasts(meRef.current?.id);
     setMessages(list);
     if (meRef.current) markBroadcastRead(meRef.current.id);
   }, []);

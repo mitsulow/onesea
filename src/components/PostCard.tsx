@@ -222,6 +222,20 @@ export function PostCard({
         >
           <img src="/icons/icon-share2.webp" alt="シェア" style={{ width: 16, height: 16 }} />
         </button>
+        {me && me.id !== post.user_id && (
+          <button
+            onClick={async () => {
+              const reason = prompt("この投稿の削除を事務局に依頼します。理由を教えてください");
+              if (reason === null) return;
+              const { createClient } = await import("@/lib/supabase/client");
+              const supabase = createClient();
+              await supabase.from("post_reports").insert({ kind: "cotozute", target_id: post.id, target_url: `/post/${post.id}`, excerpt: (post.body ?? "").slice(0, 120), reporter: me.id, reason: reason || null });
+              alert("事務局に削除依頼を送りました");
+            }}
+            className="flex w-9 items-center justify-center py-1.5 text-[10px] text-[#b0b3b8]"
+            aria-label="削除依頼"
+          >⚑</button>
+        )}
       </div>
 
       {/* いいねした人の顔（FB風） */}

@@ -219,6 +219,17 @@ export default function VillagePage() {
             <button
               onClick={async () => {
                 await joinVillage(me.id, villageId);
+                // 村長へTalKで申請通知
+                try {
+                  if (village.created_by && village.created_by !== me.id) {
+                    const chatId = await getOrCreateChat(me.id, village.created_by);
+                    if (chatId) {
+                      const supabase = createClient();
+                      const { data: p } = await supabase.from("profiles").select("display_name").eq("id", me.id).maybeSingle();
+                      await sendMessage(chatId, me.id, `【参加申請】${p?.display_name ?? "どなたか"}さんが「${village.name}」への参加を申請しました。村ページの村人アイコンから承認・却下できます → https://onesea.vercel.app/sekai/village/${villageId}`);
+                    }
+                  }
+                } catch {}
                 load();
               }}
               className="rounded-xl px-6 py-2.5 text-[13.5px] font-extrabold"
@@ -437,7 +448,18 @@ export default function VillagePage() {
                   {pending && isLeader && (
                     <span className="flex gap-1">
                       <button
-                        onClick={async () => { await approveVillageMember(villageId, m.user_id); load(); }}
+                        onClick={async () => {
+                          await approveVillageMember(villageId, m.user_id);
+                          // 本人へTalKで承認通知 + グループTalKに歓迎メッセージ
+                          try {
+                            const supabase = createClient();
+                            const { data: p2 } = await supabase.from("profiles").select("display_name").eq("id", m.user_id).maybeSingle();
+                            const chatId = await getOrCreateChat(me!.id, m.user_id);
+                            if (chatId) await sendMessage(chatId, me!.id, `「${village.name}」への参加が承認されました！ようこそ🎉 グループTalKでみんなと話せます → https://onesea.vercel.app/talk/g/village/${villageId}`);
+                            await supabase.from("group_messages").insert({ scope_type: "village", scope_id: villageId, sender_id: me!.id, body: `🎉 ${p2?.display_name ?? "新しい村人"}さんが「${village.name}」に加わりました！` });
+                          } catch {}
+                          load();
+                        }}
                         className="rounded bg-[#4a9a6a] px-1.5 py-0.5 text-[9px] font-bold text-white"
                       >承認</button>
                       <button
@@ -473,6 +495,18 @@ export default function VillagePage() {
                   <span className="num ml-auto text-[10px] text-[#c0c8c0]">
                     {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                   </span>
+                  {me && (
+                    <button
+                      onClick={async () => {
+                        const reason = prompt("この投稿の削除を事務局に依頼します。理由を教えてください");
+                        if (reason === null) return;
+                        const supabase = createClient();
+                        await supabase.from("post_reports").insert({ kind: "village_post", target_id: p.id, target_url: `/sekai/village/${villageId}`, excerpt: String(p.body ?? "").slice(0, 120), reporter: me.id, reason: reason || null });
+                        alert("事務局に削除依頼を送りました");
+                      }}
+                      className="ml-1 text-[9px] text-[#c0c8c0] underline"
+                    >通報</button>
+                  )}
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">
                   {linkify(String(p.body ?? ""))}
