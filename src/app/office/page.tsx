@@ -122,6 +122,28 @@ export default function OfficePage() {
             {sending ? "送信中…" : "一斉送信する"}
           </button>
           {sent && <p className="mt-1.5 text-center text-[12px] font-bold text-[#2a7a4a]">{sent}</p>}
+
+          {/* Gメールでも送る: 会員メールをBCCに詰めたGmail作成画面を開く（送信基盤いらず・無料） */}
+          <button
+            onClick={async () => {
+              const supabase = createClient();
+              const { data, error } = await supabase.rpc("office_member_emails", { aud: audience });
+              if (error || !data?.length) { alert("メールアドレスを取得できませんでした"); return; }
+              const emails = (data as Array<{ email: string }>).map((r) => r.email);
+              const subject = encodeURIComponent("【OneSea事務局】お知らせ");
+              const bodyEnc = encodeURIComponent(body.slice(0, 1500));
+              // Gmailの作成画面はURL長に上限があるので50人ずつに分けて開く
+              for (let i = 0; i < emails.length; i += 50) {
+                const bcc = encodeURIComponent(emails.slice(i, i + 50).join(","));
+                window.open(`https://mail.google.com/mail/?view=cm&fs=1&bcc=${bcc}&su=${subject}&body=${bodyEnc}`, "_blank");
+              }
+            }}
+            className="mt-2 w-full rounded-xl border-2 py-2.5 text-[13px] font-extrabold"
+            style={{ borderColor: "#c94d3a", color: "#c94d3a", background: "#fff" }}
+          >
+            ✉ Gメールでも送る（宛先BCCを自動セット）
+          </button>
+          <p className="mt-1 text-center text-[10px] text-[#a09888]">Gmailの作成画面が開きます。50人ごとに1通に分かれます</p>
         </section>
 
         {/* ② 拠点申請の認定 */}
@@ -187,11 +209,27 @@ export default function OfficePage() {
                 </div>
                 {r.reason && <div className="mt-1 text-[12.5px] font-bold text-[#c94d3a]">理由: {r.reason}</div>}
                 {r.excerpt && <div className="mt-0.5 line-clamp-2 text-[12px] text-[#5a5448]">「{r.excerpt}」</div>}
-                <div className="mt-1.5 flex gap-2">
+                <div className="mt-1.5 flex flex-wrap gap-2">
                   {r.target_url && (
                     <Link href={r.target_url} className="rounded-lg border border-[#e5dcc8] px-2.5 py-1 text-[11px] font-bold text-[#3070b0] no-underline">
                       投稿を見る →
                     </Link>
+                  )}
+                  {r.status === "open" && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm("通報された投稿そのものを削除します。よろしいですか？")) return;
+                        const supabase = createClient();
+                        const table = r.kind === "cotozute" ? "posts" : "village_posts";
+                        const { error } = await supabase.from(table).delete().eq("id", r.target_id);
+                        if (error) { alert("削除できませんでした: " + error.message); return; }
+                        await supabase.from("post_reports").update({ status: "done" }).eq("id", r.id);
+                        if (me) load(me.id);
+                      }}
+                      className="rounded-lg bg-[#c05030] px-2.5 py-1 text-[11px] font-bold text-white"
+                    >
+                      投稿を削除する
+                    </button>
                   )}
                   {r.status === "open" && (
                     <button

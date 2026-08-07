@@ -79,6 +79,12 @@ export default function ShopDetailPage() {
     if (chatId) router.push(`/talk/${chatId}`);
   };
 
+  const [amOffice, setAmOffice] = useState(false); // 事務局は出品を削除できる
+  useEffect(() => {
+    if (!me) return;
+    import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+  }, [me]);
+
   const remove = async () => {
     if (!me || !shop) return;
     if (!confirm("この楽座を取り下げますか？")) return;
@@ -223,6 +229,19 @@ export default function ShopDetailPage() {
           </Link>
         )}
 
+        {!isMine && amOffice && (
+          <button
+            onClick={async () => {
+              if (!shop || !confirm("【事務局権限】この出品を削除しますか？（法令違反等）")) return;
+              const { createClient } = await import("@/lib/supabase/client");
+              await createClient().from("shops").delete().eq("id", shop.id);
+              router.replace("/za");
+            }}
+            className="mb-2 w-full rounded-xl border border-[#c05030] bg-white py-3 text-[13.5px] font-bold text-[#c05030]"
+          >
+            事務局権限でこの出品を削除する
+          </button>
+        )}
         {isMine ? (
           <button
             onClick={remove}

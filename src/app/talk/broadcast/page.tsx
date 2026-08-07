@@ -100,6 +100,17 @@ export default function BroadcastPage() {
                     {m.body}
                   </div>
                   <span className="flex-shrink-0 text-[9px] text-[#a89e8c]">{date}</span>
+                  {admin && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm("このお知らせを削除しますか？（全員の画面から消えます）")) return;
+                        const supabase = createClient();
+                        await supabase.from("broadcast_messages").delete().eq("id", m.id);
+                        load();
+                      }}
+                      className="flex-shrink-0 text-[10px] text-[#c05030] underline"
+                    >削除</button>
+                  )}
                 </div>
               </div>
             </div>

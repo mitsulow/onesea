@@ -50,6 +50,11 @@ export default function UserPage() {
   const [posts, setPosts] = useState<CotozutePost[] | null>(null);
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [me, setMe] = useState<User | null>(null);
+  const [amOffice, setAmOffice] = useState(false); // 事務局3人だけ上部にボタン
+  useEffect(() => {
+    if (!me) return;
+    import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+  }, [me]);
   const [editingBio, setEditingBio] = useState(false);
   const [bioDraft, setBioDraft] = useState("");
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
@@ -253,6 +258,15 @@ export default function UserPage() {
         <span className="absolute right-3 top-3 z-10">
           <AvatarMenu />
         </span>
+        {isMe && amOffice && (
+          <Link
+            href="/office"
+            className="absolute left-3 top-3 z-10 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold no-underline"
+            style={{ background: "#1a2432", color: "#f0e6c8", border: "1px solid #d4b96a" }}
+          >
+            <img src="/icons/icon-megaphone.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 事務局
+          </Link>
+        )}
         {isMe && (
           <>
             <button

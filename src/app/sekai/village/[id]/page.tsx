@@ -41,6 +41,11 @@ export default function VillagePage() {
   const villageId = params.id;
   const router = useRouter();
   const [me, setMe] = useState<User | null>(null);
+  const [amOffice, setAmOffice] = useState(false); // 事務局は投稿削除できる
+  useEffect(() => {
+    if (!me) return;
+    import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+  }, [me]);
   const [village, setVillage] = useState<any | null | undefined>(undefined);
   const [members, setMembers] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
@@ -495,6 +500,17 @@ export default function VillagePage() {
                   <span className="num ml-auto text-[10px] text-[#c0c8c0]">
                     {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                   </span>
+                  {me && amOffice && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm("【事務局権限】この村の投稿を削除しますか？")) return;
+                        const supabase = createClient();
+                        await supabase.from("village_posts").delete().eq("id", p.id);
+                        load();
+                      }}
+                      className="ml-1 text-[9px] font-bold text-[#c05030] underline"
+                    >削除</button>
+                  )}
                   {me && (
                     <button
                       onClick={async () => {

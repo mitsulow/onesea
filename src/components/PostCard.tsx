@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { CotozutePost, toggleLike, deletePost, warawer } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
@@ -83,11 +83,22 @@ export function PostCard({
     }
   };
 
+  const [amOffice, setAmOffice] = useState(false);
+  useEffect(() => {
+    if (!me) return;
+    import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+  }, [me]);
+
   const onDelete = async () => {
-    if (!me || me.id !== post.user_id) return;
-    if (!confirm("この言の葉を消しますか？")) return;
+    if (!me || (me.id !== post.user_id && !amOffice)) return;
+    if (!confirm(me.id === post.user_id ? "この言の葉を消しますか？" : "【事務局権限】この投稿を削除しますか？")) return;
     setGone(true);
-    await deletePost(post.id, me.id);
+    if (me.id === post.user_id) {
+      await deletePost(post.id, me.id);
+    } else {
+      const { createClient } = await import("@/lib/supabase/client");
+      await createClient().from("posts").delete().eq("id", post.id);
+    }
     onDeleted?.();
   };
 
@@ -147,7 +158,7 @@ export function PostCard({
             )}
           </div>
         </div>
-        {me?.id === post.user_id && (
+        {(me?.id === post.user_id || amOffice) && (
           <button onClick={onDelete} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px] font-bold text-[#65676b] active:bg-[#e4e6e9]" aria-label="自分の投稿を削除">
             ×
           </button>
