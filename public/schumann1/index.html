@@ -3229,10 +3229,11 @@
 <style>
   .egg-home-btn{position:fixed;left:14px;bottom:calc(env(safe-area-inset-bottom, 0px) + 86px);z-index:900; /* ★MASTER MIND MEMBERSを隠さない高さ */
     display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;border-radius:16px;
-    background:linear-gradient(160deg,#0e1e2ef2,#17384ef2);border:1px solid #2a3a55;
-    box-shadow:0 4px 18px rgba(0,0,0,.4);cursor:pointer;text-decoration:none}
+    /* ★黒背景に溶けないよう明るい金色系＋発光 */
+    background:linear-gradient(160deg,#f7eecf,#e5c67e);border:1.5px solid #d4b96a;
+    box-shadow:0 0 14px rgba(212,185,106,.55), 0 4px 18px rgba(0,0,0,.5);cursor:pointer;text-decoration:none}
   .egg-home-btn img{width:17px;height:21px;object-fit:contain}
-  .egg-home-btn span{font-size:9px;font-weight:700;color:#e8d5a0;line-height:1}
+  .egg-home-btn span{font-size:9px;font-weight:800;color:#4a3a14;line-height:1}
   .egg-menu-ov{display:none;position:fixed;inset:0;z-index:901;background:rgba(0,0,0,.35)}
   .egg-menu{display:none;position:fixed;left:50%;transform:translateX(-50%);z-index:902;
     bottom:calc(env(safe-area-inset-bottom, 0px) + 66px);width:calc(100% - 24px);max-width:480px;
