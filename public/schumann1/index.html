@@ -1135,7 +1135,15 @@
     letter-spacing: 0.15em; line-height: 1.8;
   }
   /* ★フッターの Powered by → ⚡MMM⚡ を昔のネオン緑・大きめで */
-  footer .powered-label { margin-top: 1.4rem; font-size: 0.72rem; color: #9fb2c8; }
+  footer .powered-label {
+    margin-top: 1.4rem;
+    font-family: "Cinzel", serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.28em;
+    color: #52fa8c;
+    text-shadow: 0 0 14px rgba(82, 250, 140, 0.55), 0 0 40px rgba(82, 250, 140, 0.25);
+  }
   footer .mmm-logo { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-top: 0.35rem; }
   footer .mmm-logo .mmm-text {
     font-family: "Cinzel", serif;
@@ -1255,10 +1263,9 @@
         <div class="gf1-row">
           <span class="gf1-value"><span id="gf1-main">—.——</span></span><span class="gf1-value gf1-unit">Hz</span>
         </div>
-        <div class="gf1-note" id="gf1-note">※<span id="gf1-aud">—</span>Hzの可聴域に変換した音</div>
         <div class="gf1-live">振幅 <b id="gf1-amp">—</b> pT <span class="gf1-sep">・</span> Q値 <b id="gf1-q">—</b></div>
       </div>
-      <div class="gf1-target" id="gf1-target" style="display:none;">目標 8.02 Hz まで <b id="gf1-dist">—</b> Hz <span class="gf1-sep">・</span> 3日平均 <b id="gf1-dist3">—</b> Hz</div>
+      <div class="gf1-target" id="gf1-target" style="display:none;">目標 8.02 Hz まで <b id="gf1-dist">—</b> Hz <span class="gf1-sep">・</span> 今週平均 <b id="gf1-dist3">—</b> Hz</div>
     </div>
 
     <div class="spark-wrap">
@@ -1345,7 +1352,7 @@
     <div class="sr-card m1">
       <div class="sr-top">
         <span class="sr-name">① 第一次モード</span>
-        <span class="sr-base"><span class="avg-dash">– – –</span> 3日平均 <span id="mh-avg-F1">—</span> Hz</span>
+        <span class="sr-base"><span class="avg-dash">– – –</span> 今週平均 <span id="mh-avg-F1">—</span> Hz</span>
       </div>
       <div class="sr-vals">
         <div class="sr-v"><span class="sr-l">FREQUENCY</span><span class="sr-n"><b id="sr-hz-F1">—</b> Hz</span></div>
@@ -1360,7 +1367,7 @@
     <div class="sr-card m2">
       <div class="sr-top">
         <span class="sr-name">② 第二次モード</span>
-        <span class="sr-base"><span class="avg-dash">– – –</span> 3日平均 <span id="mh-avg-F2">—</span> Hz</span>
+        <span class="sr-base"><span class="avg-dash">– – –</span> 今週平均 <span id="mh-avg-F2">—</span> Hz</span>
       </div>
       <div class="sr-vals">
         <div class="sr-v"><span class="sr-l">FREQUENCY</span><span class="sr-n"><b id="sr-hz-F2">—</b> Hz</span></div>
@@ -1375,7 +1382,7 @@
     <div class="sr-card m3">
       <div class="sr-top">
         <span class="sr-name">③ 第三次モード</span>
-        <span class="sr-base"><span class="avg-dash">– – –</span> 3日平均 <span id="mh-avg-F3">—</span> Hz</span>
+        <span class="sr-base"><span class="avg-dash">– – –</span> 今週平均 <span id="mh-avg-F3">—</span> Hz</span>
       </div>
       <div class="sr-vals">
         <div class="sr-v"><span class="sr-l">FREQUENCY</span><span class="sr-n"><b id="sr-hz-F3">—</b> Hz</span></div>
@@ -1390,7 +1397,7 @@
     <div class="sr-card m4">
       <div class="sr-top">
         <span class="sr-name">④ 第四次モード</span>
-        <span class="sr-base"><span class="avg-dash">– – –</span> 3日平均 <span id="mh-avg-F4">—</span> Hz</span>
+        <span class="sr-base"><span class="avg-dash">– – –</span> 今週平均 <span id="mh-avg-F4">—</span> Hz</span>
       </div>
       <div class="sr-vals">
         <div class="sr-v"><span class="sr-l">FREQUENCY</span><span class="sr-n"><b id="sr-hz-F4">—</b> Hz</span></div>
@@ -1716,7 +1723,7 @@
       distRow.style.display = "";
       document.getElementById("gf1-dist").textContent = fmtDist(distNow);
     }
-    // 3日間平均 (graph_stats.json)
+    // 今週平均=今日までの7日 (graph_stats.json / 0Lei側で7日窓に変更済み)
     fetch("/api/sr/graph_stats.json", { cache: "no-store" })
       .then(r => r.ok ? r.json() : null)
       .then(s => {
@@ -1726,7 +1733,7 @@
           if (a && s.modes[k] && typeof s.modes[k].avg === "number")
             a.textContent = s.modes[k].avg.toFixed(2);
         });
-        // 距離ゲージの3日平均側 (瞬間値だけだとノイズで暴れるため併記)
+        // 距離ゲージの今週平均側 (瞬間値だけだとノイズで暴れるため併記)
         if (s.modes.F1 && typeof s.modes.F1.avg === "number") {
           const el = document.getElementById("gf1-dist3");
           if (el) el.textContent = fmtDist(s.modes.F1.avg - TARGET_HZ);
