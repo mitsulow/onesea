@@ -335,19 +335,22 @@ export function MootsSection({
         </div>
       )}
 
-      {/* 今後/過去 を左右に並べた折りたたみ（押すと下に開く） */}
-      <div className="mt-2 grid grid-cols-2 gap-2 px-1">
+      {/* 過去の一覧 ← 新月会・満月会 → 未来の予定（囲わず、文字だけ） */}
+      <div className="mt-2.5 flex items-center justify-center gap-3 px-1">
         <button
-          onClick={() => setFutureOpen((v) => !v)}
-          className="rounded-xl border border-white/10 bg-white/5 py-2 text-center text-[11.5px] font-bold text-[#a8c8b0]"
+          onClick={() => { setPastOpen((v) => !v); setFutureOpen(false); }}
+          className="text-[11.5px] font-bold"
+          style={{ color: pastOpen ? "#e8d5a0" : "#a8c8b0", textDecoration: "underline", textUnderlineOffset: 3 }}
         >
-          今後の新月会/満月会 {futureOpen ? "▾" : "▸"}
+          過去の一覧
         </button>
+        <span className="text-[12px] font-extrabold tracking-[1px] text-[#7a9a88]">← 新月会・満月会 →</span>
         <button
-          onClick={() => setPastOpen((v) => !v)}
-          className="rounded-xl border border-white/10 bg-white/5 py-2 text-center text-[11.5px] font-bold text-[#a8c8b0]"
+          onClick={() => { setFutureOpen((v) => !v); setPastOpen(false); }}
+          className="text-[11.5px] font-bold"
+          style={{ color: futureOpen ? "#e8d5a0" : "#a8c8b0", textDecoration: "underline", textUnderlineOffset: 3 }}
         >
-          過去の新月会/満月会 {pastOpen ? "▾" : "▸"}
+          未来の予定
         </button>
       </div>
       {futureOpen && (
