@@ -18,6 +18,7 @@ import {
 } from "@/lib/almanac";
 import { TideDay, Port, fetchTideDay, listPorts, setChosenPort, clearPositionCache } from "@/lib/tide";
 import { createClient } from "@/lib/supabase/client";
+import { scheduleTechoBackup, restoreTechoIfEmpty } from "@/lib/techoBackup";
 import { SignupDialog } from "@/components/SignupDialog";
 
 /**
@@ -109,15 +110,27 @@ export function InoriTecho() {
   const [memos, setMemos] = useState<Memos>({});
   // ゲストは眺めるだけ。書き込み（日シートを開く）は無料会員から
   const loggedIn = useRef<boolean | null>(null);
+  const uidRef = useRef<string | null>(null);
+  const [waraCloud, setWaraCloud] = useState<"warawa" | "free" | null>(null); // バックアップ表示用
   const [showSignup, setShowSignup] = useState(false);
 
   useEffect(() => {
     setMemos(loadMemos());
-    createClient()
-      .auth.getSession()
-      .then(({ data: { session } }) => {
-        loggedIn.current = !!session?.user;
-      });
+    const supabase = createClient();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      loggedIn.current = !!session?.user;
+      const u = session?.user;
+      if (!u) return;
+      uidRef.current = u.id;
+      const { data: prof } = await supabase.from("profiles").select("warawa_until").eq("id", u.id).maybeSingle();
+      const wara = !!prof?.warawa_until && new Date(prof.warawa_until as string) > new Date();
+      setWaraCloud(wara ? "warawa" : "free");
+      if (wara) {
+        // 機種変更後の新端末: ローカルが空ならクラウドから予定を復元
+        const restored = await restoreTechoIfEmpty(u.id);
+        if (restored) setMemos(loadMemos());
+      }
+    });
   }, []);
 
   const tryOpenDay = (k: string | null) => {
@@ -166,6 +179,7 @@ export function InoriTecho() {
       try {
         localStorage.setItem("techo-memos", JSON.stringify(next));
       } catch {}
+      if (uidRef.current && waraCloud === "warawa") scheduleTechoBackup(uidRef.current);
       return next;
     });
   };
@@ -185,6 +199,7 @@ export function InoriTecho() {
       try {
         localStorage.setItem("techo-memos", JSON.stringify(next));
       } catch {}
+      if (uidRef.current && waraCloud === "warawa") scheduleTechoBackup(uidRef.current);
       return next;
     });
   };
@@ -440,6 +455,14 @@ function MonthCal({
         </div>
       </div>
 
+      {waraCloud === "warawa" && (
+        <div className="bg-white pb-1 pt-0.5 text-center text-[9.5px] text-[#9ab8a0]">☁ 予定は自動バックアップ中 — 機種変更しても戻せます</div>
+      )}
+      {waraCloud === "free" && (
+        <a href="/lp/onesea" className="block bg-white pb-1 pt-0.5 text-center text-[9.5px] font-bold text-[#c94d3a] no-underline">
+          ☁ わらわ〜会員は予定を自動バックアップ — 機種変更しても消えません →
+        </a>
+      )}
     </div>
   );
 }
