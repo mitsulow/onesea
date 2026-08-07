@@ -151,7 +151,7 @@ export default function ChatPage() {
             style={{ background: "rgba(212,185,106,.18)", border: "1px solid rgba(212,185,106,.5)" }}
             aria-label="ビデオ通話"
           >
-            🎥
+            <img src="/icons/icon-video.webp" alt="" style={{ width: 24, height: 24 }} />
           </button>
         )}
       </header>

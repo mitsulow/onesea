@@ -39,11 +39,11 @@ const MENU_ITEMS: Array<{ href: string; icon: string; label: string; ext?: boole
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
   { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
-  { href: "/", icon: "/icons/tab-home.png", label: "ホーム" },
+  { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
-  { href: "/#techo", icon: "📖", label: "手帳", ext: true },
-  { href: "/my", icon: "🪪", label: "マイページ編集" },
-  { href: "/talk", icon: "💬", label: "TALK" },
+  { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
+  { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
+  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TALK" },
 ];
 
 /** 投稿の区切り線（細いティファニーブルー・左右いっぱい） */
@@ -578,7 +578,7 @@ export default function CotozutePage() {
           transition: "transform 0.18s cubic-bezier(0.2,0.8,0.3,1)",
         }}
       >
-        <div className="flex h-12 items-center gap-3 px-4">
+        <div className="flex h-[52px] items-center gap-3 px-4">
           <button onClick={() => setDrawer(true)} aria-label="メニュー" className="text-[22px] leading-none text-[#1c1e21]">
             ☰
           </button>

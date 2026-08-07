@@ -831,7 +831,7 @@ function BottomSheet({
                             className="absolute left-1 rounded bg-white px-0.5 text-[7px] font-semibold"
                             style={{ top: -6, color: tm.color }}
                           >
-                            🌊{tm.lb}
+                            <img src="/icons/icon-wave.webp" alt="" style={{ width: 11, height: 11, display: "inline", verticalAlign: -1.5 }} />{tm.lb}
                           </span>
                         </div>
                       ))}

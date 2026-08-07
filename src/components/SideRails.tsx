@@ -14,8 +14,8 @@ const NAV: Array<{ href: string; icon: string; label: string; ext?: boolean }> =
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
   { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
-  { href: "/#techo", icon: "📖", label: "手帳", ext: true },
-  { href: "/my", icon: "🪪", label: "マイページ" },
+  { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
+  { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ" },
   { href: "/talk", icon: "💬", label: "TALK" },
 ];
 

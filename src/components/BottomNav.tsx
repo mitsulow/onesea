@@ -59,9 +59,9 @@ const SERVICES: Service[] = [
     active: "#7de0a0",
     inactive: "#4a7a5a",
     tabs: [
-      { href: "/mmm/neura", icon: "🧠", label: "ニューラFIVE" },
+      { href: "/mmm/neura", icon: "/icons/icon-neura.webp", label: "ニューラFIVE" },
       { href: "/schumann1/index.html", icon: "⚡", label: "シューマン共振", ext: true },
-      { href: "/mmm/ddp", icon: "🌊", label: "DDP設定" },
+      { href: "/mmm/ddp", icon: "/icons/icon-wave.webp", label: "DDP設定" },
     ],
   },
   {
@@ -73,7 +73,7 @@ const SERVICES: Service[] = [
     inactive: "#7a6a90",
     tabs: [
       { href: "/tsukiyoga-v7/index.html", icon: "🌕", label: "ツキヨガv7", ext: true },
-      { href: "/my", icon: "🪪", label: "マイページ編集" },
+      { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
     ],
   },
   {
@@ -94,7 +94,7 @@ const SERVICES: Service[] = [
     inactive: "#a09888",
     tabs: [
       { href: "/za/new", icon: "🏮", label: "出品する" },
-      { href: "/my", icon: "🪪", label: "マイページ編集" },
+      { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
     ],
   },
   {
@@ -115,11 +115,11 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
   { href: "/cotozute", icon: "/icons/tab-cotozute.png", label: "コトヅテ" },
-  { href: "/", icon: "/icons/tab-home.png", label: "HOME" },
+  { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
-  { href: "/#techo", icon: "📖", label: "手帳", ext: true },
-  { href: "/my", icon: "🪪", label: "マイページ編集" },
-  { href: "/talk", icon: "💬", label: "TALK", talk: true },
+  { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
+  { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
+  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TALK", talk: true },
 ];
 
 function TabIcon({ icon, active }: { icon: string; active: boolean }) {
@@ -233,18 +233,18 @@ export function BottomNav() {
                   className="flex flex-col items-center gap-1 rounded-xl py-3"
                   style={cellStyle}
                 >
-                  {m.icon.startsWith("/") ? (
-                    <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
-                  ) : (
-                    <span className="relative text-[24px] leading-none">
-                      {m.icon}
-                      {m.talk && unread > 0 && (
-                        <span className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white" style={{ lineHeight: 1 }}>
-                          {unread > 99 ? "99+" : unread}
-                        </span>
-                      )}
-                    </span>
-                  )}
+                  <span className="relative leading-none">
+                    {m.icon.startsWith("/") ? (
+                      <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
+                    ) : (
+                      <span className="text-[24px] leading-none">{m.icon}</span>
+                    )}
+                    {m.talk && unread > 0 && (
+                      <span className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white" style={{ lineHeight: 1 }}>
+                        {unread > 99 ? "99+" : unread}
+                      </span>
+                    )}
+                  </span>
                   <span className="text-[10.5px] font-extrabold" style={{ color: isHere ? "#eae6b8" : "#c8d2e4" }}>
                     {m.label}
                   </span>
@@ -256,18 +256,18 @@ export function BottomNav() {
                   className="flex flex-col items-center gap-1 rounded-xl py-3"
                   style={cellStyle}
                 >
-                  {m.icon.startsWith("/") ? (
-                    <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
-                  ) : (
-                    <span className="relative text-[24px] leading-none">
-                      {m.icon}
-                      {m.talk && unread > 0 && (
-                        <span className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white" style={{ lineHeight: 1 }}>
-                          {unread > 99 ? "99+" : unread}
-                        </span>
-                      )}
-                    </span>
-                  )}
+                  <span className="relative leading-none">
+                    {m.icon.startsWith("/") ? (
+                      <img src={m.icon} alt="" className="h-[26px] w-[26px] object-contain" />
+                    ) : (
+                      <span className="text-[24px] leading-none">{m.icon}</span>
+                    )}
+                    {m.talk && unread > 0 && (
+                      <span className="absolute -right-3 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-bold text-white" style={{ lineHeight: 1 }}>
+                        {unread > 99 ? "99+" : unread}
+                      </span>
+                    )}
+                  </span>
                   <span className="text-[10.5px] font-extrabold" style={{ color: isHere ? "#eae6b8" : "#c8d2e4" }}>
                     {m.label}
                   </span>
@@ -293,7 +293,7 @@ export function BottomNav() {
               style={{ width: 17, height: 21 }}
             />
             <span className={`flex items-center gap-0.5 text-[9px] leading-none ${atHome ? "font-bold" : "font-medium"}`} style={{ color: atHome ? svc.active : svc.inactive }}>
-              ホーム <span className="text-[7px]">{menu ? "▾" : "▴"}</span>
+              OneSea <span className="text-[7px]">{menu ? "▾" : "▴"}</span>
             </span>
           </button>
           )}

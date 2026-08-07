@@ -54,7 +54,7 @@ export default function NeuraPage() {
     <main className="min-h-screen pb-24" style={{ background: "linear-gradient(180deg,#0a1410,#101a28)" }}>
       <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
         <span className="text-[16px] font-extrabold tracking-[3px]" style={{ color: "#a8b8f0", textShadow: "0 0 10px rgba(140,160,255,.6)" }}>
-          🧠 ニューラFIVE
+          <img src="/icons/icon-neura.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラFIVE
         </span>
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           <AvatarMenu ring="#a8b8f0" />
@@ -71,7 +71,7 @@ export default function NeuraPage() {
             href="/mmm/ddp"
             className="mt-2.5 block rounded-xl border border-[#2a4a3a] bg-[#0c1812] px-3 py-2.5 text-center text-[12.5px] font-bold text-[#7de0a0] no-underline"
           >
-            🌊 まずは自分のDDPを設定する →
+            <img src="/icons/icon-wave.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> まずは自分のDDPを設定する →
           </Link>
         )}
 
@@ -85,7 +85,7 @@ export default function NeuraPage() {
               className="mt-3 w-full rounded-xl py-3 text-[14px] font-extrabold text-[#101a28] disabled:opacity-40"
               style={{ background: "linear-gradient(135deg,#b8c8ff,#8a9af0)" }}
             >
-              {joining ? "チームを探しています..." : `🧠 ${myCity ?? myPref}のチームに参加する`}
+              {joining ? "チームを探しています..." : `${myCity ?? myPref}のチームに参加する`}
             </button>
           ) : (
             <p className="mt-3 text-[12px] text-[#5a6a8a]">ログインすると参加できます</p>
@@ -94,7 +94,7 @@ export default function NeuraPage() {
           <div className="mt-3">
             <div className="mb-2 flex items-baseline justify-between">
               <span className="text-[12.5px] font-extrabold text-[#c8d4f8]">
-                🧠 ニューラ班（{team.city ?? team.prefecture}）
+                <img src="/icons/icon-neura.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラ班（{team.city ?? team.prefecture}）
               </span>
               <span className="num text-[10px] text-[#5a6a8a]">
                 {team.members.length}/{NEURA_SIZE}人 ・ {team.season}
@@ -106,7 +106,7 @@ export default function NeuraPage() {
                   {m.profiles?.avatar_url ? (
                     <img src={m.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
                   ) : (
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2a3a55] text-[15px]">🧠</span>
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2a3a55]"><img src="/icons/icon-neura.webp" alt="" style={{ width: 20, height: 20 }} /></span>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="text-[12px] font-bold text-[#c8d4f8]">
@@ -114,7 +114,7 @@ export default function NeuraPage() {
                       {m.user_id === me?.id && <span className="ml-1 text-[9px] text-[#8a9ab8]">（あなた）</span>}
                     </div>
                     <div className="truncate text-[12.5px] text-[#e8ecff]">
-                      {m.ddp ? `🌊 ${m.ddp}` : <span className="text-[#4a5a78]">DDP未設定</span>}
+                      {m.ddp ? <><img src="/icons/icon-wave.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {m.ddp}</> : <span className="text-[#4a5a78]">DDP未設定</span>}
                     </div>
                   </div>
                 </div>

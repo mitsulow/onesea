@@ -341,7 +341,7 @@ export function TalkCall({
             style={camOn ? { background: "#2a3242", color: "#e8ecf4" } : { background: "#c05040", color: "#fff" }}
             aria-label="カメラ"
           >
-            {camOn ? "🎥" : "🚫"}
+            {camOn ? <img src="/icons/icon-video.webp" alt="" style={{ width: 22, height: 22 }} /> : "🚫"}
           </button>
         )}
         <button onClick={hangup} className="rounded-full px-7 py-3.5 text-[14px] font-extrabold text-white" style={{ background: "#d04030" }}>

@@ -233,7 +233,7 @@ export function Otohikari() {
 
         {/* 集計 — 南半球の下部に重ねる */}
         <div className="pointer-events-none absolute bottom-1 left-0 right-0 flex items-end justify-center gap-8 text-center">
-          {stat("TUNING", nowCount)}
+          {stat("TUNE-IN", nowCount)}
           {stat("TODAY", todayCount != null ? todayCount.toLocaleString() : "—")}
           {stat(
             "TARGET",

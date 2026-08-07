@@ -66,7 +66,7 @@ export function ProfileSetup() {
       className="card"
       style={{ background: "linear-gradient(150deg,#fffbf0,#fffdf8)", border: "1.5px solid #d4b96a66" }}
     >
-      <div className="sec mb-2">🌊 はじめまして — あなたのことを教えてください</div>
+      <div className="sec mb-2"><img src="/icons/icon-wave.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> はじめまして — あなたのことを教えてください</div>
 
       <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
         DDP <span className="font-normal text-[#c0b8a8]">端的な夢・願い</span>

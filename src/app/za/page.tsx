@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import TopTone from "@/components/TopTone";
 import { createClient } from "@/lib/supabase/client";
 import { Shop, Market, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
 import { ZaFeatured } from "@/components/ZaFeatured";
@@ -40,9 +41,10 @@ export default function ZaPage() {
 
   return (
     <main className="overflow-x-clip pb-20">
+      <TopTone color="#ffffff" />
       {/* 旧楽市楽座のヒーロー: 鳥居エンブレム + 楽市楽座 + 日本人総フリーランス化計画（朱色で統一） */}
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-white/95 backdrop-blur-sm">
-        <div className="flex h-14 items-center justify-between px-4">
+        <div className="flex h-[52px] items-center justify-between px-4">
           <span className="inline-flex select-none items-center" style={{ color: "#c94d3a", gap: 8 }}>
             <svg
               width={40}

@@ -69,14 +69,14 @@
   }
   .hero-dark .mmm-logo .bolt { filter: drop-shadow(0 0 6px rgba(82, 250, 140, 0.6)); }
   .site-title {
-    /* MMMロゴ (Cinzel/緑金) と区別: NASA計器風の Michroma × ティファニーブルー */
+    /* 統一ヘッダー: 薄紅の帯 × 雷色(ゴールド)。暗縁取りで可読性を確保 */
     font-family: "Michroma", sans-serif;
     font-weight: 400;
-    font-size: clamp(1rem, 4.6vw, 1.85rem);
-    letter-spacing: 0.09em;
-    text-indent: 0.09em;
-    color: #0abab5;
-    text-shadow: 0 0 14px rgba(10, 186, 181, 0.6), 0 0 40px rgba(129, 216, 208, 0.3);
+    font-size: 13px;
+    letter-spacing: 0.24em;
+    text-indent: 0.24em;
+    color: #f0b400;
+    text-shadow: 0 1px 0 #5a1626, 0 0 2px #5a1626, 0 0 12px rgba(240,180,0,.55);
     white-space: nowrap;
     line-height: 1.35;
   }
@@ -1143,10 +1143,14 @@
   .error-banner.visible { display: block; }
   /* 右上: 他のサービス(OneSea)へ戻るアバター */
   /* ヒーロー内の右上アバター（他サービスと同じ・Google認証アイコン） */
-  .svc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
-    text-align:left;padding:0.15rem 0 0.4rem}
-  .svc-titles{min-width:0}
-  .svc-avwrap{position:relative;flex-shrink:0;padding-top:4px}
+  .svc-head{position:relative;display:flex;align-items:center;justify-content:center;
+    height:52px;
+    margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw); /* 全幅帯 */
+    padding-left:calc(50vw - 50%);padding-right:calc(50vw - 50%);
+    background:linear-gradient(160deg,#f7dfe0 0%,#f2cfd2 60%,#eec4c8 100%);
+    border-bottom:1px solid rgba(180,60,70,.25);box-shadow:0 2px 12px rgba(150,40,60,.18)}
+  .svc-titles{min-width:0;text-align:center}
+  .svc-avwrap{position:absolute;right:10px;top:50%;transform:translateY(-50%);flex-shrink:0}
   .svc-av{width:34px;height:34px;border-radius:50%;overflow:hidden;padding:0;cursor:pointer;
     border:2px solid rgba(212,185,106,0.7);background:#0e1626;display:flex;
     align-items:center;justify-content:center;font-size:16px}
@@ -1199,19 +1203,18 @@
     <header class="svc-head">
       <div class="svc-titles">
         <div class="site-title">SCHUMANN RESONANCE</div>
-        <div class="mmm-logo"><span class="bolt">⚡</span><span class="mmm-text">MASTER MIND MEMBERS</span><span class="bolt">⚡</span></div>
       </div>
       <div class="svc-avwrap">
         <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー"><span id="svcAvFallback" class="svc-guest">ゲスト</span></button>
         <div class="svc-menu" id="svcMenu">
-          <a href="/"><img src="/icons/tab-home.png" alt="">ホーム</a>
+          <a href="/"><img src="/icons/tab-home.png" alt="">OneSea</a>
           <a href="/mmm"><img src="/icons/cel-sun.png" alt="">MMM</a>
           <a href="/sekai"><img src="/icons/cel-earth.png" alt="">セカイムラ</a>
           <a href="/tsukiyoga-v7/index.html"><img src="/icons/cel-moon.png" alt="">ツキヨガ</a>
           <a href="/cotozute"><img src="/icons/tab-cotozute.png" alt="">コトヅテ</a>
           <a href="/za"><img src="/rakuichi/logo-emblem.webp" alt="">楽市楽座</a>
-          <a href="/#techo"><span class="svc-mi">📖</span>手帳</a>
-          <a href="/my"><span class="svc-mi">🪪</span>マイページ</a>
+          <a href="/#techo"><img src="/icons/icon-techo.webp" alt="">手帳</a>
+          <a href="/my"><img src="/icons/icon-profile.webp" alt="">マイページ</a>
         </div>
       </div>
     </header>
@@ -1528,8 +1531,10 @@
     <p>PRIMARY: Line Graph (srf.jpg) · UPDATED EVERY 15 MINUTES</p>
     <p style="margin-top:1rem;">
       <a href="https://mitsulow.github.io/0Lei/">0Lei</a> ·
-      <a href="https://ameblo.jp/mitsulow">Blog</a> ·
-      <span style="color:var(--accent-gold);">⚡ MMM ⚡</span>
+      <a href="https://ameblo.jp/mitsulow">Blog</a>
+    </p>
+    <p style="margin-top:0.8rem;">Powered by
+      <span class="mmm-logo" style="display:inline-flex;align-items:center;gap:4px;"><span class="bolt">⚡</span><span class="mmm-text">MASTER MIND MEMBERS</span><span class="bolt">⚡</span></span>
     </p>
   </footer>
 
@@ -3199,6 +3204,59 @@
   });
   drawMonthlyTrend();
   drawModeGraphs();
+</script>
+
+<!-- ★左下: 卵HOMEボタン + 9メニュー（BottomNavと同配色・同配置） -->
+<style>
+  .egg-home-btn{position:fixed;left:14px;bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);z-index:900;
+    display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 10px;border-radius:16px;
+    background:linear-gradient(160deg,#0e1e2ef2,#17384ef2);border:1px solid #2a3a55;
+    box-shadow:0 4px 18px rgba(0,0,0,.4);cursor:pointer;text-decoration:none}
+  .egg-home-btn img{width:17px;height:21px;object-fit:contain}
+  .egg-home-btn span{font-size:9px;font-weight:700;color:#e8d5a0;line-height:1}
+  .egg-menu-ov{display:none;position:fixed;inset:0;z-index:901;background:rgba(0,0,0,.35)}
+  .egg-menu{display:none;position:fixed;left:50%;transform:translateX(-50%);z-index:902;
+    bottom:calc(env(safe-area-inset-bottom, 0px) + 66px);width:calc(100% - 24px);max-width:480px;
+    background:linear-gradient(160deg,#0e1e2ef7,#17384ef7);border:1px solid #2a3a55;border-radius:16px;
+    box-shadow:0 -6px 40px rgba(0,0,0,.45);padding:12px;
+    grid-template-columns:repeat(3,1fr);gap:8px}
+  .egg-menu.open{display:grid}
+  .egg-menu a{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 4px;
+    border-radius:12px;background:rgba(255,255,255,.07);border:1.5px solid transparent;text-decoration:none}
+  .egg-menu a img{width:26px;height:26px;object-fit:contain}
+  .egg-menu a span{font-size:10.5px;font-weight:800;color:#c8d2e4}
+</style>
+<a class="egg-home-btn" href="/" id="eggHomeBtn">
+  <img src="/icons/tab-home.png" alt="">
+  <span>OneSea ▴</span>
+</a>
+<div class="egg-menu-ov" id="eggMenuOv"></div>
+<div class="egg-menu" id="eggMenu">
+  <a href="/mmm"><img src="/icons/cel-sun.png" alt=""><span>MMM</span></a>
+  <a href="/sekai"><img src="/icons/cel-earth.png" alt=""><span>セカイムラ</span></a>
+  <a href="/tsukiyoga-v7/index.html"><img src="/icons/cel-moon.png" alt=""><span>ツキヨガ</span></a>
+  <a href="/cotozute"><img src="/icons/tab-cotozute.png" alt=""><span>コトヅテ</span></a>
+  <a href="/"><img src="/icons/tab-home.png" alt=""><span>OneSea</span></a>
+  <a href="/za"><img src="/rakuichi/logo-emblem.webp" alt="" style="border-radius:50%;object-fit:cover;"><span>楽市楽座</span></a>
+  <a href="/#techo"><img src="/icons/icon-techo.webp" alt=""><span>手帳</span></a>
+  <a href="/my"><img src="/icons/icon-profile.webp" alt=""><span>マイページ編集</span></a>
+  <a href="/talk"><img src="/icons/icon-chat.webp" alt=""><span>TALK</span></a>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById('eggHomeBtn');
+  var menu = document.getElementById('eggMenu');
+  var ov = document.getElementById('eggMenuOv');
+  function toggle(show) {
+    menu.classList.toggle('open', show);
+    ov.style.display = show ? 'block' : 'none';
+  }
+  btn.addEventListener('click', function (e) {
+    e.preventDefault(); // 1回目はメニュー。もう一度押す or OneSeaセルで / へ
+    toggle(!menu.classList.contains('open'));
+  });
+  ov.addEventListener('click', function () { toggle(false); });
+})();
 </script>
 
 </body>

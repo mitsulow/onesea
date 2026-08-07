@@ -83,6 +83,7 @@ import { SekaiMap } from "@/components/sekai/SekaiMap";
 import { CameraIcon } from "@/components/CameraIcon";
 import { PriceBanner } from "@/components/PriceBanner";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import TopTone from "@/components/TopTone";
 import { moonsOfYear, YOBI, keyOf } from "@/lib/almanac";
 import { MEISTER_COURSES } from "@/data/meister-courses";
 import { LATEST_MOOT_VIDEO, PAST_MOOT_VIDEOS } from "@/data/moot-videos";
@@ -169,7 +170,8 @@ export function useSekaiMe() {
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="pb-16">
-      <header className="relative z-[60] border-b border-[#eee] bg-white px-6 py-2 text-center">
+      <TopTone color="#ffffff" />
+      <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#eee] bg-white px-6 text-center">
         <div className="text-[10px] leading-tight tracking-[3px] text-[#8aa898]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#2a5a38]">セカイムラ</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-left">

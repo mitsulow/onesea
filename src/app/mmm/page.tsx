@@ -10,6 +10,7 @@ import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { ThreeCol } from "@/components/SideRails";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import TopTone from "@/components/TopTone";
 import {
   NEURA_SIZE,
   NeuraTeam,
@@ -92,10 +93,11 @@ export default function MmmPage() {
 
   return (
     <main className="pb-24">
+      <TopTone color="#0a1410" />
       {/* 朝一: その日はじめてなら「今日の地球を、どう楽しむ？」→ 地球儀に着地 */}
       <MorningOpening />
-      {/* ヒーロー（薄い帯） */}
-      <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
+      {/* ヒーロー（統一規格: 高さ52px・サービス名センター・アバター右） */}
+      <header className="relative z-[60] flex h-[52px] items-center justify-center px-6" style={{ background: "#0a1410" }}>
         <div className="text-center">
           <div className="text-[17px] font-extrabold tracking-[3px]" style={GREEN_NEON}>
             MasterMindMembers
@@ -123,7 +125,7 @@ export default function MmmPage() {
       <section className="card" style={{ background: "linear-gradient(150deg,#0f1a25,#16251a)", border: "none" }}>
         <div className="flex items-baseline justify-between">
           <span className="text-[13px] font-extrabold tracking-[2px]" style={GREEN_NEON}>
-            🌊 わたしのDDP
+            <img src="/icons/icon-wave.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> わたしのDDP
           </span>
           <span className="text-[10px] text-[#5a7a68]">短い夢を、明確に持つ</span>
         </div>
@@ -173,7 +175,7 @@ export default function MmmPage() {
       <section className="card" style={{ background: "linear-gradient(150deg,#101a28,#1a1a30)", border: "none" }}>
         <div className="flex items-baseline justify-between">
           <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: "#a8b8f0", textShadow: "0 0 10px rgba(140,160,255,.6)" }}>
-            🧠 ニューラ活動
+            <img src="/icons/icon-neura.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラ活動
           </span>
           <span className="text-[10px] text-[#5a6a8a]">冬至まで・5人1チーム</span>
         </div>
@@ -194,7 +196,7 @@ export default function MmmPage() {
             >
               {joining
                 ? "チームを探しています..."
-                : `🧠 ${myCity ?? myPref}のチームに参加する`}
+                : `${myCity ?? myPref}のチームに参加する`}
             </button>
           ) : (
             <p className="mt-3 text-[12px] text-[#5a6a8a]">ログインすると参加できます</p>
@@ -203,7 +205,7 @@ export default function MmmPage() {
           <div className="mt-3">
             <div className="mb-2 flex items-baseline justify-between">
               <span className="text-[12.5px] font-extrabold text-[#c8d4f8]">
-                🧠 ニューラ班（{team.city ?? team.prefecture}）
+                <img src="/icons/icon-neura.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラ班（{team.city ?? team.prefecture}）
               </span>
               <span className="num text-[10px] text-[#5a6a8a]">
                 {team.members.length}/{NEURA_SIZE}人 ・ {team.season}
@@ -215,7 +217,7 @@ export default function MmmPage() {
                   {m.profiles?.avatar_url ? (
                     <img src={m.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
                   ) : (
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2a3a55] text-[15px]">🧠</span>
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2a3a55]"><img src="/icons/icon-neura.webp" alt="" style={{ width: 20, height: 20 }} /></span>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="text-[12px] font-bold text-[#c8d4f8]">
@@ -223,7 +225,7 @@ export default function MmmPage() {
                       {m.user_id === me?.id && <span className="ml-1 text-[9px] text-[#8a9ab8]">（あなた）</span>}
                     </div>
                     <div className="truncate text-[12.5px] text-[#e8ecff]">
-                      {m.ddp ? `🌊 ${m.ddp}` : <span className="text-[#4a5a78]">DDP未設定</span>}
+                      {m.ddp ? <><img src="/icons/icon-wave.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {m.ddp}</> : <span className="text-[#4a5a78]">DDP未設定</span>}
                     </div>
                   </div>
                 </div>

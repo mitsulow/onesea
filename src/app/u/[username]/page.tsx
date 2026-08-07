@@ -373,7 +373,7 @@ export default function UserPage() {
             className="mt-2.5 rounded-xl px-3.5 py-2.5"
             style={{ background: "linear-gradient(135deg,#e6f7f6,#fdfbf4)", border: "1px solid #0abab544" }}
           >
-            <div className="text-[9.5px] font-bold tracking-[2px] text-[#0abab5]">🌊 DDP</div>
+            <div className="text-[9.5px] font-bold tracking-[2px] text-[#0abab5]"><img src="/icons/icon-wave.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> DDP</div>
             <div className="mt-0.5 whitespace-pre-wrap text-[14px] font-bold leading-relaxed text-[#2a5a56]">{masterDdp}</div>
           </div>
         )}

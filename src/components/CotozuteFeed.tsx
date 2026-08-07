@@ -87,7 +87,7 @@ export function CotozuteFeed() {
             </button>
           ) : visible >= MAX ? (
             <p className="mt-2 py-1 text-center text-[11px] tracking-[2px] text-[#c8c0b0]">
-              〜 言の葉は、海へ還りました 🌊 〜
+              〜 言の葉は、海へ還りました <img src="/icons/icon-wave.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 〜
             </p>
           ) : null}
 

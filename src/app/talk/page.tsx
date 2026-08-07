@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { BroadcastSummary, ChatSummary, GroupSummary, fetchBroadcastSummary, fetchChats, fetchGroups } from "@/lib/line";
 import { enablePush, pushEnabled, pushSupported } from "@/lib/push";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import TopTone from "@/components/TopTone";
 
 function timeLabel(iso: string | null): string {
   if (!iso) return "";
@@ -77,12 +78,19 @@ export default function LinePage() {
 
   return (
     <main className="pb-20">
+      <TopTone color="#0a2416" />
+      {/* 統一規格ヘッダー: 高さ52px・サービス名・アバター右 / TALKのイメージカラー=緑 */}
       <header
-        className="flex items-center justify-between px-5 pb-3.5 pt-4"
-        style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}
+        className="relative flex h-[52px] items-center justify-center px-5"
+        style={{ background: "linear-gradient(160deg,#0a2416 0%,#14532d 60%,#16804a 100%)" }}
       >
-        <h1 className="text-lg font-extrabold tracking-[4px] text-[#f0e6c8]">TALK</h1>
-        <AvatarMenu />
+        <h1 className="flex items-center gap-2 text-[17px] font-extrabold tracking-[4px] text-[#d8f5c8]">
+          <img src="/icons/icon-chat.webp" alt="" className="h-6 w-6 object-contain" />
+          TALK
+        </h1>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2">
+          <AvatarMenu ring="#7dd8a0" />
+        </span>
       </header>
 
       {me && showBell && (
@@ -230,7 +238,7 @@ export default function LinePage() {
                   className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[22px]"
                   style={{ background: "linear-gradient(140deg,#d8e8cf,#a8cca8)" }}
                 >
-                  {g.emoji}
+                  {g.emoji === "🧠" ? <img src="/icons/icon-neura.webp" alt="" style={{ width: 22, height: 22 }} /> : g.emoji}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">

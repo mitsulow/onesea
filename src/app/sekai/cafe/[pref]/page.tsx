@@ -442,7 +442,7 @@ export default function CafePage() {
                 className="rounded-2xl py-3.5 text-[15px] font-extrabold text-[#241c14] disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg,#e8cc90,#c8a860)", boxShadow: "0 4px 24px rgba(200,168,96,.35)" }}
               >
-                🎥 カメラで話す
+                <img src="/icons/icon-video.webp" alt="" style={{ width: 20, height: 20, display: "inline", verticalAlign: -4 }} /> カメラで話す
               </button>
               <button
                 onClick={() => join("voice")}
@@ -611,7 +611,7 @@ export default function CafePage() {
                 style={camOn ? { background: "#3a3226", color: "#e8cc90" } : { background: "#c05040", color: "#fff" }}
                 aria-label="カメラ"
               >
-                {camOn ? "🎥" : "🚫"}
+                {camOn ? <img src="/icons/icon-video.webp" alt="" style={{ width: 22, height: 22 }} /> : "🚫"}
               </button>
             )}
             <button onClick={leave} className="rounded-full px-6 py-3 text-[13.5px] font-extrabold text-white" style={{ background: "#a04030" }}>

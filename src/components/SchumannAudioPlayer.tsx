@@ -428,7 +428,7 @@ export function SchumannAudioPlayer() {
       ? `🧘 瞑想モード（${program.course}分）`
       : program?.kind === "idea"
         ? "💡 アイディアモード"
-        : "🌊 シンクロモード";
+        : "シンクロモード";
 
   return (
     <section
@@ -667,7 +667,7 @@ export function SchumannAudioPlayer() {
               ✕
             </button>
             <div className="text-center text-[16px] font-extrabold text-white">
-              {introKind === "idea" ? "💡 アイディアモード" : "🌊 シンクロモード"}
+              {introKind === "idea" ? "💡 アイディアモード" : "シンクロモード"}
             </div>
             <div className="mt-0.5 text-center text-[11px] text-[#7ab8d8]">
               {introKind === "idea" ? "全体からアイディアを降ろします" : "今日の「やりたいこと」に許可を出す"}
@@ -729,7 +729,7 @@ export function SchumannAudioPlayer() {
             >
               ✕
             </button>
-            <div className="text-center text-[15px] font-extrabold text-[#2a6a66]">🌊 ふと、全体に繋がろう</div>
+            <div className="text-center text-[15px] font-extrabold text-[#2a6a66]"><img src="/icons/icon-wave.webp" alt="" style={{ width: 17, height: 17, display: "inline", verticalAlign: -3 }} /> ふと、全体に繋がろう</div>
             <div className="mt-0.5 text-center text-[11.5px] text-[#8a8070]">ふと、繋がった事を書き記してください</div>
             <textarea
               value={ddpBody}
@@ -746,7 +746,7 @@ export function SchumannAudioPlayer() {
               className="mt-2.5 w-full rounded-xl py-2.5 text-[14px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "#0abab5" }}
             >
-              {ddpSaved ? "刻みました 🌊" : ddpSaving ? "保存中..." : "セレンディピティ投稿"}
+              {ddpSaved ? "刻みました" : ddpSaving ? "保存中..." : "セレンディピティ投稿"}
             </button>
             <p className="mt-1.5 text-center text-[9.5px] text-[#b8ae9c]">あなたのマイページに、日付ごとに表示されます</p>
           </div>

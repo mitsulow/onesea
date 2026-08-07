@@ -170,10 +170,10 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
           />
         ) : (
           <span
-            className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-base"
+            className="flex h-8 w-8 items-center justify-center rounded-full border-2"
             style={{ borderColor: `${ring}b0` }}
           >
-            🌊
+            <span className="text-[8px] font-bold leading-none tracking-[0.5px]">ゲスト</span>
           </span>
         )}
         {waraMissing > 0 && (
@@ -208,17 +208,17 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               {icon("/icons/tab-cotozute.png")} コトヅテ
             </Link>
             <Link href="/" onClick={() => setOpen(false)} className={item + hereCls("/")}>
-              {icon("/icons/tab-home.png")} ホーム
+              {icon("/icons/tab-home.png")} OneSea
             </Link>
             <Link href="/za" onClick={() => setOpen(false)} className={item + hereCls("/za")}>
               <img src="/rakuichi/logo-emblem.webp" alt="" className="h-[20px] w-[20px] flex-shrink-0 rounded-full object-cover" />
               楽市楽座
             </Link>
             <Link href="/#techo" onClick={() => setOpen(false)} className={item + hereCls("/#techo")}>
-              <span className="w-[20px] text-center text-[16px]">📖</span> 手帳
+              {icon("/icons/icon-techo.webp")} 手帳
             </Link>
             <Link href="/my" onClick={() => setOpen(false)} className={item + hereCls("/my")}>
-              <span className="w-[20px] text-center text-[16px]">🪪</span> マイページ編集
+              {icon("/icons/icon-profile.webp")} マイページ編集
               {waraMissing > 0 && (
                 <span
                   className="ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
@@ -229,7 +229,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               )}
             </Link>
             <Link href="/talk" onClick={() => setOpen(false)} className={item + hereCls("/talk")}>
-              <span className="w-[20px] text-center text-[16px]">💬</span> TALK
+              {icon("/icons/icon-chat.webp")} TALK
               {unread > 0 && (
                 <span
                   className="ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
@@ -240,7 +240,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               )}
             </Link>
             <button onClick={logout} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13.5px] font-medium text-[#a05040] active:bg-[#faf4ea]">
-              <span className="w-[20px] text-center text-[16px]">👋</span> ログアウト
+              {icon("/icons/icon-logout.webp")} ログアウト
             </button>
           </div>
         </>,
