@@ -695,10 +695,10 @@ export default function UserPage() {
         </div>
       </div>
 
+      <MyCotozuteSection userId={profile.id} ownerName={profile.display_name ?? "この人"} />
+
       {/* 今日のDDPの積み重ね（タイムライン） */}
       {dailyDdps.length > 0 && (
-        <MyCotozuteSection userId={profile.id} ownerName={profile.display_name ?? "この人"} />
-
         <div className="pt-5">
           <div className="card">
             <div className="sec mb-3">⚡過去のシンクロニシティ⚡</div>
