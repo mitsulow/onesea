@@ -169,9 +169,9 @@ export function useSekaiMe() {
 /** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="pb-[58px]" style={{ minHeight: "100dvh", background: "linear-gradient(180deg,#102a60 0%,#16336e 100%)" }}>
-      <TopTone color="#102a60" />
-      <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#2a4a88] px-6 text-center" style={{ background: "#102a60" }}>
+    <main className="pb-[58px]" style={{ minHeight: "100dvh", background: "linear-gradient(180deg,#2a4e96 0%,#3560ac 100%)" }}>
+      <TopTone color="#2a4e96" />
+      <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#4a6ab0] px-6 text-center" style={{ background: "#2a4e96" }}>
         <div className="text-[10px] leading-tight tracking-[3px] text-[#8fb8e8]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eaf2ff]">セカイムラ</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-left">
@@ -484,6 +484,11 @@ function MootArchive() {
 export function ActivitySection({ me }: { me: User | null }) {
   const [feed, setFeed] = useState<any[] | null>(null);
   const [seedOpen, setSeedOpen] = useState(false); // 「村を作る」カードで開く
+  const [amOffice, setAmOffice] = useState(false); // 事務局は全報告を消せる
+  useEffect(() => {
+    if (!me) return;
+    import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+  }, [me]);
   const [stripSeeds, setStripSeeds] = useState<any[]>([]); // 村の予備軍（1人でも作ったら並ぶ）
   useEffect(() => {
     const supabase = createClient();
@@ -946,7 +951,21 @@ export function ActivitySection({ me }: { me: User | null }) {
       ) : (
         <div className="space-y-2.5">
           {feed.map((p) => (
-            <div key={p.id} className="overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
+            <div key={p.id} className="relative overflow-hidden rounded-xl border border-[#e2eae0] bg-white">
+              {me && (me.id === p.user_id || amOffice) && (
+                <button
+                  onClick={async () => {
+                    if (!confirm("本当に削除していいですか？")) return;
+                    const supabase = createClient();
+                    await supabase.from("village_posts").delete().eq("id", p.id);
+                    load();
+                  }}
+                  aria-label="削除"
+                  className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b]"
+                >
+                  ×
+                </button>
+              )}
               <div className="p-3">
                 {/* ヘッダー: 誰（どの拠点）が投稿したか → 本文 → 写真 の順 */}
                 <Link
