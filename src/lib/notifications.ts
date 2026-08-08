@@ -35,6 +35,12 @@ export function notifText(n: NotificationRow): string {
       return `記事にハートが付きました`;
     case "follow":
       return `${who}さんにフォローされました`;
+    case "quest_call":
+      return `あなたのスキルが呼ばれています！「この指とまれ」に旗が立ちました`;
+    case "quest_pick":
+      return `${who}さんに指名されました🌸「この人が欲しい♪」`;
+    case "quest_join":
+      return `${who}さんが花いちもんめの仲間になりました`;
     default:
       return `${who}さんからお知らせがあります`;
   }
