@@ -86,7 +86,7 @@ export function ZaFeatured({ shops }: { shops: Shop[] }) {
       </div>
 
       {/* スライド */}
-      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div data-noswipe onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div
           className="flex transition-transform duration-500 ease-in-out"
           style={{ transform: `translateX(-${index * 100}%)` }}
