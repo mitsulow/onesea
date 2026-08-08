@@ -23,6 +23,7 @@ export default function NewShopPage() {
   const [price, setPrice] = useState("");
   const [isTrial, setIsTrial] = useState(true);
   const [barter, setBarter] = useState(false);
+  const [handover, setHandover] = useState("both"); // 交換方法(楽市のみ)
   const [tip, setTip] = useState(false);
   const [category, setCategory] = useState<string>("other");
   const [images, setImages] = useState<Array<{ full: string; thumb: string }>>([]);
@@ -75,6 +76,7 @@ export default function NewShopPage() {
         price_jpy: market === "ichi" ? null : price ? Number(price) : null,
         is_trial: market === "ichi" ? isTrial : false,
         accepts_barter: barter,
+        handover: market === "ichi" ? handover : null,
         accepts_tip: tip,
         category,
         market,
