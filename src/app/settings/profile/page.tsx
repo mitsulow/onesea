@@ -1,5 +1,6 @@
 "use client";
 
+import { TechoBackupCard } from "@/components/TechoBackupCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -320,6 +321,8 @@ export default function ProfileSettingsPage() {
           >
             {saving ? "保存中..." : "保存する"}
           </button>
+
+          <TechoBackupCard userId={me.id} />
 
           <div className="pt-6 text-center">
             <button onClick={logout} className="text-[12px] text-[#b0a898] underline">
