@@ -44,7 +44,7 @@ import {
   meisterTeachers,
   fetchTasukete,
   addTasukete,
-  closeTasukete,, PREF_COORDS } from "@/lib/sekai";
+  closeTasukete, PREF_COORDS } from "@/lib/sekai";
 import {
   detectPrefecture,
   OVERSEAS_AREAS,
