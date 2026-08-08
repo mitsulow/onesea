@@ -1498,43 +1498,53 @@
         <div id="dv-records-inst" style="padding:0 0.9rem"></div>
       </div>
 
-      <!-- ■生の数値フィード: 30分ごとの実測F1を今日から過去へ無限スクロール -->
+      <!-- ■生の数値(全データ): 年平均→月平均→日平均→全時刻 と掘っていくドリルダウン台帳 -->
       <div class="dv-block">
-        <div class="dv-title">■生の数値（30分ごと） <span>実測F1をそのまま・下へスクロールするほど過去へ・2018年5月〜</span></div>
+        <div class="dv-title">■生の数値（全データ）</div>
         <style>
-          #lgr-list { max-height: 480px; overflow-y: auto; margin: 0.3rem 0.9rem 0.7rem; border: 1px solid rgba(120,180,255,.15); border-radius: 10px; font-family: 'JetBrains Mono', 'Noto Sans JP', monospace; overscroll-behavior: contain; }
-          .lgr-row { padding: 0.2rem 0.8rem; font-size: 0.84rem; color: #9fb2c8; white-space: nowrap; transition: transform 0.25s ease; }
+          #lgr-list { max-height: 520px; overflow-y: auto; margin: 0.3rem 0.9rem 0.7rem; border: 1px solid rgba(120,180,255,.15); border-radius: 10px; font-family: 'JetBrains Mono', 'Noto Sans JP', monospace; overscroll-behavior: contain; }
+          .lgr-row { padding: 0.2rem 0.8rem; white-space: nowrap; transition: transform 0.25s ease; cursor: pointer; }
           .lgr-row b { font-weight: 700; margin-left: 0.6em; }
+          .lgr-row .ar { display: inline-block; width: 1em; color: #7d829a; font-size: 0.8em; }
+          .lgr-y { font-size: 0.98rem; font-weight: 700; color: #cfe0ec; padding-top: 0.34rem; padding-bottom: 0.34rem; }
+          .lgr-m { font-size: 0.88rem; color: #b8c8da; }
+          .lgr-d { font-size: 0.84rem; color: #9fb2c8; }
+          .lgr-t { font-size: 0.8rem; color: #8a9cb0; cursor: default; }
           .lgr-more { padding: 0.6rem; text-align: center; color: #7d829a; font-size: 0.78rem; }
         </style>
-        <div style="margin:0.35rem 0.9rem 0;font-size:0.7rem;letter-spacing:0.04em;color:#7d829a;text-align:center;">
-          <span style="color:#5aa8ff;">■</span>〜7.70　<span style="color:#5ad48f;">■</span>7.71〜7.90　<span style="color:#ffd60a;">■</span>7.91〜8.01　<span style="color:#ff6a5a;">■</span>8.02〜　·　低いほど左・高いほど右へうねります
-        </div>
-        <div id="lgr-list"><div class="lgr-more">開くと読み込みます…</div></div>
+        <div id="lgr-list"><div class="lgr-more">読み込み中…</div></div>
       </div>
       <script>
-      // ■生の数値フィード: 0Lei月ファイル(5分粒度)から30分ごとのF1を、今日→過去へ無限に流す。
-      //   通信は月ファイル(約300KB/月)を1回ずつ読むだけ。1カ月ぶんスクロールしても300KB。
+      // ■生の数値(全データ): 2011年〜の日平均(daily_summary)から年・月・日を組み、
+      //   日をタップした時だけ0Lei月ファイル(5分粒度)を読んで30分ごとの全時刻を出す。
       (function () {
         var list = document.getElementById("lgr-list");
         if (!list) return;
-        var cache = {};
-        var busy = false, ended = false, emptyRun = 0;
-        var cur = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); // JST今日
-        var getMonth = function (m) {
-          if (cache[m]) return cache[m];
-          cache[m] = fetch("https://mitsulow.github.io/0Lei/history/" + m + ".json")
+        var monthCache = {};
+        var byYear = {}, byMonth = {}, byDay = {};
+        var colOf = function (fr) { return fr >= 8.02 ? "#ff6a5a" : fr >= 7.91 ? "#ffd60a" : fr >= 7.71 ? "#5ad48f" : "#5aa8ff"; };
+        var xOf = function (fr) { return (Math.max(0, Math.min(1, (fr - 7.55) / 0.6)) * 26).toFixed(1); };
+        var avg = function (arr) { var t = 0; for (var i = 0; i < arr.length; i++) t += arr[i]; return t / arr.length; };
+        var row = function (cls, key, label, v, leaf) {
+          var fr = Number(v.toFixed(2));
+          return '<div class="lgr-row ' + cls + '" data-k="' + key + '" style="transform:translateX(' + xOf(fr) + '%)">' +
+            (leaf ? '<span class="ar"></span>' : '<span class="ar">▸</span>') + label +
+            '<b style="color:' + colOf(fr) + '">' + fr.toFixed(2) + "Hz</b></div>";
+        };
+        var getMonthFile = function (m) {
+          if (monthCache[m]) return monthCache[m];
+          monthCache[m] = fetch("https://mitsulow.github.io/0Lei/history/" + m + ".json")
             .then(function (r) { return r.ok ? r.json() : []; })
             .catch(function () { return []; });
-          return cache[m];
+          return monthCache[m];
         };
-        var appendDay = function (day) {
+        var timesHtml = function (day) {
           var start = Date.parse(day + "T00:00:00+09:00");
           var end = start + 86400e3;
           var months = {};
           months[day.slice(0, 7)] = 1;
           months[new Date(start).toISOString().slice(0, 7)] = 1;
-          return Promise.all(Object.keys(months).map(getMonth)).then(function (parts) {
+          return Promise.all(Object.keys(months).map(getMonthFile)).then(function (parts) {
             var rows = [].concat.apply([], parts);
             var buckets = new Array(48);
             for (var i = 0; i < rows.length; i++) {
@@ -1543,58 +1553,74 @@
               var t = Date.parse(r.t);
               if (!(t >= start && t < end)) continue;
               var q = Math.floor((t - start) / 1800e3);
-              var center = start + q * 1800e3 + 900e3;
-              if (!buckets[q] || Math.abs(t - center) < Math.abs(buckets[q].t - center)) buckets[q] = { t: t, f1: r.F1 };
+              var c = start + q * 1800e3 + 900e3;
+              if (!buckets[q] || Math.abs(t - c) < Math.abs(buckets[q].t - c)) buckets[q] = { t: t, f1: r.F1 };
             }
-            var y = day.slice(0, 4), mo = day.slice(5, 7), d = day.slice(8, 10); // 桁を揃える(9月と10月・9時と10時で段差が出ないように)
             var html = "", n = 0;
-            for (var q2 = 47; q2 >= 0; q2--) { // 新しい時刻が上
+            for (var q2 = 0; q2 < 48; q2++) {
               var b = buckets[q2];
               if (!b) continue;
               n++;
               var hh = ("0" + Math.floor(q2 / 2)).slice(-2);
               var mm = q2 % 2 ? "30" : "00";
-              // 4色: 〜7.70青 / 〜7.90緑 / 〜8.01黄 / 8.02〜赤(表示と同じ2桁丸めで判定)
-              var fr = Number(b.f1.toFixed(2));
-              var col = fr >= 8.02 ? "#ff6a5a" : fr >= 7.91 ? "#ffd60a" : fr >= 7.71 ? "#5ad48f" : "#5aa8ff";
-              // 低いほど左・高いほど右へ泳ぐ(列全体が周波数の波形を描く)
-              var xr = Math.max(0, Math.min(1, (fr - 7.55) / 0.6));
-              html += '<div class="lgr-row" style="transform:translateX(' + (xr * 30).toFixed(1) + '%)">' + y + "年" + mo + "月" + d + "日 " + hh + ":" + mm + '<b style="color:' + col + '">' + b.f1.toFixed(2) + "Hz</b></div>";
+              html += row("lgr-t", "", hh + ":" + mm, b.f1, true);
             }
-            if (n) list.insertAdjacentHTML("beforeend", html);
-            return n;
+            return n ? html : '<div class="lgr-more">この日の時刻別データはありません（2018年5月以降のみ）</div>';
           });
         };
-        var prevDay = function (day) {
-          var t = new Date(day + "T00:00:00Z");
-          t.setUTCDate(t.getUTCDate() - 1);
-          return t.toISOString().slice(0, 10);
-        };
-        var feed = function () {
-          if (busy || ended) return;
-          busy = true;
-          var day = cur;
-          appendDay(day).then(function (n) {
-            emptyRun = n ? 0 : emptyRun + 1;
-            cur = prevDay(day);
-            if (cur < "2018-05-01" || emptyRun > 90) {
-              ended = true;
-              list.insertAdjacentHTML("beforeend", '<div class="lgr-more">— 記録はここまで（2018年5月〜） —</div>');
-            }
-            busy = false;
-            // 画面がまだ埋まっていなければ続けて過去へ
-            if (!ended && list.scrollHeight < list.clientHeight * 1.6) feed();
-          });
-        };
-        list.addEventListener("scroll", function () {
-          if (list.scrollTop + list.clientHeight > list.scrollHeight - 240) feed();
+        // 展開/折りたたみ(共通)
+        list.addEventListener("click", function (ev) {
+          var el = ev.target.closest(".lgr-row");
+          if (!el || el.classList.contains("lgr-t")) return;
+          var sub = el.nextElementSibling;
+          var ar = el.querySelector(".ar");
+          if (sub && sub.classList.contains("lgr-sub")) {
+            sub.remove();
+            if (ar) ar.textContent = "▸";
+            return;
+          }
+          if (ar) ar.textContent = "▾";
+          var k = el.getAttribute("data-k");
+          var box = document.createElement("div");
+          box.className = "lgr-sub";
+          if (el.classList.contains("lgr-y")) {
+            var months = Object.keys(byMonth).filter(function (m) { return m.slice(0, 4) === k; }).sort().reverse();
+            box.innerHTML = months.map(function (m) {
+              return row("lgr-m", m, m.slice(0, 4) + "年" + m.slice(5, 7) + "月", avg(byMonth[m]));
+            }).join("");
+          } else if (el.classList.contains("lgr-m")) {
+            var days = Object.keys(byDay).filter(function (d) { return d.slice(0, 7) === k; }).sort().reverse();
+            box.innerHTML = days.map(function (d) {
+              return row("lgr-d", d, d.slice(0, 4) + "年" + d.slice(5, 7) + "月" + d.slice(8, 10) + "日", byDay[d]);
+            }).join("");
+          } else if (el.classList.contains("lgr-d")) {
+            box.innerHTML = '<div class="lgr-more">読み込み中…</div>';
+            timesHtml(k).then(function (h) { box.innerHTML = h; });
+          }
+          el.after(box);
         });
         var det = list.closest("details");
         var boot = function () {
           if (det && !det.open) return;
-          list.innerHTML = "";
           if (det) det.removeEventListener("toggle", boot);
-          feed();
+          fetch("/api/sr/history/daily_summary.json")
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              var days = (d && d.days) || [];
+              for (var i = 0; i < days.length; i++) {
+                var e = days[i];
+                if (e.f1 == null) continue;
+                var y = e.d.slice(0, 4), m = e.d.slice(0, 7);
+                (byYear[y] = byYear[y] || []).push(e.f1);
+                (byMonth[m] = byMonth[m] || []).push(e.f1);
+                byDay[e.d] = e.f1;
+              }
+              var years = Object.keys(byYear).sort().reverse();
+              list.innerHTML = years.map(function (y2) {
+                return row("lgr-y", y2, y2 + "年", avg(byYear[y2]));
+              }).join("") || '<div class="lgr-more">データがありません</div>';
+            })
+            .catch(function () { list.innerHTML = '<div class="lgr-more">読み込みに失敗しました</div>'; });
         };
         if (det) det.addEventListener("toggle", boot);
         boot();
