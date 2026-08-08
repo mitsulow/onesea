@@ -462,7 +462,7 @@ export async function fetchTanbo() {
   const supabase = createClient();
   const { data } = await supabase
     .from("tanbo")
-    .select("id, name, prefecture, note, photo_url, year, user_id, profiles!tanbo_user_id_fkey(username, display_name, avatar_url)")
+    .select("id, name, prefecture, note, photo_url, year, user_id, created_at, profiles!tanbo_user_id_fkey(username, display_name, avatar_url)")
     .order("created_at", { ascending: false })
     .limit(60);
   return data ?? [];

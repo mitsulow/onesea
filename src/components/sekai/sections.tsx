@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThreeCol } from "@/components/SideRails";
@@ -44,8 +44,7 @@ import {
   meisterTeachers,
   fetchTasukete,
   addTasukete,
-  closeTasukete,
-} from "@/lib/sekai";
+  closeTasukete,, PREF_COORDS } from "@/lib/sekai";
 import {
   detectPrefecture,
   OVERSEAS_AREAS,
@@ -2016,9 +2015,11 @@ export function ClubsSection({ me }: { me: User | null }) {
   );
 }
 
-/* ═══ 米部 ═══ */
+/* ═══ 米部 — sekaimura.net/komebu を参考に再構築: 一覧(タップで詳細) / マップ / お知らせ ═══ */
 export function KomeSection({ me, myPref }: { me: User | null; myPref: string }) {
   const [tanbo, setTanbo] = useState<any[] | null>(null);
+  const [tab, setTab] = useState<"list" | "map" | "news">("list");
+  const [sel, setSel] = useState<any | null>(null); // タップした田んぼの詳細
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [tPref, setTPref] = useState(myPref);
@@ -2026,6 +2027,8 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
   const [photo, setPhoto] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const mapHost = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<any>(null);
 
   useEffect(() => setTPref(myPref), [myPref]);
   const load = useCallback(async () => setTanbo(await fetchTanbo()), []);
@@ -2034,6 +2037,36 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
   }, [load]);
 
   const thisYear = (tanbo ?? []).filter((t) => t.year === new Date().getFullYear()).length;
+
+  /* マップタブ: 県の代表点に🌾マーカー */
+  useEffect(() => {
+    if (tab !== "map" || !tanbo || mapRef.current) return;
+    let disposed = false;
+    (async () => {
+      const L = (await import("leaflet")).default;
+      if (disposed || !mapHost.current || mapRef.current) return;
+      const map = L.map(mapHost.current, { scrollWheelZoom: false }).setView([36.2, 137.5], 5);
+      mapRef.current = map;
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap contributors", maxZoom: 18 }).addTo(map);
+      for (const t of tanbo) {
+        const c = PREF_COORDS[t.prefecture];
+        if (!c) continue;
+        const jitter = () => (Math.random() - 0.5) * 0.2;
+        const mk = L.marker([c[0] + jitter(), c[1] + jitter()], {
+          icon: L.divIcon({ className: "", html: `<div style="font-size:20px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))">🌾</div>`, iconSize: [22, 22], iconAnchor: [11, 11] }),
+        })
+          .addTo(map)
+          .bindPopup(`<b>${t.name}</b><br>${t.prefecture ?? ""}`);
+        mk.on("click", () => setSel(t));
+      }
+    })();
+    return () => {
+      disposed = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, tanbo]);
 
   const save = async () => {
     if (!me || !name.trim() || saving) return;
@@ -2046,6 +2079,46 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
     setPhoto(null);
     load();
   };
+
+  /* タップした田んぼの詳細（一覧・マップ共通で下に大きく開く） */
+  const detail = sel && (
+    <div className="mt-2 overflow-hidden rounded-2xl border-2 border-[#c8b86a] bg-white shadow-md">
+      <div className="flex items-center gap-1.5 bg-[#a08a30] px-3 py-1.5 text-[11px] font-extrabold text-white">
+        <span>🌾</span>
+        <span className="truncate">{sel.prefecture ?? ""}の田んぼ</span>
+        <button onClick={() => setSel(null)} className="ml-auto text-[13px] leading-none">×</button>
+      </div>
+      {sel.photo_url && <img src={srcCdn(sel.photo_url)} alt="" className="h-[160px] w-full object-cover" />}
+      <div className="px-3.5 py-3">
+        <div className="text-[17px] font-extrabold leading-snug text-[#3a4a34]">{sel.name}</div>
+        <div className="mt-0.5 text-[11.5px] text-[#a0aca0]">
+          {sel.prefecture ?? ""} ・ 世話人 {sel.profiles?.display_name ?? "—"} ・ {sel.year}年
+        </div>
+        {sel.note && <div className="mt-1.5 text-[13px] leading-relaxed text-[#5a5448]">{sel.note}</div>}
+        <div className="mt-2.5 flex gap-2">
+          {me && sel.user_id && sel.user_id !== me.id && (
+            <button
+              onClick={async () => {
+                const chatId = await getOrCreateChat(me.id, sel.user_id);
+                if (chatId) {
+                  await sendMessage(chatId, me.id, `【米部】田んぼ「${sel.name}」について教えてください！手伝いに行きたいです🌾`);
+                  window.location.href = `/talk/${chatId}`;
+                }
+              }}
+              className="flex-1 rounded-xl bg-[#a08a30] py-2.5 text-center text-[13px] font-extrabold text-white"
+            >
+              世話人にTALKで連絡 →
+            </button>
+          )}
+          {sel.profiles?.username && (
+            <a href={`/u/${sel.profiles.username}`} className="flex-1 rounded-xl border-2 border-[#a08a30] py-2.5 text-center text-[13px] font-extrabold text-[#a08a30] no-underline">
+              世話人のページ →
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <section id="kome" className="card" style={{ scrollMarginTop: 56 }}>
@@ -2067,33 +2140,94 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
         </div>
       </div>
 
-      {tanbo !== null && tanbo.length > 0 && (
-        <div className="space-y-2">
-          {tanbo.slice(0, 6).map((t) => (
-            <div key={t.id} className="flex items-center gap-2.5 rounded-xl border border-[#eef2ec] bg-white p-2">
-              {t.photo_url ? (
-                <img src={srcCdn(t.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
-              ) : (
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2f4ea] text-xl">
-                  🌾
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-bold text-[#3a4a34]">{t.name}</div>
-                <div className="text-[10.5px] text-[#a0aca0]">
-                  {t.prefecture} ・ {t.profiles?.display_name ?? ""}
-                </div>
-                {t.note && <div className="truncate text-[11px] text-[#8a968a]">{t.note}</div>}
-              </div>
+      {/* タブ: 一覧 / マップ / お知らせ（sekaimura.net/komebu と同じ3本柱） */}
+      <div className="mb-2 flex gap-1 rounded-xl bg-[#f2efe2] p-1">
+        {([["list", "🌾 田んぼ一覧"], ["map", "🗾 マップ"], ["news", "📢 お知らせ"]] as const).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => { setTab(k); setSel(null); }}
+            className="flex-1 rounded-lg py-1.5 text-[11.5px] font-extrabold"
+            style={tab === k ? { background: "#a08a30", color: "#fff" } : { color: "#8a8060" }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── 一覧 ── */}
+      {tab === "list" && (
+        <>
+          {tanbo === null ? (
+            <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
+          ) : tanbo.length === 0 ? (
+            <p className="py-2 text-[12px] text-[#a0aca0]">まだ田んぼが登録されていません</p>
+          ) : (
+            <div className="space-y-2">
+              {tanbo.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setSel(sel?.id === t.id ? null : t)}
+                  className="flex w-full items-center gap-2.5 rounded-xl border bg-white p-2 text-left"
+                  style={{ borderColor: sel?.id === t.id ? "#a08a30" : "#eef2ec" }}
+                >
+                  {t.photo_url ? (
+                    <img src={srcCdn(t.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2f4ea] text-xl">🌾</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-bold text-[#3a4a34]">{t.name}</div>
+                    <div className="text-[10.5px] text-[#a0aca0]">
+                      {t.prefecture} ・ {t.profiles?.display_name ?? ""}
+                    </div>
+                    {t.note && <div className="truncate text-[11px] text-[#8a968a]">{t.note}</div>}
+                  </div>
+                  <span className="flex-shrink-0 text-[11px] text-[#c0b890]">{sel?.id === t.id ? "▲" : "▼ 詳細"}</span>
+                </button>
+              ))}
             </div>
+          )}
+          {detail}
+        </>
+      )}
+
+      {/* ── マップ ── */}
+      {tab === "map" && (
+        <>
+          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+          <div ref={mapHost} className="h-[300px] w-full overflow-hidden rounded-xl border border-[#e8e2cc]" data-noswipe />
+          <p className="mt-1 text-center text-[10px] text-[#a0aca0]">🌾を押すと下に詳細が開きます（位置は県の代表点）</p>
+          {detail}
+        </>
+      )}
+
+      {/* ── お知らせ（登録の記録が自動で新聞になる） ── */}
+      {tab === "news" && (
+        <div className="space-y-2.5">
+          {(tanbo ?? []).map((t) => (
+            <button key={t.id} onClick={() => { setTab("list"); setSel(t); }} className="block w-full border-b border-[#eee8d8] pb-2 text-left">
+              <div className="text-[12.5px] font-extrabold text-[#5a5030]">【田んぼ】「{t.name}」が登録されました！</div>
+              <div className="mt-0.5 text-[11.5px] leading-relaxed text-[#8a8060]">
+                {t.prefecture ?? ""}の田んぼです。{t.note ? ` ${t.note}` : ""} タップして詳細をご確認ください🌾
+              </div>
+              <div className="num mt-0.5 text-[9.5px] text-[#b8b090]">
+                {t.created_at ? new Date(t.created_at).toLocaleDateString("ja-JP") : `${t.year}年`}
+              </div>
+            </button>
           ))}
+          <div className="pb-1 text-left">
+            <div className="text-[12.5px] font-extrabold text-[#5a5030]">米部について</div>
+            <div className="mt-0.5 text-[11.5px] leading-relaxed text-[#8a8060]">
+              2025年、セカイムラ米部は全国75枚の田んぼを蘇らせました。今年も田んぼごとに仲間が集まって、田植えから収穫までを一緒にやっていきます。
+            </div>
+          </div>
         </div>
       )}
 
       {me &&
         (adding ? (
           <div className="mt-3 rounded-xl border border-[#c8b86a88] bg-[#fbf9f0] p-3">
-            <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]">🌾 田んぼを台帳に載せる</div>
+            <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]">🌾 田んぼを登録する</div>
             <div className="mb-2 flex gap-2">
               <input
                 value={name}
@@ -2146,7 +2280,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#a08a30" }}
               >
-                {saving ? "登録中..." : "台帳に載せる"}
+                {saving ? "登録中..." : "登録する"}
               </button>
             </div>
           </div>
@@ -2156,7 +2290,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
             className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
             style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
           >
-            🌾 蘇らせた田んぼを登録する
+            🌾 うちの田んぼを米部に登録する（みんなが手伝いに来ます）
           </button>
         ))}
     </section>
