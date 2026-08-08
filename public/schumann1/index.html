@@ -1532,15 +1532,10 @@
     <div class="dv-panel">
       <div class="dv-block">
         <div class="dv-title">〇いまの太陽の姿 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
-        <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
+        <video id="sun-video" controls muted loop playsinline preload="none" poster="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;"></video>
+        <div id="sun-video-credit" style="margin-top:0.3rem;text-align:center;font-size:0.68rem;color:#8aa8d0;">動画: NICT宇宙天気予報センター提供（SDO 304Å・自動更新・ループ再生）</div>
+        <img id="sun-img" src="" alt="いまの太陽 (SDO 304Å)" referrerpolicy="no-referrer" style="display:none;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
         <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
-        <button id="sun-video-btn" type="button" style="display:block;margin:0.5rem auto 0;padding:0.5rem 1.4rem;border-radius:100px;border:1.5px solid rgba(255,170,60,.5);background:rgba(40,24,8,.6);color:#ffd60a;font:700 0.82rem 'Noto Sans JP',sans-serif;cursor:pointer;">▶ 太陽の動画で見る（プロミネンスが動く・約2.4MB）</button>
-        <video id="sun-video" controls playsinline preload="none" style="display:none;width:100%;max-width:340px;margin:0.5rem auto 0;border-radius:12px;background:#000;" src="https://swc.nict.go.jp/data/latest/sdo/latest_512_0304.mp4"></video>
-        <div id="sun-video-credit" style="display:none;margin-top:0.3rem;text-align:center;font-size:0.68rem;color:#8aa8d0;">NICT宇宙天気予報センター提供（SDO 304Å・自動更新）</div>
-        <div id="sun-anim-wrap" style="display:none;max-width:340px;margin:0.5rem auto 0;text-align:center;">
-          <img id="sun-anim" alt="太陽 直近48時間" style="width:100%;border-radius:12px;background:#000;display:block;">
-          <div id="sun-anim-label" style="margin-top:0.3rem;font-size:0.72rem;color:#ffd60a;letter-spacing:0.06em;"></div>
-        </div>
         <!-- NICT きょうの概況（本物の予報官の文章） -->
         <div id="nict-box" style="display:none;margin:0.7rem 0.9rem 0;padding:0.7rem 0.8rem;border:1px solid rgba(120,180,255,.3);border-radius:12px;background:rgba(14,20,32,.7);">
           <div style="font-size:0.7rem;letter-spacing:0.12em;color:#8aa8d0;">📋 NICT宇宙天気予報センター きょうの概況 <span id="nict-updated" style="color:#5a7a9a;"></span></div>
@@ -3539,75 +3534,34 @@
           if (st) st.innerHTML = '<span style="color:' + c[2] + ';">' + c[0] + c[1].toFixed(1) + '</span><span style="font-size:0.6em;color:#c8a060;"> ' + (c[0] === "X" || c[0] === "M" ? "フレア中" : c[0] === "C" ? "小フレア" : "静穏") + '</span>';
         }).catch(() => {});
       const img = document.getElementById("sun-img");
-      if (img) img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg?t=" + Date.now();
+      if (img && img.style.display !== "none") img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg?t=" + Date.now();
     };
     tick();
     setInterval(tick, 5 * 60000);
-    // ▶ 太陽の動画 — 本命はNICT提供のSDO動画(2.4MB・宇宙天気予報ページと同じもの)。
-    //   読めない環境だけNASA静止画のコマ送り(フォールバック)に自動で切り替える
-    const vbtn = document.getElementById("sun-video-btn");
-    const flipbook = async () => {
-      vbtn.disabled = true;
-      vbtn.textContent = "コマを読み込み中...";
-      try {
-        const d = await fetch("/api/sun-frames").then(r => r.json());
-        const frames = (d && d.frames) || [];
-        if (frames.length < 4) throw new Error("no frames");
-        const wrap = document.getElementById("sun-anim-wrap");
-        const img = document.getElementById("sun-anim");
-        const label = document.getElementById("sun-anim-label");
-        const loaded = [];
-        let done = 0;
-        await Promise.all(frames.map((u, i) => new Promise((res) => {
-          const im = new Image();
-          im.onload = () => { loaded[i] = u; done++; vbtn.textContent = `コマを読み込み中... ${done}/${frames.length}`; res(); };
-          im.onerror = () => { done++; res(); };
-          im.src = u;
-        })));
-        const ok = loaded.filter(Boolean);
-        if (ok.length < 4) throw new Error("load fail");
-        vbtn.style.display = "none";
-        wrap.style.display = "block";
-        const timeOf = (u) => {
-          const m = u.match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})_512/);
-          if (!m) return "";
-          const t = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) + 9 * 3600000);
-          return `${t.getUTCMonth() + 1}/${t.getUTCDate()} ${t.getUTCHours()}:${String(t.getUTCMinutes()).padStart(2, "0")}`;
-        };
-        let i = 0;
-        setInterval(() => {
-          img.src = ok[i];
-          label.textContent = `\u2600 ${timeOf(ok[i])} JST（直近48時間 ${i + 1}/${ok.length}コマ）`;
-          i = (i + 1) % ok.length;
-        }, 150);
-      } catch (e) {
-        vbtn.disabled = false;
-        vbtn.style.display = "block";
-        vbtn.textContent = "読み込めませんでした。もう一度押してください";
-      }
-    };
-    if (vbtn) vbtn.addEventListener("click", () => {
+    // 〇いまの太陽の姿: 折りたたみを開いた人だけNICTの太陽動画(2.4MB)を読み込み、ループ再生
+    //   読めない環境は静止画(NASA最新)に自動で切り替える
+    (() => {
+      const fold = document.getElementById("fold-solar");
       const vid = document.getElementById("sun-video");
-      const credit = document.getElementById("sun-video-credit");
-      vbtn.style.display = "none";
-      vid.style.display = "block";
-      credit.style.display = "block";
+      if (!fold || !vid) return;
       let started = false;
-      vid.addEventListener("playing", () => { started = true; });
-      const bail = () => {
-        if (started) return;
-        started = true; // 二重発火防止
-        try { vid.pause(); vid.removeAttribute("src"); vid.load(); } catch (e) {}
-        vid.style.display = "none";
-        credit.style.display = "none";
-        vbtn.style.display = "block";
-        vbtn.disabled = true;
-        flipbook();
+      const start = () => {
+        if (started || !fold.open) return;
+        started = true;
+        vid.addEventListener("error", () => {
+          vid.style.display = "none";
+          const credit = document.getElementById("sun-video-credit");
+          if (credit) credit.style.display = "none";
+          const img = document.getElementById("sun-img");
+          img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg?t=" + Date.now();
+          img.style.display = "block";
+        });
+        vid.src = "https://swc.nict.go.jp/data/latest/sdo/latest_512_0304.mp4";
+        vid.play().catch(() => {});
       };
-      vid.addEventListener("error", bail);
-      setTimeout(() => { if (!started && vid.readyState < 2) bail(); }, 15000);
-      try { vid.play(); } catch (e) {}
-    });
+      fold.addEventListener("toggle", start);
+      start();
+    })()
     // 📋 NICT きょうの概況
     fetch("/api/nict").then(r => r.json()).then(d => {
       if (!d || !d.summary) return;
