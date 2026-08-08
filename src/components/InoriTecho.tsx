@@ -383,11 +383,9 @@ function MonthCal({
         {onFullscreen && (
           <button
             onClick={onFullscreen}
-            aria-label="全画面表示"
-            title="全画面表示"
-            className="absolute right-[52px] top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md border border-[#e0d8c8] bg-white text-[12px] text-[#8a7a5a]"
+            className="absolute right-[52px] top-1/2 flex -translate-y-1/2 items-center gap-[3px] rounded-md border border-[#e0d8c8] bg-white px-1.5 py-[3px] text-[9px] font-bold leading-none text-[#8a7a5a]"
           >
-            ⛶
+            <span className="text-[11px] leading-none">⛶</span> 全画面表示
           </button>
         )}
         <button
