@@ -931,6 +931,8 @@
   details.fold[open] > summary::before { transform: rotate(90deg); }
   details.fold[open] > summary { border-bottom: 1px solid rgba(50, 70, 120, 0.14); }
   details.fold > :not(summary) { margin-left: 0.8rem; margin-right: 0.8rem; }
+  /* スマホは両端いっぱい(上の0.8remを確実に打ち消す — specificity対策で!important) */
+  @media (max-width: 700px) { details.fold > :not(summary) { margin-left: 0 !important; margin-right: 0 !important; } }
   details.fold > section, details.fold > .graph-section, details.fold > h2 { margin-top: 1rem; }
   details.fold > :last-child:not(summary) { margin-bottom: 1rem; }
   .graph-description { padding: 0.9rem 1.2rem 0.6rem; }
