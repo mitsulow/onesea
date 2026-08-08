@@ -188,7 +188,7 @@ export function HomeDashboard() {
           {m}月{d}日<span className="text-[0.78em]">({dow})</span>
         </span>
       </div>
-      <div className="mt-1 text-[11.5px] tracking-[1px] text-[#a09880]">
+      <div className="-mt-1 text-[11.5px] tracking-[1px] text-[#a09880]">
         {kyurekiLabel(tk)}
         {best?.sekki && (
           <span className="ml-2 font-bold" style={{ color: accent }}>

@@ -671,10 +671,10 @@ function BottomSheet({
             className="relative border-b border-[#f0ede6] px-4 pb-2 text-center"
             style={{ paddingTop: "calc(env(safe-area-inset-top) + 10px)", background: "linear-gradient(180deg,#faf7f2,#fff)" }}
           >
-            <div className="text-center text-[24px] font-extrabold text-[#2a2a2a]">
+            <div className="text-center text-[24px] font-extrabold leading-tight text-[#2a2a2a]">
               {m}月{d}日<span className="text-[0.78em]">({dow})</span>
             </div>
-            <div className="text-[10px] text-[#b8a888]">{kyurekiLabel(dk)}</div>
+            <div className="-mt-0.5 text-[10px] leading-tight text-[#b8a888]">{kyurekiLabel(dk)}</div>
             <button
               onClick={onClose}
               aria-label="閉じる"
