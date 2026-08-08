@@ -1,5 +1,6 @@
 "use client";
 
+import { PhotoCropper } from "@/components/PhotoCropper";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -25,6 +26,8 @@ export default function ClubPage() {
   const [joined, setJoined] = useState(false);
   const [body, setBody] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
+  const [cropSrc, setCropSrc] = useState<{ kind: "cover" | "icon"; file: File } | null>(null); // 切り抜き中の画像
+  const [lookBusy, setLookBusy] = useState<"cover" | "icon" | null>(null);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -107,12 +110,30 @@ export default function ClubPage() {
           )}
         </div>
         <div className="mt-3 leading-none">
-          {club.icon_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={club.icon_url} alt="" className="mx-auto h-[64px] w-[64px] rounded-full border-2 border-white/40 object-cover" />
-          ) : (
-            <span className="text-[44px]">{club.emoji ?? "🎌"}</span>
-          )}
+          <span className="relative inline-block">
+            {club.icon_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={club.icon_url} alt="" className="mx-auto h-[64px] w-[64px] rounded-full border-2 border-white/40 object-cover" />
+            ) : (
+              <span className="text-[44px]">{club.emoji ?? "🎌"}</span>
+            )}
+            {me && joined && (
+              <label className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-[#d4b96a] text-[#1a2432] shadow">
+                {lookBusy === "icon" ? "⏳" : <CameraIcon size={14} />}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    setCropSrc({ kind: "icon", file: f });
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            )}
+          </span>
         </div>
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{club.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
@@ -138,47 +159,50 @@ export default function ClubPage() {
             {joined ? "✓ 入部中（タップで退部）" : "入部する"}
           </button>
         )}
+        {/* マイページと同じ文法: 右下にカメラボタン(背景) */}
         {me && joined && (
-          <div className="mt-2 flex justify-center gap-3">
-            <label className="cursor-pointer text-[10.5px] font-bold text-[#a8cca8] underline">
-              背景を変える
+          <>
+            <label className="absolute bottom-2.5 right-3 cursor-pointer rounded-full bg-black/50 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur-sm">
+              {lookBusy === "cover" ? "⏳" : (
+                <span className="flex items-center gap-1.5"><CameraIcon size={14} /> 背景を変える</span>
+              )}
               <input
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={async (e) => {
+                onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (!f || !me) return;
-                  const url = await uploadImage("post-images", me.id, f, 1080, 0.6);
-                  if (url) {
-                    const supabase = createClient();
-                    await supabase.rpc("set_club_look", { cid: clubId, cover: url, icon: null });
-                    load();
-                  }
+                  if (!f) return;
+                  setCropSrc({ kind: "cover", file: f });
+                  e.target.value = "";
                 }}
               />
             </label>
-            <label className="cursor-pointer text-[10.5px] font-bold text-[#a8cca8] underline">
-              アイコンを変える
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f || !me) return;
-                  const url = await uploadImage("post-images", me.id, f, 256, 0.7);
-                  if (url) {
-                    const supabase = createClient();
-                    await supabase.rpc("set_club_look", { cid: clubId, cover: null, icon: url });
-                    load();
-                  }
-                }}
-              />
-            </label>
-          </div>
+          </>
         )}
       </header>
+      {/* 切り抜き(マイページと同じPhotoCropper) */}
+      {cropSrc && me && (
+        <PhotoCropper
+          file={cropSrc.file}
+          aspect={cropSrc.kind === "cover" ? 2.4 : 1}
+          outWidth={cropSrc.kind === "cover" ? 1080 : 256}
+          onDone={async (blob) => {
+            const kind = cropSrc.kind;
+            setCropSrc(null);
+            if (!blob || !me) return;
+            setLookBusy(kind);
+            const file = new File([blob], kind + ".jpg", { type: "image/jpeg" });
+            const url = await uploadImage("post-images", me.id, file, kind === "cover" ? 1080 : 256, 0.72);
+            if (url) {
+              const supabase = createClient();
+              await supabase.rpc("set_club_look", { cid: clubId, cover: kind === "cover" ? url : null, icon: kind === "icon" ? url : null });
+              await load();
+            }
+            setLookBusy(null);
+          }}
+        />
+      )}
 
       <div className="space-y-3.5 pt-4">
         {/* 部員 */}

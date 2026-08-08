@@ -429,7 +429,7 @@ export async function myVillageIds(userId: string): Promise<Set<string>> {
 }
 
 /* ============ 部活動 ============ */
-const CLUB_SELECT = "id, name, emoji, description, scope, is_official, created_by, club_members(count)";
+const CLUB_SELECT = "id, name, emoji, description, scope, is_official, created_by, cover_url, icon_url, club_members(count)";
 
 export async function fetchClubs(): Promise<Club[]> {
   const supabase = createClient();

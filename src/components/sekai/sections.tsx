@@ -1949,11 +1949,20 @@ export function ClubsSection({ me }: { me: User | null }) {
               <Link
                 key={c.id}
                 href={`/sekai/club/${c.id}`}
-                className="rounded-xl border bg-white p-3 no-underline"
-                style={{ borderColor: c.is_official ? "#d4b96a88" : "#e2eae0" }}
+                className="overflow-hidden rounded-xl border p-3 no-underline"
+                style={{
+                  borderColor: c.is_official ? "#d4b96a88" : "#e2eae0",
+                  ...((c as { cover_url?: string | null }).cover_url
+                    ? { backgroundImage: `linear-gradient(rgba(255,255,255,.82), rgba(255,255,255,.9)), url(${(c as { cover_url?: string | null }).cover_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+                    : { background: "#fff" }),
+                }}
               >
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[22px]">{c.emoji ?? "🎌"}</span>
+                  {(c as { icon_url?: string | null }).icon_url ? (
+                    <img src={(c as { icon_url?: string | null }).icon_url!} alt="" className="h-[26px] w-[26px] rounded-full object-cover" />
+                  ) : (
+                    <span className="text-[22px]">{c.emoji ?? "🎌"}</span>
+                  )}
                   {c.is_official && (
                     <span className="rounded-full bg-[#f8f2e0] px-1.5 py-0.5 text-[8.5px] font-bold text-[#a08030]">
                       公式
