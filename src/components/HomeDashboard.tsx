@@ -221,12 +221,11 @@ export function HomeDashboard() {
         const holy = holyTimeOf(tk);
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
         let nearTide: [string, string] | null = null;
-        let nd2 = 1e9;
         for (const [lb, t2] of tideRows) {
           const [hh, mm2] = t2.split(":").map(Number);
-          const df = Math.abs(hh * 60 + mm2 - nowMin);
-          if (df < nd2) { nd2 = df; nearTide = [lb, t2]; }
+          if (hh * 60 + mm2 >= nowMin) { nearTide = [lb, t2]; break; } // 次に来る潮
         }
+        if (!nearTide && tideRows.length) nearTide = tideRows[tideRows.length - 1];
         const IconSpan = ({ src }: { src: string }) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt="" className="mx-1.5 inline-block h-[15px] w-[15px] rounded-full object-contain align-[-3px]" />
@@ -246,12 +245,12 @@ export function HomeDashboard() {
                   <span style={{ color: lv >= 90 ? "#c9002a" : lv >= 45 ? "#d97020" : "#a08c30" }}>（叶いレベル{lv}・{lv === 360 ? "最強" : lv === 180 ? "超すごい" : lv === 90 ? "凄い" : lv === 45 ? "かなり強い" : lv === 15 ? "強い" : lv === 5 ? "少し強い" : "普通"}）</span>
                   {best?.sekki && <span className="ml-1 font-extrabold" style={{ color: "#2a8a4a" }}>「{best.sekki[0]}」の日です</span>}
                   <IconSpan src={moonImageOf(moon.age)} />
-                  今日の月は月齢{moon.age.toFixed(1)}、月の出は{mt.rise ?? "—"}
+                  今日の月は月齢{moon.age.toFixed(1)}、{mt.rise ? `月の出は${mt.rise}` : mt.set ? `月の入りは${mt.set}` : ""}
                   {holy && <span className="ml-1 font-extrabold" style={{ color: "#b8912a" }}>本日は{holy.name}（{holy.label}）{holy.time}です</span>}
                   {nearTide && (
                     <>
                       <IconSpan src="/icons/cel-earth.png" />
-                      本日の{nearTide[0]}潮時刻は{nearTide[1]}です
+                      次の{nearTide[0]}潮時刻は{nearTide[1]}です
                     </>
                   )}
                   <span className="mx-6" style={{ color: "#6a5a30" }}>✦</span>
