@@ -247,7 +247,7 @@ export function Otohikari() {
       {/* 地球儀の下: △MasterMindSystem（同フォント・タップで F1〜F4 のグラフを展開） */}
       <details className="px-2">
         <summary
-          className="cursor-pointer list-none text-left text-[13px] font-extrabold tracking-[2px]"
+          className="cursor-pointer list-none text-right text-[13px] font-extrabold tracking-[2px]"
           style={{
             color: "#8ff4ff",
             textShadow:

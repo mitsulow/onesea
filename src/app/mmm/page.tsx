@@ -101,6 +101,7 @@ export default function MmmPage() {
           <div className="text-[17px] font-extrabold tracking-[3px]" style={GREEN_NEON}>
             MasterMindMembers
           </div>
+          <div className="text-[8px] leading-tight tracking-[2px] text-[#5a8a6a]">夢とヒラメキの保管庫</div>
         </div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           <AvatarMenu ring="#7de0a0" />
