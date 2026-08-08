@@ -11,6 +11,7 @@ export interface Shop {
   name: string;
   description: string | null;
   price_jpy: number | null;
+  sold?: boolean; // ブツブツ交換成立などで売り切れ
   is_trial: boolean;
   accepts_barter: boolean;
   accepts_tip: boolean;
@@ -45,7 +46,7 @@ export function categoryOf(id: string | null) {
 }
 
 const SHOP_SELECT =
-  "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
+  "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, sold, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
 
 export async function fetchShops(category?: string | null): Promise<Shop[]> {
   const supabase = createClient();

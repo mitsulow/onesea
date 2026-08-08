@@ -197,7 +197,26 @@ export default function ChatPage() {
                   mine ? "rounded-br-md bg-[#8de055] text-[#1a2a10]" : "rounded-bl-md bg-white text-[#3a3428]"
                 }`}
               >
-                {m.body}
+                {(() => {
+                  const parts = String(m.body ?? "").split(/(https?:\/\/[^\s]+)/g);
+                  return parts.map((pt, i) =>
+                    /^https?:\/\//.test(pt) ? (
+                      <a
+                        key={i}
+                        href={pt.startsWith("https://onesea.vercel.app") ? pt.replace("https://onesea.vercel.app", "") : pt}
+                        target={pt.startsWith("https://onesea.vercel.app") ? undefined : "_blank"}
+                        rel="noopener noreferrer"
+                        className="font-extrabold underline"
+                        style={{ color: "#0a6ab0" }}
+                      >
+                        こちらです →
+                      </a>
+                    ) : (
+                      // 「こちらです → URL」の形は文言が重複するので、直前の「こちらです →」テキストは削る
+                      <span key={i}>{pt.replace(/こちらです\s*→\s*$/, "")}</span>
+                    )
+                  );
+                })()}
               </div>
               {!mine && <span className="text-[9px] text-[#a89e8c]">{time}</span>}
             </div>

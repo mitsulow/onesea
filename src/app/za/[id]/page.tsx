@@ -81,7 +81,10 @@ export default function ShopDetailPage() {
       const supabase = createClient();
       await supabase.from("barter_offers").insert({ shop_id: params.id, user_id: me.id, offer, offer_shop_id: offerShop?.id ?? null });
       loadOffers();
-      router.push(`/talk/${chatId}`);
+      setBarterOpen(false);
+      setOfferText("");
+      setOfferId(null);
+      alert("ブツブツ交換を提案しました！出品者にTalKでお知らせが届きます。下の「いま来ている提案」にあなたのカードが並びました");
     }
     setProposing(false);
   };
@@ -166,7 +169,7 @@ export default function ShopDetailPage() {
           {(shop.image_urls.length ? shop.image_urls : [null]).map((url, i) =>
             url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={srcCdn(url)} alt={shop.name} className="h-full w-full flex-shrink-0 snap-center object-cover" />
+              <img key={i} src={srcCdn(url)} alt={shop.name} className="h-full w-full flex-shrink-0 snap-center object-cover" style={shop.sold ? { filter: "grayscale(1)" } : undefined} />
             ) : (
               <div
                 key={i}
@@ -179,6 +182,16 @@ export default function ShopDetailPage() {
             )
           )}
         </div>
+        {shop.sold && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <span
+              className="border-[6px] border-[#d02020] px-6 py-1 text-[64px] font-extrabold tracking-[6px] text-[#d02020]"
+              style={{ transform: "rotate(-18deg)", textShadow: "0 2px 8px rgba(0,0,0,.3)", background: "rgba(255,255,255,.55)" }}
+            >
+              SOLD
+            </span>
+          </div>
+        )}
         {shop.image_urls.length > 1 && (
           <>
             <div className="pointer-events-none absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
@@ -291,7 +304,7 @@ export default function ShopDetailPage() {
                 </div>
                 <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                   {offers.map((o: any) => (
-                    <div key={o.id} className="w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5">
+                    <div key={o.id} className="relative w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5">
                       <div className="flex items-center gap-1.5">
                         {o.profiles?.avatar_url ? (
                           <img src={o.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-6 w-6 rounded-full object-cover" />
@@ -303,6 +316,34 @@ export default function ShopDetailPage() {
                       <div className="mt-1.5 line-clamp-3 text-[12px] font-bold leading-snug text-[#3a3428]">⇄ {o.offer}</div>
                       {o.offer_shop_id && (
                         <a href={`/za/${o.offer_shop_id}`} className="mt-1 block text-[10px] font-bold text-[#3070b0] underline">出品を見る →</a>
+                      )}
+                      {o.accepted && (
+                        <span
+                          className="pointer-events-none absolute right-1 top-1 flex h-[46px] w-[46px] items-center justify-center rounded-full border-[3px] border-[#d02020] text-[13px] font-extrabold text-[#d02020]"
+                          style={{ transform: "rotate(-14deg)", background: "rgba(255,255,255,.82)" }}
+                        >
+                          決定
+                        </span>
+                      )}
+                      {me && shop.owner_id === me.id && !shop.sold && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`「${o.profiles?.display_name ?? "この人"}さん」とのブツブツ交換に決定しますか？\n（商品はSOLDになります）`)) return;
+                            const supabase = createClient();
+                            await supabase.from("barter_offers").update({ accepted: true }).eq("id", o.id);
+                            await supabase.from("shops").update({ sold: true }).eq("id", shop.id).eq("owner_id", me.id);
+                            // 決定した相手にTalKでお知らせ
+                            try {
+                              const chatId = await getOrCreateChat(me.id, o.user_id);
+                              if (chatId) await sendMessage(chatId, me.id, `【ブツブツ交換 成立】「${shop.name}」⇄「${o.offer}」で決定しました！やり取りの続きはこのTalKで🤝`);
+                            } catch {}
+                            fetchShop(params.id).then((s2) => setShop(s2));
+                            loadOffers();
+                          }}
+                          className="mt-1.5 w-full rounded-lg bg-[#c94d3a] py-1.5 text-[10.5px] font-extrabold text-white"
+                        >
+                          この人に決めた
+                        </button>
                       )}
                     </div>
                   ))}
