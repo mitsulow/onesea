@@ -295,6 +295,11 @@ export default function UserPage() {
 
       {/* アバター + 名前 */}
       <div className="relative px-4">
+        {profile.birthday && (
+          <span className="num absolute right-4 top-1.5 text-right text-[11px] font-bold text-[#a09888]">
+            <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
+          </span>
+        )}
         <div className="relative -mt-11 inline-block">
           {profile.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -333,12 +338,7 @@ export default function UserPage() {
         </div>
 
         <div className="relative mt-1.5">
-          {profile.birthday && (
-            <span className="num absolute right-0 top-0 text-right text-[11px] font-bold text-[#a09888]">
-              <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
-            </span>
-          )}
-          <h1 className="flex items-center gap-1.5 pr-32 text-[21px] font-extrabold leading-snug text-[#3a3428]">
+          <h1 className="flex items-center gap-1.5 text-[21px] font-extrabold leading-snug text-[#3a3428]">
             {profile.display_name ?? "むらびと"}
             {isWara && <WarawaBadge size={17} />}
           </h1>
