@@ -2119,10 +2119,10 @@
       const yv = all.filter(e => e.d.startsWith(String(todayY))).map(e => e.f1);
       const yearAvg = yv.length ? yv.reduce((a, b) => a + b, 0) / yv.length : null;
 
-      // ① 一週間 (過去7日) — 縦軸を0〜9Hz固定にして日々の高さを素直に比べられるように
+      // ① 一週間 (過去7日) — 縦軸は自動スケール(データの最小〜最大にピタッと寄せて、日々の違いがハッキリ見える)
       dvBars("dv-week", all.slice(-7).map(e => ({
         v: e.f1, label: Number(e.d.slice(5, 7)) + "/" + Number(e.d.slice(8, 10)),
-      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true, fixedLo: 7.0, fixedHi: 9.0 });
+      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true });
 
       // ② 一カ月 (過去30日)
       dvBars("dv-recent", all.slice(-30).map(e => ({
