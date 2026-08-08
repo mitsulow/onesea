@@ -1520,7 +1520,7 @@
     <div class="dv-panel">
       <div class="dv-block">
         <div class="dv-title">■いまの太陽 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
-        <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;margin:0 auto;border-radius:12px;" />
+        <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
         <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
         <div class="graph-description"><p>赤い模様が活動領域。明るい爆発がフレアです。X線の強さがC→M→Xと上がるほど大きなフレア。Xクラスが出ると1〜3日後に太陽風の塊が地球に届き、磁気嵐（Kp上昇）→電離層が乱れて、シューマン共振の「天井」が揺れます。</p></div>
       </div>
@@ -3276,7 +3276,11 @@
   // 折りたたみを開いた瞬間に、隠れていた間サイズ0だったオーバーレイ等を再計算
   document.querySelectorAll("details.fold").forEach(d => {
     d.addEventListener("toggle", () => {
-      if (d.open) { buildJstOverlays(); drawSparkline(); drawMonthlyTrend(); drawModeGraphs(); }
+      if (d.open) {
+        buildJstOverlays(); drawSparkline(); drawMonthlyTrend(); drawModeGraphs();
+        // 開いたタブの一番上から読めるように(画像読み込みで下へ流されるのも防止)
+        setTimeout(() => d.scrollIntoView({ behavior: "auto", block: "start" }), 60);
+      }
     });
   });
   // 右上アバター: 他サービスと同じGoogle認証アイコンを出す。
