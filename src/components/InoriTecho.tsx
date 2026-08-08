@@ -824,17 +824,18 @@ function BottomSheet({
                   {/* 左上: 月齢(大きめ) + 朔弦望メッセージ */}
                   <div className="absolute left-3 top-2.5 z-10 text-left">
                     <div className="num text-[16px] font-bold text-[#e8e4f0]" style={{ textShadow: "0 0 6px #000" }}>月齢 {moon.age.toFixed(1)}</div>
-                    {(() => {
-                      const ht = holyTimeOf(dk);
-                      return ht ? (
-                        <div className="mt-1 text-[13px] font-extrabold leading-snug text-[#e8c860]" style={{ textShadow: "0 0 6px #000" }}>
-                          ✦{ht.name}（{ht.label}）
-                          <br />
-                          <span className="num" style={{ paddingLeft: "1em" }}>{ht.time}</span>
-                        </div>
-                      ) : null;
-                    })()}
                   </div>
+                  {/* 右上: 朔弦望メッセージ（右詰め・✦なし） */}
+                  {(() => {
+                    const ht = holyTimeOf(dk);
+                    return ht ? (
+                      <div className="absolute right-3 top-2.5 z-10 text-right text-[13px] font-extrabold leading-snug text-[#e8c860]" style={{ textShadow: "0 0 6px #000" }}>
+                        {ht.name}（{ht.label}）
+                        <br />
+                        <span className="num">{ht.time}</span>
+                      </div>
+                    ) : null;
+                  })()}
                   {/* 右下: 月の出・南中・月の入 */}
                   <div className="absolute bottom-2.5 right-3 z-10 text-right text-[11px] leading-relaxed text-[#b8b4c8]" style={{ textShadow: "0 0 6px #000" }}>
                     <div>月の出 <span className="num text-white">{mt.rise ?? "—"}</span></div>
