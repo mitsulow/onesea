@@ -53,6 +53,7 @@ export function VillagerSuggestions({
           .select("id, username, display_name, avatar_url, status_line")
           .not("username", "is", null)
           .in("id", ids)
+          .gt("warawa_until", new Date().toISOString()) // 出品実績のあるwarawerさんだけ
           .limit(10);
       }
       const { data } = await q;
