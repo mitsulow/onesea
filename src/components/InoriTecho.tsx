@@ -482,9 +482,6 @@ function MonthCal({
         </div>
       </div>
 
-      {waraCloud === "warawa" && (
-        <div className="bg-white pb-1 pt-0.5 text-center text-[9.5px] text-[#9ab8a0]">☁ 予定は自動バックアップ中 — 機種変更しても戻せます</div>
-      )}
       {waraCloud === "free" && (
         <a href="/lp/onesea" className="block bg-white pb-1 pt-0.5 text-center text-[9.5px] font-bold text-[#c94d3a] no-underline">
           ☁ わらわ〜会員は予定を自動バックアップ — 機種変更しても消えません →
