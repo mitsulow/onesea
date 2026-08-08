@@ -521,7 +521,7 @@ export default function UserPage() {
         )}
         {profile.skills && profile.skills.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんなことが出来ます（{profile.skills.length}）</div>
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんな事が出来ます（Skill Card{profile.skills.length}）</div>
             <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 pt-0.5" data-noswipe>
               {profile.skills.map((sk, i) => {
                 const CARD_COLORS = [
@@ -549,7 +549,7 @@ export default function UserPage() {
         )}
         {profile.wants_to_do && profile.wants_to_do.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私こんなことやってみたい！（{profile.wants_to_do.length}）</div>
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんなことやってみたい！（Quest Card{profile.wants_to_do.length}）</div>
             <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 pt-0.5" data-noswipe>
               {profile.wants_to_do.map((w, i) => {
                 const CARD_COLORS = [
