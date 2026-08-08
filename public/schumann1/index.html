@@ -3595,5 +3595,24 @@
     } catch (e) {}
   })();
 </script>
+
+<script>
+  /* 静的ページ用の自動アップデート: サーバーのETagが変わっていたら1回だけ再読み込み */
+  (function () {
+    try {
+      fetch(location.pathname, { method: "HEAD", cache: "no-store" }).then(function (r) {
+        var et = r.headers.get("etag") || r.headers.get("last-modified") || "";
+        if (!et) return;
+        var key = "page-etag:" + location.pathname;
+        var prev = localStorage.getItem(key);
+        localStorage.setItem(key, et);
+        if (prev && prev !== et && !sessionStorage.getItem("etag-reloaded")) {
+          sessionStorage.setItem("etag-reloaded", "1");
+          location.reload();
+        }
+      }).catch(function () {});
+    } catch (e) {}
+  })();
+</script>
 </body>
 </html>

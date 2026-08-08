@@ -31,6 +31,10 @@ export function notifText(n: NotificationRow): string {
       return `${who}さんにシェアされました`;
     case "club_post":
       return `${who}さんが部活に活動記録を投稿しました`;
+    case "like":
+      return `記事にハートが付きました`;
+    case "follow":
+      return `${who}さんにフォローされました`;
     default:
       return `${who}さんからお知らせがあります`;
   }

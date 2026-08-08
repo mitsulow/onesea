@@ -62,7 +62,36 @@ export default function NotificationsPage() {
             <br />コメント・返信・ブツブツ交換の提案・シェアがここに届きます
           </p>
         ) : (
-          rows.map((n) => {
+          groupLikes(rows).map((g) => {
+            if (g.kind === "likes") {
+              // ハートは束ねて1行 — 付けた人のアイコンをずらり（バッジ数には入れない）
+              return (
+                <Link key={g.key} href={g.url} className="block no-underline">
+                  <div className="flex items-start gap-2.5 border-b border-[#f0ece0] px-4 py-3">
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#fdeef0] text-[16px]">❤️</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-bold leading-snug text-[#3a3428]">
+                        記事にハートが付きました（{g.items.length}）
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center">
+                        {g.items.slice(0, 14).map((n2, i) => (
+                          <span key={n2.id} style={{ marginLeft: i === 0 ? 0 : -6 }}>
+                            {n2.profiles?.avatar_url ? (
+                              <img src={srcCdn(n2.profiles.avatar_url)} alt={n2.profiles?.display_name ?? ""} title={n2.profiles?.display_name ?? ""} referrerPolicy="no-referrer" className="h-7 w-7 rounded-full border-2 border-white object-cover" />
+                            ) : (
+                              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-[#f0ece0] text-[11px]">🙂</span>
+                            )}
+                          </span>
+                        ))}
+                        {g.items.length > 14 && <span className="ml-1.5 text-[10px] text-[#a09888]">+{g.items.length - 14}</span>}
+                      </div>
+                      <div className="num mt-0.5 text-[10px] text-[#b0a890]">{relTime(g.at)}</div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            }
+            const n = g.n;
             const unread = !n.read_at;
             const inner = (
               <div
@@ -101,4 +130,26 @@ export default function NotificationsPage() {
       </div>
     </main>
   );
+}
+
+
+/** ハート通知を投稿ごとに束ねる（他の通知はそのまま順序維持） */
+function groupLikes(rows: NotificationRow[]):
+  Array<{ kind: "one"; key: string; n: NotificationRow } | { kind: "likes"; key: string; url: string; at: string; items: NotificationRow[] }> {
+  const out: Array<{ kind: "one"; key: string; n: NotificationRow } | { kind: "likes"; key: string; url: string; at: string; items: NotificationRow[] }> = [];
+  const likeGroup = new Map<string, { kind: "likes"; key: string; url: string; at: string; items: NotificationRow[] }>();
+  for (const n of rows) {
+    if (n.kind === "like" && n.target_url) {
+      let g = likeGroup.get(n.target_url);
+      if (!g) {
+        g = { kind: "likes", key: "lk-" + n.target_url, url: n.target_url, at: n.created_at, items: [] };
+        likeGroup.set(n.target_url, g);
+        out.push(g);
+      }
+      g.items.push(n);
+    } else {
+      out.push({ kind: "one", key: n.id, n });
+    }
+  }
+  return out;
 }

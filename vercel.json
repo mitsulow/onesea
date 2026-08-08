@@ -1,9 +1,36 @@
 {
   "framework": "nextjs",
   "crons": [
-    { "path": "/api/push-ddp", "schedule": "36 12 * * *" }
+    {
+      "path": "/api/push-ddp",
+      "schedule": "36 12 * * *"
+    }
   ],
   "redirects": [
-    { "source": "/schumann1", "destination": "/schumann1/index.html", "permanent": false }
+    {
+      "source": "/schumann1",
+      "destination": "/schumann1/index.html",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/schumann1/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/tsukiyoga-v7/index.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    }
   ]
 }
