@@ -38,6 +38,9 @@ export default function ProfileSettingsPage() {
   const [sns, setSns] = useState<Record<string, string>>({});
   const [birthday, setBirthday] = useState("");
   const [birthTime, setBirthTime] = useState("");
+  const [gender, setGender] = useState(""); // "female" | "male"
+  const [birthPref, setBirthPref] = useState("");
+  const [birthCity, setBirthCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -71,9 +74,12 @@ export default function ProfileSettingsPage() {
       // いきなり課金で登録フォームを経ていない人も、ここで見えて直せる。
       const { data: priv } = await supabase
         .from("private_profiles")
-        .select("birth_date, birth_time")
+        .select("birth_date, birth_time, gender, birth_pref, birth_city")
         .eq("user_id", u.id)
         .maybeSingle();
+      if (priv?.gender) setGender(priv.gender as string);
+      if (priv?.birth_pref) setBirthPref(priv.birth_pref as string);
+      if (priv?.birth_city) setBirthCity(priv.birth_city as string);
       if (priv?.birth_date && !data?.birthday) setBirthday(priv.birth_date as string);
       if (priv?.birth_time) {
         const t = String(priv.birth_time).slice(0, 5);
@@ -91,8 +97,7 @@ export default function ProfileSettingsPage() {
       s
         .split(/[、,]/)
         .map((x) => x.trim())
-        .filter(Boolean)
-        .slice(0, 12);
+        .filter(Boolean); // 無制限 — スキルは多いほど依頼が舞い込む
     const snsClean: Record<string, string> = {};
     for (const [k, v] of Object.entries(sns)) if (v.trim()) snsClean[k] = v.trim();
     const { error } = await supabase
@@ -112,11 +117,14 @@ export default function ProfileSettingsPage() {
       })
       .eq("id", me.id);
     // 誕生日・誕生時刻はツキヨガ月占い等が読む private_profiles にも同期
-    if (birthday || birthTime) {
+    if (birthday || birthTime || gender || birthPref || birthCity) {
       await supabase.from("private_profiles").upsert({
         user_id: me.id,
         ...(birthday ? { birth_date: birthday } : {}),
         birth_time: birthTime || "15:00", // 未入力は15時
+        gender: gender || null,
+        birth_pref: birthPref.trim() || null,
+        birth_city: birthCity.trim() || null,
       });
     }
     setSaving(false);
@@ -169,8 +177,36 @@ export default function ProfileSettingsPage() {
         <p className="px-5 py-10 text-center text-sm text-[#8a8070]">ログインしてください</p>
       ) : (
         <div className="space-y-4 px-4 pt-4">
-          {field("表示名", displayName, setDisplayName, "名前")}
-          {field("ひとこと", statusLine, setStatusLine, "例: 沖縄で自然栽培はじめました")}
+          {field("名前", displayName, setDisplayName, "名前（ニックネームもOK）")}
+          {field("みんなへひとこと", statusLine, setStatusLine, "例: 沖縄で自然栽培はじめました")}
+
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">スキル（私はこんなことが出来ます）</label>
+            <textarea
+              value={skills}
+              onChange={(e) => setSkills(e.target.value)}
+              rows={3}
+              placeholder="料理、デザイン、パソコン仕事、大工仕事、励ますこと、肩もみ、…"
+              className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
+            />
+            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">※できるかぎり沢山のスキルを入力すると依頼が舞い込みます。「、」区切りで並べて行ってね（何個でもOK）</p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">やってみたいこと</label>
+            <textarea
+              value={wants}
+              onChange={(e) => setWants(e.target.value)}
+              rows={3}
+              placeholder="田舎暮らし、パン屋さん、世界一周、出店、…"
+              className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
+            />
+            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">「、」区切りで何個でもOK</p>
+          </div>
+
+          {field("ライスワーク（今の仕事）", riceWork, setRiceWork, "いまの仕事")}
+          {field("ライフワーク（本当にやりたいこと）", lifeWork, setLifeWork, "本当にやりたいこと")}
+
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">自己紹介</label>
             <textarea
@@ -178,17 +214,18 @@ export default function ProfileSettingsPage() {
               onChange={(e) => setBio(e.target.value)}
               rows={4}
               maxLength={500}
+              placeholder="自分の魅力を簡単に書いてみよう"
               className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
             />
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             {field("都道府県", prefecture, setPrefecture, "例: 沖縄県")}
             {field("市町村", city, setCity, "例: 那覇市")}
           </div>
+
           <div>
-            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
-              生年月日 <span className="font-normal text-[#c0b8a8]">月占いに使います</span>
-            </label>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">生年月日</label>
             <input
               type="date"
               value={birthday}
@@ -197,6 +234,7 @@ export default function ProfileSettingsPage() {
             />
             <p className="mt-0.5 text-[10px] text-[#b8ae9c]">名刺の「地球冒険◯日目」（生まれてから何日目）にも使われます</p>
           </div>
+
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
               誕生時刻 <span className="font-normal text-[#c0b8a8]">月占いに使います・分からなければ空欄でOK</span>
@@ -209,10 +247,48 @@ export default function ProfileSettingsPage() {
             />
             <p className="mt-0.5 text-[10px] text-[#b8ae9c]">未入力の場合は15時として占います（知らない人が多いので大丈夫）</p>
           </div>
-          {field("ライスワーク", riceWork, setRiceWork, "いまの仕事")}
-          {field("ライフワーク", lifeWork, setLifeWork, "本当にやりたいこと")}
-          {field("スキル", skills, setSkills, "例: 料理、デザイン、大工", "「、」区切りで12個まで")}
-          {field("やりたいこと", wants, setWants, "例: 田舎暮らし、出店", "「、」区切りで12個まで")}
+
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">性別</label>
+            <div className="flex gap-2">
+              {([["female", "女性"], ["male", "男性"]] as const).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setGender(v)}
+                  className="flex-1 rounded-xl border py-2.5 text-[14px] font-bold"
+                  style={
+                    gender === v
+                      ? { background: "#c94d3a", color: "#fff", borderColor: "#c94d3a" }
+                      : { background: "#fff", color: "#8a7a5a", borderColor: "#e8dcc4" }
+                  }
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">ツキヨガのZOOM受講の判定に使います</p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">
+              生まれた場所 <span className="font-normal text-[#c0b8a8]">月占いに使います</span>
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                value={birthPref}
+                onChange={(e) => setBirthPref(e.target.value)}
+                placeholder="都道府県"
+                className="w-full rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] outline-none focus:border-[#c94d3a]"
+              />
+              <input
+                value={birthCity}
+                onChange={(e) => setBirthCity(e.target.value)}
+                placeholder="市町村"
+                className="w-full rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] outline-none focus:border-[#c94d3a]"
+              />
+            </div>
+          </div>
 
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">SNS リンク</label>

@@ -495,24 +495,32 @@ export default function UserPage() {
         )}
         {profile.skills && profile.skills.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> SKILL</div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> こんなことが出来ます（{profile.skills.length}）</div>
+            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1" data-noswipe>
               {profile.skills.map((sk) => (
-                <span key={sk} className="rounded-full bg-[#eaf1e6] px-2.5 py-1 text-[11.5px] font-medium text-[#4a6a3c]">
-                  {sk}
-                </span>
+                <div
+                  key={sk}
+                  className="flex min-h-[76px] w-[46%] flex-shrink-0 snap-start items-center justify-center rounded-2xl px-3 py-4 text-center"
+                  style={{ background: "linear-gradient(150deg,#eef6e8,#dcecd2)", border: "1.5px solid #b8d4a8" }}
+                >
+                  <span className="text-[17px] font-extrabold leading-snug text-[#3a5a2c]">{sk}</span>
+                </div>
               ))}
             </div>
           </div>
         )}
         {profile.wants_to_do && profile.wants_to_do.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> やりたいこと</div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> やってみたいこと（{profile.wants_to_do.length}）</div>
+            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1" data-noswipe>
               {profile.wants_to_do.map((w) => (
-                <span key={w} className="rounded-full bg-[#fdf0ee] px-2.5 py-1 text-[11.5px] font-medium text-[#a05040]">
-                  {w}
-                </span>
+                <div
+                  key={w}
+                  className="flex min-h-[76px] w-[46%] flex-shrink-0 snap-start items-center justify-center rounded-2xl px-3 py-4 text-center"
+                  style={{ background: "linear-gradient(150deg,#fdf2ec,#f8dcd2)", border: "1.5px solid #e8b0a0" }}
+                >
+                  <span className="text-[17px] font-extrabold leading-snug text-[#a04030]">{w}</span>
+                </div>
               ))}
             </div>
           </div>
