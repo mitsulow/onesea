@@ -12,7 +12,6 @@ import {
   holyTimeOf,
   kyurekiFullLabel,
   moonNameOf,
-  gekkanOf,
   keyOf,
   todayKey,
   YOBI,
@@ -849,25 +848,11 @@ function BottomSheet({
                     ) : null;
                   })()}
                   {/* 右下: 月の出・南中・月の入 */}
-                  <div className="absolute bottom-9 right-3 z-10 text-right text-[11px] leading-relaxed text-[#b8b4c8]" style={{ textShadow: "0 0 6px #000" }}>
+                  <div className="absolute bottom-2.5 right-3 z-10 text-right text-[11px] leading-relaxed text-[#b8b4c8]" style={{ textShadow: "0 0 6px #000" }}>
                     <div>月の出 <span className="num text-white">{mt.rise ?? "—"}</span></div>
                     <div>南中 <span className="num text-white">{mt.transit ?? "—"}</span></div>
                     <div>月の入 <span className="num text-white">{mt.set ?? "—"}</span></div>
                   </div>
-                  {/* 下部: ツキヨガ月鑑 — その日の月の名前と、込めた想い */}
-                  {(() => {
-                    const g = gekkanOf(moon.age);
-                    return (
-                      <div
-                        className="absolute inset-x-0 bottom-0 z-10 px-3 pb-1.5 pt-4 text-center"
-                        style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,5,.92) 55%)" }}
-                      >
-                        <span className="text-[13px] font-extrabold text-[#f0e6c8]">{g.name}</span>
-                        <span className="ml-1 text-[9.5px] text-[#a8a0b8]">（{g.yomi}）</span>
-                        <span className="ml-1.5 text-[10.5px] leading-snug text-[#c8c0d8]">{g.imi}</span>
-                      </div>
-                    );
-                  })()}
                 </div>
               )}
             </div>
