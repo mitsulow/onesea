@@ -518,17 +518,29 @@ export default function UserPage() {
         )}
         {profile.skills && profile.skills.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> こんなことが出来ます（{profile.skills.length}）</div>
-            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1" data-noswipe>
-              {profile.skills.map((sk) => (
-                <div
-                  key={sk}
-                  className="flex min-h-[76px] w-[46%] flex-shrink-0 snap-start items-center justify-center rounded-2xl px-3 py-4 text-center"
-                  style={{ background: "linear-gradient(150deg,#eef6e8,#dcecd2)", border: "1.5px solid #b8d4a8" }}
-                >
-                  <span className="text-[17px] font-extrabold leading-snug text-[#3a5a2c]">{sk}</span>
-                </div>
-              ))}
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんなことが出来ます（{profile.skills.length}）</div>
+            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 pt-0.5" data-noswipe>
+              {profile.skills.map((sk, i) => {
+                const CARD_COLORS = [
+                  ["#fdf6ec", "#c94d3a"], // 生成り×朱
+                  ["#0e1e2e", "#f0e6c8"], // 紺×金
+                  ["#eef6e8", "#3a5a2c"], // 若葉×深緑
+                  ["#fdf0ee", "#a04030"], // 桜×茜
+                  ["#f0f4fa", "#2a4a7a"], // 空×藍
+                  ["#fffbe8", "#8a6a10"], // 月白×山吹
+                  ["#f4eefa", "#5a3a7a"], // 藤×紫
+                ] as const;
+                const [bg, fg] = CARD_COLORS[i % CARD_COLORS.length];
+                return (
+                  <div
+                    key={sk}
+                    className="flex min-h-[84px] w-[46%] flex-shrink-0 snap-start items-center justify-center px-3 py-4 text-center"
+                    style={{ background: bg, color: fg, boxShadow: "2px 3px 10px rgba(0,0,0,.18)", border: "1px solid rgba(0,0,0,.06)" }}
+                  >
+                    <span className="text-[17px] font-extrabold leading-snug" style={{ color: fg }}>{sk}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
