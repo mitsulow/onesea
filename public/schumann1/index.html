@@ -1512,37 +1512,35 @@
   <details class="fold" id="fold-solar">
     <summary>太陽とイナヅマとシューマン共振</summary>
 
-    <div class="graph-description">
-      <p>シューマン共振は<b>「太陽×稲妻＝地球の音」</b>という関係。太陽が強まると稲妻の数が増え、地面と電離層の間の「空洞」を鳴らします。更に、太陽が強くなり電離層が押されることで空洞が狭くなり、<b>音程（周波数）が高く</b>なります。シューマン共振とは結局は<b>太陽のご機嫌次第</b>なのです。このページではその3者（太陽・稲妻・シューマン共振）の関連性を、実際のデータをもとに無料公開しています。</p>
-    </div>
-
-    <!-- いまの太陽×イナヅマ 2枚看板 -->
-    <div style="display:flex;gap:10px;margin:0.2rem 0.9rem 0.8rem;">
-      <div style="flex:1;text-align:center;background:linear-gradient(160deg,#1a1208,#241505);border:1px solid rgba(255,170,60,.35);border-radius:14px;padding:0.7rem 0.4rem;">
-        <div style="font-size:0.72rem;letter-spacing:0.15em;color:#c8a060;">☀ いまの太陽</div>
-        <div id="stat-sun" style="font:800 1.5rem/1.3 'JetBrains Mono',monospace;color:#ffd60a;">—</div>
-      </div>
-      <div style="flex:1;text-align:center;background:linear-gradient(160deg,#0e1420,#101a2e);border:1px solid rgba(120,180,255,.3);border-radius:14px;padding:0.7rem 0.4rem;">
-        <div style="font-size:0.72rem;letter-spacing:0.15em;color:#8aa8d0;">⚡ いまのイナヅマ</div>
-        <div id="stat-lightning" style="font:800 1.5rem/1.3 'JetBrains Mono',monospace;color:#8ff4ff;">—</div>
-      </div>
-    </div>
-
     <!-- ■いまの太陽（リアルタイム・無料API） -->
     <div class="dv-panel">
       <div class="dv-block">
-        <div class="dv-title">〇いまの太陽の姿 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
+        <div class="dv-title">〇いまの太陽の姿</div>
         <video id="sun-video" muted loop playsinline preload="none" poster="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;"></video>
-        <div id="sun-video-credit" style="margin-top:0.3rem;text-align:center;font-size:0.68rem;color:#8aa8d0;">動画: NICT宇宙天気予報センター提供（SDO 304Å・自動更新・ループ再生）</div>
         <img id="sun-img" src="" alt="いまの太陽 (SDO 304Å)" referrerpolicy="no-referrer" style="display:none;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
-        <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
-        <!-- NICT きょうの概況（本物の予報官の文章） -->
-        <div id="nict-box" style="display:none;margin:0.7rem 0.9rem 0;padding:0.7rem 0.8rem;border:1px solid rgba(120,180,255,.3);border-radius:12px;background:rgba(14,20,32,.7);">
-          <div style="font-size:0.7rem;letter-spacing:0.12em;color:#8aa8d0;">📋 NICT宇宙天気予報センター きょうの概況 <span id="nict-updated" style="color:#5a7a9a;"></span></div>
-          <p id="nict-summary" style="margin-top:0.35rem;font-size:0.82rem;line-height:1.8;color:#cfe0ec;"></p>
-          <a href="https://swc.nict.go.jp/" target="_blank" rel="noopener" style="font-size:0.7rem;color:#2CB7DE;">swc.nict.go.jp →</a>
+        <!-- いまの太陽×イナヅマ 2枚看板 -->
+        <div style="display:flex;gap:10px;margin:0.2rem 0.9rem 0.8rem;">
+          <div style="flex:1;text-align:center;background:linear-gradient(160deg,#1a1208,#241505);border:1px solid rgba(255,170,60,.35);border-radius:14px;padding:0.7rem 0.4rem;">
+            <div style="font-size:0.72rem;letter-spacing:0.15em;color:#c8a060;">☀ いまの太陽</div>
+            <div id="stat-sun" style="font:800 1.5rem/1.3 'JetBrains Mono',monospace;color:#ffd60a;">—</div>
+          </div>
+          <div style="align-self:center;flex:0 0 auto;font:800 1.3rem/1 'JetBrains Mono',monospace;color:#8aa8d0;">×</div>
+          <div style="flex:1;text-align:center;background:linear-gradient(160deg,#0e1420,#101a2e);border:1px solid rgba(120,180,255,.3);border-radius:14px;padding:0.7rem 0.4rem;">
+            <div style="font-size:0.72rem;letter-spacing:0.15em;color:#8aa8d0;">⚡ いまのイナヅマ</div>
+            <div id="stat-lightning" style="font:800 1.5rem/1.3 'JetBrains Mono',monospace;color:#8ff4ff;">—</div>
+          </div>
         </div>
-        <div class="graph-description"><p>赤い模様が活動領域。明るい爆発がフレアです。X線の強さは<b>A→B→C→M→X</b>の5段階（1段で10倍）。AとBは「静穏」、Cから小さなフレア、M・Xが本物のフレアです。いま「B2.5」なら静かな太陽ということ。M・Xが出ると<b>1〜3日後</b>に太陽風の塊が地球に届いて電離層が押され、シューマン共振の音程が動きます — だから下の「過去の分析」の散布図は、この1〜3日の時間差（ラグ）を自動で考慮して相関を取っています。</p></div>
+        <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
+        <!-- NICT きょうの概況（折りたたみ・本物の予報官の文章） -->
+        <details id="nict-box" style="display:none;margin:0.7rem 0.9rem 0;border:1px solid rgba(120,180,255,.3);border-radius:12px;background:rgba(14,20,32,.7);">
+          <summary style="list-style:none;cursor:pointer;padding:0.7rem 0.8rem;font-size:0.78rem;letter-spacing:0.08em;color:#8aa8d0;">📋 NICT宇宙天気予報センター きょうの概況 <span id="nict-updated" style="color:#5a7a9a;"></span> <span style="color:#5a7a9a;">▾</span></summary>
+          <div style="padding:0 0.8rem 0.8rem;">
+            <p id="nict-summary" style="font-size:0.82rem;line-height:1.8;color:#cfe0ec;"></p>
+            <div style="margin-top:0.5rem;font-size:0.7rem;color:#5a7a9a;">出典：<a href="https://swc.nict.go.jp/" target="_blank" rel="noopener" style="color:#2CB7DE;">https://swc.nict.go.jp/</a></div>
+          </div>
+        </details>
+        <div class="graph-description"><p>X線の強さは<b>A→B→C→M→X</b>の5段階（1段で10倍）。AとBは「静穏」、Cから小さなフレア、M・Xが本物のフレアです。いま「B2.5」なら静かな太陽ということ。M・Xが出ると<b>1〜3日後</b>に太陽風の塊が地球に届いて電離層が押され、シューマン共振の音程が動きます — だから下の「過去の分析」の散布図は、この1〜3日の時間差（ラグ）を自動で考慮して相関を取っています。</p></div>
+        
       </div>
 
       <!-- ■いまの世界の雷（リアルタイム） -->
@@ -1582,6 +1580,14 @@
       </div>
     </div>
     <div class="graph-description"><p id="solar-note">計算中…</p></div>
+    <details style="margin:0.6rem 0.9rem 0.4rem;border:1px solid rgba(120,180,255,.25);border-radius:12px;background:rgba(14,20,32,.55);">
+      <summary style="list-style:none;cursor:pointer;padding:0.65rem 0.8rem;font:700 0.8rem/1 'Noto Sans JP',sans-serif;letter-spacing:0.08em;color:#8aa8d0;">詳しくは ▾</summary>
+      <div style="padding:0 0.4rem 0.5rem;">
+        <div class="graph-description">
+          <p>シューマン共振は<b>「太陽×稲妻＝地球の音」</b>という関係。太陽が強まると稲妻の数が増え、地面と電離層の間の「空洞」を鳴らします。更に、太陽が強くなり電離層が押されることで空洞が狭くなり、<b>音程（周波数）が高く</b>なります。シューマン共振とは結局は<b>太陽のご機嫌次第</b>なのです。このページではその3者（太陽・稲妻・シューマン共振）の関連性を、実際のデータをもとに無料公開しています。</p>
+        </div>
+      </div>
+    </details>
   </details>
 
   <details class="fold" id="fold-mag">
@@ -3529,7 +3535,7 @@
           if (!last) return;
           const c = cls(last.flux);
           el.innerHTML = '☀ いまのX線は <b style="color:' + c[2] + ';font-size:1.25em;">' + c[0] + 'クラスの' + c[1].toFixed(1) + '</b>'
-            + '<span style="color:#9fb2c8;font-weight:400;">（' + (c[0] === "X" || c[0] === "M" ? "フレア発生中！" : c[0] === "C" ? "小さなフレア" : "静穏") + '）</span>';
+            + '<span style="color:#9fb2c8;font-weight:400;">（' + (c[0] === "X" || c[0] === "M" ? "フレア発生中！" : c[0] === "C" ? "小さなフレア" : "静穏") + '）</span> ☀';
           const st = document.getElementById("stat-sun");
           if (st) st.innerHTML = '<span style="color:' + c[2] + ';">' + c[0] + c[1].toFixed(1) + '</span><span style="font-size:0.6em;color:#c8a060;"> ' + (c[0] === "X" || c[0] === "M" ? "フレア中" : c[0] === "C" ? "小フレア" : "静穏") + '</span>';
         }).catch(() => {});
