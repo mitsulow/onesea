@@ -378,14 +378,6 @@ function MonthCal({
       <div className="px-4 pt-1" style={{ background: "#fff" }}>
       </div>
 
-      {/* 全画面表示ボタン（月表示の上・右寄せ） */}
-      {onFullscreen && (
-        <div className="flex justify-end px-2 pt-1">
-          <button onClick={onFullscreen} className="rounded-full border border-[#e0d8c8] bg-white px-2 py-[1px] text-[8.5px] font-bold text-[#8a7a5a]">
-            ↗ 全画面表示
-          </button>
-        </div>
-      )}
       {/* 月ナビ */}
       <div className="flex items-center justify-between border-b border-[#eee] px-1.5 pb-0.5 pt-1.5">
         <button
@@ -396,7 +388,14 @@ function MonthCal({
         >
           ◀
         </button>
-        <span className="text-[17px] font-extrabold text-[#2a2a2a]">{ML[mi]}</span>
+        <span className="flex flex-col items-center leading-none">
+          {onFullscreen && (
+            <button onClick={onFullscreen} className="mb-[1px] rounded-full border border-[#e0d8c8] bg-white px-2 py-[1px] text-[8.5px] font-bold text-[#8a7a5a]">
+              ↗ 全画面表示
+            </button>
+          )}
+          <span className="text-[17px] font-extrabold text-[#2a2a2a]">{ML[mi]}</span>
+        </span>
         <button
           onClick={() => mi < MONTHS.length - 1 && setMi(mi + 1)}
           disabled={mi === MONTHS.length - 1}
@@ -1401,7 +1400,7 @@ function FullscreenCal({
             <button
               key={i}
               onClick={() => onOpenDay(k)}
-              className="overflow-hidden border-b border-r border-[#f0ede8] px-[2px] py-[1px] text-left align-top"
+              className="flex flex-col items-stretch justify-start overflow-hidden border-b border-r border-[#f0ede8] px-[2px] py-[1px] text-left"
               style={{ background: isT ? "#fff2ec" : l >= 4 ? "#fdf4f0" : "#fff", boxShadow: isT ? "inset 0 0 0 2px #c05030" : "none" }}
             >
               <div className="flex items-start justify-between leading-none">
