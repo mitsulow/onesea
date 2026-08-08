@@ -1600,7 +1600,7 @@ export function LoungeSection({
   );
 }
 
-/* ═══ 拠点（村）+ 村をつくる ═══ */
+/* ═══ 拠点（村）— 上: 写真ストリップ(会員数順) / 県セレクト / 写真つき一覧 / ＋村を作りたい ═══ */
 export function VillagesSection({
   me,
   myPref,
@@ -1610,20 +1610,11 @@ export function VillagesSection({
   myPref: string;
   router: ReturnType<typeof useRouter>;
 }) {
-  const [pref, setPref] = useState(myPref);
-  useEffect(() => setPref(myPref), [myPref]);
+  void myPref;
+  void router;
   const [villages, setVillages] = useState<Village[] | null>(null);
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
-  const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
-  const [desc, setDesc] = useState("");
-  const [vCity, setVCity] = useState("");
-  const [policy, setPolicy] = useState<Village["policy"]>("open");
-  const [saving, setSaving] = useState(false);
-  const [born, setBorn] = useState<string | null>(null);
-
-  const isJapan = (PREFS as readonly string[]).includes(pref);
-  useEffect(() => setVCity(""), [pref]);
+  const [pref, setPref] = useState(""); // "" = 全世界の拠点
 
   const load = useCallback(async () => {
     const list = await fetchVillages(null);
@@ -1635,263 +1626,124 @@ export function VillagesSection({
     load();
   }, [load]);
 
-  const officials = (villages ?? []).filter((v) => v.is_official);
-  const inPref = (villages ?? []).filter((v) => !v.is_official && v.prefecture === pref);
-  const others = (villages ?? []).filter((v) => !v.is_official && v.prefecture !== pref);
+  const memberN = (v: Village) => v.village_members?.[0]?.count ?? 0;
+  const shown = (villages ?? [])
+    .filter((v) => !pref || v.prefecture === pref)
+    .sort((a, b) => memberN(b) - memberN(a)); // 会員数が多い順
 
-  const create = async () => {
-    if (!me || !name.trim() || saving) return;
-    setSaving(true);
-    await createVillage(me.id, {
-      name: name.trim(),
-      prefecture: pref,
-      city: isJapan && vCity ? vCity : null,
-      description: desc.trim(),
-      policy,
-    });
-    setSaving(false);
-    setCreating(false);
-    setBorn(name.trim());
-    setName("");
-    setDesc("");
-    load();
-    setTimeout(() => setBorn(null), 6000);
-  };
-
-  const VillageCard = ({ v }: { v: Village }) => {
-    const members = v.village_members?.[0]?.count ?? 0;
-    const joined = mineIds.has(v.id);
-    return (
-      <div className="rounded-xl border border-[#e2eae0] bg-white p-3">
-        <div className="flex items-start justify-between gap-2">
-          <Link href={`/sekai/village/${v.id}`} className="min-w-0 no-underline">
-            <div className="text-[14.5px] font-extrabold text-[#2a4a34]"><img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {v.name} <span className="text-[10px] text-[#a0aca0]">›</span></div>
-            <div className="mt-0.5 text-[11px] text-[#a0aca0]">
-              {v.prefecture}
-              {v.city ? ` ${v.city}` : ""} ・ {members}人 ・ 村長 {v.profiles?.display_name ?? "—"}
-            </div>
-          </Link>
-          <span className="flex flex-shrink-0 items-center gap-1">
-            {v.is_official && (
-              <span
-                className="rounded-full px-2 py-0.5 text-[9.5px] font-extrabold"
-                style={{ background: "#f8f0d8", color: "#a08030", border: "1px solid #d4b96a" }}
-              >
-                🏛 公式
-              </span>
-            )}
-            <span
-              className="rounded-full px-2 py-0.5 text-[9.5px] font-bold"
-              style={
-                v.policy === "open"
-                  ? { background: "#eaf6ee", color: GREEN }
-                  : { background: "#f4f0e6", color: "#a08030" }
-              }
-            >
-              {POLICY_LABEL[v.policy]}
-            </span>
-          </span>
-        </div>
-        {v.description && <p className="mt-1 text-[12px] leading-relaxed text-[#5a6458]">{v.description}</p>}
-        {me && !joined && (
-          <div className="mt-2">
-            {v.policy === "open" ? (
-              <button
-                onClick={async () => {
-                  await joinVillage(me.id, v.id);
-                  load();
-                }}
-                className="rounded-lg px-4 py-1.5 text-[12px] font-extrabold text-white"
-                style={{ background: "#4a8a5c" }}
-              >
-                この村に入る
-              </button>
-            ) : v.policy === "approval" || v.policy === "invite" ? (
-              <button
-                onClick={async () => {
-                  if (!v.created_by) return;
-                  const chatId = await getOrCreateChat(me.id, v.created_by);
-                  if (chatId) router.push(`/talk/${chatId}`);
-                }}
-                className="rounded-lg border border-[#d8e4da] px-4 py-1.5 text-[12px] font-bold"
-                style={{ color: GREEN }}
-              >
-                立ち上げ村長に連絡する
-              </button>
-            ) : (
-              <span className="text-[11px] text-[#a0aca0]">いまは募集していません — 別の村か、新しい村を</span>
-            )}
-          </div>
-        )}
-        {joined && <div className="mt-1.5 text-[11px] font-bold" style={{ color: GREEN }}>✓ あなたの村</div>}
-      </div>
-    );
+  const goSeed = () => {
+    document.getElementById("seed-sec")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
-    <section id="villages" className="card" style={{ scrollMarginTop: 56 }}>
-      {/* 公式拠点（事務局認定・全国） */}
-      {officials.length > 0 && (
-        <div className="mb-4">
-          <div className="mb-2 flex items-baseline justify-between">
-            <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: "#a08030" }}>
-              🏛 セカイムラ公式拠点
-            </span>
-            <span className="text-[10px] text-[#a0aca0]">セカイムラ事務局が認定</span>
-          </div>
-          <div className="space-y-2">
-            {officials.map((v) => (
-              <VillageCard key={v.id} v={v} />
-            ))}
-          </div>
-        </div>
-      )}
+    <section className="card">
+      <SectionTitle>
+        <img src="/icons/icon-base.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3 }} />{" "}
+        {pref || "全世界"}の拠点{villages ? `（${shown.length}）` : ""}
+      </SectionTitle>
 
-      <div className="mb-2.5 flex items-baseline justify-between">
-        <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
-          <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {pref}の拠点
-        </span>
-        <span className="text-[10px] text-[#a0aca0]">一つの県に、いくつでも</span>
+      {/* ① 写真ストリップ — トップページと同じ。会員数が多い順 */}
+      <div className="hide-scrollbar -mx-3 mb-2.5 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1" data-noswipe>
+        {shown.map((v) => (
+          <Link
+            key={v.id}
+            href={`/sekai/village/${v.id}`}
+            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#e2eae0] bg-white no-underline shadow-sm"
+          >
+            <div className="relative h-[86px] bg-[#eaf2ea]">
+              {v.cover_url ? (
+                <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[22px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
+                  🏡
+                </div>
+              )}
+              {v.is_official && (
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-[#d4b96a] px-1.5 py-0.5 text-[8.5px] font-extrabold text-[#1a2432]">公式</span>
+              )}
+            </div>
+            <div className="px-2 py-1.5">
+              <div className="truncate text-[12px] font-extrabold" style={{ color: GREEN }}>{v.name}</div>
+              <div className="truncate text-[10px] text-[#a0aca0]">
+                {v.prefecture ?? ""} ・ {memberN(v)}人
+              </div>
+            </div>
+          </Link>
+        ))}
+        {/* 一番右: ＋村を作りたい（トップページと同じカード） */}
+        <button
+          onClick={goSeed}
+          className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border-2 border-dashed border-[#c8dccb] bg-white text-left shadow-sm"
+        >
+          <div className="flex h-[86px] w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#eaf6ec,#d8ecdc)" }}>
+            <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
+          </div>
+          <div className="px-2 py-1.5">
+            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作りたい</div>
+            <div className="truncate text-[10px] text-[#a0aca0]">3人集めて申請 ▼</div>
+          </div>
+        </button>
       </div>
+
+      {/* ② 県セレクト */}
       <select
         value={pref}
         onChange={(e) => setPref(e.target.value)}
-        className="mb-2.5 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
+        className="mb-2.5 w-full rounded-xl border-2 border-[#c8dccb] bg-white px-3 py-2.5 text-[13.5px] font-bold outline-none"
+        style={{ color: GREEN }}
       >
-        <optgroup label="日本（47都道府県）">
-          {PREFS.map((p) => (
-            <option key={p} value={p}>
-              {p}
-              {p === myPref ? "（わたしの地域）" : ""}
-            </option>
-          ))}
-        </optgroup>
-        <optgroup label="海外">
-          {OVERSEAS_AREAS.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </optgroup>
+        <option value="">🌏 全世界の拠点（会員数が多い順）</option>
+        {[...new Set((villages ?? []).map((v) => v.prefecture).filter(Boolean))].sort().map((pf) => (
+          <option key={pf as string} value={pf as string}>
+            {pf}（{(villages ?? []).filter((v) => v.prefecture === pf).length}）
+          </option>
+        ))}
       </select>
 
-      {born && (
-        <div
-          className="mb-2.5 rounded-xl px-4 py-3 text-center"
-          style={{ background: "linear-gradient(135deg,#eaf6ee,#fdf8ec)", border: "1.5px solid #4a8a5c66" }}
-        >
-          <div className="flex justify-center gap-1"><img src="/icons/icon-cracker.webp" alt="" style={{ width: 26, height: 26 }} /><img src="/icons/icon-fire.webp" alt="" style={{ width: 26, height: 26 }} /><img src="/icons/icon-cracker.webp" alt="" style={{ width: 26, height: 26 }} /></div>
-          <div className="mt-0.5 text-[14px] font-extrabold" style={{ color: GREEN }}>
-            「{born}」が生まれました
-          </div>
-          <div className="mt-0.5 text-[11px] text-[#8a968a]">あなたが村長です。地図にも灯りました</div>
-        </div>
-      )}
+      {/* ③ 写真つき一覧（縦） */}
       {villages === null ? (
         <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
-      ) : inPref.length === 0 ? (
-        <div
-          className="rounded-xl border-2 border-dashed px-4 py-5 text-center"
-          style={{ borderColor: "#4a8a5c55", background: "linear-gradient(135deg,#eff7f0,#fffdf8)" }}
-        >
-          <div className="text-3xl">🏡</div>
-          <p className="mt-1.5 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
-            {pref}には、まだ拠点がありません
-          </p>
-          <p className="mt-0.5 text-[11.5px] text-[#8a968a]">最初の拠点を、あなたが立ち上げませんか</p>
-        </div>
+      ) : shown.length === 0 ? (
+        <p className="py-2 text-[12px] text-[#a0aca0]">この地域にはまだ拠点がありません。あなたが最初の村長に</p>
       ) : (
         <div className="space-y-2">
-          {inPref.map((v) => (
-            <VillageCard key={v.id} v={v} />
-          ))}
+          {shown.map((v) => {
+            const joined = mineIds.has(v.id);
+            return (
+              <Link
+                key={v.id}
+                href={`/sekai/village/${v.id}`}
+                className="flex items-center gap-2.5 overflow-hidden rounded-xl border bg-white p-2 no-underline"
+                style={{ borderColor: v.is_official ? "#d4b96a88" : "#e2eae0" }}
+              >
+                <div className="relative h-[64px] w-[92px] flex-shrink-0 overflow-hidden rounded-lg bg-[#eaf2ea]">
+                  {v.cover_url ? (
+                    <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[20px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
+                      🏡
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-[14px] font-extrabold text-[#2a4a34]">{v.name}</span>
+                    {v.is_official && (
+                      <span className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[8.5px] font-extrabold" style={{ background: "#f8f0d8", color: "#a08030", border: "1px solid #d4b96a" }}>公式</span>
+                    )}
+                    {joined && <span className="flex-shrink-0 text-[9px] font-bold text-[#4a9a6a]">✓ 参加中</span>}
+                  </div>
+                  <div className="mt-0.5 truncate text-[11px] text-[#a0aca0]">
+                    {v.prefecture ?? ""}
+                    {v.city ? ` ${v.city}` : ""} ・ {memberN(v)}人 ・ 村長 {v.profiles?.display_name ?? "—"}
+                  </div>
+                  {v.description && <div className="mt-0.5 truncate text-[11px] text-[#8a968a]">{v.description}</div>}
+                </div>
+                <span className="flex-shrink-0 pr-1 text-[12px] text-[#c0ccc0]">›</span>
+              </Link>
+            );
+          })}
         </div>
-      )}
-
-      {/* 村をつくるボタン */}
-      {me &&
-        (creating ? (
-          <div className="mt-3 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
-            <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-              拠点を立ち上げる
-            </div>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={`例: セカイムラ${pref.replace(/[都道府県]$/, "")}${inPref.length > 0 ? inPref.length + 1 : ""}`}
-              className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[14px] outline-none focus:border-[#4a8a5c]"
-            />
-            <div className="mb-2 text-[10.5px] text-[#8a968a]">
-              場所: <b className="text-[#3a5a44]">{pref}</b>（上の選択と連動）
-            </div>
-            {/* 日本の県なら市区町村（総務省の全国市区町村）を選べる。海外は不要 */}
-            {isJapan && (
-              <select
-                value={vCity}
-                onChange={(e) => setVCity(e.target.value)}
-                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
-              >
-                <option value="">市区町村を選ぶ *</option>
-                {(JP_CITIES[pref] ?? []).map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            )}
-            <select
-              value={policy}
-              onChange={(e) => setPolicy(e.target.value as Village["policy"])}
-              className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
-            >
-              <option value="open">誰でも参加OK</option>
-              <option value="approval">申請・承認制</option>
-              <option value="invite">招待制</option>
-            </select>
-            <textarea
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-              rows={2}
-              placeholder="どんな集まりにしたい？（例: 駅近マンションを満月・新月に開放。ごはん持ち寄り）"
-              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13px] leading-relaxed outline-none focus:border-[#4a8a5c]"
-            />
-            <div className="flex gap-2">
-              <button onClick={() => setCreating(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                キャンセル
-              </button>
-              <button
-                onClick={create}
-                disabled={!name.trim() || (isJapan && !vCity) || saving}
-                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
-                style={{ background: "#4a8a5c" }}
-              >
-                {saving ? "立ち上げています..." : "拠点を立ち上げる"}
-              </button>
-            </div>
-            <p className="mt-1.5 text-[10px] leading-relaxed text-[#a0aca0]">
-              あなたが村長になります。場所の形は自由 — 自宅の開放も、ドネーション制も、古民家も。
-            </p>
-          </div>
-        ) : (
-          <button
-            onClick={() => setCreating(true)}
-            className="mt-3 w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
-            style={{ background: "linear-gradient(135deg,#4a8a5c,#3a7a4c)" }}
-          >
-            <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 拠点を立ち上げる
-          </button>
-        ))}
-
-      {/* 全国の拠点（折りたたみ表示） */}
-      {others.length > 0 && (
-        <details className="mt-3">
-          <summary className="cursor-pointer text-[11.5px] font-bold" style={{ color: GREEN }}>
-            全国の拠点をみる（{others.length}）
-          </summary>
-          <div className="mt-2 space-y-2">
-            {others.map((v) => (
-              <VillageCard key={v.id} v={v} />
-            ))}
-          </div>
-        </details>
       )}
     </section>
   );
