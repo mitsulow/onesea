@@ -1008,7 +1008,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                           className="flex-shrink-0 rounded-lg border px-3 py-1.5 text-[11.5px] font-bold"
                           style={{ borderColor: "#c8a030", color: "#a07820", background: "#fff" }}
                         >
-                          ✓ 参加中（タップで取消）
+                          ✓ 参加予定（タップで取消）
                         </button>
                       ) : (
                         <button
