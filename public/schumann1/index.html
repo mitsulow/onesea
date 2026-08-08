@@ -1546,13 +1546,13 @@
               var center = start + q * 1800e3 + 900e3;
               if (!buckets[q] || Math.abs(t - center) < Math.abs(buckets[q].t - center)) buckets[q] = { t: t, f1: r.F1 };
             }
-            var y = day.slice(0, 4), mo = Number(day.slice(5, 7)), d = Number(day.slice(8, 10));
+            var y = day.slice(0, 4), mo = day.slice(5, 7), d = day.slice(8, 10); // 桁を揃える(9月と10月・9時と10時で段差が出ないように)
             var html = "", n = 0;
             for (var q2 = 47; q2 >= 0; q2--) { // 新しい時刻が上
               var b = buckets[q2];
               if (!b) continue;
               n++;
-              var hh = Math.floor(q2 / 2);
+              var hh = ("0" + Math.floor(q2 / 2)).slice(-2);
               var mm = q2 % 2 ? "30" : "00";
               // 4色: 〜7.70青 / 〜7.90緑 / 〜8.01黄 / 8.02〜赤(表示と同じ2桁丸めで判定)
               var fr = Number(b.f1.toFixed(2));
