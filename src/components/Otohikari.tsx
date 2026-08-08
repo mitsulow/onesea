@@ -185,7 +185,7 @@ export function Otohikari() {
 
         {/* 実測時刻 — セクションの一番下・右端 */}
         {live.updated && (
-          <span className="num pointer-events-none absolute bottom-1 left-3 z-20 text-[9px] text-[#5a7a9a]">
+          <span className="num pointer-events-none absolute right-3 top-1 z-20 text-[9px] text-[#5a7a9a]">
             実測 {new Date(live.updated).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} 更新
           </span>
         )}
