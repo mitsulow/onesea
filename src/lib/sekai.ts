@@ -144,14 +144,19 @@ export function removeMootFromTecho(m: Moot) {
 
 export async function fetchMootData(dates: string[], userId: string | null) {
   const supabase = createClient();
-  const { data } = await supabase.from("moot_rsvps").select("moot_date, user_id").in("moot_date", dates);
+  const { data } = await supabase.from("moot_rsvps").select("moot_date, user_id, status").in("moot_date", dates);
   const counts = new Map<string, number>();
-  const mine = new Set<string>();
+  const mine = new Set<string>(); // yes の日
+  const mineNo = new Set<string>(); // no の日
   for (const r of data ?? []) {
-    counts.set(r.moot_date, (counts.get(r.moot_date) ?? 0) + 1);
-    if (userId && r.user_id === userId) mine.add(r.moot_date);
+    const st = (r as { status?: string }).status ?? "yes";
+    if (st === "yes") counts.set(r.moot_date, (counts.get(r.moot_date) ?? 0) + 1);
+    if (userId && r.user_id === userId) {
+      if (st === "yes") mine.add(r.moot_date);
+      else mineNo.add(r.moot_date);
+    }
   }
-  return { counts, mine };
+  return { counts, mine, mineNo };
 }
 
 /** 次の集いに「集います」した村人の顔ぶれ */
@@ -181,10 +186,15 @@ export async function todaysVillager() {
   return list[doy % list.length];
 }
 
-export async function toggleRsvp(userId: string, dateKey: string, kind: "new" | "full", isRsvped: boolean) {
+/** 三択: "yes"(参加) / "no"(不参加) / null(未定=行を消す) */
+export async function setRsvp(userId: string, dateKey: string, kind: "new" | "full", status: "yes" | "no" | null) {
   const supabase = createClient();
-  if (isRsvped) await supabase.from("moot_rsvps").delete().eq("user_id", userId).eq("moot_date", dateKey);
-  else await supabase.from("moot_rsvps").insert({ user_id: userId, moot_date: dateKey, kind });
+  await supabase.from("moot_rsvps").delete().eq("user_id", userId).eq("moot_date", dateKey);
+  if (status) await supabase.from("moot_rsvps").insert({ user_id: userId, moot_date: dateKey, kind, status });
+}
+
+export async function toggleRsvp(userId: string, dateKey: string, kind: "new" | "full", isRsvped: boolean) {
+  await setRsvp(userId, dateKey, kind, isRsvped ? null : "yes");
 }
 
 /** 自分の集い参加回数（表示用） */
@@ -194,6 +204,7 @@ export async function myMootCount(userId: string): Promise<number> {
     .from("moot_rsvps")
     .select("moot_date", { count: "exact", head: true })
     .eq("user_id", userId)
+    .eq("status", "yes")
     .lte("moot_date", new Date().toISOString().slice(0, 10));
   return count ?? 0;
 }

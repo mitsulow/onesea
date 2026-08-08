@@ -15,7 +15,7 @@ import {
   upcomingMoots,
   nextMisoka,
   fetchMootData,
-  toggleRsvp,
+  setRsvp,
   myMootCount,
   fetchSettings,
   mootTimeOf,
@@ -168,17 +168,17 @@ export function useSekaiMe() {
 /** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="bg-white pb-[58px]" style={{ minHeight: "100dvh" }}>
-      <TopTone color="#ffffff" />
-      <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#eee] bg-white px-6 text-center">
-        <div className="text-[10px] leading-tight tracking-[3px] text-[#8aa898]">世界は一つの村になる。</div>
-        <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#2a5a38]">セカイムラ</div>
+    <main className="pb-[58px]" style={{ minHeight: "100dvh", background: "linear-gradient(180deg,#102a60 0%,#16336e 100%)" }}>
+      <TopTone color="#102a60" />
+      <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#2a4a88] px-6 text-center" style={{ background: "#102a60" }}>
+        <div className="text-[10px] leading-tight tracking-[3px] text-[#8fb8e8]">世界は一つの村になる。</div>
+        <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eaf2ff]">セカイムラ</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-left">
           <AvatarMenu />
         </span>
       </header>
       {/* PCは Cotozute と同じ3カラム（全幅・中央フィード・左右レール） */}
-      <ThreeCol centerClassName="space-y-2.5 bg-white lg:rounded-xl lg:border lg:border-[#e4e6e9]">
+      <ThreeCol centerClassName="space-y-2.5 lg:rounded-xl">
         {children}
       </ThreeCol>
     </main>
@@ -203,6 +203,7 @@ export function MootsSection({
   const [pastOpen, setPastOpen] = useState(false);
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
   const [mine, setMine] = useState<Set<string>>(new Set());
+  const [mineNo, setMineNo] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<Record<string, string>>({});
 
   const load = useCallback(async () => {
@@ -212,6 +213,7 @@ export function MootsSection({
     );
     setCounts(r.counts);
     setMine(r.mine);
+    setMineNo((r as { mineNo?: Set<string> }).mineNo ?? new Set());
   }, [me, moots]);
 
   useEffect(() => {
@@ -221,14 +223,17 @@ export function MootsSection({
 
   const next = moots[0];
   const joined = next ? mine.has(next.dateKey) : false;
+  const declined = next ? mineNo.has(next.dateKey) : false;
   const today = next?.dday === 0;
 
-  const rsvp = async () => {
+  /* 三択: 同じボタンをもう一度押すと未定に戻る。参加=手帳へ自動入力(アラーム無し)、外すと自動削除 */
+  const rsvp = async (want: "yes" | "no") => {
     if (!me || !next) return;
-    await toggleRsvp(me.id, next.dateKey, next.kind, joined);
-    // 参加します → 手帳のその日時に自動でスケジュール（取消で消える）
-    if (joined) removeMootFromTecho(next);
-    else writeMootToTecho(next);
+    const cur = joined ? "yes" : declined ? "no" : null;
+    const nextSt = cur === want ? null : want;
+    await setRsvp(me.id, next.dateKey, next.kind, nextSt);
+    if (nextSt === "yes") writeMootToTecho(next);
+    else removeMootFromTecho(next);
     await load();
     onRsvped();
   };
@@ -295,9 +300,7 @@ export function MootsSection({
             ) : me ? (
               <>
                 <button
-                  onClick={() => {
-                    if (!joined) rsvp();
-                  }}
+                  onClick={() => rsvp("yes")}
                   className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold"
                   style={
                     joined
@@ -308,17 +311,15 @@ export function MootsSection({
                   {joined ? "✓ 参加する" : "参加する"}
                 </button>
                 <button
-                  onClick={() => {
-                    if (joined) rsvp();
-                  }}
+                  onClick={() => rsvp("no")}
                   className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold"
                   style={
-                    joined
-                      ? { background: "rgba(20,28,38,.55)", color: "#8a9aa8", border: "1px solid #3a4a58" }
-                      : { background: "rgba(20,28,38,.85)", color: "#d8e0e8", border: "1.5px solid #5a6a78" }
+                    declined
+                      ? { background: "rgba(90,42,42,.9)", color: "#e8b8b8", border: "1.5px solid #9a4a4a" }
+                      : { background: "rgba(20,28,38,.85)", color: "#d8e0e8", border: "1px solid #5a6a78" }
                   }
                 >
-                  参加しない
+                  {declined ? "✓ 参加しない" : "参加しない"}
                 </button>
               </>
             ) : null}

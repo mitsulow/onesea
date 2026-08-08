@@ -21,6 +21,7 @@ import {
 import { TideDay, Port, fetchTideDay, listPorts, setChosenPort, clearPositionCache } from "@/lib/tide";
 import { createClient } from "@/lib/supabase/client";
 import { scheduleTechoBackup, restoreTechoIfEmpty } from "@/lib/techoBackup";
+import { ensureAlarmPermission, startAlarmWatcher } from "@/lib/techoAlarm";
 import { hasConsent } from "@/lib/consents";
 import { ConsentDialog } from "@/components/ConsentDialog";
 import { SignupDialog } from "@/components/SignupDialog";
@@ -51,6 +52,7 @@ for (let y = 2025, m = 11; y < 2028; ) {
 
 export interface TechoEv {
   id: string;
+  alarm?: boolean; // アラーム(通知)を鳴らす
   sh: number; // 開始 時
   sm: number; // 開始 分
   eh: number; // 終了 時
@@ -123,6 +125,7 @@ export function InoriTecho() {
 
   useEffect(() => {
     setMemos(loadMemos());
+    startAlarmWatcher(); // アラーム付き予定の見張り
     const supabase = createClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       loggedIn.current = !!session?.user;
@@ -1151,7 +1154,26 @@ function BottomSheet({
                 ))}
               </select>
             </div>
-            {/* 色ペン（タグ名は✎で自由に変更できる） */}
+            {/* ⏰ アラーム: 予定時刻に通知を鳴らす（自動入力の予定はアラーム無し） */}
+            <button
+              onClick={async () => {
+                const next = !evEdit.alarm;
+                if (next) {
+                  const ok = await ensureAlarmPermission();
+                  if (!ok) { alert("通知が許可されていません。端末の設定でOneSeaの通知を許可してください"); return; }
+                }
+                setEvEdit({ ...evEdit, alarm: next });
+              }}
+              className="mt-2.5 w-full rounded-xl border-2 py-2 text-[12.5px] font-extrabold"
+              style={
+                evEdit.alarm
+                  ? { borderColor: "#c94d3a", background: "#fff3f0", color: "#c94d3a" }
+                  : { borderColor: "#e0d8c8", background: "#fff", color: "#a09888" }
+              }
+            >
+              {evEdit.alarm ? "⏰ アラームON — 予定時刻に通知します" : "⏰ アラームを設定する"}
+            </button>
+            {/* 色ペン（タグ名は✎で自由に変えられる） */}
             <div className="mt-2.5 flex items-start gap-2.5">
               {PENS.map((pn) => (
                 <div key={pn.id} className="flex flex-col items-center gap-0.5">
