@@ -304,7 +304,17 @@ export function BottomNav() {
             const active = isActive(t.href);
             const inner = (
               <>
-                <TabIcon icon={t.icon} active={active} />
+                <span className="relative inline-flex">
+                  <TabIcon icon={t.icon} active={active} />
+                  {t.href.startsWith("/talk") && unread > 0 && (
+                    <span
+                      className="num absolute -right-2.5 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9px] font-extrabold text-white"
+                      style={{ lineHeight: 1, boxShadow: "0 0 0 1.5px #fff" }}
+                    >
+                      {unread > 99 ? "99+" : unread}
+                    </span>
+                  )}
+                </span>
                 <span className={`text-[9px] leading-none ${active ? "font-bold" : "font-medium"}`} style={{ color: active ? svc.active : svc.inactive }}>
                   {t.label}
                 </span>

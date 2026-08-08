@@ -191,19 +191,16 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
           </span>
         )}
         {unread + notifN > 0 && (
-          <span className="absolute -bottom-1.5 -right-1 flex items-baseline" style={{ lineHeight: 1 }}>
-            <span
-              className="num text-[11px] font-extrabold text-[#e05040]"
-              style={{ textShadow: "0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff" }}
-            >
-              {unread + notifN}
-            </span>
-            <span className="ml-[1px] h-[7px] w-[7px] self-center rounded-full bg-[#e05040]" />
+          <span
+            className="num absolute -right-1.5 -top-1.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[10px] font-extrabold text-white"
+            style={{ lineHeight: 1, boxShadow: "0 0 0 1.5px #fff" }}
+          >
+            {unread + notifN > 99 ? "99+" : unread + notifN}
           </span>
         )}
         {waraMissing > 0 && (
           <span
-            className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[9.5px] font-bold text-white"
+            className="absolute -bottom-1 -right-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[9.5px] font-bold text-white"
             style={{ lineHeight: 1 }}
           >
             {waraMissing}
