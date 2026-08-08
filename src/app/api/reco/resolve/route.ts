@@ -42,6 +42,12 @@ function cleanName(t: string | null): string | null {
 
 function pickImage(html: string, allowStatic = false): string | null {
   const og = pickMeta(html, "og:image");
+  // Google検索ページはナレッジパネルのサムネを base64 でインライン埋め込みしている
+  const b64s = html.match(/data:image\/jpeg;base64,[A-Za-z0-9+/=]{2000,}/g);
+  if (b64s && b64s.length) {
+    b64s.sort((a, b) => b.length - a.length);
+    if (b64s[0].length < 60000) return b64s[0]; // 大きすぎるものはDBに入れない
+  }
   // Googleの既定サムネ(staticmap)より実写真を優先
   const photo = html.match(/https:\/\/lh\d\.googleusercontent\.com\/(?:p\/|gps-cs|places\/)[^"'\\\s)]+/);
   if (photo) return photo[0].replace(/=w\d+.*$/, "=w640-h480-k-no");

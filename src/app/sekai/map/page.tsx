@@ -30,7 +30,7 @@ function ShopSpotlight() {
     const supabase = createClient();
     supabase
       .from("reco_shops")
-      .select("id, name, category, comment, lat, lng, address, image_url, user_id, profiles!reco_shops_user_id_fkey(display_name, username)")
+      .select("id, name, category, comment, lat, lng, address, image_url, source_url, user_id, profiles!reco_shops_user_id_fkey(display_name, username)")
       .eq("id", id)
       .maybeSingle()
       .then(({ data, error }) => {
@@ -58,13 +58,13 @@ function ShopSpotlight() {
         {shop.address && <div className="mt-0.5 text-[11.5px] text-[#a09888]">{shop.address}</div>}
         {shop.comment && <div className="mt-1.5 text-[13px] leading-relaxed text-[#5a5448]">{shop.comment}</div>}
         <a
-          href={`https://www.google.com/maps?q=${shop.lat},${shop.lng}`}
+          href={shop.source_url ?? `https://www.google.com/search?q=${encodeURIComponent(shop.name)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-2.5 block rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline"
           style={{ background: c.color }}
         >
-          Googleマップでひらく →
+          この店の詳細を見る →
         </a>
       </div>
     </div>

@@ -55,6 +55,7 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
     lng: number;
     image?: string | null;
     href?: string | null;
+    sourceUrl?: string | null;
   } | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layersRef = useRef<Array<{ cat: string; mk: any }>>([]);
@@ -156,7 +157,7 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
               `<b>${s.name}</b><br>${c.emoji} ${c.label}${s.comment ? `<br><span style="color:#888">${s.comment}</span>` : ""}`
             );
           mk.on("click", () =>
-            setDetail({ kind: "reco", name: s.name, sub: `${c.emoji} ${c.label}`, desc: s.comment ?? null, color: c.color, emoji: c.emoji, lat: s.lat, lng: s.lng, image: (s as { image_url?: string | null }).image_url ?? null })
+            setDetail({ kind: "reco", name: s.name, sub: `${c.emoji} ${c.label}`, desc: s.comment ?? null, color: c.color, emoji: c.emoji, lat: s.lat, lng: s.lng, image: (s as { image_url?: string | null }).image_url ?? null, sourceUrl: (s as { source_url?: string | null }).source_url ?? null })
           );
           layersRef.current.push({ cat: s.category === "power_spot" ? "power" : `reco_${s.category}`, mk });
           if (s.category === "power_spot") {
@@ -253,13 +254,13 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
                 </a>
               )}
               <a
-                href={`https://www.google.com/maps?q=${detail.lat},${detail.lng}`}
+                href={detail.kind === "reco" ? (detail.sourceUrl ?? `https://www.google.com/search?q=${encodeURIComponent(detail.name)}`) : `https://www.google.com/maps?q=${detail.lat},${detail.lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={(detail.href ? "flex-1 " : "block w-full ") + "rounded-xl border-2 py-2.5 text-center text-[13px] font-extrabold no-underline"}
                 style={{ borderColor: detail.color, color: detail.color }}
               >
-                Googleマップでひらく →
+                {detail.kind === "reco" ? "この店の詳細を見る →" : "Googleマップでひらく →"}
               </a>
             </div>
           </div>

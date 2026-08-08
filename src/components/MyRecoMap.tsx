@@ -58,6 +58,7 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
           lng: (d.lng as number) ?? 139.76,
           address: null,
           image_url: (d.image as string) ?? null,
+          source_url: url, // 共有リンクをそのまま保存（詳細ボタンで開く）
         });
         if (created) {
           setShops((prev) => [created, ...(prev ?? [])]);
@@ -73,6 +74,7 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
   };
 
   const remove = async (s: RecoShop) => {
+    if (!confirm(`「${s.name}」を削除しますか？`)) return;
     await deleteRecoShop(s.id, userId);
     setShops((prev) => (prev ?? []).filter((x) => x.id !== s.id));
   };
@@ -110,7 +112,7 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
               </select>
             </div>
           )}
-          {!isPower && <div className="mb-1 text-[11px] font-extrabold text-[#8a7a5a]">② Googleマップなどで「共有 → リンクをコピー」して貼る</div>}
+          {!isPower && <div className="mb-1 text-[11px] font-extrabold text-[#8a7a5a]">② その店をGoogleで検索し、共有 → リンクをコピーして貼る</div>}
           {/* Googleマップのリンクを貼るだけ */}
           <input
             value={paste}
@@ -119,7 +121,7 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
               // 貼り付けた瞬間に自動で解決（ボタン押し不要）。共有文に店名が混ざっていてもOK
               if (/https?:\/\//.test(e.target.value)) resolveLink(e.target.value);
             }}
-            placeholder="GoogleマップかGoogle検索の「共有」からコピーして、ここに貼るだけ"
+            placeholder="Googleでその店を検索して、下に表示される共有ボタンを押してコピーして、コチラに貼ってください"
             className="w-full rounded-xl border border-[#2CB7DE55] bg-white px-3 py-2.5 text-[13px] outline-none focus:border-[#2CB7DE]"
           />
           {resolving && <p className="mt-1 text-[11px] text-[#2CB7DE]">カードを作っています…</p>}
