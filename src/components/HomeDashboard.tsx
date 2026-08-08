@@ -225,26 +225,20 @@ export function HomeDashboard() {
         return (
           <button
             onClick={openToday}
-            className="mt-1.5 block w-full overflow-hidden py-1.5"
+            className="block w-full overflow-hidden py-1"
             aria-label="今日のこよみ"
-            style={{
-              background: "linear-gradient(180deg,#141210,#000 40%,#000 60%,#141210)",
-              borderTop: "2px solid #2a2620",
-              borderBottom: "2px solid #2a2620",
-              backgroundImage: "repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, transparent 1px 3px), linear-gradient(180deg,#141210,#000 40%,#000 60%,#141210)",
-            }}
           >
             <style>{`@keyframes tickerX { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }`}</style>
             <div className="flex w-max whitespace-nowrap" style={{ animation: "tickerX 40s linear infinite" }}>
               {[0, 1].map((k) => (
-                <span key={k} className="num flex items-center text-[12px] font-bold" style={{ color: "#ffb63d", textShadow: "0 0 6px rgba(255,182,61,.75)" }}>
+                <span key={k} className="num flex items-center text-[12px] font-bold" style={{ color: "#7a6a48" }}>
                   <IconSpan src="/icons/cel-sun.png" />
-                  今日の叶いタイム <b className="mx-1 text-[14px]" style={{ color: "#ff5540", textShadow: "0 0 8px rgba(255,85,64,.8)" }}>{best?.time ?? "—"}</b>
-                  <span style={{ color: lv >= 90 ? "#ff4d6a" : lv >= 45 ? "#ffa040" : "#ffd23d", textShadow: "0 0 6px currentColor" }}>（叶いレベル{lv}・{lv === 360 ? "最強" : lv === 180 ? "超すごい" : lv === 90 ? "凄い" : lv === 45 ? "かなり強い" : lv === 15 ? "強い" : lv === 5 ? "少し強い" : "普通"}）</span>
-                  {best?.sekki && <span className="ml-1 font-extrabold" style={{ color: "#5aff8a", textShadow: "0 0 6px rgba(90,255,138,.7)" }}>「{best.sekki[0]}」の日です</span>}
+                  今日の叶いタイム <b className="mx-1 text-[14px]" style={{ color: "#c94d3a" }}>{best?.time ?? "—"}</b>
+                  <span style={{ color: lv >= 90 ? "#c9002a" : lv >= 45 ? "#d97020" : "#a08c30" }}>（叶いレベル{lv}・{lv === 360 ? "最強" : lv === 180 ? "超すごい" : lv === 90 ? "凄い" : lv === 45 ? "かなり強い" : lv === 15 ? "強い" : lv === 5 ? "少し強い" : "普通"}）</span>
+                  {best?.sekki && <span className="ml-1 font-extrabold" style={{ color: "#2a8a4a" }}>「{best.sekki[0]}」の日です</span>}
                   <IconSpan src={moonImageOf(moon.age)} />
                   今日の月は月齢{moon.age.toFixed(1)}、月の出は{mt.rise ?? "—"}
-                  {holy && <span className="ml-1 font-extrabold" style={{ color: "#ffe23d", textShadow: "0 0 7px rgba(255,226,61,.8)" }}>本日は{holy.name}（{holy.label}）{holy.time}です</span>}
+                  {holy && <span className="ml-1 font-extrabold" style={{ color: "#b8912a" }}>本日は{holy.name}（{holy.label}）{holy.time}です</span>}
                   {nearTide && (
                     <>
                       <IconSpan src="/icons/cel-earth.png" />

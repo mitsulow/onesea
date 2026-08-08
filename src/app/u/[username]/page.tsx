@@ -379,11 +379,11 @@ export default function UserPage() {
         {masterDdp && (
           <div
             id="ddp-sec"
-            className="-mx-4 mt-2.5 px-4 py-3.5"
-            style={{ background: "linear-gradient(135deg,#0a1410,#101a28)" }}
+            className="mt-2.5 px-4 py-3.5"
+            style={{ background: "linear-gradient(135deg,#ede6d6,#f6f1e4)", border: "1px solid #ddd2ba" }}
           >
-            <div className="text-[10px] font-bold tracking-[2px] text-[#0abab5]">{profile.display_name ?? "この人"}のDDP</div>
-            <div className="mt-1 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-[#c8f0ec]">{masterDdp}</div>
+            <div className="text-[10px] font-bold tracking-[2px] text-[#8a6a42]">{profile.display_name ?? "この人"}のDDP</div>
+            <div className="mt-1 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-[#4a4030]">{masterDdp}</div>
           </div>
         )}
 
