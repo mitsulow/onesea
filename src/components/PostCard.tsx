@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchFollowees, toggleFollow } from "@/lib/follows";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -84,6 +85,11 @@ export function PostCard({
   };
 
   const [amOffice, setAmOffice] = useState(false);
+  const [following, setFollowing] = useState<boolean | null>(null); // フォロー状態(自分の投稿はnullのまま)
+  useEffect(() => {
+    if (!me || me.id === post.user_id) return;
+    fetchFollowees(me.id).then((s2) => setFollowing(s2.has(post.user_id))).catch(() => {});
+  }, [me, post.user_id]);
   useEffect(() => {
     if (!me) return;
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
@@ -240,6 +246,18 @@ export function PostCard({
         >
           <img src="/icons/icon-share2.webp" alt="シェア" style={{ width: 16, height: 16 }} />
         </button>
+        {me && me.id !== post.user_id && following !== null && (
+          <button
+            onClick={async () => {
+              await toggleFollow(me.id, post.user_id, following);
+              setFollowing(!following);
+            }}
+            className="flex flex-1 items-center justify-center gap-1 py-1.5 text-[12px] font-bold"
+            style={{ color: following ? "#0abab5" : "#65676b" }}
+          >
+            {following ? "✓ フォロー中" : "＋ フォロー"}
+          </button>
+        )}
         {me && me.id !== post.user_id && (
           <button
             onClick={async () => {

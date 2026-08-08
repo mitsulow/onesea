@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchFollowingProfiles } from "@/lib/follows";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -386,6 +387,8 @@ export default function UserPage() {
             <div className="mt-1 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-[#4a4030]">{masterDdp}</div>
           </div>
         )}
+
+        <FollowingRow userId={profile.id} />
 
         {/* 自己紹介 */}
         <div className="mt-2">
@@ -1031,6 +1034,34 @@ function CardDeck({ items, startColor = 0 }: { items: string[]; startColor?: num
       >
         <span className="text-[21px] font-extrabold leading-snug">{items[idx]}</span>
         <span className="num absolute bottom-1.5 right-2.5 text-[10px] opacity-60">{idx + 1}/{n}</span>
+      </div>
+    </div>
+  );
+}
+
+
+/** フォローしている人 — アイコンがずらっと並ぶ */
+function FollowingRow({ userId }: { userId: string }) {
+  const [people, setPeople] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
+  useEffect(() => {
+    fetchFollowingProfiles(userId).then(setPeople).catch(() => {});
+  }, [userId]);
+  if (people.length === 0) return null;
+  return (
+    <div className="mt-2.5">
+      <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]">フォローしている人（{people.length}）</div>
+      <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" data-noswipe>
+        {people.map((pp) => (
+          <Link key={pp.id} href={pp.username ? `/u/${pp.username}` : "#"} className="flex w-[52px] flex-shrink-0 flex-col items-center gap-0.5 no-underline">
+            {pp.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={srcCdn(pp.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-11 w-11 rounded-full border border-[#e8dcc4] object-cover" />
+            ) : (
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f0ece0] text-[13px]">🙂</span>
+            )}
+            <span className="w-full truncate text-center text-[8.5px] text-[#8a8070]">{pp.display_name ?? ""}</span>
+          </Link>
+        ))}
       </div>
     </div>
   );

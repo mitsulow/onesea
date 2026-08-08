@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchFollowees, seenSet, markSeen } from "@/lib/follows";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
@@ -153,7 +154,30 @@ export default function CotozutePage() {
         else setShowUpgrade(true);
       }
     });
-    fetchMixedFeed(null, PAGE).then((list) => {
+    fetchMixedFeed(null, PAGE).then(async (list) => {
+      // ★おススメ順: 未読 → フォロー中 → いいね多い → 新しい。少ない時は結局全部並ぶ
+      try {
+        const { data: { session: s2 } } = await supabase.auth.getSession();
+        const fl = s2?.user ? await fetchFollowees(s2.user.id) : new Set<string>();
+        const seen = seenSet();
+        const meta = (it: FeedItem) =>
+          it.kind === "coto"
+            ? { id: it.post.id, uid: it.post.user_id, at: it.post.created_at, likes: it.post.likes?.[0]?.count ?? 0 }
+            : it.kind === "mura"
+              ? { id: it.mura.id, uid: it.mura.user_id ?? "", at: it.mura.created_at, likes: 0 }
+              : { id: feedKey(it), uid: "", at: new Date(0).toISOString(), likes: 0 };
+        const score = (it: FeedItem) => {
+          const m = meta(it);
+          let sc = 0;
+          if (!seen.has(m.id)) sc += 1_000_000;
+          if (fl.has(m.uid)) sc += 100_000;
+          sc += Math.min(m.likes, 99) * 1000;
+          sc += Math.max(0, 999 - Math.floor((Date.now() - new Date(m.at).getTime()) / 3600e3));
+          return sc;
+        };
+        list = [...list].sort((a, b) => score(b) - score(a));
+        markSeen(list.map((it) => meta(it).id)); // 一回見たら次は違う投稿が上に来る
+      } catch {}
       setItems(list);
       itemsRef.current = list;
       setHasMore(list.length > 0);
