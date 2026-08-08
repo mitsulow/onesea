@@ -344,7 +344,7 @@ export default function UserPage() {
         </div>
         {isWara && profile.member_no != null && (
           <span
-            className="num ml-2 inline-block align-bottom rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-[#7a5a10]"
+            className="num ml-2 inline-block align-bottom px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider text-[#7a5a10]"
             style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a", marginBottom: 6 }}
           >
             わらわ〜No.{String(profile.member_no).padStart(7, "0")}
