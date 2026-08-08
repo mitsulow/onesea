@@ -378,7 +378,7 @@ function MonthCal({
       {/* 全画面表示ボタン（月表示の上・右寄せ） */}
       {onFullscreen && (
         <div className="flex justify-end px-2 pt-1">
-          <button onClick={onFullscreen} className="rounded-full border border-[#e0d8c8] bg-white px-2.5 py-0.5 text-[10px] font-bold text-[#8a7a5a]">
+          <button onClick={onFullscreen} className="rounded-full border border-[#e0d8c8] bg-white px-2 py-[1px] text-[8.5px] font-bold text-[#8a7a5a]">
             ↗ 全画面表示
           </button>
         </div>
@@ -1401,7 +1401,7 @@ function FullscreenCal({
               className="overflow-hidden border-b border-r border-[#f0ede8] px-[2px] py-[1px] text-left align-top"
               style={{ background: isT ? "#fff2ec" : l >= 4 ? "#fdf4f0" : "#fff", boxShadow: isT ? "inset 0 0 0 2px #c05030" : "none" }}
             >
-              <div className="flex items-center justify-between leading-none">
+              <div className="flex items-start justify-between leading-none">
                 <span className="text-[11px] font-bold" style={{ color: di === 0 ? "#c05030" : di === 6 ? "#3070b0" : "#444" }}>{d}</span>
                 <span className="text-[8px] opacity-85">{moon.emoji}</span>
               </div>
@@ -1413,7 +1413,7 @@ function FullscreenCal({
               {chips.slice(0, 4).map((c, j) => (
                 <div
                   key={j}
-                  className="mt-[1px] truncate rounded-[3px] px-[2px] text-[8px] font-bold leading-[1.35] text-white"
+                  className="mx-auto mt-[1px] w-fit max-w-full truncate rounded-[3px] px-[3px] text-center text-[8px] font-bold leading-[1.35] text-white"
                   style={{ background: c.c }}
                 >
                   {c.text}
