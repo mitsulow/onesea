@@ -170,7 +170,7 @@ export default function GroupChatPage() {
       </div>
 
       {/* 入力欄 */}
-      <div className="sticky bottom-14 flex items-end gap-2 border-t border-[#e5dccb] bg-[#fffdf8] px-3 py-2">
+      <div className="sticky bottom-14 mt-auto flex items-end gap-2 border-t border-[#e5dccb] bg-[#fffdf8] px-3 py-2">
         <textarea
           ref={taRef}
           value={body}
