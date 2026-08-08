@@ -1,5 +1,6 @@
 "use client";
 
+import { srcCdn } from "@/lib/images";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -85,7 +86,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
               </button>
               {p.avatar_url ? (
                 <img
-                  src={p.avatar_url}
+                  src={srcCdn(p.avatar_url)}
                   alt=""
                   referrerPolicy="no-referrer"
                   className="h-[68px] w-[68px] rounded-full border-[3px] border-[#c94d3a]/50 object-cover shadow-sm"

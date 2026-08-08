@@ -1,5 +1,6 @@
 "use client";
 
+import { srcCdn } from "@/lib/images";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -133,7 +134,7 @@ export default function ChatPage() {
             <Link href={`/u/${partner.username}`} className="flex items-center gap-2.5 no-underline">
               {partner.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={partner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full object-cover" />
+                <img src={srcCdn(partner.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full object-cover" />
               ) : (
                 <span className="text-xl"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
               )}

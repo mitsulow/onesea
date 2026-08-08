@@ -1,5 +1,6 @@
 "use client";
 
+import { srcCdn } from "@/lib/images";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -130,7 +131,7 @@ export default function GroupChatPage() {
                   <Link href={`/u/${m.profiles.username}`} className="flex-shrink-0 self-start">
                     {m.profiles?.avatar_url ? (
                       <img
-                        src={m.profiles.avatar_url}
+                        src={srcCdn(m.profiles.avatar_url)}
                         alt=""
                         referrerPolicy="no-referrer"
                         className="h-8 w-8 rounded-full object-cover"

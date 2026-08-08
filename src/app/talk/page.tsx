@@ -1,5 +1,6 @@
 "use client";
 
+import { srcCdn } from "@/lib/images";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
@@ -316,7 +317,7 @@ export default function LinePage() {
                 {c.partner.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={c.partner.avatar_url}
+                    src={srcCdn(c.partner.avatar_url)}
                     alt=""
                     referrerPolicy="no-referrer"
                     className="h-12 w-12 rounded-full object-cover"

@@ -64,7 +64,7 @@ function ShopSpotlight() {
           className="mt-2.5 block rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline"
           style={{ background: c.color }}
         >
-          この店の詳細を見る →
+          {shop.category === "power_spot" ? "この場所の詳細を見る →" : "この店の詳細を見る →"}
         </a>
       </div>
     </div>

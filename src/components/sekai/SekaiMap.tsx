@@ -142,6 +142,7 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
       try {
         const shops = await fetchRecoShops();
         if (disposed) return;
+        const focusId = new URLSearchParams(window.location.search).get("shop");
         for (const s of shops) {
           const c = recoCat(s.category);
           const mk = L.marker([s.lat, s.lng], {
@@ -160,6 +161,11 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
             setDetail({ kind: "reco", name: s.name, sub: `${c.emoji} ${c.label}`, desc: s.comment ?? null, color: c.color, emoji: c.emoji, lat: s.lat, lng: s.lng, image: (s as { image_url?: string | null }).image_url ?? null, sourceUrl: (s as { source_url?: string | null }).source_url ?? null })
           );
           layersRef.current.push({ cat: s.category === "power_spot" ? "power" : `reco_${s.category}`, mk });
+          if (focusId && s.id === focusId) {
+            // カードから飛んで来た場所: 地図をそこへ寄せて目立たせる
+            map.setView([s.lat, s.lng], 13);
+            mk.openPopup();
+          }
           if (s.category === "power_spot") {
             setPowerList((prev) => [...prev, { name: s.name, area: s.address ?? "", desc: s.comment ?? null, lat: s.lat, lng: s.lng }]);
           }
@@ -260,7 +266,7 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
                 className={(detail.href ? "flex-1 " : "block w-full ") + "rounded-xl border-2 py-2.5 text-center text-[13px] font-extrabold no-underline"}
                 style={{ borderColor: detail.color, color: detail.color }}
               >
-                {detail.kind === "reco" ? "この店の詳細を見る →" : "Googleマップでひらく →"}
+                {detail.kind === "reco" ? (detail.sub.includes("パワースポット") ? "この場所の詳細を見る →" : "この店の詳細を見る →") : "Googleマップでひらく →"}
               </a>
             </div>
           </div>
