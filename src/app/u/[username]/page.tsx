@@ -300,6 +300,9 @@ export default function UserPage() {
             <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
           </span>
         )}
+        <span className="absolute right-4 top-7 z-[5]">
+          <SekaiBelongBadge userId={profile.id} />
+        </span>
         <div className="relative -mt-11 inline-block">
           {profile.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -355,7 +358,6 @@ export default function UserPage() {
                 わらわ〜No.{String(profile.member_no).padStart(7, "0")}
               </span>
             )}
-            <SekaiBelongBadge userId={profile.id} />
           </div>
           {profile.status_line && (
             <div className="mt-0.5 text-[13px] font-medium text-[#5a5448]">{profile.status_line}</div>
@@ -374,11 +376,11 @@ export default function UserPage() {
         {masterDdp && (
           <div
             id="ddp-sec"
-            className="mt-2.5 rounded-xl px-3.5 py-2.5"
-            style={{ background: "linear-gradient(135deg,#e6f7f6,#fdfbf4)", border: "1px solid #0abab544" }}
+            className="-mx-4 mt-2.5 px-4 py-3.5"
+            style={{ background: "linear-gradient(135deg,#0a1410,#101a28)" }}
           >
-            <div className="text-[9.5px] font-bold tracking-[2px] text-[#0abab5]"><img src="/icons/icon-ddp.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> DDP</div>
-            <div className="mt-0.5 whitespace-pre-wrap text-[14px] font-bold leading-relaxed text-[#2a5a56]">{masterDdp}</div>
+            <div className="text-[10px] font-bold tracking-[2px] text-[#0abab5]">{profile.display_name ?? "この人"}のDDP</div>
+            <div className="mt-1 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-[#c8f0ec]">{masterDdp}</div>
           </div>
         )}
 
