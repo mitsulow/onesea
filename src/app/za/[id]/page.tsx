@@ -27,6 +27,7 @@ export default function ShopDetailPage() {
   const [offerText, setOfferText] = useState("");
   const [proposing, setProposing] = useState(false);
   const [offers, setOffers] = useState<any[]>([]); // みんなのブツブツ交換提案（公開）
+  const [outOffers, setOutOffers] = useState<any[]>([]); // この品を差し出して提案中の交換(相手の品への入口)
 
   useEffect(() => {
     const supabase = createClient();
@@ -52,6 +53,23 @@ export default function ShopDetailPage() {
       .order("created_at", { ascending: false })
       .limit(50);
     setOffers(d2 ?? []);
+    // この品を差し出して、よその品に提案しているケース
+    const { data: outs } = await supabase
+      .from("barter_offers")
+      .select("id, shop_id, accepted, created_at")
+      .eq("offer_shop_id", params.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (outs && outs.length) {
+      const { data: tgts } = await supabase
+        .from("shops")
+        .select("id, name")
+        .in("id", outs.map((o) => o.shop_id));
+      const nameOf = new Map((tgts ?? []).map((t) => [t.id, t.name]));
+      setOutOffers(outs.map((o) => ({ ...o, target_name: nameOf.get(o.shop_id) ?? "出品" })));
+    } else {
+      setOutOffers([]);
+    }
   };
 
   const openBarter = async () => {
@@ -75,6 +93,7 @@ export default function ShopDetailPage() {
         `「${shop.name}」⇄「${offer}」`,
       ];
       if (offerShop) lines.push(`こちらです → https://onesea.vercel.app/za/${offerShop.id}`);
+      lines.push(`届いた提案の一覧 → https://onesea.vercel.app/za/${params.id}`);
       lines.push("いかがでしょうか？");
       await sendMessage(chatId, me.id, lines.join("\n"));
       // みんなにも見えるように公開一覧へ
@@ -353,6 +372,21 @@ export default function ShopDetailPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+            {outOffers.length > 0 && (
+              <div>
+                <div className="mb-1 text-[11px] font-extrabold text-[#5a7d4a]">この品で提案中のブツブツ交換</div>
+                {outOffers.map((o: any) => (
+                  <a
+                    key={o.id}
+                    href={`/za/${o.shop_id}`}
+                    className="mb-1.5 flex items-center justify-between rounded-xl border border-[#d8e4d0] bg-[#f7faf4] px-3 py-2 text-[12px] font-bold text-[#3a3428] no-underline"
+                  >
+                    <span className="min-w-0 truncate">⇄「{o.target_name}」に提案中{o.accepted ? "（決定🤝）" : ""}</span>
+                    <span className="flex-shrink-0 text-[10.5px] text-[#3070b0]">提案一覧を見る →</span>
+                  </a>
+                ))}
               </div>
             )}
             {shop.market === "za" && (
