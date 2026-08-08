@@ -350,6 +350,7 @@ export async function fetchActivityFeed(limit = 10, offset = 0) {
     .select(
       "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, created_by), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
     )
+    .neq("kind", "event") // イベントは横スクロールのイベント欄だけに出す(フィードは拠点の報告専用)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
   return data ?? [];

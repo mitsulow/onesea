@@ -1,5 +1,6 @@
 "use client";
 
+import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { readTecho, writeTecho } from "@/lib/techoStore";
 import { SekaiBadge } from "@/components/WarawaBadge";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
@@ -566,6 +567,37 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [myVills, setMyVills] = useState<Village[]>([]);
   const [writing, setWriting] = useState(false);
   const [evWriting, setEvWriting] = useState(false); // イベント作成モーダル
+  const [wChoose, setWChoose] = useState(false); // 投稿の2択(①イベント作成 ②村の報告)
+  const [evDetail, setEvDetail] = useState<any | null>(null); // イベントカードを開いた詳細
+  const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所オーバーレイ
+  const [wPlace, setWPlace] = useState<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null>(null);
+  const [wPlacePaste, setWPlacePaste] = useState("");
+  const [wPlaceMsg, setWPlaceMsg] = useState<string | null>(null);
+  const [wPlaceBusy, setWPlaceBusy] = useState(false);
+  /** Google共有リンク → 場所を自動取り込み(マイページのおススメ地図と同じ最新解決API) */
+  const resolvePlace = async (raw: string) => {
+    const m = raw.match(/https?:\/\/[^\s]+/);
+    if (!m || wPlaceBusy) return;
+    const url = m[0];
+    const hint = raw.replace(url, "").replace(/[\n\r"']+/g, " ").trim().slice(0, 100);
+    setWPlaceBusy(true);
+    setWPlaceMsg(null);
+    try {
+      const r = await fetch("/api/reco/resolve?url=" + encodeURIComponent(url) + (hint ? "&hint=" + encodeURIComponent(hint) : ""));
+      const d = await r.json();
+      if (!r.ok || (!d.name && d.lat == null)) {
+        setWPlaceMsg("リンクを読めませんでした。Googleマップ/Google検索の「共有」からコピーしたリンクを貼ってください");
+      } else if (d.lat == null || d.lng == null) {
+        setWPlaceMsg("場所（座標）が読めませんでした。Googleマップのアプリで場所を開いて「共有→リンクをコピー」だと確実です");
+      } else {
+        setWPlace({ name: (d.name as string) ?? null, lat: d.lat as number, lng: d.lng as number, url, image: (d.image as string) ?? null });
+        setWPlacePaste("");
+      }
+    } catch {
+      setWPlaceMsg("通信に失敗しました");
+    }
+    setWPlaceBusy(false);
+  };
   const [wKind, setWKind] = useState<"normal" | "event">("normal");
   const [wEventAt, setWEventAt] = useState("");
   const [joinedEv, setJoinedEv] = useState<Set<string>>(new Set());
@@ -592,7 +624,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     const { data: evs } = await supabase
       .from("village_posts")
       .select(
-        "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+        "id, body, photo_url, kind, event_at, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
       )
       .eq("kind", "event")
       .gte("event_at", new Date().toISOString())
@@ -675,6 +707,12 @@ export function ActivitySection({ me }: { me: User | null }) {
     try {
       const memos = JSON.parse(readTecho());
       const day = memos[key];
+      if (day?.ev?.length) {
+        day.ev = day.ev.filter((x: any) => x.id !== `sekai-${p.id}`);
+        if (!day.ev.length) delete day.ev;
+        memos[key] = day;
+        writeTecho(JSON.stringify(memos));
+      }
       if (day?.h?.[hour]) {
         const lines = String(day.h[hour]).split("\n").filter((l: string) => l !== label);
         if (lines.length) day.h[hour] = lines.join("\n");
@@ -704,10 +742,25 @@ export function ActivitySection({ me }: { me: User | null }) {
     try {
       const memos = JSON.parse(readTecho());
       const day = memos[key] ?? { note: "", h: {} };
-      day.h = day.h ?? {};
-      const hour = String(d.getHours());
-      const label = eventLabel(p);
-      day.h[hour] = day.h[hour] ? `${day.h[hour]}\n${label}` : label; // 2件目以降は改行で追記
+      // 構造化された予定として登録: 手帳側でタップすると場所(Googleマップ)が開く
+      day.ev = day.ev ?? [];
+      const evId = `sekai-${p.id}`;
+      if (!day.ev.some((x: any) => x.id === evId)) {
+        day.ev.push({
+          id: evId,
+          sh: d.getHours(),
+          sm: d.getMinutes(),
+          eh: Math.min(23, d.getHours() + 2),
+          em: d.getMinutes(),
+          text: eventLabel(p),
+          color: "green",
+          place:
+            p.place_lat != null || p.place_name
+              ? { name: p.place_name ?? null, lat: p.place_lat ?? null, lng: p.place_lng ?? null, url: p.place_url ?? null }
+              : undefined,
+        });
+        day.ev.sort((a: any, b: any) => a.sh * 60 + a.sm - (b.sh * 60 + b.sm));
+      }
       memos[key] = day;
       writeTecho(JSON.stringify(memos));
       localStorage.setItem(`onesea-ev-${p.id}`, "1");
@@ -777,9 +830,13 @@ export function ActivitySection({ me }: { me: User | null }) {
         village_id: wVillage,
         user_id: me.id,
         body: wBody.trim(),
-        photo_url: wPhoto,
+        photo_url: wPhoto ?? (wKind === "event" ? wPlace?.image ?? null : null),
         kind: wKind,
         event_at: eventAt,
+        place_name: wKind === "event" ? wPlace?.name ?? null : null,
+        place_lat: wKind === "event" ? wPlace?.lat ?? null : null,
+        place_lng: wKind === "event" ? wPlace?.lng ?? null : null,
+        place_url: wKind === "event" ? wPlace?.url ?? null : null,
       })
       .select("id")
       .single();
@@ -789,6 +846,10 @@ export function ActivitySection({ me }: { me: User | null }) {
         id: inserted.id,
         event_at: eventAt,
         body: wBody.trim(),
+        place_name: wPlace?.name ?? null,
+        place_lat: wPlace?.lat ?? null,
+        place_lng: wPlace?.lng ?? null,
+        place_url: wPlace?.url ?? null,
         villages: { name: myVills.find((v) => v.id === wVillage)?.name },
       });
     }
@@ -799,6 +860,9 @@ export function ActivitySection({ me }: { me: User | null }) {
     setWBody("");
     setWPhoto(null);
     setWEventAt("");
+    setWPlace(null);
+    setWPlacePaste("");
+    setWPlaceMsg(null);
     loadFeed();
     loadEvents();
   };
@@ -972,10 +1036,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           </div>
         ) : (
           <button
-            onClick={() => {
-              setWKind("normal");
-              setWriting(true);
-            }}
+            onClick={() => setWChoose(true)}
             className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
             style={{ borderColor: "#c8dccb" }}
           >
@@ -984,7 +1045,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/icon-pen.webp" alt="" style={{ width: 18, height: 18 }} />
               </span>
-              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">セカイムラの活動報告 <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
+              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">村からの投稿 <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
               <span
                 className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
                 style={{ background: GREEN }}
@@ -1163,7 +1224,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       )}
 
       {/* 📅 これからのイベント（横スクロール・旧セカイムラ式） */}
-      {events.length > 0 && (
+      {(events.length > 0 || (me && myVills.length > 0)) && (
         <div className="mb-2">
           <div className="px-3 pb-1 text-[12px] font-extrabold" style={{ color: GREEN }}>
             📅 イベント
@@ -1202,7 +1263,8 @@ export function ActivitySection({ me }: { me: User | null }) {
               return (
                 <div
                   key={p.id}
-                  className="w-[230px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#e2eae0] bg-white shadow-sm"
+                  onClick={() => setEvDetail(p)}
+                  className="w-[230px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-[#e2eae0] bg-white shadow-sm"
                 >
                   <div className="relative h-[110px] bg-[#eaf2ea]">
                     {p.photo_url ? (
@@ -1254,7 +1316,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                     {me &&
                       (joined ? (
                         <button
-                          onClick={() => cancelEvent(p)}
+                          onClick={(e) => { e.stopPropagation(); cancelEvent(p); }}
                           className="rounded-full border px-2.5 py-1 text-[10.5px] font-bold"
                           style={{ borderColor: "#4a9a5a", color: GREEN, background: "#fff" }}
                         >
@@ -1262,7 +1324,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                         </button>
                       ) : (
                         <button
-                          onClick={() => joinEvent(p)}
+                          onClick={(e) => { e.stopPropagation(); joinEvent(p); }}
                           className="rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white"
                           style={{ background: GREEN }}
                         >
@@ -1277,6 +1339,52 @@ export function ActivitySection({ me }: { me: User | null }) {
         </div>
       )}
 
+
+      {/* 投稿の2択: ①イベントを作成 ②村の報告 */}
+      {wChoose && me && (
+        <div className="fixed inset-0 z-[89] flex items-end justify-center bg-black/45" onClick={() => setWChoose(false)}>
+          <div
+            className="w-full max-w-[480px] rounded-t-2xl bg-white px-4 pt-3"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#ddd]" />
+            <div className="mb-2.5 text-center text-[13px] font-extrabold" style={{ color: GREEN }}>
+              村からの投稿
+            </div>
+            <button
+              onClick={() => {
+                setWChoose(false);
+                setWKind("event");
+                setEvWriting(true);
+              }}
+              className="mb-2 flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left"
+              style={{ borderColor: "#c8a030", background: "#fdf9ec" }}
+            >
+              <span className="text-[22px]">📅</span>
+              <span>
+                <span className="block text-[14px] font-extrabold text-[#a07820]">① イベントを作成</span>
+                <span className="block text-[11px] text-[#b09a60]">日時・場所つき。下のイベント欄に並びます</span>
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setWChoose(false);
+                setWKind("normal");
+                setWriting(true);
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left"
+              style={{ borderColor: "#4a8a5c", background: "#f4faf5" }}
+            >
+              <span className="text-[22px]">✏️</span>
+              <span>
+                <span className="block text-[14px] font-extrabold" style={{ color: GREEN }}>② 村の報告</span>
+                <span className="block text-[11px] text-[#8aa890]">写真つきの活動報告。フィードに流れます</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 📅 イベント作成モーダル */}
       {evWriting && me && (
@@ -1336,6 +1444,40 @@ export function ActivitySection({ me }: { me: User | null }) {
                 />
               </label>
             </div>
+            {/* 場所: Googleの共有リンクを貼るだけで自動取り込み(おススメ地図と同じ仕組み) */}
+            <div className="mb-2">
+              <div className="mb-1 text-[11px] font-extrabold text-[#8a9a8a]">
+                📍 場所 — Googleマップ/Google検索で場所を調べて「共有」→リンクをコピーして貼るだけ
+              </div>
+              {wPlace ? (
+                <div className="flex items-center gap-2 rounded-xl border border-[#c8dccb] bg-[#f4faf5] px-3 py-2">
+                  {wPlace.image && <img src={wPlace.image} alt="" className="h-9 w-9 flex-shrink-0 rounded-lg object-cover" />}
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold" style={{ color: GREEN }}>
+                    ✓ {wPlace.name ?? "場所を取り込みました"}
+                  </span>
+                  <button
+                    onClick={() => setWPlace(null)}
+                    className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white text-[12px] font-bold text-[#a0aca0]"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    value={wPlacePaste}
+                    onChange={(e) => {
+                      setWPlacePaste(e.target.value);
+                      if (/https?:\/\//.test(e.target.value)) resolvePlace(e.target.value);
+                    }}
+                    placeholder="https://maps.app.goo.gl/… または https://share.google/…"
+                    className="w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[12.5px] outline-none focus:border-[#4a8a5c]"
+                  />
+                  {wPlaceBusy && <p className="mt-1 text-[11px] text-[#8a9a8a]">場所を読み取り中…</p>}
+                  {wPlaceMsg && <p className="mt-1 text-[11px] font-bold text-[#c05030]">{wPlaceMsg}</p>}
+                </>
+              )}
+            </div>
             <div className="flex gap-2">
               <button onClick={() => setEvWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
                 キャンセル
@@ -1352,6 +1494,93 @@ export function ActivitySection({ me }: { me: User | null }) {
           </div>
         </div>
       )}
+
+      {/* 📅 イベント詳細（カードをタップで立ち上がる） */}
+      {evDetail && (
+        <div className="fixed inset-0 z-[92] flex items-center justify-center bg-black/55 px-4" onClick={() => setEvDetail(null)}>
+          <div
+            className="max-h-[86vh] w-full max-w-[420px] overflow-y-auto rounded-2xl bg-white"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 拠点ページのサムネ */}
+            <div className="relative h-[120px] bg-[#eaf2ea]">
+              {evDetail.villages?.cover_url ? (
+                <img src={srcCdn(evDetail.villages.cover_url)} alt="" className="h-full w-full object-cover" />
+              ) : evDetail.photo_url ? (
+                <img src={srcCdn(evDetail.photo_url)} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-[26px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>🏡</div>
+              )}
+              <button
+                onClick={() => setEvDetail(null)}
+                aria-label="とじる"
+                className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-[15px] font-bold text-white"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4">
+              <Link href={`/sekai/village/${evDetail.villages?.id}`} className="no-underline" onClick={() => setEvDetail(null)}>
+                <span className="text-[16px] font-extrabold" style={{ color: GREEN }}>
+                  {evDetail.villages?.name ?? "セカイムラ"}
+                </span>
+                <span className="ml-1 text-[12px] font-bold text-[#9ab3a0]">
+                  {evDetail.villages?.prefecture ? `@${evDetail.villages.prefecture}` : ""}
+                </span>
+                <span className="ml-1"><SekaiBadge size={14} /></span>
+              </Link>
+              {/* 日時 + 参加する */}
+              {evDetail.event_at && (
+                <div className="mt-2 flex items-center justify-between gap-2 rounded-xl px-3 py-2.5" style={{ background: "#fdf6e4", border: "1px solid #e8d8a8" }}>
+                  <span className="num min-w-0 text-[13.5px] font-extrabold text-[#a07820]">
+                    📅 {(() => { const d = new Date(evDetail.event_at); return `${d.getMonth() + 1}月${d.getDate()}日（${YOBI[d.getDay()]}）${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}〜`; })()}
+                  </span>
+                  {me &&
+                    (joinedEv.has(evDetail.id) ? (
+                      <button
+                        onClick={() => cancelEvent(evDetail)}
+                        className="flex-shrink-0 rounded-lg border px-3 py-1.5 text-[11.5px] font-bold"
+                        style={{ borderColor: "#c8a030", color: "#a07820", background: "#fff" }}
+                      >
+                        ✓ 参加予定
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => joinEvent(evDetail)}
+                        className="flex-shrink-0 rounded-lg px-3.5 py-2 text-[12px] font-extrabold text-white"
+                        style={{ background: "#c8a030" }}
+                      >
+                        参加する
+                      </button>
+                    ))}
+                </div>
+              )}
+              <p className="mt-2.5 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#3a4438]">
+                {String(evDetail.body ?? "")}
+              </p>
+              {evDetail.photo_url && (
+                <img src={srcCdn(evDetail.photo_url)} alt="" className="mt-2 max-h-72 w-full rounded-xl object-cover" />
+              )}
+              {(evDetail.place_name || evDetail.place_lat != null) && (
+                <button
+                  onClick={() =>
+                    setPlaceView({ name: evDetail.place_name, lat: evDetail.place_lat, lng: evDetail.place_lng, url: evDetail.place_url })
+                  }
+                  className="mt-2.5 flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-[13px] font-extrabold"
+                  style={{ borderColor: "#c8dccb", color: "#3070b0", background: "#f6faff" }}
+                >
+                  📍 <span className="min-w-0 flex-1 truncate">{evDetail.place_name ?? "場所の詳細"}</span>
+                  <span className="flex-shrink-0 text-[11px]">地図を見る →</span>
+                </button>
+              )}
+              <p className="mt-2 text-[10.5px] text-[#a0aca0]">
+                「参加する」を押すと、あなたの手帳のこの日にイベントが入ります。手帳側でタップすると場所の地図が開きます。
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      {placeView && <PlaceOverlay place={placeView} onClose={() => setPlaceView(null)} />}
 
     </section>
   );

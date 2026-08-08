@@ -1,5 +1,6 @@
 "use client";
 
+import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { readTecho, writeTecho, setCurrentUid, migrateLegacyTecho } from "@/lib/techoStore";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -60,6 +61,8 @@ export interface TechoEv {
   em: number; // 終了 分
   text: string;
   color: string; // ペンID
+  /** セカイムラのイベント等: タップでGoogleマップのオーバーレイを開く場所情報 */
+  place?: { name?: string | null; lat?: number | null; lng?: number | null; url?: string | null };
 }
 
 interface DayMemo {
@@ -557,6 +560,7 @@ function BottomSheet({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [tide, setTide] = useState<TideDay | null>(null);
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
+  const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所の詳細(Googleマップのオーバーレイ)
   const [portPick, setPortPick] = useState(false); // 港選択モーダル
   const [celSel, setCelSel] = useState<"sun" | "earth" | "moon" | null>(null); // 天体トリオの選択
   const [celSeen, setCelSeen] = useState<Set<string>>(new Set()); // 既読(バッジ消し)
@@ -949,7 +953,7 @@ function BottomSheet({
                         <div
                           key={ev.id}
                           data-ev
-                          onClick={() => setEvEdit(ev)}
+                          onClick={() => (ev.place ? setPlaceView(ev.place) : setEvEdit(ev))}
                           className="absolute bottom-0 top-0 w-[4px] cursor-pointer rounded"
                           style={{ left: 1 + i * 6, background: penColor(ev.color), opacity: 0.55 }}
                         />
@@ -1008,7 +1012,7 @@ function BottomSheet({
                             <button
                               key={ev.id}
                               data-ev
-                              onClick={() => setEvEdit(ev)}
+                              onClick={() => (ev.place ? setPlaceView(ev.place) : setEvEdit(ev))}
                               className="mb-0.5 block w-full rounded-md px-1.5 py-0.5 text-left text-[11px] leading-snug"
                               style={{
                                 background: penColor(ev.color) + "18",
@@ -1130,6 +1134,7 @@ function BottomSheet({
       )}
 
       {/* 予定の追加・編集（○時○分〜○時○分・色ペン） */}
+      {placeView && <PlaceOverlay place={placeView} onClose={() => setPlaceView(null)} />}
       {evEdit && (
         <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/40" onClick={() => setEvEdit(null)}>
           <div
@@ -1309,6 +1314,7 @@ function FullscreenCal({
   onOpenDay: (k: string) => void;
 }) {
   const [y, m] = MONTHS[mi];
+  const [fsPlace, setFsPlace] = useState<PlaceInfo | null>(null); // 予定チップの場所オーバーレイ
   // 指に追従するスワイプで前後の月へ
   const [dragX, setDragX] = useState(0);
   const [anim, setAnim] = useState(false);
@@ -1385,6 +1391,7 @@ function FullscreenCal({
         ))}
       </div>
       {/* 本体: 残り全部を行で山分けして1マスの縦を最大化 */}
+      {fsPlace && <PlaceOverlay place={fsPlace} onClose={() => setFsPlace(null)} />}
       <div className="grid flex-1 grid-cols-7" style={{ gridTemplateRows: `repeat(${rows}, 1fr)`, paddingBottom: "env(safe-area-inset-bottom)" }}>
         {cells.map((d, i) => {
           if (d === null) return <div key={i} className="border-b border-r border-[#f0ede8] bg-[#fbfaf8]" />;
@@ -1395,8 +1402,8 @@ function FullscreenCal({
           const dayM = memos[k];
           const di = i % 7;
           const isT = k === todayK;
-          const chips: Array<{ text: string; c: string }> = [];
-          for (const e of dayM?.ev ?? []) chips.push({ text: e.text, c: penColor(e.color) });
+          const chips: Array<{ text: string; c: string; place?: PlaceInfo }> = [];
+          for (const e of dayM?.ev ?? []) chips.push({ text: e.text, c: penColor(e.color), place: e.place });
           for (const [, v] of Object.entries(dayM?.h ?? {})) {
             for (const line of String(v).split("\n")) if (line.trim()) chips.push({ text: line.trim(), c: "#8a9a80" });
           }
@@ -1429,10 +1436,11 @@ function FullscreenCal({
                     {chips.slice(0, cap).map((c, j) => (
                       <div
                         key={j}
+                        onClick={c.place ? (e) => { e.stopPropagation(); setFsPlace(c.place!); } : undefined}
                         className="mx-auto mt-[1px] w-fit max-w-full truncate rounded-[3px] px-[3px] text-center text-[8px] font-bold leading-[1.35] text-white"
                         style={{ background: c.c }}
                       >
-                        {c.text}
+                        {c.place ? "📍" : ""}{c.text}
                       </div>
                     ))}
                     {chips.length > cap && <div className="text-center text-[7px] leading-none text-[#a09880]">+{chips.length - cap}</div>}
