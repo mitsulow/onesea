@@ -25,6 +25,7 @@ export default function OfficePage() {
   const [sent, setSent] = useState("");
   const [seeds, setSeeds] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [inqs, setInqs] = useState<any[]>([]);
 
   const load = async (uid: string) => {
     const supabase = createClient();
@@ -48,6 +49,8 @@ export default function OfficePage() {
       reps = reps.map((r) => ({ ...r, reporterProf: by.get(r.reporter) ?? null }));
     }
     setReports(reps);
+    const { data: iq } = await supabase.from("inquiries").select("*, profiles!inquiries_user_id_fkey(username, display_name, avatar_url)").order("created_at", { ascending: false }).limit(100);
+    setInqs(iq ?? []);
     void uid;
   };
 
@@ -285,6 +288,53 @@ export default function OfficePage() {
                 </div>
               );
             })
+          )}
+        </section>
+
+        {/* ✉ 問い合わせ受信箱 — 下に積み上がる */}
+        <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
+          <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">
+            ■ 問い合わせ
+            {inqs.filter((r) => r.status === "open").length > 0 && (
+              <span className="ml-2 rounded-full bg-[#e05040] px-2 py-0.5 text-[10.5px] font-bold text-white">
+                {inqs.filter((r) => r.status === "open").length}件
+              </span>
+            )}
+          </div>
+          {inqs.length === 0 ? (
+            <p className="py-1 text-[12.5px] text-[#a09888]">問い合わせはありません</p>
+          ) : (
+            inqs.map((r) => (
+              <div key={r.id} className="border-b border-[#f0ece0] py-2.5 last:border-b-0" style={{ opacity: r.status === "open" ? 1 : 0.45 }}>
+                <div className="flex items-center gap-2 text-[11px] text-[#a09888]">
+                  {r.profiles?.avatar_url ? (
+                    <img src={r.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-5 w-5 rounded-full object-cover" />
+                  ) : (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#e5dcc8] text-[9px]">?</span>
+                  )}
+                  {r.profiles?.username ? (
+                    <Link href={`/u/${r.profiles.username}`} className="font-bold text-[#3070b0] underline">{r.profiles?.display_name ?? "会員"}</Link>
+                  ) : (
+                    <span className="font-bold">{r.profiles?.display_name ?? "会員"}</span>
+                  )}
+                  <span className="num">{new Date(r.created_at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                  {r.status !== "open" && <span className="font-bold text-[#2a7a4a]">対応済み</span>}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-[#3a3428]">{r.body}</p>
+                {r.status === "open" && (
+                  <button
+                    onClick={async () => {
+                      const supabase = createClient();
+                      await supabase.from("inquiries").update({ status: "done" }).eq("id", r.id);
+                      if (me) load(me.id);
+                    }}
+                    className="mt-1.5 rounded-lg bg-[#2a7a4a] px-2.5 py-1 text-[11px] font-bold text-white"
+                  >
+                    対応済みにする
+                  </button>
+                )}
+              </div>
+            ))
           )}
         </section>
 

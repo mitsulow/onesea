@@ -31,6 +31,10 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   const [waraMissing, setWaraMissing] = useState(0); // わらわ〜会員の未入力数（0で消える）
   const [isAdmin, setIsAdmin] = useState(false); // 事務局
   const [notifN, setNotifN] = useState(0); // 🔔お知らせ未読
+  const [inqOpen, setInqOpen] = useState(false); // 事務局への問い合わせ
+  const [inqBody, setInqBody] = useState("");
+  const [inqBusy, setInqBusy] = useState(false);
+  const [inqDone, setInqDone] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<{ top: number; right: number }>({ top: 52, right: 12 });
 
@@ -272,6 +276,12 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
                 </span>
               )}
             </Link>
+            <button
+              onClick={() => { setOpen(false); setInqOpen(true); setInqDone(false); }}
+              className="flex w-full items-center gap-2.5 border-b border-[#f2ece0] px-4 py-2.5 text-left text-[13.5px] font-medium text-[#3a3428] active:bg-[#faf4ea]"
+            >
+              {icon("/icons/icon-megaphone.webp")} 事務局への問い合わせ
+            </button>
             {isAdmin && (
               <Link href="/office" onClick={() => setOpen(false)} className={item + hereCls("/office")}>
                 {icon("/icons/icon-megaphone.webp")} 事務局
@@ -287,6 +297,57 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
         </>,
         document.body
       )}
+      {inqOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div className="fixed inset-0 z-[130] flex items-center justify-center px-5">
+            <div className="absolute inset-0 bg-black/55" onClick={() => setInqOpen(false)} />
+            <div className="relative w-full max-w-[360px] rounded-3xl bg-white p-5">
+              <div className="text-[15px] font-extrabold text-[#3a3428]">✉ 事務局への問い合わせ</div>
+              {inqDone ? (
+                <>
+                  <p className="mt-3 text-[13px] leading-relaxed text-[#5a5448]">
+                    送信しました。事務局（マスター・マチルダ・西田あかね）が確認して、必要ならTalKでお返事します。
+                  </p>
+                  <button onClick={() => setInqOpen(false)} className="mt-4 w-full rounded-2xl py-3 text-[14px] font-extrabold text-white" style={{ background: "#1a2432" }}>
+                    とじる
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="mt-1 text-[11px] text-[#a09888]">バグ報告・使い方の質問・要望など、なんでもどうぞ</p>
+                  <textarea
+                    value={inqBody}
+                    onChange={(e) => setInqBody(e.target.value)}
+                    rows={5}
+                    maxLength={1000}
+                    placeholder="内容を書いてください"
+                    className="mt-2 w-full resize-none rounded-xl border border-[#e8dcc4] bg-[#fffdf8] p-3 text-[13.5px] outline-none focus:border-[#c94d3a]"
+                  />
+                  <button
+                    disabled={!inqBody.trim() || inqBusy || !user}
+                    onClick={async () => {
+                      if (!user) return;
+                      setInqBusy(true);
+                      const supabase = createClient();
+                      const { error } = await supabase.from("inquiries").insert({ user_id: user.id, body: inqBody.trim() });
+                      setInqBusy(false);
+                      if (error) { alert("送信できませんでした: " + error.message); return; }
+                      setInqBody("");
+                      setInqDone(true);
+                    }}
+                    className="mt-2.5 w-full rounded-2xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40"
+                    style={{ background: "#c94d3a" }}
+                  >
+                    {inqBusy ? "送信中..." : user ? "事務局へ送る" : "ログインすると送れます"}
+                  </button>
+                  <button onClick={() => setInqOpen(false)} className="mt-2 block w-full text-center text-[11px] text-[#a09888]">キャンセル</button>
+                </>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </span>
   );
 }
