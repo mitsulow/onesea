@@ -378,8 +378,18 @@ function MonthCal({
       <div className="px-4 pt-1" style={{ background: "#fff" }}>
       </div>
 
-      {/* 月ナビ */}
-      <div className="flex items-center justify-between border-b border-[#eee] px-1.5 pb-0.5 pt-1.5">
+      {/* 月ナビ（右端▶の左に⛶=全画面。地図アプリと同じ文法） */}
+      <div className="relative flex items-center justify-between border-b border-[#eee] px-1.5 pb-0.5 pt-1.5">
+        {onFullscreen && (
+          <button
+            onClick={onFullscreen}
+            aria-label="全画面表示"
+            title="全画面表示"
+            className="absolute right-[52px] top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md border border-[#e0d8c8] bg-white text-[12px] text-[#8a7a5a]"
+          >
+            ⛶
+          </button>
+        )}
         <button
           onClick={() => mi > 0 && setMi(mi - 1)}
           disabled={mi === 0}
@@ -388,14 +398,7 @@ function MonthCal({
         >
           ◀
         </button>
-        <span className="flex flex-col items-center leading-none">
-          <span className="text-[17px] font-extrabold text-[#2a2a2a]">{ML[mi]}</span>
-          {onFullscreen && (
-            <button onClick={onFullscreen} className="mt-[2px] rounded-full border border-[#e0d8c8] bg-white px-2 py-[1px] text-[8.5px] font-bold text-[#8a7a5a]">
-              ↗ 全画面表示
-            </button>
-          )}
-        </span>
+        <span className="text-[17px] font-extrabold text-[#2a2a2a]">{ML[mi]}</span>
         <button
           onClick={() => mi < MONTHS.length - 1 && setMi(mi + 1)}
           disabled={mi === MONTHS.length - 1}
