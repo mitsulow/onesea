@@ -367,6 +367,40 @@ export function kyurekiOf(dateKey: string): { month: number; leap: boolean; day:
   return { month: pm, leap: true, day };
 }
 
+/** 和風月名（旧暦の月） */
+const WAFU_MONTHS = ["", "睦月", "如月", "弥生", "卯月", "皐月", "水無月", "文月", "葉月", "長月", "神無月", "霜月", "師走"];
+const KANJI_DAYS = ["", "一日", "二日", "三日", "四日", "五日", "六日", "七日", "八日", "九日", "十日",
+  "十一日", "十二日", "十三日", "十四日", "十五日", "十六日", "十七日", "十八日", "十九日", "二十日",
+  "二十一日", "二十二日", "二十三日", "二十四日", "二十五日", "二十六日", "二十七日", "二十八日", "二十九日", "三十日"];
+
+/** 「旧暦文月八日（旧7月8日）」形式 */
+export function kyurekiFullLabel(dateKey: string): string {
+  const k = kyurekiOf(dateKey);
+  if (!k.month) return `旧暦${k.day}日`;
+  const wafu = WAFU_MONTHS[k.month] ?? `${k.month}月`;
+  const kd = KANJI_DAYS[Math.min(30, Math.max(1, k.day))];
+  return `旧暦${k.leap ? "閏" : ""}${wafu}${kd}（旧${k.month}月${k.day}日）`;
+}
+
+/** ツキヨガの30日「月の呼び名」辞書（旧暦の日 → 呼び名） */
+const MOON_NAMES_30: Record<number, [string, string]> = {
+  1: ["つきたち", "月立ち"], 2: ["ふつかづき", "二日月"], 3: ["みかづき", "三日月"], 4: ["まゆづき", "眉月"],
+  5: ["ゆうづき", "夕月"], 6: ["むいかづき", "六日月"], 7: ["かたみに", "互に"], 8: ["よいづき", "宵月"],
+  9: ["ここのかづき", "九日月"], 10: ["とおかんや", "十日夜"], 11: ["じゅういちや", "十一夜"], 12: ["じゅうにや", "十二夜"],
+  13: ["あたらよ", "可惜夜"], 14: ["まちよい", "待宵"], 15: ["くまなし", "隈無し"], 16: ["いざよい", "十六夜"],
+  17: ["たちまち", "立待月"], 18: ["いまち", "居待月"], 19: ["ねまち", "寝待月"], 20: ["ふけまち", "更待月"],
+  21: ["にじゅういちや", "二十一夜"], 22: ["にじゅうにや", "二十二夜"], 23: ["ありあけ", "有明"], 24: ["にじゅうよや", "二十四夜"],
+  25: ["ほしあひ", "星合"], 26: ["なごりづき", "名残月"], 27: ["あかつき", "暁"], 28: ["あけぼの", "曙"],
+  29: ["つごもり", "晦・月籠"], 30: ["みそか", "晦日"],
+};
+
+/** その日の月の呼び名（ひらがな・漢字） */
+export function moonNameOf(dateKey: string): { yomi: string; kanji: string } {
+  const k = kyurekiOf(dateKey);
+  const [yomi, kanji] = MOON_NAMES_30[Math.min(30, Math.max(1, k.day))] ?? MOON_NAMES_30[1];
+  return { yomi, kanji };
+}
+
 export function kyurekiLabel(dateKey: string): string {
   const k = kyurekiOf(dateKey);
   if (!k.month) return `旧暦${k.day}日`;

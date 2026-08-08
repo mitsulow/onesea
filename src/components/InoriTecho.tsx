@@ -10,6 +10,8 @@ import {
   moonImageOf,
   kyurekiLabel,
   holyTimeOf,
+  kyurekiFullLabel,
+  moonNameOf,
   keyOf,
   todayKey,
   YOBI,
@@ -822,8 +824,17 @@ function BottomSheet({
                     style={{ height: 188, width: 188 }}
                   />
                   {/* 左上: 月齢(大きめ) + 朔弦望メッセージ */}
-                  <div className="absolute left-3 top-2.5 z-10 text-left">
-                    <div className="num text-[16px] font-bold text-[#e8e4f0]" style={{ textShadow: "0 0 6px #000" }}>月齢 {moon.age.toFixed(1)}</div>
+                  <div className="absolute left-3 top-2.5 z-10 text-left" style={{ textShadow: "0 0 6px #000" }}>
+                    <div className="num text-[16px] font-bold text-[#e8e4f0]">月齢 {moon.age.toFixed(1)}</div>
+                    <div className="mt-0.5 text-[11px] leading-tight text-[#b8b4c8]">{kyurekiFullLabel(dk)}</div>
+                    {(() => {
+                      const mn = moonNameOf(dk);
+                      return (
+                        <div className="mt-0.5 text-[13px] font-extrabold leading-tight text-[#c8d8f0]">
+                          {mn.yomi}<span className="ml-1 text-[10px] font-normal text-[#8a90a8]">（{mn.kanji}）</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                   {/* 右上: 朔弦望メッセージ（右詰め・✦なし） */}
                   {(() => {
