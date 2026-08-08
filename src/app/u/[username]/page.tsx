@@ -303,9 +303,6 @@ export default function UserPage() {
             <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
           </span>
         )}
-        <span className="absolute right-4 top-7 z-[5]">
-          <SekaiBelongBadge userId={profile.id} />
-        </span>
         <div className="relative -mt-11 inline-block">
           {profile.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -342,14 +339,17 @@ export default function UserPage() {
             </>
           )}
         </div>
-        {isWara && profile.member_no != null && (
-          <span
-            className="num ml-2 inline-block align-bottom px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider text-[#7a5a10]"
-            style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a", marginBottom: 6 }}
-          >
-            わらわ〜No.{String(profile.member_no).padStart(7, "0")}
-          </span>
-        )}
+        <span className="ml-2 inline-flex flex-col items-start gap-1 align-top pt-0.5">
+          {isWara && profile.member_no != null && (
+            <span
+              className="num px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider text-[#7a5a10]"
+              style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
+            >
+              わらわ〜No.{String(profile.member_no).padStart(7, "0")}
+            </span>
+          )}
+          <SekaiBelongBadge userId={profile.id} />
+        </span>
 
         <div className="relative mt-1.5">
           <h1 className="flex items-center gap-1.5 text-[21px] font-extrabold leading-snug text-[#3a3428]">
@@ -872,7 +872,7 @@ function SekaiBelongBadge({ userId }: { userId: string }) {
   if (name === undefined) return null;
   return (
     <span
-      className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+      className="px-2 py-0.5 text-[9.5px] font-bold"
       style={
         name
           ? { background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }
