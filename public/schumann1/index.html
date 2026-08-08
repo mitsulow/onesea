@@ -1204,7 +1204,7 @@
   .svc-menu a img{width:20px;height:20px;object-fit:contain;flex-shrink:0}
   .svc-menu .svc-mi{width:20px;text-align:center;font-size:15px;flex-shrink:0}
   /* F1ドットグラフの期間切替タブ */
-  .dot-tabs{display:flex;gap:8px;padding:0 0.9rem 0.4rem}
+  .dot-tabs{display:flex;gap:8px;padding:0 0.9rem 0.4rem;position:relative;z-index:5}
   .dot-tab{font:600 0.82rem/1 "Noto Sans JP",sans-serif;color:#9fb2c8;
     background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
     border-radius:999px;padding:6px 16px;cursor:pointer;transition:all .15s}
@@ -1465,8 +1465,8 @@
       <div class="dvs-item"><div class="dvs-num" id="dvs-max">—</div><div class="dvs-label" id="dvs-max-label">歴代最高F1</div></div>
     </div>
     <div class="dot-tabs" id="dot-tabs">
-      <button type="button" class="dot-tab" data-range="all">全期間</button>
       <button type="button" class="dot-tab active" data-range="3y">3年間</button>
+      <button type="button" class="dot-tab" data-range="all">全期間</button>
     </div>
     <div class="dv-block" id="dotBlock"><canvas id="dv-dot"></canvas></div>
     <div class="dv-panel">
@@ -2078,7 +2078,7 @@
       }
     }
     // 点（宝の山方式: 単色グリーンの素のドット）
-    const r = dotRange === "3y" ? 1.17 * u : 0.88 * u; // さらに面積70%に(半径x0.837)
+    const r = dotRange === "3y" ? 1.046 * u : 0.787 * u; // 面積80%に縮小(半径x0.894)
     pts.forEach(e => {
       const c = [90, 212, 143]; // ★宝の山と同じ単色グリーン #5ad48f
       const x = X(Date.parse(e.d + "T00:00:00Z")), yy = Y(e.f1);
@@ -3342,14 +3342,15 @@
     document.addEventListener("click", () => menu.classList.remove("open"));
   })();
 
-  // F1ドットグラフの期間切替
-  document.addEventListener("click", (ev) => {
-    const btn = ev.target && ev.target.closest ? ev.target.closest("#dot-tabs .dot-tab") : null;
-    if (!btn) return;
-    ev.preventDefault();
-    dotRange = btn.dataset.range;
-    document.querySelectorAll("#dot-tabs .dot-tab").forEach(b => b.classList.toggle("active", b === btn));
-    loadTrendDays().then(drawDotGraph);
+  // F1ドットグラフの期間切替（直付け。キャプチャ段階で拾って他のリスナーに横取りされないように）
+  document.querySelectorAll("#dot-tabs .dot-tab").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      dotRange = btn.dataset.range;
+      document.querySelectorAll("#dot-tabs .dot-tab").forEach(b => b.classList.toggle("active", b === btn));
+      loadTrendDays().then(drawDotGraph);
+    }, true);
   });
   drawMonthlyTrend();
   drawModeGraphs();
