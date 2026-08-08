@@ -341,9 +341,11 @@ export function MootsSection({
           className="text-[11.5px] font-bold"
           style={{ color: pastOpen ? "#e8d5a0" : "#a8c8b0", textDecoration: "underline", textUnderlineOffset: 3 }}
         >
-          過去の一覧
+          過去動画一覧
         </button>
-        <span className="text-[12px] font-extrabold tracking-[1px] text-[#7a9a88]">← 新月会・満月会 →</span>
+        <span className="text-[12px] font-extrabold tracking-[1px] text-[#7a9a88]">
+          ← 第{mootNoOf(moots[0]?.dateKey) ?? "—"}回{moots[0]?.kind === "new" ? "新月会" : "満月会"} →
+        </span>
         <button
           onClick={() => { setFutureOpen((v) => !v); setPastOpen(false); }}
           className="text-[11.5px] font-bold"
@@ -748,9 +750,9 @@ export function ActivitySection({ me }: { me: User | null }) {
       {/* 見出し（上の角丸でセクションの始まりが分かる） */}
       <div
         className="mb-2 px-4 pb-2.5 pt-3.5"
-        style={{ background: "linear-gradient(150deg,#163522,#1e4530)" }}
+        style={{ background: "linear-gradient(150deg,#0e2a4e,#1a4a7a)" }}
       >
-        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#eae6b8]">全国セカイムラ一覧</div>
+        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#cfe4f8]">全国セカイムラ一覧</div>
       </div>
 
       {/* <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 各地のセカイムラ拠点 — レジェンドが近い順にズラリ（横スワイプ） */}
@@ -826,7 +828,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
           </div>
           <div className="px-2 py-1.5">
-            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作る</div>
+            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作りたい</div>
             <div className="truncate text-[10px] text-[#a0aca0]">{seedOpen ? "閉じる ▲" : "3人集めて申請 ▼"}</div>
           </div>
         </button>
@@ -2018,7 +2020,11 @@ export function ClubsSection({ me }: { me: User | null }) {
 /* ═══ 米部 — sekaimura.net/komebu を参考に再構築: 一覧(タップで詳細) / マップ / お知らせ ═══ */
 export function KomeSection({ me, myPref }: { me: User | null; myPref: string }) {
   const [tanbo, setTanbo] = useState<any[] | null>(null);
-  const [tab, setTab] = useState<"list" | "map" | "news">("list");
+  const [sales, setSales] = useState<any[]>([]); // お米販売(旧サイトから移行)
+  const [newsRows, setNewsRows] = useState<any[]>([]); // 米部お知らせ(旧サイトから移行)
+  const [saleOpen, setSaleOpen] = useState<string | null>(null); // こだわりを開いた販売
+  const [listPref, setListPref] = useState(""); // 田んぼ一覧の県フィルタ
+  const [tab, setTab] = useState<"list" | "map" | "kome" | "news">("list");
   const [sel, setSel] = useState<any | null>(null); // タップした田んぼの詳細
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
@@ -2031,7 +2037,16 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
   const mapRef = useRef<any>(null);
 
   useEffect(() => setTPref(myPref), [myPref]);
-  const load = useCallback(async () => setTanbo(await fetchTanbo()), []);
+  const load = useCallback(async () => {
+    setTanbo(await fetchTanbo());
+    const supabase = createClient();
+    const [{ data: ks }, { data: kn }] = await Promise.all([
+      supabase.from("kome_sales").select("*").order("sold_out", { ascending: true }).order("created_at", { ascending: false }),
+      supabase.from("kome_news").select("*").order("created_at", { ascending: false }).limit(60),
+    ]);
+    setSales(ks ?? []);
+    setNewsRows(kn ?? []);
+  }, []);
   useEffect(() => {
     load();
   }, [load]);
@@ -2142,7 +2157,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
 
       {/* タブ: 一覧 / マップ / お知らせ（sekaimura.net/komebu と同じ3本柱） */}
       <div className="mb-2 flex gap-1 rounded-xl bg-[#f2efe2] p-1">
-        {([["list", "🌾 田んぼ一覧"], ["map", "🗾 マップ"], ["news", "📢 お知らせ"]] as const).map(([k, label]) => (
+        {([["list", "🌾 田んぼ"], ["map", "🗾 マップ"], ["kome", "🍚 お米を買う"], ["news", "📢 お知らせ"]] as const).map(([k, label]) => (
           <button
             key={k}
             onClick={() => { setTab(k); setSel(null); }}
@@ -2163,7 +2178,17 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
             <p className="py-2 text-[12px] text-[#a0aca0]">まだ田んぼが登録されていません</p>
           ) : (
             <div className="space-y-2">
-              {tanbo.map((t) => (
+              <select
+                value={listPref}
+                onChange={(e) => setListPref(e.target.value)}
+                className="w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] font-bold text-[#8a7020] outline-none"
+              >
+                <option value="">全国の田んぼ（{tanbo.length}）</option>
+                {[...new Set(tanbo.map((t) => t.prefecture).filter(Boolean))].map((pf) => (
+                  <option key={pf} value={pf}>{pf}（{tanbo.filter((t) => t.prefecture === pf).length}）</option>
+                ))}
+              </select>
+              {tanbo.filter((t) => !listPref || t.prefecture === listPref).map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setSel(sel?.id === t.id ? null : t)}
@@ -2201,19 +2226,92 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
         </>
       )}
 
-      {/* ── お知らせ（登録の記録が自動で新聞になる） ── */}
+      {/* ── 🍚 お米を買う（旧サイトの販売情報を全部移行・デザイン刷新） ── */}
+      {tab === "kome" && (
+        <div className="space-y-3">
+          {sales.length === 0 ? (
+            <p className="py-2 text-[12px] text-[#a0aca0]">いま販売中のお米はありません</p>
+          ) : (
+            sales.map((k) => (
+              <div key={k.id} className="overflow-hidden rounded-2xl border border-[#e4dcc0] bg-white shadow-sm">
+                {(k.image_urls?.[0]) && (
+                  <div className="relative">
+                    <img src={k.image_urls[0]} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-[150px] w-full object-cover" />
+                    <span
+                      className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white"
+                      style={{ background: k.sold_out ? "#8a8070" : "#2a8a4a" }}
+                    >
+                      {k.sold_out ? "売り切れ" : "販売中"}
+                    </span>
+                    <span className="absolute right-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                      {k.prefecture}{k.municipality ? ` ${k.municipality}` : ""}
+                    </span>
+                  </div>
+                )}
+                <div className="px-3.5 py-3">
+                  <div className="text-[16px] font-extrabold leading-snug text-[#3a3428]">
+                    {k.variety}{k.amount_kg ? `（${k.amount_kg}kg）` : ""}
+                  </div>
+                  <div className="mt-0.5 text-[11.5px] text-[#8a8060]">生産者：{k.farm_name}{k.contact_person ? `（${k.contact_person}さん）` : ""}</div>
+                  <div className="num mt-1 text-[15px] font-extrabold text-[#a05030]">
+                    {k.price_yen?.toLocaleString()}円{k.shipping_yen ? <span className="text-[11px] font-bold text-[#a09888]">（送料 {k.shipping_yen}円）</span> : null}
+                  </div>
+                  {(k.features || k.cultivation || k.thoughts) && (
+                    <button onClick={() => setSaleOpen(saleOpen === k.id ? null : k.id)} className="mt-1.5 text-[11px] font-bold text-[#8a7020] underline">
+                      {saleOpen === k.id ? "▾ とじる" : "▸ 生産者のこだわりを読む"}
+                    </button>
+                  )}
+                  {saleOpen === k.id && (
+                    <div className="mt-1.5 space-y-1.5 rounded-xl bg-[#faf7ec] p-2.5 text-[12px] leading-relaxed text-[#5a5030]">
+                      {k.features && <p>【特徴】{k.features}</p>}
+                      {k.cultivation && <p>【栽培】{k.cultivation}</p>}
+                      {k.production && <p>【生産量】{k.production}</p>}
+                      {k.thoughts && <p>【想い】{k.thoughts}</p>}
+                      {k.message && <p>【米部へ】{k.message}</p>}
+                      {k.farmer_image && <img src={k.farmer_image} alt="" loading="lazy" referrerPolicy="no-referrer" className="mt-1 w-full rounded-lg object-cover" />}
+                    </div>
+                  )}
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {k.website_url && (
+                      <a href={k.website_url} target="_blank" rel="noopener noreferrer" className="flex-1 rounded-xl bg-[#a08a30] py-2.5 text-center text-[12.5px] font-extrabold text-white no-underline">
+                        🛒 販売ページへ →
+                      </a>
+                    )}
+                    {k.email && (
+                      <a href={`mailto:${k.email}`} className="flex-1 rounded-xl border-2 border-[#a08a30] py-2.5 text-center text-[12.5px] font-extrabold text-[#a08a30] no-underline">
+                        ✉ メールで注文
+                      </a>
+                    )}
+                    {k.phone && (
+                      <a href={`tel:${k.phone}`} className="rounded-xl border border-[#d8d0b0] px-3 py-2.5 text-center text-[12.5px] font-bold text-[#8a8060] no-underline">
+                        📞
+                      </a>
+                    )}
+                    {k.instagram_url && (
+                      <a href={k.instagram_url} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-[#d8d0b0] px-3 py-2.5 text-[12.5px] no-underline">📷</a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          <p className="text-center text-[9.5px] leading-relaxed text-[#b0a890]">
+            掲載情報は生産者からの提供に基づいています。購入・連絡のやり取りは各自ご注意ください
+          </p>
+        </div>
+      )}
+
+      {/* ── 📢 お知らせ（旧サイトの22件 + 新規登録の自動フィード） ── */}
       {tab === "news" && (
         <div className="space-y-2.5">
-          {(tanbo ?? []).map((t) => (
-            <button key={t.id} onClick={() => { setTab("list"); setSel(t); }} className="block w-full border-b border-[#eee8d8] pb-2 text-left">
-              <div className="text-[12.5px] font-extrabold text-[#5a5030]">【田んぼ】「{t.name}」が登録されました！</div>
-              <div className="mt-0.5 text-[11.5px] leading-relaxed text-[#8a8060]">
-                {t.prefecture ?? ""}の田んぼです。{t.note ? ` ${t.note}` : ""} タップして詳細をご確認ください🌾
-              </div>
+          {newsRows.map((nr) => (
+            <div key={nr.id} className="border-b border-[#eee8d8] pb-2">
+              <div className="text-[12.5px] font-extrabold text-[#5a5030]">{nr.title}</div>
+              {nr.content && <div className="mt-0.5 whitespace-pre-wrap text-[11.5px] leading-relaxed text-[#8a8060]">{nr.content}</div>}
               <div className="num mt-0.5 text-[9.5px] text-[#b8b090]">
-                {t.created_at ? new Date(t.created_at).toLocaleDateString("ja-JP") : `${t.year}年`}
+                {nr.created_at ? new Date(nr.created_at).toLocaleDateString("ja-JP") : ""}
               </div>
-            </button>
+            </div>
           ))}
           <div className="pb-1 text-left">
             <div className="text-[12.5px] font-extrabold text-[#5a5030]">米部について</div>
