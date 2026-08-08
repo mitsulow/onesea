@@ -34,7 +34,7 @@ export async function GET() {
     if (!m) return false;
     return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) >= cutoff;
   });
-  const N = 48;
+  const N = 24; // 1コマ約55KB → 全部で約1.3MB(押した人だけが読み込む)
   const step = Math.max(1, Math.floor(recent.length / N));
   const frames = recent.filter((_, i) => i % step === 0).slice(-N);
   return NextResponse.json(
