@@ -31,6 +31,7 @@ const MAP_MODES: Array<{ id: MapMode; name: string; short: string; desc: string 
 export function Otohikari() {
   const [live, setLive] = useState<SchumannLive>({ f1hz: null, updated: null });
   const [nowCount, setNowCount] = useState(0);
+  const [faces, setFaces] = useState<Array<{ name: string | null; avatar: string | null; username: string | null }> | null>(null); // Tune-in中の顔ぶれ(タップで表示)
   const [todayCount, setTodayCount] = useState<number | null>(null);
   const [spots, setSpots] = useState<Spot[]>([]);
   const [mode, setMode] = useState<MapMode>("all");
@@ -240,15 +241,64 @@ export function Otohikari() {
           </div>
         )}
 
+        {/* Tune-in中の顔ぶれ — 地球儀に重ねてズラーっと */}
+        {faces && (
+          <div className="absolute inset-x-2 top-8 z-30 rounded-2xl p-2.5" style={{ background: "rgba(5,10,20,.82)", border: "1px solid rgba(143,244,255,.35)" }} onClick={() => setFaces(null)}>
+            <div className="mb-1.5 text-center text-[10px] font-bold tracking-[2px] text-[#8ff4ff]">
+              いま地球と繋がっている人（{faces.length}人）
+            </div>
+            {faces.length === 0 ? (
+              <p className="py-2 text-center text-[10.5px] text-[#5a7a9a]">いまはだれも繋がっていません</p>
+            ) : (
+              <div className="flex max-h-[120px] flex-wrap justify-center gap-1.5 overflow-y-auto">
+                {faces.map((f, i) =>
+                  f.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={f.avatar}
+                      alt={f.name ?? ""}
+                      title={f.name ?? ""}
+                      referrerPolicy="no-referrer"
+                      className="h-9 w-9 rounded-full border border-[#8ff4ff]/50 object-cover"
+                      style={{ boxShadow: "0 0 8px rgba(120,235,255,.5)" }}
+                    />
+                  ) : (
+                    <span key={i} title={f.name ?? ""} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#8ff4ff]/40 bg-[#12283a] text-[11px] text-[#8ff4ff]">
+                      {(f.name ?? "☺").slice(0, 1)}
+                    </span>
+                  )
+                )}
+              </div>
+            )}
+            <div className="mt-1 text-center text-[8.5px] text-[#4a6a8a]">タップで閉じる</div>
+          </div>
+        )}
+
         {/* 集計 — 南半球の下部に重ねる */}
         <div className="absolute bottom-1 left-0 right-0 flex items-end justify-center gap-8 text-center">
-          {stat(
-            "Tune-in",
-            <>
-              {nowCount}
-              <span className="ml-0.5 align-baseline text-[8px] font-normal">人</span>
-            </>
-          )}
+          <button
+            type="button"
+            className="pointer-events-auto"
+            onClick={async () => {
+              if (faces) { setFaces(null); return; }
+              try {
+                const { createClient } = await import("@/lib/supabase/client");
+                const { data } = await createClient().rpc("otohikari_now_faces");
+                setFaces(Array.isArray(data) ? data : []);
+              } catch {
+                setFaces([]);
+              }
+            }}
+          >
+            {stat(
+              "Tune-in",
+              <>
+                {nowCount}
+                <span className="ml-0.5 align-baseline text-[8px] font-normal">人</span>
+              </>
+            )}
+          </button>
           {stat(
             "Today",
             <>
