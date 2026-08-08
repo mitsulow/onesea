@@ -339,6 +339,14 @@ export default function UserPage() {
             </>
           )}
         </div>
+        {isWara && profile.member_no != null && (
+          <span
+            className="num ml-2 inline-block align-bottom rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-[#7a5a10]"
+            style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a", marginBottom: 6 }}
+          >
+            わらわ〜No.{String(profile.member_no).padStart(7, "0")}
+          </span>
+        )}
 
         <div className="relative mt-1.5">
           <h1 className="flex items-center gap-1.5 text-[21px] font-extrabold leading-snug text-[#3a3428]">
@@ -350,14 +358,6 @@ export default function UserPage() {
             <div className="text-[12px] text-[#a09888]">@Warawer{String(profile.member_no).padStart(7, "0")}</div>
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {isWara && profile.member_no != null && (
-              <span
-                className="num rounded-full px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-[#7a5a10]"
-                style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
-              >
-                わらわ〜No.{String(profile.member_no).padStart(7, "0")}
-              </span>
-            )}
           </div>
           {profile.status_line && (
             <div className="mt-0.5 text-[13px] font-medium text-[#5a5448]">{profile.status_line}</div>
