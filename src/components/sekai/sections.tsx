@@ -239,9 +239,14 @@ export function MootsSection({
       className="card"
       style={{ background: "linear-gradient(150deg,#0f1a25,#1a2a38)", border: "none", padding: "10px 8px 12px", scrollMarginTop: 56 }}
     >
-      {me && (
-        <div className="mb-1 px-1 text-right text-[10px] text-[#5a7a68]">あなたの参加 {mootCount}回</div>
-      )}
+      <div className="mb-1 flex items-center justify-between px-1">
+        <span className="flex items-center gap-1.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/cel-moon.png" alt="" className="h-[18px] w-[18px] object-contain" style={{ transform: "scaleX(-1)" }} />
+          <span className="text-[13px] font-extrabold tracking-[1px] text-[#f0e6c8]">セカイムラオンライン新月/満月会</span>
+        </span>
+        {me && <span className="text-[10px] text-[#5a7a68]">あなたの参加 {mootCount}回</span>}
+      </div>
 
       {/* テレビ画面（当日はここにZoomの導線が出る） */}
       {next && (
@@ -251,16 +256,6 @@ export function MootsSection({
             className="absolute inset-0"
             style={{ background: "linear-gradient(180deg, rgba(8,16,24,.25) 0%, rgba(8,16,24,.02) 45%, rgba(8,16,24,.55) 100%)" }}
           />
-          {/* 番組名 — テレビのフチ（上の枠）に乗せる。ツキヨガの半月がチャンネルロゴ */}
-          <div
-            className="absolute left-2.5 top-[1.5%] flex items-center gap-1.5"
-            style={{ textShadow: "0 1px 6px rgba(0,0,0,.95), 0 0 2px rgba(0,0,0,.9)" }}
-          >
-            <img src="/icons/cel-moon.png" alt="" className="h-[22px] w-[22px] object-contain drop-shadow" style={{ transform: "scaleX(-1)" }} />
-            <span className="text-[15px] font-extrabold tracking-[1px] text-[#f0e6c8]">
-              セカイムラオンライン新月/満月会
-            </span>
-          </div>
           {/* 案内パネル（30%の半透明地に文字を重ねる） */}
           <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 rounded-xl px-3 py-2.5 text-center" style={{ background: "rgba(8,16,24,.24)" }}>
             <div className="text-left text-[10px] font-bold tracking-[2px] text-[#a8d8b8]">Next</div>
