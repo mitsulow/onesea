@@ -227,6 +227,27 @@ export default function NewShopPage() {
                     <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換で</span>
                   </label>
+                  {/* ② 交換方法（受け渡しのしかた） */}
+                  <div className="mt-1">
+                    <div className="mb-1 text-[12px] font-extrabold text-[#8a7a5a]">② 交換方法を選ぶ</div>
+                    <div className="flex flex-col gap-1.5">
+                      {([["pickup", "取りに来てくれる人優先"], ["cod", "着払いでの郵送可"], ["both", "どちらもOK"]] as const).map(([v, label]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setHandover(v)}
+                          className="rounded-xl border-2 py-2 text-[13px] font-bold"
+                          style={
+                            handover === v
+                              ? { borderColor: "#c94d3a", background: "#fff3f0", color: "#c94d3a" }
+                              : { borderColor: "#ede5d8", background: "#fff", color: "#8a8070" }
+                          }
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>

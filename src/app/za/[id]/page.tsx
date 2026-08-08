@@ -233,6 +233,11 @@ export default function ShopDetailPage() {
             </span>
             <span className="flex gap-1 text-[13px] text-[#8a8070]">
               {shop.accepts_barter && <span><img src="/icons/icon-barter.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換OK</span>}
+              {shop.handover && (
+                <span style={{ color: "#5a7d4a", fontWeight: 700 }}>
+                  {shop.handover === "pickup" ? "🚶 取りに来てくれる人優先" : shop.handover === "cod" ? "📦 着払いでの郵送可" : "🚶📦 取りに来ても着払い郵送もOK"}
+                </span>
+              )}
               {shop.accepts_tip && <span><img src="/icons/icon-coin.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 投げ銭OK</span>}
             </span>
           </div>
@@ -349,6 +354,11 @@ export default function ShopDetailPage() {
                   ))}
                 </div>
               </div>
+            )}
+            {shop.market === "za" && (
+              <p className="rounded-xl bg-[#fdf6e4] px-3 py-2 text-center text-[11px] leading-relaxed text-[#8a7020]" style={{ border: "1px solid #e8d8a8" }}>
+                商品が売れた場合の発送料や金銭の授受は、個人同士でやり取りしてください
+              </p>
             )}
             <button
               onClick={contact}
