@@ -243,10 +243,15 @@ export function HomeDashboard() {
                   <IconSpan src="/icons/cel-sun.png" />
                   今日の叶いタイム <b className="mx-1 text-[14px]" style={{ color: "#c94d3a" }}>{best?.time ?? "—"}</b>
                   <span style={{ color: lv >= 90 ? "#c9002a" : lv >= 45 ? "#d97020" : "#a08c30" }}>（叶いレベル{lv}・{lv === 360 ? "最強" : lv === 180 ? "超すごい" : lv === 90 ? "凄い" : lv === 45 ? "かなり強い" : lv === 15 ? "強い" : lv === 5 ? "少し強い" : "普通"}）</span>
-                  {best?.sekki && <span className="ml-1 font-extrabold" style={{ color: "#2a8a4a" }}>「{best.sekki[0]}」の日です</span>}
+                  {best?.sekki && (
+                    <span className="ml-1 font-extrabold" style={{ color: lv >= 180 ? "#c9002a" : "#2a8a4a" }}>
+                      願い叶いレベル{lv === 360 ? "最強" : lv === 180 ? "超すごい" : lv === 90 ? "凄い" : lv === 45 ? "かなり強い" : "強め"}の日「{best.sekki[0]}点{best?.time ?? ""}」です
+                    </span>
+                  )}
+                  {best?.kou && <span className="ml-2" style={{ color: "#6a8a50" }}>七十二候「{best.kou[0]}」</span>}
                   <IconSpan src={moonImageOf(moon.age)} />
                   今日の月は月齢{moon.age.toFixed(1)}、{mt.rise ? `月の出は${mt.rise}` : mt.set ? `月の入りは${mt.set}` : ""}
-                  {holy && <span className="ml-1 font-extrabold" style={{ color: "#b8912a" }}>本日は{holy.name}（{holy.label}）{holy.time}です</span>}
+                  {holy && <span className="ml-1 font-extrabold" style={{ color: "#b8912a" }}>本日{holy.name}（{holy.label}）{holy.time}</span>}
                   {nearTide && (
                     <>
                       <IconSpan src="/icons/cel-earth.png" />
