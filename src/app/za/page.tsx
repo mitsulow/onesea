@@ -1,5 +1,6 @@
 "use client";
 
+import { HanaIchimonme } from "@/components/HanaIchimonme";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AvatarMenu } from "@/components/AvatarMenu";
@@ -22,12 +23,14 @@ export default function ZaPage() {
   const [category, setCategory] = useState<string | null>(null);
   const [market, setMarket] = useState<Market>("ichi");
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [me, setMe] = useState<import("@supabase/supabase-js").User | null>(null);
 
   useEffect(() => {
     // 未ログインでも閲覧できる公開ページ（URLシェア用）。
     // ログイン中ならアイコンを出してマイページへ飛べるようにする
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
+      setMe(session?.user ?? null);
       setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
       const uid = session?.user?.id;
       if (uid) {
@@ -93,16 +96,17 @@ export default function ZaPage() {
         <VillagerSuggestions title="おすすめの座主" sellersOnly />
 
         {/* 楽市 / 楽座 の切り替え */}
-        <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
           {(
             [
               ["ichi", "楽市", "０円かブツブツ交換"],
               ["za", "楽座", "有料でプロの商品"],
+              ["hana", "この指とまれ", "花いちもんめ"],
             ] as const
           ).map(([id, label, sub]) => (
             <button
               key={id}
-              onClick={() => setMarket(id)}
+              onClick={() => setMarket(id as any)} // eslint-disable-line @typescript-eslint/no-explicit-any
               className="rounded-xl py-2 text-center transition-colors"
               style={
                 market === id
@@ -116,6 +120,10 @@ export default function ZaPage() {
           ))}
         </div>
 
+        {market === ("hana" as any) ? ( // eslint-disable-line @typescript-eslint/no-explicit-any
+          <HanaIchimonme me={me} />
+        ) : (
+        <>
         {/* カテゴリチップ */}
         <div className="hide-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-2">
           <button
@@ -256,6 +264,8 @@ export default function ZaPage() {
               );
             })}
           </div>
+        )}
+        </>
         )}
       </div>
     </main>
