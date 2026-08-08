@@ -12,6 +12,7 @@ import {
   holyTimeOf,
   kyurekiFullLabel,
   moonNameOf,
+  gekkanOf,
   keyOf,
   todayKey,
   YOBI,
@@ -647,8 +648,8 @@ function BottomSheet({
 
   const tideRows: Array<[string, string, string]> = [];
   if (tide) {
-    for (const [t] of tide.high) tideRows.push(["満", t, "#3070b0"]);
-    for (const [t] of tide.low) tideRows.push(["干", t, "#88aacc"]);
+    for (const [t] of tide.high) tideRows.push(["満", t, "#0a7ac0"]);
+    for (const [t] of tide.low) tideRows.push(["干", t, "#b8862a"]);
     // 新聞式の「満満干干」ではなく、起こる時間順に並べる
     tideRows.sort((a, b) => a[1].localeCompare(b[1]));
   }
@@ -848,11 +849,25 @@ function BottomSheet({
                     ) : null;
                   })()}
                   {/* 右下: 月の出・南中・月の入 */}
-                  <div className="absolute bottom-2.5 right-3 z-10 text-right text-[11px] leading-relaxed text-[#b8b4c8]" style={{ textShadow: "0 0 6px #000" }}>
+                  <div className="absolute bottom-9 right-3 z-10 text-right text-[11px] leading-relaxed text-[#b8b4c8]" style={{ textShadow: "0 0 6px #000" }}>
                     <div>月の出 <span className="num text-white">{mt.rise ?? "—"}</span></div>
                     <div>南中 <span className="num text-white">{mt.transit ?? "—"}</span></div>
                     <div>月の入 <span className="num text-white">{mt.set ?? "—"}</span></div>
                   </div>
+                  {/* 下部: ツキヨガ月鑑 — その日の月の名前と、込めた想い */}
+                  {(() => {
+                    const g = gekkanOf(moon.age);
+                    return (
+                      <div
+                        className="absolute inset-x-0 bottom-0 z-10 px-3 pb-1.5 pt-4 text-center"
+                        style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,5,.92) 55%)" }}
+                      >
+                        <span className="text-[13px] font-extrabold text-[#f0e6c8]">{g.name}</span>
+                        <span className="ml-1 text-[9.5px] text-[#a8a0b8]">（{g.yomi}）</span>
+                        <span className="ml-1.5 text-[10.5px] leading-snug text-[#c8c0d8]">{g.imi}</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -930,6 +945,12 @@ function BottomSheet({
                           style={{ top: `${nodePct}%`, background: ac }}
                         >
                           <span
+                            className="absolute left-1 rounded px-0.5 text-[8px] font-bold"
+                            style={{ top: -7, color: ac, background: isEd ? "#fafdf8" : "#fff8ee" }}
+                          >
+                            叶い
+                          </span>
+                          <span
                             className="absolute right-1 rounded px-1 text-[8px] font-bold"
                             style={{ top: -7, color: ac, background: isEd ? "#fafdf8" : "#fff8ee" }}
                           >
@@ -940,14 +961,14 @@ function BottomSheet({
                       {marks.map((tm, i) => (
                         <div
                           key={i}
-                          className="pointer-events-none absolute left-0 right-0 z-[1] h-[1.5px] opacity-40"
+                          className="pointer-events-none absolute left-0 right-0 z-[1] h-[1.5px] opacity-55"
                           style={{ top: `${(tm.min / 60) * 100}%`, background: tm.color }}
                         >
                           <span
-                            className="absolute left-1 rounded bg-white px-0.5 text-[7px] font-semibold"
+                            className="absolute left-1 rounded bg-white px-0.5 text-[8px] font-bold"
                             style={{ top: -6, color: tm.color }}
                           >
-                            <img src="/icons/icon-wave.webp" alt="" style={{ width: 11, height: 11, display: "inline", verticalAlign: -1.5 }} />{tm.lb}
+                            🌊{tm.lb}潮
                           </span>
                         </div>
                       ))}

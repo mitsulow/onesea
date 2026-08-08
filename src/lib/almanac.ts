@@ -394,10 +394,66 @@ const MOON_NAMES_30: Record<number, [string, string]> = {
   29: ["つごもり", "晦・月籠"], 30: ["みそか", "晦日"],
 };
 
-/** その日の月の呼び名（ひらがな・漢字） */
+/**
+ * 🌙 ツキヨガ月鑑（つきよがげっかん）— ツキヨガの原点。
+ * みつろうが29個の想いを込めた「月の名前」と説明。名前は変更禁止（増補のみ可）。
+ * 月齢(0-28)で引く。朔望月29.53日と29個のズレは floor(月齢) を 0..28 に丸めてハメる。
+ */
+export const TSUKIYOGA_GEKKAN: Array<{ name: string; yomi: string; imi: string }> = [
+  { name: "朔月", yomi: "さくづき", imi: "始まりの静寂。すべてがリセットされる夜" },
+  { name: "繊月", yomi: "せんげつ", imi: "細い糸のような光。願いが芽吹く" },
+  { name: "三日月", yomi: "みかづき", imi: "夢を描く弓。未来への矢を放つ準備" },
+  { name: "黄昏月", yomi: "たそがれづき", imi: "夕空に浮かぶ淡い決意" },
+  { name: "宵月", yomi: "よいづき", imi: "宵の口に輝く希望の欠片" },
+  { name: "夕月", yomi: "ゆうづき", imi: "夕暮れと共に育つ想い" },
+  { name: "弓張月", yomi: "ゆみはりづき", imi: "弓を張るように意志を固める" },
+  { name: "上弦月", yomi: "じょうげんづき", imi: "決断の半月。迷いを断ち切る" },
+  { name: "九夜月", yomi: "くやづき", imi: "九つの夜を越えた成長の証" },
+  { name: "宵待月", yomi: "よいまちづき", imi: "満ちるを待つ心のときめき" },
+  { name: "十日夜", yomi: "とおかんや", imi: "収穫への感謝が芽生える" },
+  { name: "近待月", yomi: "ちかまちづき", imi: "もうすぐ満ちる。期待の高まり" },
+  { name: "小望月", yomi: "こもちづき", imi: "望みが形になる前夜" },
+  { name: "十三夜", yomi: "じゅうさんや", imi: "日本人が愛した美しき未完" },
+  { name: "待宵月", yomi: "まつよいづき", imi: "明日の満月を待つ宵" },
+  { name: "満月", yomi: "まんげつ", imi: "完全なる充足。感謝が満ちる夜" },
+  { name: "十六夜", yomi: "いざよい", imi: "ためらいながら昇る謙虚な光" },
+  { name: "立待月", yomi: "たちまちづき", imi: "立って待つほど恋しい月" },
+  { name: "居待月", yomi: "いまちづき", imi: "座して待つ余裕の心" },
+  { name: "寝待月", yomi: "ねまちづき", imi: "横になって待つ安らぎ" },
+  { name: "更待月", yomi: "ふけまちづき", imi: "夜更けに現れる静かな知恵" },
+  { name: "下弦月", yomi: "かげんづき", imi: "手放しの半月。執着を解く" },
+  { name: "二十三夜", yomi: "にじゅうさんや", imi: "二十三夜講。仲間と祈る夜" },
+  { name: "真夜中月", yomi: "まよなかづき", imi: "深夜に昇る内省の光" },
+  { name: "暁月", yomi: "あかつきづき", imi: "夜明け前の深い気づき" },
+  { name: "有明月", yomi: "ありあけづき", imi: "夜明けの空に残る儚さ" },
+  { name: "残月", yomi: "ざんげつ", imi: "消えゆく前の最後の輝き" },
+  { name: "暁闇月", yomi: "ぎょうあんづき", imi: "闇に溶ける手前の神秘" },
+  { name: "晦月", yomi: "つごもりづき", imi: "月隠り。次の朔への準備" },
+];
+
+/** その日の月鑑エントリ（月齢から） */
+export function gekkanOf(age: number): { name: string; yomi: string; imi: string } {
+  const i = Math.min(28, Math.max(0, Math.floor(age)));
+  return TSUKIYOGA_GEKKAN[i];
+}
+
+/**
+ * その日の月の呼び名（ひらがな・漢字）。
+ * ツキヨガ本体と全く同じ計算式（BASE_NEW_MOON + 朔望月29.530588853の深夜差分）で
+ * 旧暦日を出す — ツキヨガの毎日の表示と1日もズレないことが最優先。
+ */
 export function moonNameOf(dateKey: string): { yomi: string; kanji: string } {
-  const k = kyurekiOf(dateKey);
-  const [yomi, kanji] = MOON_NAMES_30[Math.min(30, Math.max(1, k.day))] ?? MOON_NAMES_30[1];
+  const [y, m, d] = dateKey.split("-").map(Number);
+  const BASE_NEW_MOON = Date.parse("2000-01-06T18:14:00Z");
+  const SYNODIC = 29.530588853;
+  const dayMs = 86400000;
+  const target = new Date(y, m - 1, d);
+  const daysSinceBase = (target.getTime() - BASE_NEW_MOON) / dayMs;
+  const cycleCount = Math.floor(daysSinceBase / SYNODIC);
+  const lastNewMoon = new Date(BASE_NEW_MOON + cycleCount * SYNODIC * dayMs);
+  const lnmMidnight = new Date(lastNewMoon.getFullYear(), lastNewMoon.getMonth(), lastNewMoon.getDate()).getTime();
+  const lunarDay = Math.round((target.getTime() - lnmMidnight) / dayMs) + 1;
+  const [yomi, kanji] = MOON_NAMES_30[Math.min(30, Math.max(1, lunarDay))] ?? MOON_NAMES_30[1];
   return { yomi, kanji };
 }
 
