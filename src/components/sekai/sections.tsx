@@ -167,6 +167,67 @@ export function useSekaiMe() {
   return { me, myPref, mootCount, refreshMootCount };
 }
 
+/** ☰で開く、セカイムラ内のタブ一覧（下タブと同じ並び） */
+const SEKAI_MENU = [
+  { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ トップ" },
+  { href: "/sekai/villages", icon: "/icons/icon-base.webp", label: "拠点" },
+  { href: "/sekai/clubs", icon: "/icons/icon-broom.webp", label: "部活" },
+  { href: "/sekai/kome", icon: "/icons/icon-rice.webp", label: "米部" },
+  { href: "/sekai/meister", icon: "/icons/icon-course.webp", label: "講座" },
+  { href: "/sekai/tasukete", icon: "/icons/icon-tasukete.webp", label: "助けて" },
+  { href: "/sekai/map", icon: "/icons/icon-japanmap.webp", label: "地図" },
+];
+
+/** 左上の三本線メニュー。floating=ヘッダーが無いページ用(左上に浮かせる) */
+export function SekaiMenuButton({ floating = false }: { floating?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="セカイムラメニュー"
+        className={
+          floating
+            ? "fixed left-3 z-[70] flex h-9 w-9 items-center justify-center rounded-full text-[19px] leading-none text-white shadow-md"
+            : "absolute left-3 top-1/2 -translate-y-1/2 text-[22px] leading-none text-[#eaf2ff]"
+        }
+        style={floating ? { background: "rgba(42,78,150,.9)", top: "calc(env(safe-area-inset-top) + 10px)" } : undefined}
+      >
+        ☰
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[85] bg-black/35" onClick={() => setOpen(false)} />
+          <div className="fixed left-0 top-0 z-[86] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
+            <div className="px-5 pb-2 pt-5">
+              <div className="text-[10px] tracking-[2px] text-[#8fb8e8]">世界は一つの村になる。</div>
+              <div className="text-[19px] font-extrabold" style={{ color: "#2a4e96" }}>セカイムラ</div>
+            </div>
+            {SEKAI_MENU.map((m) => {
+              const here = path === m.href || (m.href !== "/sekai" && path.startsWith(m.href));
+              return (
+                <Link
+                  key={m.href}
+                  href={m.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-3 border-b border-[#f0f2f6] px-5 py-3 text-[14px] no-underline ${
+                    here ? "bg-[#e8f0fc] font-bold text-[#2a4e96]" : "font-medium text-[#1c1e21]"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
+                  {m.label}
+                </Link>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 /** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
@@ -175,6 +236,7 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
       <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#4a6ab0] px-6 text-center" style={{ background: "#2a4e96" }}>
         <div className="text-[10px] leading-tight tracking-[3px] text-[#8fb8e8]">世界は一つの村になる。</div>
         <div className="text-[17px] font-extrabold leading-snug tracking-[6px] text-[#eaf2ff]">セカイムラ</div>
+        <SekaiMenuButton />
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-left">
           <AvatarMenu />
         </span>

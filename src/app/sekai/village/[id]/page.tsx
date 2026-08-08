@@ -25,7 +25,7 @@ import {
 } from "@/lib/sekai";
 import { CameraIcon } from "@/components/CameraIcon";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
-import { linkify } from "@/components/sekai/sections";
+import { linkify, SekaiMenuButton } from "@/components/sekai/sections";
 import { srcCdn } from "@/lib/images";
 
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
@@ -181,6 +181,7 @@ export default function VillagePage() {
 
   return (
     <main className="pb-20">
+      <SekaiMenuButton floating />
       <header
         className="px-4 pb-5 pt-4 text-center"
         style={{

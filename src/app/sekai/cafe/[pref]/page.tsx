@@ -1,5 +1,6 @@
 "use client";
 
+import { SekaiMenuButton } from "@/components/sekai/sections";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -394,6 +395,7 @@ export default function CafePage() {
 
   return (
     <main className="flex min-h-screen flex-col" style={{ background: "linear-gradient(165deg,#171310,#241c14)" }}>
+      <SekaiMenuButton floating />
       <header className="flex items-center justify-between px-4 pb-3 pt-4">
         <Link href="/sekai" className="text-[13px] font-bold text-[#c8a878] no-underline">
           ◀ セカイムラ

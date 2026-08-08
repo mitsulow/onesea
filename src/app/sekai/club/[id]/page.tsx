@@ -1,5 +1,6 @@
 "use client";
 
+import { SekaiMenuButton } from "@/components/sekai/sections";
 import { PhotoCropper } from "@/components/PhotoCropper";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -91,6 +92,7 @@ export default function ClubPage() {
 
   return (
     <main className="pb-20">
+      <SekaiMenuButton floating />
       <header
         className="relative px-4 pb-5 pt-4 text-center"
         style={
