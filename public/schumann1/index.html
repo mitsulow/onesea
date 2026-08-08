@@ -1532,7 +1532,7 @@
     <div class="dv-panel">
       <div class="dv-block">
         <div class="dv-title">〇いまの太陽の姿 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
-        <video id="sun-video" controls muted loop playsinline preload="none" poster="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;"></video>
+        <video id="sun-video" muted loop playsinline preload="none" poster="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;"></video>
         <div id="sun-video-credit" style="margin-top:0.3rem;text-align:center;font-size:0.68rem;color:#8aa8d0;">動画: NICT宇宙天気予報センター提供（SDO 304Å・自動更新・ループ再生）</div>
         <img id="sun-img" src="" alt="いまの太陽 (SDO 304Å)" referrerpolicy="no-referrer" style="display:none;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
         <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
@@ -3528,8 +3528,8 @@
           const last = longs[longs.length - 1];
           if (!last) return;
           const c = cls(last.flux);
-          el.innerHTML = '☀ いまのX線フラックス <b style="color:' + c[2] + ';font-size:1.25em;">' + c[0] + c[1].toFixed(1) + '</b>'
-            + '<span style="color:#9fb2c8;font-weight:400;"> クラス（' + (c[0] === "X" || c[0] === "M" ? "フレア発生中！" : c[0] === "C" ? "小さなフレア" : "静穏") + '）</span>';
+          el.innerHTML = '☀ いまのX線は <b style="color:' + c[2] + ';font-size:1.25em;">' + c[0] + 'クラスの' + c[1].toFixed(1) + '</b>'
+            + '<span style="color:#9fb2c8;font-weight:400;">（' + (c[0] === "X" || c[0] === "M" ? "フレア発生中！" : c[0] === "C" ? "小さなフレア" : "静穏") + '）</span>';
           const st = document.getElementById("stat-sun");
           if (st) st.innerHTML = '<span style="color:' + c[2] + ';">' + c[0] + c[1].toFixed(1) + '</span><span style="font-size:0.6em;color:#c8a060;"> ' + (c[0] === "X" || c[0] === "M" ? "フレア中" : c[0] === "C" ? "小フレア" : "静穏") + '</span>';
         }).catch(() => {});
