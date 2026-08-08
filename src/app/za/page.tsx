@@ -93,8 +93,8 @@ export default function ZaPage() {
         <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[#ede5d8] bg-[#f5efe2] p-1">
           {(
             [
-              ["ichi", "楽市", "０円またはブツブツ交換"],
-              ["za", "楽座", "プロの商品をお安く"],
+              ["ichi", "楽市", "０円かブツブツ交換"],
+              ["za", "楽座", "有料でプロの商品"],
             ] as const
           ).map(([id, label, sub]) => (
             <button
