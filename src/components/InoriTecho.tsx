@@ -389,12 +389,12 @@ function MonthCal({
           ◀
         </button>
         <span className="flex flex-col items-center leading-none">
+          <span className="text-[17px] font-extrabold text-[#2a2a2a]">{ML[mi]}</span>
           {onFullscreen && (
-            <button onClick={onFullscreen} className="mb-[1px] rounded-full border border-[#e0d8c8] bg-white px-2 py-[1px] text-[8.5px] font-bold text-[#8a7a5a]">
+            <button onClick={onFullscreen} className="mt-[2px] rounded-full border border-[#e0d8c8] bg-white px-2 py-[1px] text-[8.5px] font-bold text-[#8a7a5a]">
               ↗ 全画面表示
             </button>
           )}
-          <span className="text-[17px] font-extrabold text-[#2a2a2a]">{ML[mi]}</span>
         </span>
         <button
           onClick={() => mi < MONTHS.length - 1 && setMi(mi + 1)}
@@ -1403,25 +1403,38 @@ function FullscreenCal({
               className="flex flex-col items-stretch justify-start overflow-hidden border-b border-r border-[#f0ede8] px-[2px] py-[1px] text-left"
               style={{ background: isT ? "#fff2ec" : l >= 4 ? "#fdf4f0" : "#fff", boxShadow: isT ? "inset 0 0 0 2px #c05030" : "none" }}
             >
-              <div className="flex items-start justify-between leading-none">
+              <div className="flex items-start gap-[3px] leading-none">
                 <span className="text-[11px] font-bold" style={{ color: di === 0 ? "#c05030" : di === 6 ? "#3070b0" : "#444" }}>{d}</span>
                 <span className="text-[8px] opacity-85">{moon.emoji}</span>
               </div>
               {l >= 3 && ev?.sekki && (
-                <div className="truncate text-[8px] font-extrabold leading-tight" style={{ color: l >= 4 ? "#c05030" : "#8b6914" }}>
+                <div
+                  className="mt-[1px] truncate rounded-[3px] px-[3px] text-center text-[8px] font-extrabold leading-[1.4] text-white"
+                  style={{ background: l >= 4 ? "#c02020" : "#b8912a" }}
+                >
                   {ev.sekki[0]}
                 </div>
               )}
-              {chips.slice(0, 4).map((c, j) => (
-                <div
-                  key={j}
-                  className="mx-auto mt-[1px] w-fit max-w-full truncate rounded-[3px] px-[3px] text-center text-[8px] font-bold leading-[1.35] text-white"
-                  style={{ background: c.c }}
-                >
-                  {c.text}
-                </div>
-              ))}
-              {chips.length > 4 && <div className="text-[7px] leading-none text-[#a09880]">+{chips.length - 4}</div>}
+              {(() => {
+                // 画面の縦に余白がある限り予定を並べる(はみ出す分だけ+n)
+                const cellH = (window.innerHeight - 60) / rows;
+                const used = 15 + (l >= 3 && ev?.sekki ? 13 : 0);
+                const cap = Math.max(1, Math.floor((cellH - used - 8) / 13));
+                return (
+                  <>
+                    {chips.slice(0, cap).map((c, j) => (
+                      <div
+                        key={j}
+                        className="mx-auto mt-[1px] w-fit max-w-full truncate rounded-[3px] px-[3px] text-center text-[8px] font-bold leading-[1.35] text-white"
+                        style={{ background: c.c }}
+                      >
+                        {c.text}
+                      </div>
+                    ))}
+                    {chips.length > cap && <div className="text-center text-[7px] leading-none text-[#a09880]">+{chips.length - cap}</div>}
+                  </>
+                );
+              })()}
             </button>
           );
         })}
