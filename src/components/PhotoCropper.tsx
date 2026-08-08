@@ -134,7 +134,7 @@ export function PhotoCropper({
       <p className="mt-1.5 text-[11px] text-white/60">ドラッグで位置を動かす・スライダーでズーム</p>
       <div className="mt-4 flex w-full max-w-[340px] gap-2">
         <button onClick={() => onDone(null)} className="rounded-xl px-4 py-2.5 text-[13px] font-bold text-white/70">
-          やめる
+          キャンセル
         </button>
         <button
           onClick={done}

@@ -191,6 +191,7 @@ export function InoriTecho() {
       try {
         localStorage.setItem("techo-memos", JSON.stringify(next));
       } catch {}
+      window.dispatchEvent(new Event("onesea:techoChanged")); // トップの「次の予定」を即同期
       if (uidRef.current && waraCloud === "warawa") scheduleTechoBackup(uidRef.current);
       return next;
     });
@@ -211,6 +212,7 @@ export function InoriTecho() {
       try {
         localStorage.setItem("techo-memos", JSON.stringify(next));
       } catch {}
+      window.dispatchEvent(new Event("onesea:techoChanged")); // トップの「次の予定」を即同期
       if (uidRef.current && waraCloud === "warawa") scheduleTechoBackup(uidRef.current);
       return next;
     });
@@ -1164,7 +1166,7 @@ function BottomSheet({
                 onClick={() => setPenEdit(!penEdit)}
                 className="ml-auto mt-1 rounded-full border border-[#e0dcd0] px-2 py-1 text-[10px] font-bold text-[#8a8070]"
               >
-                {penEdit ? "完了" : "タグ名"}
+                {penEdit ? "完了" : "タグ名を自分で変更"}
               </button>
             </div>
             <div className="mt-3 flex gap-2">
@@ -1180,7 +1182,7 @@ function BottomSheet({
                 </button>
               )}
               <button onClick={() => setEvEdit(null)} className="rounded-xl px-3 py-2.5 text-[12.5px] font-bold text-[#999]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={() => {

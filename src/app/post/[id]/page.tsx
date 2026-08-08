@@ -104,7 +104,7 @@ export default function PostDetailPage() {
               />
               <div className="mt-2 flex gap-2">
                 <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a09888]">
-                  やめる
+                  キャンセル
                 </button>
                 <button
                   onClick={async () => {

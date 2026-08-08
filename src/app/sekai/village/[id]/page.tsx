@@ -408,7 +408,7 @@ export default function VillagePage() {
           </select>
           <div className="flex gap-2">
             <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-              やめる
+              キャンセル
             </button>
             <button
               onClick={saveEdit}
@@ -640,7 +640,7 @@ function VillageSns({ village, isLeader, onSaved, villageId }: { village: any; i
             </div>
           ))}
           <div className="flex gap-2 pt-1">
-            <button onClick={() => setEditing(false)} className="flex-1 rounded-lg border border-white/20 py-1.5 text-[11px] font-bold text-[#c8dcc8]">やめる</button>
+            <button onClick={() => setEditing(false)} className="flex-1 rounded-lg border border-white/20 py-1.5 text-[11px] font-bold text-[#c8dcc8]">キャンセル</button>
             <button
               onClick={async () => {
                 const clean: Record<string, string> = {};

@@ -99,6 +99,7 @@ export function HomeDashboard() {
         .catch(() => {});
     loadSchumann();
     const schT = setInterval(loadSchumann, 10 * 60000);
+    const loadPlans = () => {
     try {
       const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
       const byDay: Record<string, Array<{ time: string; text: string; color?: string }>> = {};
@@ -125,6 +126,9 @@ export function HomeDashboard() {
       setDayPlans(byDay);
       setPlanKeys(keys);
     } catch {}
+    };
+    loadPlans();
+    window.addEventListener("onesea:techoChanged", loadPlans); // 手帳で消したら即トップからも消す
     const supabase = createClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const uid = session?.user?.id;
@@ -134,7 +138,10 @@ export function HomeDashboard() {
         setAdvDays(Math.floor((Date.now() - new Date(prof.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1);
       }
     });
-    return () => clearInterval(schT);
+    return () => {
+      clearInterval(schT);
+      window.removeEventListener("onesea:techoChanged", loadPlans);
+    };
   }, [tk]);
 
   const openToday = () => window.dispatchEvent(new Event("onesea:openToday"));

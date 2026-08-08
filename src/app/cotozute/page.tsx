@@ -905,7 +905,7 @@ export default function CotozutePage() {
                 }}
                 className="ml-auto px-2 py-2 text-[13px] font-bold text-white/70"
               >
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={bakeAndPost}

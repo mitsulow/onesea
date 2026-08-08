@@ -895,7 +895,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
             <div className="flex gap-2">
               <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={publish}
@@ -1257,7 +1257,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
             <div className="flex gap-2">
               <button onClick={() => setEvWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={publish}
@@ -1836,7 +1836,7 @@ export function VillagesSection({
             />
             <div className="flex gap-2">
               <button onClick={() => setCreating(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={create}
@@ -1991,7 +1991,7 @@ export function ClubsSection({ me }: { me: User | null }) {
             </div>
             <div className="flex gap-2">
               <button onClick={() => setCreating(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={create}
@@ -2138,7 +2138,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
             </div>
             <div className="flex gap-2">
               <button onClick={() => setAdding(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={save}
@@ -2286,7 +2286,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
             </div>
             <div className="flex gap-2">
               <button onClick={() => setAdding(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={save}
@@ -2604,7 +2604,7 @@ export function TasuketeSection({ me, myPref, router }: { me: User | null; myPre
             </div>
             <div className="flex gap-2">
               <button onClick={() => setAdding(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                やめる
+                キャンセル
               </button>
               <button
                 onClick={save}
