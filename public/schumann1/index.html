@@ -1503,11 +1503,13 @@
         <div class="dv-title">■生の数値（30分ごと） <span>実測F1をそのまま・下へスクロールするほど過去へ・2018年5月〜</span></div>
         <style>
           #lgr-list { max-height: 480px; overflow-y: auto; margin: 0.3rem 0.9rem 0.7rem; border: 1px solid rgba(120,180,255,.15); border-radius: 10px; font-family: 'JetBrains Mono', 'Noto Sans JP', monospace; overscroll-behavior: contain; }
-          .lgr-row { padding: 0.22rem 0.8rem; font-size: 0.86rem; color: #9fb2c8; border-bottom: 1px dashed rgba(120,180,255,.10); white-space: nowrap; }
-          .lgr-row b { color: #5ad48f; font-weight: 700; margin-left: 0.6em; }
-          .lgr-row:nth-child(even) { background: rgba(255,255,255,.025); }
+          .lgr-row { padding: 0.2rem 0.8rem; font-size: 0.84rem; color: #9fb2c8; white-space: nowrap; transition: transform 0.25s ease; }
+          .lgr-row b { font-weight: 700; margin-left: 0.6em; }
           .lgr-more { padding: 0.6rem; text-align: center; color: #7d829a; font-size: 0.78rem; }
         </style>
+        <div style="margin:0.35rem 0.9rem 0;font-size:0.7rem;letter-spacing:0.04em;color:#7d829a;text-align:center;">
+          <span style="color:#5aa8ff;">■</span>〜7.70　<span style="color:#5ad48f;">■</span>7.71〜7.90　<span style="color:#ffd60a;">■</span>7.91〜8.01　<span style="color:#ff6a5a;">■</span>8.02〜　·　低いほど左・高いほど右へうねります
+        </div>
         <div id="lgr-list"><div class="lgr-more">開くと読み込みます…</div></div>
       </div>
       <script>
@@ -1552,7 +1554,12 @@
               n++;
               var hh = Math.floor(q2 / 2);
               var mm = q2 % 2 ? "30" : "00";
-              html += '<div class="lgr-row">' + y + "年" + mo + "月" + d + "日 " + hh + ":" + mm + "<b>" + b.f1.toFixed(2) + "Hz</b></div>";
+              // 4色: 〜7.70青 / 〜7.90緑 / 〜8.01黄 / 8.02〜赤(表示と同じ2桁丸めで判定)
+              var fr = Number(b.f1.toFixed(2));
+              var col = fr >= 8.02 ? "#ff6a5a" : fr >= 7.91 ? "#ffd60a" : fr >= 7.71 ? "#5ad48f" : "#5aa8ff";
+              // 低いほど左・高いほど右へ泳ぐ(列全体が周波数の波形を描く)
+              var xr = Math.max(0, Math.min(1, (fr - 7.55) / 0.6));
+              html += '<div class="lgr-row" style="transform:translateX(' + (xr * 30).toFixed(1) + '%)">' + y + "年" + mo + "月" + d + "日 " + hh + ":" + mm + '<b style="color:' + col + '">' + b.f1.toFixed(2) + "Hz</b></div>";
             }
             if (n) list.insertAdjacentHTML("beforeend", html);
             return n;
