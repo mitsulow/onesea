@@ -23,6 +23,7 @@ export default function GroupChatPage() {
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement | null>(null); // 入力欄(自動で膨らむ)
   const meRef = useRef<User | null>(null);
 
   const load = useCallback(async () => {
@@ -81,6 +82,7 @@ export default function GroupChatPage() {
     setSending(true);
     const text = body.trim();
     setBody("");
+    if (taRef.current) taRef.current.style.height = "auto";
     await sendGroupMessage(type, id, me.id, text);
     setSending(false);
     load();
@@ -170,8 +172,14 @@ export default function GroupChatPage() {
       {/* 入力欄 */}
       <div className="sticky bottom-14 flex items-end gap-2 border-t border-[#e5dccb] bg-[#fffdf8] px-3 py-2">
         <textarea
+          ref={taRef}
           value={body}
-          onChange={(e) => setBody(e.target.value)}
+          onChange={(e) => {
+            setBody(e.target.value);
+            const el = e.currentTarget;
+            el.style.height = "auto";
+            el.style.height = Math.min(el.scrollHeight, 112) + "px"; // 行が増えたら入力欄も膨らむ(上限4行ほど)
+          }}
           placeholder="みんなへメッセージ..."
           rows={1}
           className="max-h-28 min-h-[38px] flex-1 resize-none rounded-2xl border border-[#e8dcc4] bg-white px-3.5 py-2 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"

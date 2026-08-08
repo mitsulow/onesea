@@ -1,5 +1,6 @@
 "use client";
 
+import { moonOracleIdxOf } from "@/lib/almanac";
 import { TechoBackupCard } from "@/components/TechoBackupCard";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -115,6 +116,7 @@ export default function ProfileSettingsPage() {
         wants_to_do: toArr(wants),
         sns: Object.keys(snsClean).length ? snsClean : null,
         birthday: birthday || null,
+        moon_type: birthday ? moonOracleIdxOf(birthday, birthTime || "15:00") : null, // ツキヨガ12タイプ(マイページ表示用)
       })
       .eq("id", me.id);
     // 誕生日・誕生時刻はツキヨガ月占い等が読む private_profiles にも同期

@@ -450,3 +450,32 @@ export function holyTimeOf(dateKey: string): { name: string; label: string; time
   }
   return null;
 }
+
+
+/* ---- ツキヨガ月占い 12タイプ（本体 tsukiyoga-v7 と全く同じ式） ----
+ * 4色(黒紅白蒼) × 3動物(うさぎ/カメ/ワニ)。誕生日の月齢で決まる。
+ * マイページにキャラを自動表示するために使う。 */
+export const MOON_ORACLE_TYPES = [
+  { name: "黒いうさぎ", moon: "シンゲツ", kanji: "新月" },
+  { name: "黒いカメ", moon: "ミカヅキ", kanji: "三日月" },
+  { name: "黒いワニ", moon: "ユウヅキ", kanji: "夕月" },
+  { name: "紅いうさぎ", moon: "カタミニ", kanji: "互に" },
+  { name: "紅いカメ", moon: "トオカンヤ", kanji: "十日夜" },
+  { name: "紅いワニ", moon: "アタラヨ", kanji: "可惜夜" },
+  { name: "白いうさぎ", moon: "マンゲツ", kanji: "満月" },
+  { name: "白いカメ", moon: "イザヨイ", kanji: "十六夜" },
+  { name: "白いワニ", moon: "ネマチ", kanji: "寝待月" },
+  { name: "蒼いうさぎ", moon: "アリアケ", kanji: "有明" },
+  { name: "蒼いカメ", moon: "ホシアヒ", kanji: "星合" },
+  { name: "蒼いワニ", moon: "アケボノ", kanji: "曙" },
+] as const;
+
+/** 誕生日(+時刻JST・未入力は15時) → 12タイプindex。不正な日付は -1 */
+export function moonOracleIdxOf(birthday: string, birthTime = "15:00"): number {
+  const BASE = Date.parse("2000-01-06T18:14:00Z");
+  const SYN = 29.530588853;
+  const t = Date.parse(`${birthday}T${birthTime}:00+09:00`);
+  if (Number.isNaN(t)) return -1;
+  const age = ((((t - BASE) / 86400000) % SYN) + SYN) % SYN;
+  return Math.min(11, Math.floor(age / (SYN / 12)));
+}

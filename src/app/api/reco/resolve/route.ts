@@ -21,14 +21,22 @@ function pickMeta(html: string, prop: string): string | null {
   return m ? m[1].replace(/&amp;/g, "&") : null;
 }
 
-function pickCoords(text: string): { lat: number; lng: number } | null {
+/** 店そのものを指す座標（!3d!4dのピン / q=の明示指定）だけを拾う */
+function pickPin(text: string): { lat: number; lng: number } | null {
   const pin = text.match(/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/);
   if (pin) return { lat: parseFloat(pin[1]), lng: parseFloat(pin[2]) };
-  const at = text.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
-  if (at) return { lat: parseFloat(at[1]), lng: parseFloat(at[2]) };
   const q = text.match(/[?&](?:q|query|center)=(-?\d{1,2}\.\d+)(?:%2C|,)(-?\d{1,3}\.\d+)/);
   if (q) return { lat: parseFloat(q[1]), lng: parseFloat(q[2]) };
   return null;
+}
+
+/**
+ * @lat,lng は「地図画面の中心」＝ 共有した人の現在地のことがある（店の位置とは限らない）。
+ * 他の手段が全部ダメだった時だけの最終フォールバック。
+ */
+function pickViewport(text: string): { lat: number; lng: number } | null {
+  const at = text.match(/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/);
+  return at ? { lat: parseFloat(at[1]), lng: parseFloat(at[2]) } : null;
 }
 
 function cleanName(t: string | null): string | null {
@@ -65,7 +73,18 @@ async function nominatim(name: string): Promise<{ lat: number; lng: number; labe
       { headers: { "user-agent": "OneSea/1.0 (reco resolver)" } }
     );
     const j = await r.json();
-    if (Array.isArray(j) && j[0]) return { lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon), label: j[0].display_name };
+    if (Array.isArray(j) && j[0]) {
+      const label = String(j[0].display_name ?? "");
+      // 別物ヒット対策（例: クボー御嶽→川越の久保川）: 結果の住所に店名の2文字が含まれなければ捨てる
+      const n = name.replace(/\s+/g, "");
+      let ok = false;
+      for (let i = 0; i + 2 <= n.length; i++) {
+        const g = n.slice(i, i + 2);
+        if (/[^\x20-\x7e]/.test(g) && label.includes(g)) { ok = true; break; }
+      }
+      if (!ok && /^[\x20-\x7e]+$/.test(n)) ok = label.toLowerCase().includes(n.toLowerCase().slice(0, 4));
+      if (ok) return { lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon), label };
+    }
   } catch {}
   return null;
 }
@@ -116,7 +135,7 @@ export async function GET(req: NextRequest) {
     if (!name && hint) name = hint;
 
     // 座標: 最終URL → HTML本文
-    coords = pickCoords(finalUrl) ?? pickCoords(html);
+    coords = pickPin(finalUrl) ?? pickPin(html);
 
     // 画像
     image = pickImage(html, true);
@@ -131,6 +150,9 @@ export async function GET(req: NextRequest) {
         coords = { lat: g.lat, lng: g.lng };
       }
     }
+
+    // 最終手段: 地図画面の中心（共有者の現在地かもしれないので一番最後）
+    if (!coords) coords = pickViewport(finalUrl);
 
     if (!name && !coords) {
       return NextResponse.json({ error: "parse_failed" }, { status: 422 });

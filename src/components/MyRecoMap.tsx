@@ -50,12 +50,15 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
       const d = await r.json();
       if (!r.ok || (!d.name && d.lat == null)) {
         setMsg("リンクを読めませんでした。Googleマップ/Google検索の共有ボタンからコピーしたものを貼ってください");
+      } else if (d.lat == null || d.lng == null) {
+        // 場所が読めないまま保存すると東京駅にニセピンが立つので、保存せずお願いする
+        setMsg("場所（座標）が読めませんでした。Googleマップのアプリでお店を開いて「共有 → リンクをコピー」で貼ると確実です");
       } else {
         const created = await addRecoShop(userId, {
           name: (d.name as string) || hint || (isPower ? "パワースポット" : "お店"),
           category: cat,
-          lat: (d.lat as number) ?? 35.68,
-          lng: (d.lng as number) ?? 139.76,
+          lat: d.lat as number,
+          lng: d.lng as number,
           address: null,
           image_url: (d.image as string) ?? null,
           source_url: url, // 共有リンクをそのまま保存（詳細ボタンで開く）

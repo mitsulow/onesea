@@ -1,5 +1,6 @@
 "use client";
 
+import { MOON_ORACLE_TYPES, moonOracleIdxOf } from "@/lib/almanac";
 import { fetchFollowingProfiles } from "@/lib/follows";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -39,6 +40,7 @@ interface FullProfile {
   member_no: number | null;
   created_at: string | null;
   birthday: string | null;
+  moon_type?: number | null;
   warawa_until: string | null;
 }
 
@@ -84,7 +86,7 @@ export default function UserPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at, birthday, warawa_until")
+      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at, birthday, warawa_until, moon_type")
       .eq("username", username)
       .maybeSingle();
     const prof = (data as FullProfile) ?? null;
@@ -304,6 +306,26 @@ export default function UserPage() {
             <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
           </span>
         )}
+        {/* ツキヨガ月占いのキャラ（誕生日から自動） */}
+        {profile.birthday &&
+          (() => {
+            const oi = profile.moon_type ?? moonOracleIdxOf(profile.birthday);
+            if (oi < 0 || oi > 11) return null;
+            return (
+              <a
+                href="/tsukiyoga-v7/index.html"
+                title="ツキヨガ月占い"
+                className="absolute right-4 top-[27px] flex items-center gap-1.5 rounded-full border border-[#e8dcc4] bg-white/90 py-0.5 pl-1 pr-2.5 text-[11px] font-extrabold text-[#6a5f4e] shadow-sm"
+              >
+                <img
+                  src={`/tsukiyoga-v7/character_icons/char_${String(oi).padStart(2, "0")}.png`}
+                  alt=""
+                  className="h-6 w-6 rounded-full object-cover"
+                />
+                {MOON_ORACLE_TYPES[oi].name}
+              </a>
+            );
+          })()}
         <div className="relative -mt-11 inline-block">
           {profile.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element

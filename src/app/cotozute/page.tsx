@@ -1,6 +1,6 @@
 "use client";
 
-import { fetchFollowees, seenSet, markSeen } from "@/lib/follows";
+import { markSeen } from "@/lib/follows";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
@@ -89,6 +89,7 @@ export default function CotozutePage() {
   const [storySize, setStorySize] = useState(30); // 文字サイズ（プレビューpx・ピンチで変更）
   const [storyRot, setStoryRot] = useState(0); // 回転（度・二本指）
   const storyPinch = useRef<{ d0: number; a0: number; size0: number; rot0: number } | null>(null);
+  const storyDrag = useRef<{ x0: number; y0: number; px: number; py: number } | null>(null); // 1本指ドラッグ(相対移動)
   const storyBoxRef = useRef<HTMLDivElement>(null);
   const storySwipe = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const [pull, setPull] = useState(0);
@@ -155,28 +156,16 @@ export default function CotozutePage() {
       }
     });
     fetchMixedFeed(null, PAGE).then(async (list) => {
-      // ★おススメ順: 未読 → フォロー中 → いいね多い → 新しい。少ない時は結局全部並ぶ
+      // ★新着順が最優先（同じ古い投稿がずっと上に居座らないように）
       try {
-        const { data: { session: s2 } } = await supabase.auth.getSession();
-        const fl = s2?.user ? await fetchFollowees(s2.user.id) : new Set<string>();
-        const seen = seenSet();
         const meta = (it: FeedItem) =>
           it.kind === "coto"
             ? { id: it.post.id, uid: it.post.user_id, at: it.post.created_at, likes: it.post.likes?.[0]?.count ?? 0 }
             : it.kind === "mura"
               ? { id: it.mura.id, uid: it.mura.user_id ?? "", at: it.mura.created_at, likes: 0 }
               : { id: feedKey(it), uid: "", at: new Date(0).toISOString(), likes: 0 };
-        const score = (it: FeedItem) => {
-          const m = meta(it);
-          let sc = 0;
-          if (!seen.has(m.id)) sc += 1_000_000;
-          if (fl.has(m.uid)) sc += 100_000;
-          sc += Math.min(m.likes, 99) * 1000;
-          sc += Math.max(0, 999 - Math.floor((Date.now() - new Date(m.at).getTime()) / 3600e3));
-          return sc;
-        };
-        list = [...list].sort((a, b) => score(b) - score(a));
-        markSeen(list.map((it) => meta(it).id)); // 一回見たら次は違う投稿が上に来る
+        list = [...list].sort((a, b) => new Date(meta(b).at).getTime() - new Date(meta(a).at).getTime());
+        markSeen(list.map((it) => meta(it).id));
       } catch {}
       setItems(list);
       itemsRef.current = list;
@@ -450,7 +439,7 @@ export default function CotozutePage() {
             ＋
           </span>
           <div className="px-1 pt-5 text-center text-[10.5px] font-bold leading-snug text-[#1c1e21]">
-            {storyUploading ? "投稿中..." : "ストーリーズを作成"}
+            {storyUploading ? "投稿中..." : "消える言伝を作成"}
           </div>
         </label>
       )}
@@ -826,11 +815,76 @@ export default function CotozutePage() {
       {/* ストーリー作成エディタ（ネオン文字を写真に乗せる） */}
       {storyDraft && (
         <div className="fixed inset-0 z-[93] flex flex-col bg-black" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-          <div ref={storyBoxRef} className="relative flex-1 overflow-hidden">
+          <div
+            ref={storyBoxRef}
+            className="relative flex-1 overflow-hidden"
+            style={{ touchAction: "none" }}
+            onTouchStart={(e) => {
+              if (!storyText.trim()) return;
+              if (e.touches.length >= 2) {
+                const [a, b] = [e.touches[0], e.touches[1]];
+                storyPinch.current = {
+                  d0: Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
+                  a0: Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX),
+                  size0: storySize,
+                  rot0: storyRot,
+                };
+                storyDrag.current = null;
+              } else {
+                const t = e.touches[0];
+                storyDrag.current = { x0: t.clientX, y0: t.clientY, px: storyPos.x, py: storyPos.y };
+              }
+            }}
+            onTouchMove={(e) => {
+              if (!storyText.trim()) return;
+              if (e.touches.length >= 2 && storyPinch.current) {
+                const [a, b] = [e.touches[0], e.touches[1]];
+                const d = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+                const ang = Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX);
+                setStorySize(Math.min(90, Math.max(13, storyPinch.current.size0 * (d / storyPinch.current.d0))));
+                let rot = storyPinch.current.rot0 + ((ang - storyPinch.current.a0) * 180) / Math.PI;
+                rot = ((rot % 360) + 540) % 360 - 180;
+                if (Math.abs(rot) < 6) rot = 0; // まっすぐ付近はピタッと水平に吸い付く
+                setStoryRot(rot);
+                return;
+              }
+              const r = storyBoxRef.current?.getBoundingClientRect();
+              const g = storyDrag.current;
+              if (!r || !g) return;
+              const t = e.touches[0];
+              setStoryPos({
+                x: Math.min(0.95, Math.max(0.05, g.px + (t.clientX - g.x0) / r.width)),
+                y: Math.min(0.92, Math.max(0.08, g.py + (t.clientY - g.y0) / r.height)),
+              });
+            }}
+            onTouchEnd={(e) => {
+              if (e.touches.length < 2) storyPinch.current = null;
+              if (e.touches.length === 0) storyDrag.current = null;
+            }}
+            onMouseDown={(e) => {
+              if (!storyText.trim()) return;
+              const r = storyBoxRef.current?.getBoundingClientRect();
+              if (!r) return;
+              const g = { x0: e.clientX, y0: e.clientY, px: storyPos.x, py: storyPos.y };
+              const onMove = (ev: MouseEvent) => {
+                setStoryPos({
+                  x: Math.min(0.95, Math.max(0.05, g.px + (ev.clientX - g.x0) / r.width)),
+                  y: Math.min(0.92, Math.max(0.08, g.py + (ev.clientY - g.y0) / r.height)),
+                });
+              };
+              const onUp = () => {
+                window.removeEventListener("mousemove", onMove);
+                window.removeEventListener("mouseup", onUp);
+              };
+              window.addEventListener("mousemove", onMove);
+              window.addEventListener("mouseup", onUp);
+              e.preventDefault();
+            }}
+          >
             <img src={srcCdn(storyDraft.url)} alt="" className="absolute inset-0 h-full w-full object-contain" />
             {storyText.trim() && (
               <div
-                className="absolute cursor-grab touch-none select-none whitespace-pre-wrap text-center font-extrabold"
+                className="pointer-events-none absolute select-none whitespace-pre-wrap text-center font-extrabold"
                 style={{
                   left: `${storyPos.x * 100}%`,
                   top: `${storyPos.y * 100}%`,
@@ -841,62 +895,13 @@ export default function CotozutePage() {
                   lineHeight: 1.25,
                   maxWidth: "150%",
                 }}
-                onTouchStart={(e) => {
-                  if (e.touches.length === 2) {
-                    const [a, b] = [e.touches[0], e.touches[1]];
-                    storyPinch.current = {
-                      d0: Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY),
-                      a0: Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX),
-                      size0: storySize,
-                      rot0: storyRot,
-                    };
-                  }
-                }}
-                onTouchMove={(e) => {
-                  if (e.touches.length === 2 && storyPinch.current) {
-                    // ピンチ=大きさ / 二本指の回転=角度
-                    const [a, b] = [e.touches[0], e.touches[1]];
-                    const d = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
-                    const ang = Math.atan2(b.clientY - a.clientY, b.clientX - a.clientX);
-                    setStorySize(Math.min(90, Math.max(13, storyPinch.current.size0 * (d / storyPinch.current.d0))));
-                    setStoryRot(storyPinch.current.rot0 + ((ang - storyPinch.current.a0) * 180) / Math.PI);
-                    return;
-                  }
-                  const r = storyBoxRef.current?.getBoundingClientRect();
-                  if (!r) return;
-                  const t = e.touches[0];
-                  setStoryPos({
-                    x: Math.min(0.95, Math.max(0.05, (t.clientX - r.left) / r.width)),
-                    y: Math.min(0.92, Math.max(0.08, (t.clientY - r.top) / r.height)),
-                  });
-                }}
-                onTouchEnd={(e) => {
-                  if (e.touches.length < 2) storyPinch.current = null;
-                }}
-                onMouseDown={(e) => {
-                  const r = storyBoxRef.current?.getBoundingClientRect();
-                  if (!r) return;
-                  const onMove = (ev: MouseEvent) => {
-                    setStoryPos({
-                      x: Math.min(0.95, Math.max(0.05, (ev.clientX - r.left) / r.width)),
-                      y: Math.min(0.92, Math.max(0.08, (ev.clientY - r.top) / r.height)),
-                    });
-                  };
-                  const onUp = () => {
-                    window.removeEventListener("mousemove", onMove);
-                    window.removeEventListener("mouseup", onUp);
-                  };
-                  window.addEventListener("mousemove", onMove);
-                  window.addEventListener("mouseup", onUp);
-                  e.preventDefault();
-                }}
               >
                 {storyText}
               </div>
             )}
             {storyText.trim() && (
               <div className="pointer-events-none absolute bottom-2 left-0 right-0 text-center text-[10.5px] text-white/50">
-                1本指で移動 ・ 2本指でひらいて拡大 / ひねって回転
+                画面のどこを触ってもOK: 1本指で移動 ・ 2本指で拡大/かたむき
               </div>
             )}
           </div>
@@ -908,6 +913,31 @@ export default function CotozutePage() {
               placeholder="ネオン文字を入れる（改行OK・空欄でもOK）"
               className="w-full resize-none rounded-xl bg-white/12 px-3 py-2.5 text-[15px] font-bold text-white outline-none placeholder:text-white/40"
             />
+            {storyText.trim() && (
+              <div className="mt-2 flex items-center gap-2 text-[10.5px] font-bold text-white/75">
+                <span className="flex-shrink-0">大きさ</span>
+                <input
+                  type="range"
+                  min={13}
+                  max={90}
+                  value={Math.round(storySize)}
+                  onChange={(e) => setStorySize(Number(e.target.value))}
+                  className="min-w-0 flex-1 accent-white"
+                />
+                <span className="flex-shrink-0">ナナメ</span>
+                <input
+                  type="range"
+                  min={-45}
+                  max={45}
+                  value={Math.round(Math.min(45, Math.max(-45, storyRot)))}
+                  onChange={(e) => setStoryRot(Number(e.target.value))}
+                  className="min-w-0 flex-1 accent-white"
+                />
+                <button onClick={() => setStoryRot(0)} className="flex-shrink-0 rounded-full bg-white/15 px-2 py-1">
+                  水平
+                </button>
+              </div>
+            )}
             <div className="mt-2.5 flex items-center gap-3">
               {["#0affd0", "#ff3db8", "#ffd93d", "#4dc3ff", "#b04dff"].map((c) => (
                 <button
@@ -988,7 +1018,7 @@ export default function CotozutePage() {
             <button
               onClick={async (e) => {
                 e.stopPropagation();
-                if (!confirm("このストーリーズを削除しますか？")) return;
+                if (!confirm("この消える言伝を削除しますか？")) return;
                 await deleteStory(stories[storyView].id, me.id);
                 setStoryView(null);
                 setStoriesList(await fetchStories());
