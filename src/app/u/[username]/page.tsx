@@ -522,57 +522,13 @@ export default function UserPage() {
         {profile.skills && profile.skills.length > 0 && (
           <div className="mt-2.5">
             <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんな事が出来ます（Skill Card{profile.skills.length}）</div>
-            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 pt-0.5" data-noswipe>
-              {profile.skills.map((sk, i) => {
-                const CARD_COLORS = [
-                  ["#fdf6ec", "#c94d3a"], // 生成り×朱
-                  ["#0e1e2e", "#f0e6c8"], // 紺×金
-                  ["#eef6e8", "#3a5a2c"], // 若葉×深緑
-                  ["#fdf0ee", "#a04030"], // 桜×茜
-                  ["#f0f4fa", "#2a4a7a"], // 空×藍
-                  ["#fffbe8", "#8a6a10"], // 月白×山吹
-                  ["#f4eefa", "#5a3a7a"], // 藤×紫
-                ] as const;
-                const [bg, fg] = CARD_COLORS[i % CARD_COLORS.length];
-                return (
-                  <div
-                    key={sk}
-                    className="flex min-h-[84px] w-[46%] flex-shrink-0 snap-start items-center justify-center px-3 py-4 text-center"
-                    style={{ background: bg, color: fg, boxShadow: "2px 3px 10px rgba(0,0,0,.18)", border: "1px solid rgba(0,0,0,.06)" }}
-                  >
-                    <span className="text-[17px] font-extrabold leading-snug" style={{ color: fg }}>{sk}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <CardDeck items={profile.skills} />
           </div>
         )}
         {profile.wants_to_do && profile.wants_to_do.length > 0 && (
           <div className="mt-2.5">
             <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんなことやってみたい！（Quest Card{profile.wants_to_do.length}）</div>
-            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 pt-0.5" data-noswipe>
-              {profile.wants_to_do.map((w, i) => {
-                const CARD_COLORS = [
-                  ["#fdf0ee", "#a04030"], // 桜×茜
-                  ["#fffbe8", "#8a6a10"], // 月白×山吹
-                  ["#0e1e2e", "#f0e6c8"], // 紺×金
-                  ["#eef6e8", "#3a5a2c"], // 若葉×深緑
-                  ["#f0f4fa", "#2a4a7a"], // 空×藍
-                  ["#fdf6ec", "#c94d3a"], // 生成り×朱
-                  ["#f4eefa", "#5a3a7a"], // 藤×紫
-                ] as const;
-                const [bg, fg] = CARD_COLORS[i % CARD_COLORS.length];
-                return (
-                  <div
-                    key={w}
-                    className="flex min-h-[84px] w-[46%] flex-shrink-0 snap-start items-center justify-center px-3 py-4 text-center"
-                    style={{ background: bg, color: fg, boxShadow: "2px 3px 10px rgba(0,0,0,.18)", border: "1px solid rgba(0,0,0,.06)" }}
-                  >
-                    <span className="text-[17px] font-extrabold leading-snug" style={{ color: fg }}>{w}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <CardDeck items={profile.wants_to_do} startColor={3} />
           </div>
         )}
       </div>
@@ -975,6 +931,108 @@ function MyCotozuteSection({ userId, ownerName }: { userId: string; ownerName: s
             もっと見る
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+
+/**
+ * 名刺デッキ — 画面センターに1枚、下に重なった山。上のカードを左へめくると次が現れる。
+ * 指に追従してめくれる感覚を大事に。data-noswipe でページ全体スワイプとは衝突しない。
+ */
+function CardDeck({ items, startColor = 0 }: { items: string[]; startColor?: number }) {
+  const [idx, setIdx] = useState(0);
+  const [dx, setDx] = useState(0);
+  const [flying, setFlying] = useState(false);
+  const startX = useRef<number | null>(null);
+  const COLORS = [
+    ["#fdf6ec", "#c94d3a"],
+    ["#0e1e2e", "#f0e6c8"],
+    ["#eef6e8", "#3a5a2c"],
+    ["#fdf0ee", "#a04030"],
+    ["#f0f4fa", "#2a4a7a"],
+    ["#fffbe8", "#8a6a10"],
+    ["#f4eefa", "#5a3a7a"],
+  ] as const;
+  const n = items.length;
+  if (n === 0) return null;
+
+  const flip = () => {
+    setFlying(true);
+    setDx(-window.innerWidth * 0.9);
+    setTimeout(() => {
+      setFlying(false);
+      setDx(0);
+      setIdx((i) => (i + 1) % n);
+    }, 260);
+  };
+
+  const onTS = (e: React.TouchEvent) => {
+    if (flying) return;
+    startX.current = e.touches[0].clientX;
+  };
+  const onTM = (e: React.TouchEvent) => {
+    if (flying || startX.current == null) return;
+    setDx(e.touches[0].clientX - startX.current);
+  };
+  const onTE = () => {
+    if (flying || startX.current == null) return;
+    startX.current = null;
+    if (dx < -70) flip();
+    else if (dx > 70) {
+      // 右へめくったら1枚戻る
+      setFlying(true);
+      setDx(window.innerWidth * 0.9);
+      setTimeout(() => {
+        setFlying(false);
+        setDx(0);
+        setIdx((i) => (i - 1 + n) % n);
+      }, 260);
+    } else setDx(0);
+  };
+
+  return (
+    <div className="relative mx-auto select-none pb-3 pt-1" style={{ height: 150, maxWidth: 300 }} data-noswipe>
+      {/* 下に重なる山（多いほど厚く見える・最大4枚ぶんの縁） */}
+      {[3, 2, 1].map((k) =>
+        k < n ? (
+          <div
+            key={k}
+            className="absolute inset-x-0 mx-auto"
+            style={{
+              top: 6 + k * 5,
+              height: 116,
+              maxWidth: 300 - k * 14,
+              background: COLORS[(idx + k + startColor) % COLORS.length][0],
+              border: "1px solid rgba(0,0,0,.08)",
+              boxShadow: "0 2px 6px rgba(0,0,0,.12)",
+              transform: `scale(${1 - k * 0.02})`,
+            }}
+          />
+        ) : null
+      )}
+      {/* 一番上のカード — 指に追従して左へめくれる */}
+      <div
+        onTouchStart={onTS}
+        onTouchMove={onTM}
+        onTouchEnd={onTE}
+        onClick={() => Math.abs(dx) < 5 && flip()}
+        className="absolute inset-x-0 top-1.5 mx-auto flex cursor-pointer items-center justify-center px-4 text-center"
+        style={{
+          height: 120,
+          maxWidth: 300,
+          background: COLORS[(idx + startColor) % COLORS.length][0],
+          color: COLORS[(idx + startColor) % COLORS.length][1],
+          boxShadow: "3px 5px 16px rgba(0,0,0,.25)",
+          border: "1px solid rgba(0,0,0,.06)",
+          transform: `translateX(${dx}px) rotate(${dx * 0.045}deg)`,
+          transition: flying ? "transform .26s ease-in" : startX.current != null ? "none" : "transform .2s ease-out",
+          touchAction: "pan-y",
+        }}
+      >
+        <span className="text-[21px] font-extrabold leading-snug">{items[idx]}</span>
+        <span className="num absolute bottom-1.5 right-2.5 text-[10px] opacity-60">{idx + 1}/{n}</span>
       </div>
     </div>
   );
