@@ -1809,7 +1809,10 @@
             el.style.marginTop = "6px";
             condEl.parentNode.insertBefore(el, condEl.nextSibling);
           }
-          el.textContent = "⚡ " + f.max_class + "フレアが出ています（" + hh + "）— 由来の太陽風は1〜3日後に地球到達の可能性";
+          // 到着予定 = フレア発生から約48時間後(CMEの標準的な旅程。実際は1〜3日で前後)
+          const arrive = new Date(t.getTime() + 48 * 3600 * 1000);
+          const aTxt = (arrive.getMonth() + 1) + "/" + arrive.getDate() + " " + arrive.getHours() + "時頃";
+          el.textContent = (f.max_class[0] === "X" ? "⚠️ " : "⚡ ") + f.max_class + "のフレアが発生（" + hh + "）。日本時刻 " + aTxt + "に到着予定（1〜3日で前後）";
         })
         .catch(() => {});
     }
