@@ -1534,7 +1534,9 @@
         <div class="dv-title">〇いまの太陽の姿 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
         <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
         <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
-        <button id="sun-video-btn" type="button" style="display:block;margin:0.5rem auto 0;padding:0.5rem 1.4rem;border-radius:100px;border:1.5px solid rgba(255,170,60,.5);background:rgba(40,24,8,.6);color:#ffd60a;font:700 0.82rem 'Noto Sans JP',sans-serif;cursor:pointer;">▶ 太陽の動画で見る（直近48時間・プロミネンスが動く・約1MB）</button>
+        <button id="sun-video-btn" type="button" style="display:block;margin:0.5rem auto 0;padding:0.5rem 1.4rem;border-radius:100px;border:1.5px solid rgba(255,170,60,.5);background:rgba(40,24,8,.6);color:#ffd60a;font:700 0.82rem 'Noto Sans JP',sans-serif;cursor:pointer;">▶ 太陽の動画で見る（プロミネンスが動く・約2.4MB）</button>
+        <video id="sun-video" controls playsinline preload="none" style="display:none;width:100%;max-width:340px;margin:0.5rem auto 0;border-radius:12px;background:#000;" src="https://swc.nict.go.jp/data/latest/sdo/latest_512_0304.mp4"></video>
+        <div id="sun-video-credit" style="display:none;margin-top:0.3rem;text-align:center;font-size:0.68rem;color:#8aa8d0;">NICT宇宙天気予報センター提供（SDO 304Å・自動更新）</div>
         <div id="sun-anim-wrap" style="display:none;max-width:340px;margin:0.5rem auto 0;text-align:center;">
           <img id="sun-anim" alt="太陽 直近48時間" style="width:100%;border-radius:12px;background:#000;display:block;">
           <div id="sun-anim-label" style="margin-top:0.3rem;font-size:0.72rem;color:#ffd60a;letter-spacing:0.06em;"></div>
@@ -3541,10 +3543,10 @@
     };
     tick();
     setInterval(tick, 5 * 60000);
-    // ▶ 太陽の動画 — NASAのmp4は63MB+moov末尾で再生不能だったため、
-    //   静止画アーカイブ48コマを先読みしてパラパラ動画にする(約2MB・押した時だけ)
+    // ▶ 太陽の動画 — 本命はNICT提供のSDO動画(2.4MB・宇宙天気予報ページと同じもの)。
+    //   読めない環境だけNASA静止画のコマ送り(フォールバック)に自動で切り替える
     const vbtn = document.getElementById("sun-video-btn");
-    if (vbtn) vbtn.addEventListener("click", async () => {
+    const flipbook = async () => {
       vbtn.disabled = true;
       vbtn.textContent = "コマを読み込み中...";
       try {
@@ -3580,8 +3582,31 @@
         }, 150);
       } catch (e) {
         vbtn.disabled = false;
+        vbtn.style.display = "block";
         vbtn.textContent = "読み込めませんでした。もう一度押してください";
       }
+    };
+    if (vbtn) vbtn.addEventListener("click", () => {
+      const vid = document.getElementById("sun-video");
+      const credit = document.getElementById("sun-video-credit");
+      vbtn.style.display = "none";
+      vid.style.display = "block";
+      credit.style.display = "block";
+      let started = false;
+      vid.addEventListener("playing", () => { started = true; });
+      const bail = () => {
+        if (started) return;
+        started = true; // 二重発火防止
+        try { vid.pause(); vid.removeAttribute("src"); vid.load(); } catch (e) {}
+        vid.style.display = "none";
+        credit.style.display = "none";
+        vbtn.style.display = "block";
+        vbtn.disabled = true;
+        flipbook();
+      };
+      vid.addEventListener("error", bail);
+      setTimeout(() => { if (!started && vid.readyState < 2) bail(); }, 15000);
+      try { vid.play(); } catch (e) {}
     });
     // 📋 NICT きょうの概況
     fetch("/api/nict").then(r => r.json()).then(d => {
