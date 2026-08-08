@@ -1534,6 +1534,14 @@
         <div class="dv-title">〇いまの太陽の姿 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
         <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
         <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
+        <button id="sun-video-btn" type="button" style="display:block;margin:0.5rem auto 0;padding:0.5rem 1.4rem;border-radius:100px;border:1.5px solid rgba(255,170,60,.5);background:rgba(40,24,8,.6);color:#ffd60a;font:700 0.82rem 'Noto Sans JP',sans-serif;cursor:pointer;">▶ 太陽の動画で見る（直近48時間・プロミネンスが動く）</button>
+        <video id="sun-video" controls playsinline preload="none" style="display:none;width:100%;max-width:340px;margin:0.5rem auto 0;border-radius:12px;background:#000;" src="https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_1024_0304.mp4"></video>
+        <!-- NICT きょうの概況（本物の予報官の文章） -->
+        <div id="nict-box" style="display:none;margin:0.7rem 0.9rem 0;padding:0.7rem 0.8rem;border:1px solid rgba(120,180,255,.3);border-radius:12px;background:rgba(14,20,32,.7);">
+          <div style="font-size:0.7rem;letter-spacing:0.12em;color:#8aa8d0;">📋 NICT宇宙天気予報センター きょうの概況 <span id="nict-updated" style="color:#5a7a9a;"></span></div>
+          <p id="nict-summary" style="margin-top:0.35rem;font-size:0.82rem;line-height:1.8;color:#cfe0ec;"></p>
+          <a href="https://swc.nict.go.jp/" target="_blank" rel="noopener" style="font-size:0.7rem;color:#2CB7DE;">swc.nict.go.jp →</a>
+        </div>
         <div class="graph-description"><p>赤い模様が活動領域。明るい爆発がフレアです。X線の強さは<b>A→B→C→M→X</b>の5段階（1段で10倍）。AとBは「静穏」、Cから小さなフレア、M・Xが本物のフレアです。いま「B2.5」なら静かな太陽ということ。M・Xが出ると<b>1〜3日後</b>に太陽風の塊が地球に届いて電離層が押され、シューマン共振の音程が動きます — だから下の「過去の分析」の散布図は、この1〜3日の時間差（ラグ）を自動で考慮して相関を取っています。</p></div>
       </div>
 
@@ -3530,6 +3538,24 @@
     };
     tick();
     setInterval(tick, 5 * 60000);
+    // ▶ 太陽の動画(押した時だけ読み込む — パケ死しない)
+    const vbtn = document.getElementById("sun-video-btn"), vid = document.getElementById("sun-video");
+    if (vbtn && vid) vbtn.addEventListener("click", () => {
+      vid.style.display = "block";
+      vbtn.style.display = "none";
+      try { vid.play(); } catch (e) {}
+    });
+    // 📋 NICT きょうの概況
+    fetch("/api/nict").then(r => r.json()).then(d => {
+      if (!d || !d.summary) return;
+      const box = document.getElementById("nict-box");
+      document.getElementById("nict-summary").textContent = d.summary;
+      if (d.updated) {
+        const t = new Date(d.updated);
+        document.getElementById("nict-updated").textContent = "(" + (t.getMonth() + 1) + "/" + t.getDate() + " " + t.getHours() + "時発表)";
+      }
+      box.style.display = "block";
+    }).catch(() => {});
   })();
 
   // ■いまの世界の雷: Blitzortung 落雷カウント（1分あたりの検知数）
