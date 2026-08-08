@@ -44,6 +44,18 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
   const [count, setCount] = useState<string>("読み込み中...");
   const [filter, setFilter] = useState<string>("all");
   const [powerList, setPowerList] = useState<Array<{ name: string; area: string; desc: string | null; lat: number; lng: number }>>([]);
+  const [detail, setDetail] = useState<{
+    kind: "village" | "spot" | "reco";
+    name: string;
+    sub: string;
+    desc: string | null;
+    color: string;
+    emoji: string;
+    lat: number;
+    lng: number;
+    image?: string | null;
+    href?: string | null;
+  } | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layersRef = useRef<Array<{ cat: string; mk: any }>>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,6 +92,9 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
               v.description ?? ""
             }</span>`
           );
+        mk.on("click", () =>
+          setDetail({ kind: "village", name: v.name, sub: `${v.prefecture ?? ""} ・ 村人 ${v.village_members?.[0]?.count ?? 0}人`, desc: v.description ?? null, color: "#2a6a3a", emoji: "⛺", lat: c[0], lng: c[1], href: `/sekai/village/${v.id}` })
+        );
         layersRef.current.push({ cat: "base", mk });
       }
 
@@ -110,6 +125,9 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
                 s.description ? `<br><span style="color:#888">${s.description}</span>` : ""
               }`
             );
+          mk.on("click", () =>
+            setDetail({ kind: "spot", name: s.name ?? "", sub: (s.prefecture ?? "") + (s.city ? " " + s.city : ""), desc: s.description ?? null, color: isPower ? "#2a8a4a" : (CAT_COLOR[s.category] ?? "#4a8a5c"), emoji: isPower ? "⛩" : "📍", lat: s.latitude, lng: s.longitude })
+          );
           layersRef.current.push({ cat: isPower ? "power" : (s.category ?? "other"), mk });
           if (isPower) pw.push({ name: s.name ?? "", area: (s.prefecture ?? "") + (s.city ? " " + s.city : ""), desc: s.description ?? null, lat: s.latitude, lng: s.longitude });
         }
@@ -137,6 +155,9 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
             .bindPopup(
               `<b>${s.name}</b><br>${c.emoji} ${c.label}${s.comment ? `<br><span style="color:#888">${s.comment}</span>` : ""}`
             );
+          mk.on("click", () =>
+            setDetail({ kind: "reco", name: s.name, sub: `${c.emoji} ${c.label}`, desc: s.comment ?? null, color: c.color, emoji: c.emoji, lat: s.lat, lng: s.lng, image: (s as { image_url?: string | null }).image_url ?? null })
+          );
           layersRef.current.push({ cat: s.category === "power_spot" ? "power" : `reco_${s.category}`, mk });
           if (s.category === "power_spot") {
             setPowerList((prev) => [...prev, { name: s.name, area: s.address ?? "", desc: s.comment ?? null, lat: s.lat, lng: s.lng }]);
@@ -210,6 +231,40 @@ export function SekaiMap({ villages }: { villages: Village[] }) {
       </div>
       <div ref={hostRef} style={{ height: 400, borderRadius: 14, zIndex: 1 }} />
       <p className="pt-2 text-center text-[11px] text-[#8a968a]">{count}</p>
+      {detail && (
+        <div className="mt-2 overflow-hidden rounded-2xl border-2 bg-white shadow-md" style={{ borderColor: detail.color }}>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-extrabold text-white" style={{ background: detail.color }}>
+            <span>{detail.emoji}</span>
+            <span className="truncate">{detail.kind === "village" ? "セカイムラ拠点" : detail.kind === "reco" ? "村人のおススメ" : "みんなのおススメ"}</span>
+            <button onClick={() => setDetail(null)} className="ml-auto text-[13px] leading-none">×</button>
+          </div>
+          {detail.image && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={detail.image} alt="" referrerPolicy="no-referrer" className="h-[140px] w-full object-cover" />
+          )}
+          <div className="px-3.5 py-3">
+            <div className="text-[17px] font-extrabold leading-snug text-[#3a3428]">{detail.name}</div>
+            {detail.sub && <div className="mt-0.5 text-[11.5px] text-[#a09888]">{detail.sub}</div>}
+            {detail.desc && <div className="mt-1.5 text-[13px] leading-relaxed text-[#5a5448]">{detail.desc}</div>}
+            <div className="mt-2.5 flex gap-2">
+              {detail.href && (
+                <a href={detail.href} className="flex-1 rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline" style={{ background: detail.color }}>
+                  拠点ページへ →
+                </a>
+              )}
+              <a
+                href={`https://www.google.com/maps?q=${detail.lat},${detail.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={(detail.href ? "flex-1 " : "block w-full ") + "rounded-xl border-2 py-2.5 text-center text-[13px] font-extrabold no-underline"}
+                style={{ borderColor: detail.color, color: detail.color }}
+              >
+                Googleマップでひらく →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
       {powerListView}
     </div>
   );
