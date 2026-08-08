@@ -1118,7 +1118,11 @@ function BottomSheet({
             <div className="mt-2.5 flex items-center gap-1.5 text-[13px] text-[#555]">
               <select
                 value={evEdit.sh}
-                onChange={(e) => setEvEdit({ ...evEdit, sh: Number(e.target.value) })}
+                onChange={(e) => {
+                  const sh = Number(e.target.value);
+                  // 開始を選んだら終了は自動で1時間後に（過去にはならない。あとで自由に直せる）
+                  setEvEdit({ ...evEdit, sh, eh: Math.min(23, sh + 1), em: evEdit.sm });
+                }}
                 className="rounded-lg border border-[#e4e0d8] bg-white px-1.5 py-1.5"
               >
                 {Array.from({ length: 24 }, (_, i) => (
