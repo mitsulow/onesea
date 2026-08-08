@@ -134,7 +134,17 @@ export function Otohikari() {
               "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
           }}
         >
-          <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: "italic", letterSpacing: "1px" }}>▽OtOHikari-map</span>
+          <span
+            style={{
+              fontFamily: "Georgia, 'Times New Roman', serif",
+              fontStyle: "italic",
+              letterSpacing: "1px",
+              color: "#d8a0ff",
+              textShadow: "0 0 6px rgba(200,120,255,.95), 0 0 14px rgba(180,80,255,.7), 0 0 30px rgba(160,40,255,.5)",
+            }}
+          >
+            ▽OtOHikari-map
+          </span>
         </span>
         <div className="relative">
           <button
@@ -268,7 +278,7 @@ export function Otohikari() {
               "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
           }}
         >
-          △MasterMindSystem
+          △MasterMindSystem▽
         </summary>
         <div className="mt-2 space-y-1.5">
           {(["f1", "f2", "f3", "f4"] as const).map((k) => (
