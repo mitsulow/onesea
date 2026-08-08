@@ -241,7 +241,7 @@ export default function ChatPage() {
           }}
           placeholder="メッセージ..."
           rows={1}
-          className="max-h-28 min-h-[38px] flex-1 resize-none rounded-2xl border border-[#e8dcc4] bg-white px-3.5 py-2 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
+          className="hide-scrollbar max-h-28 min-h-[38px] flex-1 resize-none rounded-2xl border border-[#e8dcc4] bg-white px-3.5 py-2 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
         />
         <button
           onClick={submit}
