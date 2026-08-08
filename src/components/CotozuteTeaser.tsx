@@ -22,7 +22,13 @@ export function CotozuteTeaser() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
       setMe(u);
-      if (u) setLikedSet(await fetchMyLikes(u.id));
+      if (u) {
+        setLikedSet(await fetchMyLikes(u.id));
+        // マイページで変えた写真(profiles.avatar_url)を優先表示
+        supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
+          if (data?.avatar_url) setMyAvatar(data.avatar_url);
+        });
+      }
     });
     fetchPostsPage(0, 5).then(setPosts);
   }, []);
