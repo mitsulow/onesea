@@ -44,7 +44,7 @@ const SERVICES: Service[] = [
     inactive: "#8ab89a",
     tabs: [
       { href: "/sekai/villages", icon: "/icons/icon-base.webp", label: "拠点" },
-      { href: "/sekai/clubs", icon: "/icons/icon-club.webp", label: "部活" },
+      { href: "/sekai/clubs", icon: "/icons/icon-broom.svg", label: "部活" },
       { href: "/sekai/kome", icon: "/icons/icon-rice.webp", label: "米部" },
       { href: "/sekai/meister", icon: "/icons/icon-course.webp", label: "講座" },
       { href: "/sekai/tasukete", icon: "/icons/icon-tasukete.webp", label: "助けて" },

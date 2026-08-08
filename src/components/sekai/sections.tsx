@@ -2402,6 +2402,9 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
 export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }) {
   const [misoka] = useState(() => nextMisoka());
   const [reports, setReports] = useState<any[] | null>(null);
+  const [selJ, setSelJ] = useState<any | null>(null); // タップした報告の詳細
+  const [jPaste, setJPaste] = useState("");
+  const [jResolving, setJResolving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [shrine, setShrine] = useState("");
   const [jPref, setJPref] = useState(myPref);
@@ -2453,7 +2456,7 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
       {reports !== null && reports.length > 0 && (
         <div className="space-y-2">
           {reports.slice(0, 5).map((r) => (
-            <div key={r.id} className="flex items-center gap-2.5 rounded-xl border border-[#eef2ec] bg-white p-2">
+            <button key={r.id} onClick={() => setSelJ(selJ?.id === r.id ? null : r)} className="flex w-full items-center gap-2.5 rounded-xl border bg-white p-2 text-left" style={{ borderColor: selJ?.id === r.id ? "#b08a30" : "#eef2ec" }}>
               {r.photo_url ? (
                 <img src={srcCdn(r.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
               ) : (
@@ -2468,8 +2471,25 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
                 </div>
                 {r.note && <div className="truncate text-[11px] text-[#8a968a]">{r.note}</div>}
               </div>
-            </div>
+            </button>
           ))}
+          {selJ && (
+            <div className="overflow-hidden rounded-2xl border-2 border-[#c8a860] bg-white shadow-md">
+              <div className="flex items-center gap-1.5 bg-[#b08a30] px-3 py-1.5 text-[11px] font-extrabold text-white">
+                <img src="/icons/icon-torii.webp" alt="" style={{ width: 14, height: 14 }} />
+                <span>そうじの報告</span>
+                <button onClick={() => setSelJ(null)} className="ml-auto text-[13px] leading-none">×</button>
+              </div>
+              {selJ.photo_url && <img src={srcCdn(selJ.photo_url)} alt="" className="h-[180px] w-full object-cover" />}
+              <div className="px-3.5 py-3">
+                <div className="text-[16px] font-extrabold leading-snug text-[#3a4a34]">{selJ.shrine}</div>
+                <div className="mt-0.5 text-[11.5px] text-[#a0aca0]">
+                  {selJ.prefecture ?? ""} ・ {selJ.profiles?.display_name ?? ""} ・ {selJ.created_at ? new Date(selJ.created_at).toLocaleDateString("ja-JP") : ""}
+                </div>
+                {selJ.note && <div className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-[#5a5448]">{selJ.note}</div>}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -2479,6 +2499,27 @@ export function JinjaSection({ me, myPref }: { me: User | null; myPref: string }
             <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]"><img src="/icons/icon-torii.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> そうじの奉告</div>
             <div className="mb-2 flex gap-2">
               <input
+              value={jPaste}
+              onChange={async (e) => {
+                const v = e.target.value;
+                setJPaste(v);
+                const mu = v.match(/https?:\/\/[^\s]+/);
+                if (!mu || jResolving) return;
+                setJResolving(true);
+                try {
+                  const r = await fetch("/api/reco/resolve?url=" + encodeURIComponent(mu[0]));
+                  const d = r.ok ? await r.json() : {};
+                  if (d.name) setShrine(String(d.name).slice(0, 60));
+                  if (d.image && !photo) setPhoto(d.image as string);
+                  setJPaste("");
+                } catch {}
+                setJResolving(false);
+              }}
+              placeholder="⛩ Googleで神社を検索 → 共有リンクを貼ると名前が自動で入ります"
+              className="mb-2 w-full rounded-xl border border-[#2CB7DE55] bg-white px-3 py-2.5 text-[12px] outline-none focus:border-[#2CB7DE]"
+            />
+            {jResolving && <p className="mb-1 text-[11px] text-[#2CB7DE]">読み取り中…</p>}
+            <input
                 value={shrine}
                 onChange={(e) => setShrine(e.target.value)}
                 placeholder="神社の名前"
