@@ -1,0 +1,65 @@
+import { createClient } from "@/lib/supabase/client";
+
+/**
+ * 統合お知らせ（🔔）。DBトリガーが notifications に自動で積む:
+ *  cotozute_comment / village_reply / shop_comment / barter_offer / share
+ * （ハートは通知しない方針）
+ */
+export interface NotificationRow {
+  id: string;
+  actor_id: string | null;
+  kind: string;
+  target_url: string | null;
+  excerpt: string | null;
+  created_at: string;
+  read_at: string | null;
+  profiles: { username: string | null; display_name: string | null; avatar_url: string | null } | null;
+}
+
+export function notifText(n: NotificationRow): string {
+  const who = n.profiles?.display_name ?? "どなたか";
+  switch (n.kind) {
+    case "cotozute_comment":
+      return `${who}さんからCotozute投稿にコメントが来ています`;
+    case "village_reply":
+      return `${who}さんがセカイムラ投稿に返信しました`;
+    case "shop_comment":
+      return `${who}さんが楽市楽座の出品にコメントしました`;
+    case "barter_offer":
+      return `${who}さんからブツブツ交換の提案が来ました`;
+    case "share":
+      return `${who}さんにシェアされました`;
+    default:
+      return `${who}さんからお知らせがあります`;
+  }
+}
+
+export async function fetchNotifications(userId: string, limit = 60): Promise<NotificationRow[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("notifications")
+    .select("id, actor_id, kind, target_url, excerpt, created_at, read_at, profiles!notifications_actor_id_fkey(username, display_name, avatar_url)")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data as unknown as NotificationRow[]) ?? [];
+}
+
+export async function fetchNotifUnread(userId: string): Promise<number> {
+  const supabase = createClient();
+  const { count } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .is("read_at", null);
+  return count ?? 0;
+}
+
+export async function markNotifsRead(userId: string): Promise<void> {
+  const supabase = createClient();
+  await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .is("read_at", null);
+}

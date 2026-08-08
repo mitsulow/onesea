@@ -224,10 +224,17 @@ export function PostCard({
           <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {commentCount > 0 && <span className="num">{commentCount}</span>}
         </Link>
         <button
-          onClick={() => {
+          onClick={async () => {
             const url = `https://onesea.vercel.app/post/${post.id}`;
             if (navigator.share) navigator.share({ text: bodyText ?? "", url }).catch(() => {});
             else navigator.clipboard?.writeText(url);
+            // シェアされたことを投稿主にお知らせ（🔔）
+            if (me && me.id !== post.user_id) {
+              try {
+                const { createClient } = await import("@/lib/supabase/client");
+                await createClient().from("post_shares").insert({ post_id: post.id, user_id: me.id });
+              } catch {}
+            }
           }}
           className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] text-[#65676b]"
         >

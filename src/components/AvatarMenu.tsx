@@ -29,6 +29,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   const [unread, setUnread] = useState(0);
   const [waraMissing, setWaraMissing] = useState(0); // わらわ〜会員の未入力数（0で消える）
   const [isAdmin, setIsAdmin] = useState(false); // 事務局
+  const [notifN, setNotifN] = useState(0); // 🔔お知らせ未読
   const btnRef = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<{ top: number; right: number }>({ top: 52, right: 12 });
 
@@ -50,6 +51,12 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
       refreshMissing();
       if (userId) {
         import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(userId!).then(setIsAdmin)).catch(() => {});
+        const refreshNotif = () => {
+          import("@/lib/notifications").then(({ fetchNotifUnread }) => fetchNotifUnread(userId!).then(setNotifN)).catch(() => {});
+        };
+        refreshNotif();
+        window.addEventListener("onesea:notifRefresh", refreshNotif);
+        window.addEventListener("onesea:unreadRefresh", refreshNotif);
       }
       // 未読は共有ポーラー（1タブ1本・非表示中は止まる）から受け取る
       if (userId) {
@@ -180,6 +187,17 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <span className="text-[8px] font-bold leading-none tracking-[0.5px]">ゲスト</span>
           </span>
         )}
+        {unread + notifN > 0 && (
+          <span className="absolute -bottom-1.5 -right-1 flex items-baseline" style={{ lineHeight: 1 }}>
+            <span
+              className="num text-[11px] font-extrabold text-[#e05040]"
+              style={{ textShadow: "0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff" }}
+            >
+              {unread + notifN}
+            </span>
+            <span className="ml-[1px] h-[7px] w-[7px] self-center rounded-full bg-[#e05040]" />
+          </span>
+        )}
         {waraMissing > 0 && (
           <span
             className="absolute -right-1 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#e05040] px-0.5 text-[9.5px] font-bold text-white"
@@ -199,6 +217,17 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             className="fixed z-[96] max-h-[80vh] w-56 overflow-y-auto rounded-xl border border-[#ede5d8] bg-white"
             style={{ top: anchor.top, right: anchor.right, boxShadow: "0 10px 36px rgba(0,0,0,0.22)" }}
           >
+            <Link href="/notifications" onClick={() => setOpen(false)} className={item + hereCls("/notifications")}>
+              <span className="flex h-[20px] w-[20px] flex-shrink-0 items-center justify-center text-[16px]">🔔</span> お知らせ
+              {notifN > 0 && (
+                <span
+                  className="ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
+                  style={{ lineHeight: 1 }}
+                >
+                  {notifN > 99 ? "99+" : notifN}
+                </span>
+              )}
+            </Link>
             <Link href="/mmm" onClick={() => setOpen(false)} className={item + hereCls("/mmm")}>
               {icon("/icons/cel-sun.png")} MasterMindMembers
             </Link>
