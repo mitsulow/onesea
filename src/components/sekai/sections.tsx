@@ -1,5 +1,6 @@
 "use client";
 
+import { readTecho, writeTecho } from "@/lib/techoStore";
 import { SekaiBadge } from "@/components/WarawaBadge";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
@@ -610,7 +611,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     const hour = String(d.getHours());
     const label = eventLabel(p);
     try {
-      const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+      const memos = JSON.parse(readTecho());
       const day = memos[key];
       if (day?.h?.[hour]) {
         const lines = String(day.h[hour]).split("\n").filter((l: string) => l !== label);
@@ -618,7 +619,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         else delete day.h[hour];
         if (!day.note && Object.keys(day.h ?? {}).length === 0) delete memos[key];
         else memos[key] = day;
-        localStorage.setItem("techo-memos", JSON.stringify(memos));
+        writeTecho(JSON.stringify(memos));
       }
       localStorage.removeItem(`onesea-ev-${p.id}`);
     } catch {}
@@ -639,14 +640,14 @@ export function ActivitySection({ me }: { me: User | null }) {
     const d = new Date(p.event_at);
     const key = keyOf(d.getFullYear(), d.getMonth() + 1, d.getDate());
     try {
-      const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+      const memos = JSON.parse(readTecho());
       const day = memos[key] ?? { note: "", h: {} };
       day.h = day.h ?? {};
       const hour = String(d.getHours());
       const label = eventLabel(p);
       day.h[hour] = day.h[hour] ? `${day.h[hour]}\n${label}` : label; // 2件目以降は改行で追記
       memos[key] = day;
-      localStorage.setItem("techo-memos", JSON.stringify(memos));
+      writeTecho(JSON.stringify(memos));
       localStorage.setItem(`onesea-ev-${p.id}`, "1");
     } catch {}
     if (me) {
