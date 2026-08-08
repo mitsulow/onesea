@@ -89,8 +89,12 @@ export default function ClubPage() {
   return (
     <main className="pb-20">
       <header
-        className="px-4 pb-5 pt-4 text-center"
-        style={{ background: "linear-gradient(165deg,#0e2014 0%,#163522 55%,#1e4530 100%)" }}
+        className="relative px-4 pb-5 pt-4 text-center"
+        style={
+          club.cover_url
+            ? { backgroundImage: `linear-gradient(rgba(10,22,14,.62), rgba(10,22,14,.72)), url(${club.cover_url})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { background: "linear-gradient(165deg,#0e2014 0%,#163522 55%,#1e4530 100%)" }
+        }
       >
         <div className="flex items-center justify-between">
           <Link href="/sekai" className="text-[13px] font-bold text-[#a8cca8] no-underline">
@@ -102,7 +106,14 @@ export default function ClubPage() {
             </span>
           )}
         </div>
-        <div className="mt-3 text-[44px] leading-none">{club.emoji ?? "🎌"}</div>
+        <div className="mt-3 leading-none">
+          {club.icon_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={club.icon_url} alt="" className="mx-auto h-[64px] w-[64px] rounded-full border-2 border-white/40 object-cover" />
+          ) : (
+            <span className="text-[44px]">{club.emoji ?? "🎌"}</span>
+          )}
+        </div>
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{club.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
           {club.scope} ・ 部員 {members.length}人
@@ -126,6 +137,46 @@ export default function ClubPage() {
           >
             {joined ? "✓ 入部中（タップで退部）" : "入部する"}
           </button>
+        )}
+        {me && joined && (
+          <div className="mt-2 flex justify-center gap-3">
+            <label className="cursor-pointer text-[10.5px] font-bold text-[#a8cca8] underline">
+              背景を変える
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f || !me) return;
+                  const url = await uploadImage("post-images", me.id, f, 1080, 0.6);
+                  if (url) {
+                    const supabase = createClient();
+                    await supabase.rpc("set_club_look", { cid: clubId, cover: url, icon: null });
+                    load();
+                  }
+                }}
+              />
+            </label>
+            <label className="cursor-pointer text-[10.5px] font-bold text-[#a8cca8] underline">
+              アイコンを変える
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f || !me) return;
+                  const url = await uploadImage("post-images", me.id, f, 256, 0.7);
+                  if (url) {
+                    const supabase = createClient();
+                    await supabase.rpc("set_club_look", { cid: clubId, cover: null, icon: url });
+                    load();
+                  }
+                }}
+              />
+            </label>
+          </div>
         )}
       </header>
 

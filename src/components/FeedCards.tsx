@@ -1,5 +1,6 @@
 "use client";
 
+import { SekaiBadge } from "@/components/WarawaBadge";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { MuraPost } from "@/lib/feed";
@@ -53,19 +54,19 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
             onClick={() => v && router.push(`/sekai/village/${v.id}`)}
             className="block max-w-full truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21]"
           >
-            {v ? `${v.name}${v.prefecture ? `（${v.prefecture}）` : ""}` : "セカイムラ"}
+            {v ? `${v.name}${v.prefecture ? `（${v.prefecture}）` : ""}` : "セカイムラ"} <SekaiBadge size={14} />
           </button>
           <div className="text-[11.5px] leading-tight text-[#8a8d91]">
             {relTime(mura.created_at)}
             {mura.profiles?.display_name && <span className="ml-1.5">{mura.profiles.display_name}</span>}
           </div>
         </div>
-        {/* 右上: ムラビトの投稿バッジ（塗りつぶし） */}
+        {/* 右上: 公認拠点の投稿バッジ（緑） */}
         <span
           className="flex-shrink-0 self-start rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white"
-          style={{ background: "#8a6a42" }}
+          style={{ background: "#2a8a4a" }}
         >
-          ムラビト投稿
+          公認拠点
         </span>
       </div>
 

@@ -22,3 +22,26 @@ export function WarawaBadge({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
+
+
+/** 公認セカイムラ拠点のしるし（緑のチェック）— 村名義の投稿に付く */
+export function SekaiBadge({ size = 14 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 20 20"
+      role="img"
+      aria-label="公認セカイムラ拠点"
+      className="inline-block flex-shrink-0 align-[-2px]"
+    >
+      <title>公認セカイムラ拠点</title>
+      <path
+        d="M10 0l2.4 2.1 3.1-.5 1 3 3 1-.5 3.1L21 11l-2.1 2.4.5 3.1-3 1-1 3-3.1-.5L10 22l-2.4-2.1-3.1.5-1-3-3-1 .5-3.1L-1 11l2.1-2.4-.5-3.1 3-1 1-3 3.1.5z"
+        transform="scale(0.9) translate(1,-0.5)"
+        fill="#2a8a4a"
+      />
+      <path d="M6 10.2l2.6 2.6L14.2 7" stroke="#fff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

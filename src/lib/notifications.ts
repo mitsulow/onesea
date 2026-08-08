@@ -29,6 +29,8 @@ export function notifText(n: NotificationRow): string {
       return `${who}さんからブツブツ交換の提案が来ました`;
     case "share":
       return `${who}さんにシェアされました`;
+    case "club_post":
+      return `${who}さんが部活に活動記録を投稿しました`;
     default:
       return `${who}さんからお知らせがあります`;
   }
