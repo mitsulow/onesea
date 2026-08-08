@@ -16,6 +16,7 @@ export function CotozuteTeaser() {
   const [posts, setPosts] = useState<CotozutePost[] | null>(null);
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [me, setMe] = useState<User | null>(null);
+  const [myAvatar, setMyAvatar] = useState<string | null>(null); // マイページで変えた写真を優先
 
   useEffect(() => {
     const supabase = createClient();
@@ -57,9 +58,9 @@ export function CotozuteTeaser() {
       </Link>
       {/* 入力ボックス（タップでコトヅテの投稿画面へ） */}
       <Link href="/cotozute?compose=1" className="mb-2 flex items-center gap-2.5 no-underline">
-        {me?.user_metadata?.avatar_url ? (
+        {myAvatar || me?.user_metadata?.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={srcCdn(me.user_metadata.avatar_url as string)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+          <img src={srcCdn(myAvatar ?? (me!.user_metadata!.avatar_url as string))} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
         ) : (
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ead9] text-[16px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
         )}
