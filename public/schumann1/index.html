@@ -1535,7 +1535,10 @@
         <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
         <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
         <button id="sun-video-btn" type="button" style="display:block;margin:0.5rem auto 0;padding:0.5rem 1.4rem;border-radius:100px;border:1.5px solid rgba(255,170,60,.5);background:rgba(40,24,8,.6);color:#ffd60a;font:700 0.82rem 'Noto Sans JP',sans-serif;cursor:pointer;">▶ 太陽の動画で見る（直近48時間・プロミネンスが動く）</button>
-        <video id="sun-video" controls playsinline preload="none" style="display:none;width:100%;max-width:340px;margin:0.5rem auto 0;border-radius:12px;background:#000;" src="https://sdo.gsfc.nasa.gov/assets/img/latest/mpeg/latest_1024_0304.mp4"></video>
+        <div id="sun-anim-wrap" style="display:none;max-width:340px;margin:0.5rem auto 0;text-align:center;">
+          <img id="sun-anim" alt="太陽 直近48時間" style="width:100%;border-radius:12px;background:#000;display:block;">
+          <div id="sun-anim-label" style="margin-top:0.3rem;font-size:0.72rem;color:#ffd60a;letter-spacing:0.06em;"></div>
+        </div>
         <!-- NICT きょうの概況（本物の予報官の文章） -->
         <div id="nict-box" style="display:none;margin:0.7rem 0.9rem 0;padding:0.7rem 0.8rem;border:1px solid rgba(120,180,255,.3);border-radius:12px;background:rgba(14,20,32,.7);">
           <div style="font-size:0.7rem;letter-spacing:0.12em;color:#8aa8d0;">📋 NICT宇宙天気予報センター きょうの概況 <span id="nict-updated" style="color:#5a7a9a;"></span></div>
@@ -3538,12 +3541,47 @@
     };
     tick();
     setInterval(tick, 5 * 60000);
-    // ▶ 太陽の動画(押した時だけ読み込む — パケ死しない)
-    const vbtn = document.getElementById("sun-video-btn"), vid = document.getElementById("sun-video");
-    if (vbtn && vid) vbtn.addEventListener("click", () => {
-      vid.style.display = "block";
-      vbtn.style.display = "none";
-      try { vid.play(); } catch (e) {}
+    // ▶ 太陽の動画 — NASAのmp4は63MB+moov末尾で再生不能だったため、
+    //   静止画アーカイブ48コマを先読みしてパラパラ動画にする(約2MB・押した時だけ)
+    const vbtn = document.getElementById("sun-video-btn");
+    if (vbtn) vbtn.addEventListener("click", async () => {
+      vbtn.disabled = true;
+      vbtn.textContent = "コマを読み込み中...";
+      try {
+        const d = await fetch("/api/sun-frames").then(r => r.json());
+        const frames = (d && d.frames) || [];
+        if (frames.length < 4) throw new Error("no frames");
+        const wrap = document.getElementById("sun-anim-wrap");
+        const img = document.getElementById("sun-anim");
+        const label = document.getElementById("sun-anim-label");
+        const loaded = [];
+        let done = 0;
+        await Promise.all(frames.map((u, i) => new Promise((res) => {
+          const im = new Image();
+          im.onload = () => { loaded[i] = u; done++; vbtn.textContent = `コマを読み込み中... ${done}/${frames.length}`; res(); };
+          im.onerror = () => { done++; res(); };
+          im.src = u;
+        })));
+        const ok = loaded.filter(Boolean);
+        if (ok.length < 4) throw new Error("load fail");
+        vbtn.style.display = "none";
+        wrap.style.display = "block";
+        const timeOf = (u) => {
+          const m = u.match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})_512/);
+          if (!m) return "";
+          const t = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) + 9 * 3600000);
+          return `${t.getUTCMonth() + 1}/${t.getUTCDate()} ${t.getUTCHours()}:${String(t.getUTCMinutes()).padStart(2, "0")}`;
+        };
+        let i = 0;
+        setInterval(() => {
+          img.src = ok[i];
+          label.textContent = `\u2600 ${timeOf(ok[i])} JST（直近48時間 ${i + 1}/${ok.length}コマ）`;
+          i = (i + 1) % ok.length;
+        }, 150);
+      } catch (e) {
+        vbtn.disabled = false;
+        vbtn.textContent = "読み込めませんでした。もう一度押してください";
+      }
     });
     // 📋 NICT きょうの概況
     fetch("/api/nict").then(r => r.json()).then(d => {
