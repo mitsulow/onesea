@@ -1510,10 +1510,22 @@
   </details>
 
   <details class="fold" id="fold-solar">
-    <summary>太陽とイナズマとシューマン共振</summary>
+    <summary>太陽とイナヅマとシューマン共振</summary>
 
     <div class="graph-description">
       <p>シューマン共振は<b>「太陽×稲妻＝地球の音」</b>という関係。太陽が強まると稲妻の数が増え、地面と電離層の間の「空洞」を鳴らします。更に、太陽が強くなり電離層が押されることで空洞が狭くなり、<b>音程（周波数）が高く</b>なります。シューマン共振とは結局は<b>太陽のご機嫌次第</b>なのです。このページではその3者（太陽・稲妻・シューマン共振）の関連性を、実際のデータをもとに無料公開しています。</p>
+    </div>
+
+    <!-- いまの太陽×イナヅマ 2枚看板 -->
+    <div style="display:flex;gap:10px;margin:0.2rem 0.9rem 0.8rem;">
+      <div style="flex:1;text-align:center;background:linear-gradient(160deg,#1a1208,#241505);border:1px solid rgba(255,170,60,.35);border-radius:14px;padding:0.7rem 0.4rem;">
+        <div style="font-size:0.72rem;letter-spacing:0.15em;color:#c8a060;">☀ いまの太陽</div>
+        <div id="stat-sun" style="font:800 1.5rem/1.3 'JetBrains Mono',monospace;color:#ffd60a;">—</div>
+      </div>
+      <div style="flex:1;text-align:center;background:linear-gradient(160deg,#0e1420,#101a2e);border:1px solid rgba(120,180,255,.3);border-radius:14px;padding:0.7rem 0.4rem;">
+        <div style="font-size:0.72rem;letter-spacing:0.15em;color:#8aa8d0;">⚡ いまのイナヅマ</div>
+        <div id="stat-lightning" style="font:800 1.5rem/1.3 'JetBrains Mono',monospace;color:#8ff4ff;">—</div>
+      </div>
     </div>
 
     <!-- ■いまの太陽（リアルタイム・無料API） -->
@@ -1527,7 +1539,7 @@
 
       <!-- ■いまの世界の雷（リアルタイム） -->
       <div class="dv-block">
-        <div class="dv-title">〇いま鳴った世界のイナズマ総数 <span>リアルタイム</span></div>
+        <div class="dv-title">〇いま鳴った世界のイナヅマ総数 <span>リアルタイム</span></div>
         <div id="lightning-now" style="text-align:center;padding:0.6rem 0.9rem;font:700 1.0rem/1.7 'Noto Sans JP',sans-serif;color:#ffd60a;">⚡ 雷の検知網に接続中…</div>
 
       </div>
@@ -3497,6 +3509,8 @@
           const c = cls(last.flux);
           el.innerHTML = '☀ いまのX線フラックス <b style="color:' + c[2] + ';font-size:1.25em;">' + c[0] + c[1].toFixed(1) + '</b>'
             + '<span style="color:#9fb2c8;font-weight:400;"> クラス（' + (c[0] === "X" || c[0] === "M" ? "フレア発生中！" : c[0] === "C" ? "小さなフレア" : "静穏") + '）</span>';
+          const st = document.getElementById("stat-sun");
+          if (st) st.innerHTML = '<span style="color:' + c[2] + ';">' + c[0] + c[1].toFixed(1) + '</span><span style="font-size:0.6em;color:#c8a060;"> ' + (c[0] === "X" || c[0] === "M" ? "フレア中" : c[0] === "C" ? "小フレア" : "静穏") + '</span>';
         }).catch(() => {});
       const img = document.getElementById("sun-img");
       if (img) img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg?t=" + Date.now();
@@ -3526,13 +3540,17 @@
         if (shown > 0 || !Array.isArray(hist) || !hist.length) return;
         const [ts, n] = hist[hist.length - 1];
         const d = new Date(ts);
-        el.innerHTML = '⚡ 1分間に <b style="font-size:1.3em;">' + Number(n).toLocaleString() + '</b> 発のイナズマが地球で鳴った ⚡'
+        el.innerHTML = '⚡ 1分間に <b style="font-size:1.3em;">' + Number(n).toLocaleString() + '</b> 発のイナヅマが地球で鳴った ⚡'
           + '<span style="color:#9fb2c8;font-weight:400;font-size:0.75em;">（' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, "0") + ' 時点）</span>';
+        const sl2 = document.getElementById("stat-lightning");
+        if (sl2 && sl2.textContent === "—") sl2.innerHTML = Number(n).toLocaleString() + '<span style="font-size:0.6em;color:#8aa8d0;"> 発/分</span>';
       }).catch(() => {});
     setInterval(() => { shown = count; count = 0; }, 60000);
     setInterval(() => {
       if (shown > 0) {
-        el.innerHTML = '⚡ この1分間に <b style="font-size:1.3em;">' + shown.toLocaleString() + '</b> 発のイナズマが地球で鳴った ⚡';
+        el.innerHTML = '⚡ この1分間に <b style="font-size:1.3em;">' + shown.toLocaleString() + '</b> 発のイナヅマが地球で鳴った ⚡';
+        const sl = document.getElementById("stat-lightning");
+        if (sl) sl.innerHTML = shown.toLocaleString() + '<span style="font-size:0.6em;color:#8aa8d0;"> 発/分</span>';
       } else {
         el.textContent = "⚡ 雷を数えています…（1分ほどお待ちください）";
       }
