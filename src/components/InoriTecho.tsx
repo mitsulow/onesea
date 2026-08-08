@@ -378,29 +378,32 @@ function MonthCal({
       <div className="px-4 pt-1" style={{ background: "#fff" }}>
       </div>
 
-      {/* 月ナビ（右端▶の左に⛶=全画面。地図アプリと同じ文法） */}
-      <div className="relative flex items-center justify-between border-b border-[#eee] px-1.5 pb-0.5 pt-1.5">
-        {onFullscreen && (
-          <button
-            onClick={onFullscreen}
-            className="absolute right-[52px] top-1/2 flex -translate-y-1/2 items-center gap-[3px] rounded-md border border-[#e0d8c8] bg-white px-1.5 py-[3px] text-[9px] font-bold leading-none text-[#8a7a5a]"
-          >
-            <span className="text-[11px] leading-none">⛶</span> 全画面表示
-          </button>
-        )}
+      {/* 月ナビ — ⛶全画面は「8月」と▶のちょうど中間 */}
+      <div className="flex items-center border-b border-[#eee] px-1.5 py-0.5">
         <button
           onClick={() => mi > 0 && setMi(mi - 1)}
           disabled={mi === 0}
-          className="px-3.5 py-1 text-xl font-bold"
+          className="px-3.5 py-0.5 text-xl font-bold"
           style={{ color: mi === 0 ? "#ddd" : "#996b1d" }}
         >
           ◀
         </button>
+        <div className="flex-1" />
         <span className="text-[17px] font-extrabold text-[#2a2a2a]">{ML[mi]}</span>
+        <div className="flex flex-1 justify-center">
+          {onFullscreen && (
+            <button
+              onClick={onFullscreen}
+              className="flex items-center gap-[3px] rounded-md border border-[#e0d8c8] bg-white px-1.5 py-[3px] text-[9px] font-bold leading-none text-[#8a7a5a]"
+            >
+              <span className="text-[11px] leading-none">⛶</span> 全画面表示
+            </button>
+          )}
+        </div>
         <button
           onClick={() => mi < MONTHS.length - 1 && setMi(mi + 1)}
           disabled={mi === MONTHS.length - 1}
-          className="px-3.5 py-1 text-xl font-bold"
+          className="px-3.5 py-0.5 text-xl font-bold"
           style={{ color: mi === MONTHS.length - 1 ? "#ddd" : "#996b1d" }}
         >
           ▶
