@@ -1498,6 +1498,105 @@
         <div id="dv-records-inst" style="padding:0 0.9rem"></div>
       </div>
 
+      <!-- ■生の数値台帳: 15分ごとの実測F1をそのまま見せる(この蓄積はうちだけの強み) -->
+      <div class="dv-block">
+        <div class="dv-title">■生の数値（15分ごと） <span>時刻と実測F1値をそのまま公開・2018年5月〜</span></div>
+        <style>
+          #lgr-list { max-height: 420px; overflow-y: auto; margin: 0.3rem 0.9rem 0.7rem; border: 1px solid rgba(120,180,255,.15); border-radius: 10px; font-family: 'JetBrains Mono', monospace; }
+          .lgr-row { display: flex; justify-content: space-between; padding: 0.2rem 0.7rem; font-size: 0.86rem; color: #9fb2c8; border-bottom: 1px dashed rgba(120,180,255,.12); }
+          .lgr-row b { color: #5ad48f; font-weight: 700; }
+          .lgr-row:nth-child(even) { background: rgba(255,255,255,.025); }
+          .lgr-nav { display: flex; align-items: center; justify-content: center; gap: 0.7rem; padding: 0.35rem 0 0.1rem; }
+          .lgr-nav button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(120,180,255,.35); background: rgba(14,20,32,.7); color: #8aa8d0; font-size: 0.85rem; cursor: pointer; }
+          .lgr-nav input { background: #101826; color: #cfe0ec; border: 1px solid rgba(120,180,255,.3); border-radius: 8px; padding: 0.32rem 0.5rem; font-family: inherit; font-size: 0.85rem; color-scheme: dark; }
+        </style>
+        <div class="lgr-nav">
+          <button type="button" id="lgr-prev" aria-label="前の日">◀</button>
+          <input type="date" id="lgr-date" min="2018-05-01">
+          <button type="button" id="lgr-next" aria-label="次の日">▶</button>
+        </div>
+        <div id="lgr-list"><div style="padding:1rem;color:#7d829a;">開くと読み込みます…</div></div>
+      </div>
+      <script>
+      // ■生の数値台帳: 0Leiの月ファイル(5分粒度)から、選んだ日のJST 15分ごとF1を並べる
+      (function () {
+        var list = document.getElementById("lgr-list");
+        var dateIn = document.getElementById("lgr-date");
+        if (!list || !dateIn) return;
+        var cache = {};
+        var todayJst = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+        dateIn.value = todayJst;
+        dateIn.max = todayJst;
+        var loading = false;
+        var getMonth = function (m) {
+          if (cache[m]) return Promise.resolve(cache[m]);
+          return fetch("https://mitsulow.github.io/0Lei/history/" + m + ".json")
+            .then(function (r) { return r.ok ? r.json() : []; })
+            .catch(function () { return []; })
+            .then(function (d) { cache[m] = d; return d; });
+        };
+        var load = function () {
+          var day = dateIn.value;
+          if (!day || loading) return;
+          loading = true;
+          list.innerHTML = '<div style="padding:1rem;color:#7d829a;">読み込み中…</div>';
+          var start = Date.parse(day + "T00:00:00+09:00");
+          var end = start + 86400e3;
+          // JSTの一日はUTCでは前日15時からなので、日付の月とUTC側の月の両ファイルを見る
+          var months = {};
+          months[day.slice(0, 7)] = 1;
+          months[new Date(start).toISOString().slice(0, 7)] = 1;
+          Promise.all(Object.keys(months).map(getMonth)).then(function (parts) {
+            var rows = [].concat.apply([], parts);
+            var buckets = new Array(96);
+            for (var i = 0; i < rows.length; i++) {
+              var r = rows[i];
+              if (r.F1 == null) continue;
+              var t = Date.parse(r.t);
+              if (!(t >= start && t < end)) continue;
+              var q = Math.floor((t - start) / 900e3);
+              var center = start + q * 900e3 + 450e3;
+              if (!buckets[q] || Math.abs(t - center) < Math.abs(buckets[q].t - center)) buckets[q] = { t: t, f1: r.F1 };
+            }
+            var html = "";
+            var n = 0;
+            for (var q2 = 0; q2 < 96; q2++) {
+              var b = buckets[q2];
+              if (!b) continue;
+              n++;
+              var hh = ("0" + Math.floor(q2 / 4)).slice(-2);
+              var mm = ("0" + (q2 % 4) * 15).slice(-2);
+              html += '<div class="lgr-row"><span>' + hh + ":" + mm + "</span><b>" + b.f1.toFixed(2) + " Hz</b></div>";
+            }
+            list.innerHTML = n
+              ? html
+              : '<div style="padding:1rem;color:#7d829a;">この日のデータはありません</div>';
+            loading = false;
+          });
+        };
+        var shift = function (d) {
+          var t = new Date(dateIn.value + "T00:00:00Z");
+          t.setUTCDate(t.getUTCDate() + d);
+          var v = t.toISOString().slice(0, 10);
+          if (v < dateIn.min || v > dateIn.max) return;
+          dateIn.value = v;
+          load();
+        };
+        document.getElementById("lgr-prev").addEventListener("click", function () { shift(-1); });
+        document.getElementById("lgr-next").addEventListener("click", function () { shift(1); });
+        dateIn.addEventListener("change", load);
+        // 「過去のデータ」を開いた時にはじめて読み込む(開かない人は0バイト)
+        var det = list.closest("details");
+        var boot = function () {
+          if (det && !det.open) return;
+          load();
+          if (det) det.removeEventListener("toggle", boot);
+        };
+        if (det) det.addEventListener("toggle", boot);
+        boot();
+      })();
+      </script>
+
       <!-- MMM誘導: 宝の山 → 「この音を自分の耳で」 -->
       <a class="dv-mmm-cta" href="/mmm">
         <div class="dv-mmm-head">⚡ シューマン共振を、ご自分の耳で。</div>
