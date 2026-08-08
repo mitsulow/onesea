@@ -809,20 +809,35 @@ function BottomSheet({
 
               {/* ── 月: 月齢と出入り ── */}
               {celSel === "moon" && (
-                <div className="mx-2 mb-2 rounded-xl border border-[#26262e] p-2.5 text-center" style={{ background: "#000005" }}>
+                <div className="relative mx-2 mb-2 overflow-hidden rounded-xl border border-[#26262e]" style={{ background: "#000005", height: 200 }}>
+                  {/* NASA月画像を上下いっぱいにドーンと */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={moonImageOf(moon.age)} alt="" className="mx-auto my-1 h-14 w-14" loading="lazy" />
-                  <div className="num text-[12px] text-[#e8e4f0]">月齢 {moon.age.toFixed(1)}</div>
-                  {(() => {
-                    const ht = holyTimeOf(dk);
-                    return ht ? (
-                      <div className="mt-[1px] text-[10.5px] font-extrabold text-[#e8c860]">✦{ht.name}（{ht.label}）{ht.time}</div>
-                    ) : null;
-                  })()}
-                  <div className="mx-auto mt-1 max-w-[220px] border-t border-[#2a2a35] pt-1 text-[10.5px] leading-relaxed text-[#b8b4c8]">
-                    <div className="flex justify-between"><span>月の出</span><span className="num text-white">{mt.rise ?? "—"}</span></div>
-                    <div className="flex justify-between"><span>南中</span><span className="num text-white">{mt.transit ?? "—"}</span></div>
-                    <div className="flex justify-between"><span>月の入</span><span className="num text-white">{mt.set ?? "—"}</span></div>
+                  <img
+                    src={moonImageOf(moon.age)}
+                    alt=""
+                    loading="lazy"
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 object-contain"
+                    style={{ height: 188, width: 188 }}
+                  />
+                  {/* 左上: 月齢(大きめ) + 朔弦望メッセージ */}
+                  <div className="absolute left-3 top-2.5 z-10 text-left">
+                    <div className="num text-[16px] font-bold text-[#e8e4f0]" style={{ textShadow: "0 0 6px #000" }}>月齢 {moon.age.toFixed(1)}</div>
+                    {(() => {
+                      const ht = holyTimeOf(dk);
+                      return ht ? (
+                        <div className="mt-1 text-[13px] font-extrabold leading-snug text-[#e8c860]" style={{ textShadow: "0 0 6px #000" }}>
+                          ✦{ht.name}（{ht.label}）
+                          <br />
+                          <span className="num">{ht.time}</span>
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                  {/* 右下: 月の出・南中・月の入 */}
+                  <div className="absolute bottom-2.5 right-3 z-10 text-right text-[11px] leading-relaxed text-[#b8b4c8]" style={{ textShadow: "0 0 6px #000" }}>
+                    <div>月の出 <span className="num text-white">{mt.rise ?? "—"}</span></div>
+                    <div>南中 <span className="num text-white">{mt.transit ?? "—"}</span></div>
+                    <div>月の入 <span className="num text-white">{mt.set ?? "—"}</span></div>
                   </div>
                 </div>
               )}
