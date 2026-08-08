@@ -12,6 +12,7 @@ export default function SekaiMapPage() {
       <section className="card">
         <SectionTitle><img src="/icons/icon-japanmap.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3 }} /> セカイムラ地図 — 旅先でも家族を見つける</SectionTitle>
         <MapLoader />
+        <ShopSpotlight />
         <RecoFinder />
       </section>
     </SekaiShell>
@@ -19,6 +20,56 @@ export default function SekaiMapPage() {
 }
 
 type RecoRow = { id: string; name: string; category: string; comment: string | null; lat: number; lng: number; address: string | null };
+
+/** カードから飛んできた時 (?shop=id)、その店の概要を地図のすぐ下に大きく開く */
+function ShopSpotlight() {
+  const [shop, setShop] = useState<any | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("shop");
+    if (!id) return;
+    const supabase = createClient();
+    supabase
+      .from("reco_shops")
+      .select("id, name, category, comment, lat, lng, address, image_url, user_id, profiles!reco_shops_user_id_fkey(display_name, username)")
+      .eq("id", id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (data) { setShop(data); return; }
+        if (error) {
+          supabase.from("reco_shops").select("*").eq("id", id).maybeSingle().then(({ data: d2 }) => setShop(d2));
+        }
+      });
+  }, []);
+  if (!shop) return null;
+  const c = recoCat(shop.category);
+  return (
+    <div className="mt-2 overflow-hidden rounded-2xl border-2 bg-white shadow-md" style={{ borderColor: c.color }}>
+      <div className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-extrabold text-white" style={{ background: c.color }}>
+        <span>{c.emoji}</span>
+        <span>{c.label}</span>
+        {shop.profiles?.display_name && <span className="ml-auto font-normal opacity-90">{shop.profiles.display_name}さんのおススメ</span>}
+      </div>
+      {shop.image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={shop.image_url} alt="" referrerPolicy="no-referrer" className="h-[150px] w-full object-cover" />
+      )}
+      <div className="px-3.5 py-3">
+        <div className="text-[17px] font-extrabold leading-snug text-[#3a3428]">{shop.name}</div>
+        {shop.address && <div className="mt-0.5 text-[11.5px] text-[#a09888]">{shop.address}</div>}
+        {shop.comment && <div className="mt-1.5 text-[13px] leading-relaxed text-[#5a5448]">{shop.comment}</div>}
+        <a
+          href={`https://www.google.com/maps?q=${shop.lat},${shop.lng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2.5 block rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline"
+          style={{ background: c.color }}
+        >
+          Googleマップでひらく →
+        </a>
+      </div>
+    </div>
+  );
+}
 
 /**
  * みんなのおススメの店ファインダー。

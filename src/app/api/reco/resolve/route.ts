@@ -40,12 +40,15 @@ function cleanName(t: string | null): string | null {
   return n && n.toLowerCase() !== "google maps" && n !== "Google マップ" ? n : null;
 }
 
-function pickImage(html: string): string | null {
+function pickImage(html: string, allowStatic = false): string | null {
   const og = pickMeta(html, "og:image");
-  // Googleの既定サムネ(staticmapの東京中心など)より実写真を優先
+  // Googleの既定サムネ(staticmap)より実写真を優先
   const photo = html.match(/https:\/\/lh\d\.googleusercontent\.com\/(?:p\/|gps-cs|places\/)[^"'\\\s)]+/);
   if (photo) return photo[0].replace(/=w\d+.*$/, "=w640-h480-k-no");
+  const anyPhoto = html.match(/https:\/\/lh\d\.googleusercontent\.com\/[^"'\\\s)]{20,}/);
+  if (anyPhoto) return anyPhoto[0].replace(/=w\d+.*$/, "=w640-h480-k-no");
   if (og && !og.includes("staticmap")) return og;
+  if (og && allowStatic) return og; // 最後の手段: 地図サムネでも無いよりマシ
   return null;
 }
 
@@ -110,7 +113,7 @@ export async function GET(req: NextRequest) {
     coords = pickCoords(finalUrl) ?? pickCoords(html);
 
     // 画像
-    image = pickImage(html);
+    image = pickImage(html, true);
 
     // 座標がまだ無ければ店名からジオコーディング（無料）
     if (!coords && name) {

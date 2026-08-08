@@ -92,23 +92,25 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
 
       {isMe && (
         <div className="mb-2 rounded-xl border border-[#ede5d8] bg-[#fffaf0] p-2.5">
-          {/* カテゴリ（パワースポットは1種なので非表示） */}
-          <div className="hide-scrollbar mb-2 flex gap-1.5 overflow-x-auto" style={isPower ? { display: "none" } : undefined}>
-            {RECO_CATS.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setCat(c.id)}
-                className="flex-shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-bold"
-                style={
-                  cat === c.id
-                    ? { background: c.color, color: "#fff", borderColor: c.color }
-                    : { background: "#fff", color: "#8a8070", borderColor: "#e8dcc4" }
-                }
+          {/* ① ジャンルをリストから選ぶ（押し間違い防止のためタブではなくセレクト） */}
+          {!isPower && (
+            <div className="mb-2">
+              <div className="mb-1 text-[11px] font-extrabold text-[#8a7a5a]">① ジャンルを選択</div>
+              <select
+                value={cat}
+                onChange={(e) => setCat(e.target.value)}
+                className="w-full rounded-xl border-2 bg-white px-3 py-2.5 text-[13.5px] font-bold outline-none"
+                style={{ borderColor: recoCat(cat).color, color: recoCat(cat).color }}
               >
-                {c.emoji} {c.label}
-              </button>
-            ))}
-          </div>
+                {RECO_CATS.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.emoji} {c.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {!isPower && <div className="mb-1 text-[11px] font-extrabold text-[#8a7a5a]">② Googleマップなどで「共有 → リンクをコピー」して貼る</div>}
           {/* Googleマップのリンクを貼るだけ */}
           <input
             value={paste}
@@ -133,7 +135,7 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
             return (
               <div
                 key={s.id}
-                onClick={() => { window.location.href = "/sekai/map"; }}
+                onClick={() => { window.location.href = "/sekai/map?shop=" + s.id; }}
                 className="relative w-[128px] flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border bg-white shadow-sm"
                 style={{ borderColor: c.color + "66" }}
               >
