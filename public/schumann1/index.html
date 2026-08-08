@@ -1523,10 +1523,37 @@
   </details>
 
   <details class="fold" id="fold-solar">
-    <summary>太陽フレアが出た日、地球の音はどうなった？</summary>
+    <summary>太陽フレアと雷とシューマン共振</summary>
 
     <div class="graph-description">
-      <p>太陽で <b>Xフレア</b> や <b>Mフレア</b> が爆発すると、1〜3日後に太陽風の塊が地球へ届き、磁気圏が大きく揺れます（＝磁気嵐）。その「揺れの強さ」を毎日1つの数字にしたのが <b>Ap指数</b>。つまり <b>Apが高い日 = 太陽が怒った日</b> です。ここでは「太陽が怒った日に、シューマン共振（地球の音）はどう変わったのか」を、実測データで確かめられます。散布図は太陽風の到達遅れ（1〜3日）を考慮して、0〜2日ずらした中で一番相関が強い組み合わせを自動で表示します（Apは世界時・F1は日本時間の日区切りのため最大9時間の時差も吸収）。</p>
+      <p>シューマン共振は<b>雷が鳴らす地球の音</b>です。地面と電離層（上空約100km）のすき間は巨大な太鼓の胴のような空洞で、世界中の雷（毎秒約50発）がそこを叩き続けることで、7.83Hzを基音とする定在波が生まれます。だから<b>雷が多くなるとシューマン共振のパワーは上がり</b>、太陽フレアが電離層の高さや密度を変えると、太鼓の胴のサイズが変わって<b>音程（周波数）がわずかにズレ</b>ます。このページでは、その3者のつながりを「いま」と「過去の実測」の両方で見られます。</p>
+    </div>
+
+    <!-- ■いまの太陽（リアルタイム・無料API） -->
+    <div class="dv-panel">
+      <div class="dv-block">
+        <div class="dv-title">■いまの太陽 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
+        <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;margin:0 auto;border-radius:12px;" />
+        <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
+        <div class="graph-description"><p>赤い模様が活動領域。明るい爆発がフレアです。X線の強さがC→M→Xと上がるほど大きなフレア。Xクラスが出ると1〜3日後に太陽風の塊が地球に届き、磁気嵐（Kp上昇）→電離層が乱れて、シューマン共振の「天井」が揺れます。</p></div>
+      </div>
+
+      <!-- ■いまの世界の雷（リアルタイム） -->
+      <div class="dv-block">
+        <div class="dv-title">■いまの世界の雷 × シューマン共振 <span>Blitzortung.org 落雷検知網・リアルタイム</span></div>
+        <div id="lightning-now" style="text-align:center;padding:0.6rem 0.9rem;font:700 1.0rem/1.7 'Noto Sans JP',sans-serif;color:#ffd60a;">⚡ 雷の検知網に接続中…</div>
+        <div class="graph-description"><p>世界の有志2,000局以上のアンテナが捉えた落雷を、そのまま数えています。地球の雷は「三大雷源」— <b>東南アジア</b>（日本時間の昼すぎ）・<b>アフリカ</b>（日本時間の夜）・<b>南米アマゾン</b>（日本時間の明け方）— が太陽を追いかけて順番に鳴ります。<b>雷の総数が増える時間帯はシューマン共振のパワー（振幅）も上がります</b>。周波数の方は雷の「場所」に敏感で、観測地に近い雷源が鳴るほど高めに出ます。</p></div>
+      </div>
+    </div>
+
+    <!-- ■スポラディックE層 -->
+    <div class="graph-description">
+      <p><b>■スポラディックE層（Eスポ）</b> — 夏のいたずら者。高度約100km、ちょうどシューマン共振の「天井」のあたりに、<b>電子がぎっしり詰まった薄い板</b>が突然あらわれる現象です。夏の昼〜夕方に多く、普段は届かない遠くのFMラジオが突然聞こえたり、航空無線が数千km飛んだりします。天井の一部が局所的に「低く・硬く」なるため、シューマン共振の周波数がわずかに上ぶれする一因になると考えられています。日本の<b>NICT宇宙天気予報センター</b>（<a href="https://swc.nict.go.jp/" target="_blank" rel="noopener" style="color:#2CB7DE;">swc.nict.go.jp</a>）が毎日、フレア・磁気嵐・Eスポの予報を出しています。8.02Hz観測の照合にどうぞ。</p>
+    </div>
+
+    <!-- ■過去の分析 -->
+    <div class="graph-description">
+      <p><b>■過去の分析</b> — 太陽で <b>Xフレア</b> や <b>Mフレア</b> が爆発すると、1〜3日後に太陽風の塊が地球へ届き、磁気圏が大きく揺れます（＝磁気嵐）。その「揺れの強さ」を毎日1つの数字にしたのが <b>Ap指数</b>。つまり <b>Apが高い日 = 太陽が怒った日</b> です。散布図は太陽風の到達遅れを考慮して、フレアから<b>0〜2日ずらした中で一番相関が強い組み合わせ</b>（＝「フレアの◯時間後にシューマンが動く」）を自動で選んで表示します（Apは世界時・F1は日本時間の日区切りのため最大9時間の時差も吸収）。</p>
     </div>
     <div class="dv-panel">
       <div class="dv-block">
@@ -2417,7 +2444,7 @@
         const fs = Math.max(9, Math.min(12, W / u / 38)) * u;
         ctx.fillStyle = "#22242c";
         ctx.fillRect(0, 0, W, H);
-        const PL = fs * 0.6, PR = fs * 3.4, PT = fs * 1.0, PB = fs * 1.8;
+        const PL = fs * 0.6, PR = fs * 3.4, PT = fs * 1.0, PB = fs * 2.6;
         let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
         const mg = (hi - lo) * 0.15 + 1e-6;
         lo -= mg; hi += mg;
@@ -2432,8 +2459,26 @@
           const k = new Date(t).toISOString().slice(0, 16);
           const x = X(k);
           if (x > PL) { ctx.beginPath(); ctx.moveTo(x, PT); ctx.lineTo(x, H - PB); ctx.stroke(); }
-          ctx.fillText(Number(k.slice(5, 7)) + "/" + Number(k.slice(8, 10)), x + fs * 0.3, H - fs * 0.55);
+          ctx.fillText(Number(k.slice(5, 7)) + "/" + Number(k.slice(8, 10)), x + fs * 0.3, H - fs * 0.45);
         }
+        // 3時間おきの時刻目盛り（ラベルは6時間おき）
+        ctx.textAlign = "center";
+        ctx.font = fs * 0.72 + "px monospace";
+        for (let t = Date.parse(cut + ":00Z"); t <= t1; t += 3 * 3600e3) {
+          const k = new Date(t).toISOString().slice(0, 16);
+          const hh = new Date(t).getUTCHours();
+          const x = X(k);
+          if (x <= PL || x >= W - PR) continue;
+          if (hh !== 0) {
+            ctx.strokeStyle = "rgba(255,255,255,0.05)";
+            ctx.beginPath(); ctx.moveTo(x, H - PB); ctx.lineTo(x, H - PB + 3 * u); ctx.stroke();
+            if (hh % 6 === 0) {
+              ctx.fillStyle = "rgba(255,255,255,0.30)";
+              ctx.fillText(String(hh), x, H - fs * 1.45);
+            }
+          }
+        }
+        ctx.font = fs * 0.85 + "px monospace";
         // 横グリッド + 右軸ラベル
         ctx.textAlign = "left";
         for (let i = 0; i <= 3; i++) {
@@ -2449,7 +2494,9 @@
         ctx.strokeStyle = "rgba(255,255,255,0.3)"; ctx.setLineDash([4 * u, 4 * u]); ctx.lineWidth = u;
         ctx.beginPath(); ctx.moveTo(PL, Y(avg)); ctx.lineTo(W - PR, Y(avg)); ctx.stroke();
         ctx.setLineDash([]);
-        // 本体の線
+        // 本体の線（プロット領域でクリップ — 右のHz目盛りへはみ出さない）
+        ctx.save();
+        ctx.beginPath(); ctx.rect(PL, PT, W - PL - PR, H - PT - PB); ctx.clip();
         ctx.strokeStyle = COLORS[mode] || "#5ae08a"; ctx.lineWidth = 0.9 * u;
         ctx.beginPath();
         let pen = false, prev = null;
@@ -2466,6 +2513,7 @@
         const lk = keys[keys.length - 1];
         ctx.fillStyle = COLORS[mode] || "#e8ecf4";
         ctx.beginPath(); ctx.arc(X(lk), Y(ser[lk]), 2.6 * u, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
         ctx.font = fs + "px monospace"; ctx.textAlign = "left";
       });
     } catch (e) { /* 補助表示 */ }
@@ -3354,6 +3402,55 @@
   });
   drawMonthlyTrend();
   drawModeGraphs();
+
+  // ■いまの太陽: GOES X線フラックス → フレアクラス表示（NOAA無料API）
+  (function sunNow() {
+    const el = document.getElementById("sun-now");
+    if (!el) return;
+    const cls = f => f >= 1e-4 ? ["X", f / 1e-4, "#ff5540"] : f >= 1e-5 ? ["M", f / 1e-5, "#ffa040"] : f >= 1e-6 ? ["C", f / 1e-6, "#ffd60a"] : f >= 1e-7 ? ["B", f / 1e-7, "#8fd0a0"] : ["A", f / 1e-8, "#9fb2c8"];
+    const tick = () => {
+      fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json")
+        .then(r => r.json())
+        .then(rows => {
+          const longs = rows.filter(r => r.energy === "0.1-0.8nm");
+          const last = longs[longs.length - 1];
+          if (!last) return;
+          const [L, n, col] = cls(last.flux);
+          el.innerHTML = '☀ いまのX線フラックス <b style="color:' + col + ';font-size:1.25em;">' + L + n.toFixed(1) + '</b>'
+            + '<span style="color:#9fb2c8;font-weight:400;"> クラス（' + (L === "X" || L === "M" ? "フレア発生中！" : L === "C" ? "小さなフレア" : "静穏") + '）</span>';
+        }).catch(() => {});
+      // 太陽画像も同時に更新（キャッシュ回避）
+      const img = document.getElementById("sun-img");
+      if (img) img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg?t=" + Date.now();
+    };
+    tick();
+    setInterval(tick, 5 * 60000);
+  })();
+
+  // ■いまの世界の雷: Blitzortung 落雷カウント（1分あたりの検知数）
+  (function lightningCounter() {
+    const el = document.getElementById("lightning-now");
+    if (!el) return;
+    let count = 0, shown = 0, ws = null, rt = null;
+    function connect() {
+      try { ws = new WebSocket("wss://ws1.blitzortung.org/"); } catch (e) { return retry(); }
+      ws.onopen = () => { try { ws.send(JSON.stringify({ a: 111 })); } catch (e) {} };
+      ws.onmessage = () => { count++; };
+      ws.onclose = retry;
+      ws.onerror = () => { try { ws.close(); } catch (e) {} };
+    }
+    function retry() { clearTimeout(rt); rt = setTimeout(connect, 8000); }
+    connect();
+    setInterval(() => { shown = count; count = 0; }, 60000);
+    setInterval(() => {
+      if (shown > 0) {
+        el.innerHTML = '⚡ この1分間に世界で <b style="font-size:1.3em;">' + shown.toLocaleString() + '</b> 発の雷を検知'
+          + '<span style="color:#9fb2c8;font-weight:400;font-size:0.8em;">（Blitzortung観測網）</span>';
+      } else {
+        el.textContent = "⚡ 雷を数えています…（1分ほどお待ちください）";
+      }
+    }, 5000);
+  })();
 </script>
 
 <!-- ★左下: 卵HOMEボタン + 9メニュー（BottomNavと同配色・同配置） -->
