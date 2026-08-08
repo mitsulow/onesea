@@ -168,7 +168,7 @@ export function useSekaiMe() {
 /** 各ページ共通の外枠（コンパクトなヒーロー + 右上アイコンはOneSeaと同じメニュー） */
 export function SekaiShell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="pb-[58px]">
+    <main className="bg-white pb-[58px]" style={{ minHeight: "100dvh" }}>
       <TopTone color="#ffffff" />
       <header className="relative z-[60] flex h-[52px] flex-col items-center justify-center border-b border-[#eee] bg-white px-6 text-center">
         <div className="text-[10px] leading-tight tracking-[3px] text-[#8aa898]">世界は一つの村になる。</div>
@@ -177,9 +177,6 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
           <AvatarMenu />
         </span>
       </header>
-      <Link href="/lp/sekai" className="block border-b border-[#eee] bg-white py-1.5 text-center text-[11px] font-bold text-[#2a7a38] no-underline">
-        セカイムラについて・入会案内 →
-      </Link>
       {/* PCは Cotozute と同じ3カラム（全幅・中央フィード・左右レール） */}
       <ThreeCol centerClassName="space-y-2.5 bg-white lg:rounded-xl lg:border lg:border-[#e4e6e9]">
         {children}

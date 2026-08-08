@@ -26,7 +26,28 @@ function relTime(iso: string): string {
 }
 
 /** セカイムラ発のたより（FB型・名前欄が拠点名になる） */
-export function MuraFeedCard({ mura }: { mura: MuraPost }) {
+export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: () => void }) {
+  const [meId, setMeId] = useState<string | null>(null);
+  const [amOffice, setAmOffice] = useState(false);
+  const [gone, setGone] = useState(false);
+  useEffect(() => {
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      createClient().auth.getSession().then(({ data: { session } }) => {
+        const uid = session?.user?.id ?? null;
+        setMeId(uid);
+        if (uid) import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(uid).then(setAmOffice)).catch(() => {});
+      });
+    });
+  }, []);
+  const canDelete = !!meId && (meId === (mura as { user_id?: string }).user_id || amOffice);
+  const doDelete = async () => {
+    if (!confirm("本当に削除していいですか？")) return;
+    const { createClient } = await import("@/lib/supabase/client");
+    await createClient().from("village_posts").delete().eq("id", mura.id);
+    setGone(true);
+    onDeleted?.();
+  };
+  if (gone) return null;
   const router = useRouter();
   const v = mura.villages;
   const [expanded, setExpanded] = useState(false);
@@ -61,12 +82,23 @@ export function MuraFeedCard({ mura }: { mura: MuraPost }) {
             {mura.profiles?.display_name && <span className="ml-1.5">{mura.profiles.display_name}</span>}
           </div>
         </div>
-        {/* 右上: 公認拠点の投稿バッジ（緑） */}
-        <span
-          className="flex-shrink-0 self-start rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white"
-          style={{ background: "#2a8a4a" }}
-        >
-          公認拠点
+        {/* 右上: 公認拠点の投稿バッジ（緑） + 削除×(本人と事務局) */}
+        <span className="flex flex-shrink-0 items-center gap-1.5 self-start">
+          <span
+            className="rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white"
+            style={{ background: "#2a8a4a" }}
+          >
+            公認拠点
+          </span>
+          {canDelete && (
+            <button
+              onClick={doDelete}
+              aria-label="削除"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b]"
+            >
+              ×
+            </button>
+          )}
         </span>
       </div>
 

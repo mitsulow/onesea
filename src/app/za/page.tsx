@@ -77,9 +77,6 @@ export default function ZaPage() {
           {/* 他ページと同じ: 未ログインでも丸「ゲスト」のAvatarMenu(中でログイン導線あり) */}
           <AvatarMenu ring="#c94d3a" />
         </div>
-        <Link href="/lp/za" className="block border-t border-[#f0e6dc] py-1.5 text-center text-[11px] font-bold text-[#c94d3a] no-underline">
-          楽市楽座に出品するには・入会案内 →
-        </Link>
       </header>
 
       <div className="space-y-3 pt-3">
