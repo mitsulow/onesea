@@ -869,7 +869,7 @@
     text-align: center;
   }
   .phi-note { font-size: 0.72rem; color: var(--text-dim); text-align: center; margin-top: 0.9rem; }
-  .phi-auto-row { text-align: center; margin: 0.2rem 0 0.4rem; }
+  .phi-auto-row { display: flex; justify-content: center; gap: 10px; margin: 0.2rem 0 0.4rem; }
   .phi-auto {
     font-family: "Noto Serif JP", serif;
     font-size: 0.92rem;
@@ -877,8 +877,8 @@
     letter-spacing: 0.06em;
     padding: 0.65rem 1.6rem;
     border-radius: 100px;
-    border: 1.5px solid rgba(163, 124, 34, 0.5);
-    background: linear-gradient(160deg, #f7e6ba, #e2bc6a);
+    border: 1.5px solid rgba(159, 178, 200, 0.45);
+    background: linear-gradient(160deg, #eef3f7, #d9e4ee);
     color: #4a3408;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(160, 120, 30, 0.3);
@@ -1337,8 +1337,8 @@
       育てて手を離すと鳴りっぱなし。軽くタップで一打 / 鳴っている鉢はタップで停止。
     </p>
     <div class="phi-auto-row">
-      <button id="phi-immersive" class="phi-auto" type="button"><img src="/icons/icon-galaxy.webp" style="width:18px;height:18px;vertical-align:-3px;"> 音で遊ぶ — 没入モード</button>
-      <button id="phi-auto" class="phi-auto" type="button">♪ AI メロディ</button>
+      <button id="phi-auto" class="phi-auto" type="button">AI自動メロディ♪</button>
+      <button id="phi-immersive" class="phi-auto" type="button">没入モード</button>
     </div>
     <div class="phi-grid" id="phi-grid"></div>
     <p class="phi-note">もう一度触れると鎮まります ・ 下の φⁿ で音の高さを変えられます ※ スマホは消音モードだと鳴らないことがあります</p>
@@ -3154,47 +3154,6 @@
     meta.innerHTML = "JST " + fmtHour(pol.japan_hour) + "<br>TOMSK " + fmtHour(pol.tomsk_hour);
   }
 
-  // === 手動入力 ===
-  function updateManualDisplay() {
-    const inputHz = parseFloat(document.getElementById("manual-hz").value) || 0;
-    const oct = parseInt(document.getElementById("manual-oct").value) || 0;
-    const outHz = inputHz * Math.pow(2, oct);
-    document.getElementById("manual-in").textContent = inputHz.toFixed(2);
-    document.getElementById("manual-out").textContent = outHz.toFixed(2);
-    return outHz;
-  }
-
-  document.getElementById("manual-hz").addEventListener("input", () => {
-    const outHz = updateManualDisplay();
-    if (activeOscillators["manual"] && outHz > 0 && outHz < 20000) {
-      activeOscillators["manual"].osc.frequency.setValueAtTime(outHz, getAudioCtx().currentTime);
-    }
-  });
-
-  document.getElementById("manual-oct").addEventListener("input", () => {
-    const outHz = updateManualDisplay();
-    if (activeOscillators["manual"] && outHz > 0 && outHz < 20000) {
-      activeOscillators["manual"].osc.frequency.setValueAtTime(outHz, getAudioCtx().currentTime);
-    }
-  });
-
-  document.getElementById("manual-btn").addEventListener("click", () => {
-    const btn = document.getElementById("manual-btn");
-    const outHz = updateManualDisplay();
-    if (activeOscillators["manual"]) {
-      stopTone("manual");
-      btn.classList.remove("playing");
-    } else {
-      if (outHz <= 0 || outHz >= 20000) {
-        alert("可聴域（20〜20000Hz）に収まる値を入力してください");
-        return;
-      }
-      startTone("manual", outHz);
-      btn.classList.add("playing");
-    }
-  });
-
-  updateManualDisplay();
   loadData();
   setInterval(loadData, 5 * 60 * 1000);
 
