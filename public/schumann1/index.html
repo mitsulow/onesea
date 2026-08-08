@@ -563,11 +563,8 @@
   }
   /* ★左右いっぱい化はスマホだけ。PCでは.wrapの余白ぶんズレて左が切れる+右に白が出るため */
   @media (max-width: 700px) {
-    .dv-panel {
-      margin-left: calc(50% - 50vw);
-      margin-right: calc(50% - 50vw);
-      width: 100vw;
-    }
+    /* .wrapの余白が0なので、小細工なしで自然に全幅（100vw計算はスクロールバー分ズレるため廃止） */
+    .dv-panel { margin-left: 0; margin-right: 0; width: auto; }
   }
   .dv-block + .dv-block { margin-top: 1.7rem; }
   .dv-title {
@@ -653,6 +650,7 @@
   /* ★ スマホ: 左右余白ゼロでグラフを幅いっぱいに */
   @media (max-width: 700px) {
     .wrap { padding-left: 0; padding-right: 0; }
+    footer, .svc-head { margin-left: 0; margin-right: 0; padding-left: 0; padding-right: 0; }
     details.fold { border-radius: 0; border-left: none; border-right: none; margin-bottom: 0.7rem; }
     details.fold > :not(summary) { margin-left: 0; margin-right: 0; }
     .graph-card { border-radius: 0; }
@@ -3427,7 +3425,7 @@
   #dotFsOv .dot-fs-hint{position:absolute;bottom:8px;left:0;right:0;text-align:center;color:#5a6a7a;font-size:11px}
   #dv-dot{cursor:zoom-in;background:#0d0f16;display:block;width:100%}
   #dotBlock {}
-  @media (max-width: 700px) { #dotBlock { margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); width: 100vw; } }
+  @media (max-width: 700px) { #dotBlock { margin-left: 0; margin-right: 0; width: auto; } }
   #dotFsOv #dv-dot{cursor:zoom-out;width:96vw}
 </style>
 <div id="dotFsOv">
