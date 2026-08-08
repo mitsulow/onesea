@@ -23,6 +23,18 @@ export default function ChatPage() {
   const [callActive, setCallActive] = useState(0); // 相手が通話ルームにいる人数
   const bottomRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null); // 入力欄(自動で膨らむ)
+  const [kb, setKb] = useState(0); // ソフトキーボードの高さ(入力欄をその真上に貼り付ける)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const f = () => setKb(Math.max(0, window.innerHeight - vv.height - vv.offsetTop));
+    vv.addEventListener("resize", f);
+    vv.addEventListener("scroll", f);
+    return () => {
+      vv.removeEventListener("resize", f);
+      vv.removeEventListener("scroll", f);
+    };
+  }, []);
   const meRef = useRef<User | null>(null);
 
   /* 通話中かどうかを覗く（7秒ごと・自分が通話中は不要） */
@@ -122,7 +134,7 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col pb-14">
+    <main className="flex min-h-screen flex-col pb-32">
       {/* ヘッダー */}
       <header
         className="sticky top-0 z-40 flex items-center gap-3 px-4 pb-3 pt-3.5"
@@ -229,7 +241,7 @@ export default function ChatPage() {
       </div>
 
       {/* 入力欄 */}
-      <div className="sticky bottom-14 mt-auto flex items-end gap-2 border-t border-[#e5dccb] bg-[#fffdf8] px-3 py-2">
+      <div className="fixed inset-x-0 z-40 flex items-end gap-2 border-t border-[#e5dccb] bg-[#fffdf8] px-3 py-2" style={{ bottom: kb > 0 ? kb : 56 }}>
         <textarea
           ref={taRef}
           value={body}
