@@ -8,9 +8,13 @@
   "display": "standalone",
   "orientation": "any",
   "background_color": "#030818",
-  "theme_color": "#030818",
+  "theme_color": "#1a0a3a",
   "lang": "ja",
-  "categories": ["lifestyle", "health", "productivity"],
+  "categories": [
+    "lifestyle",
+    "health",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "./icons_v7/icon-192.png",

@@ -958,7 +958,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                     if (!confirm("本当に削除していいですか？")) return;
                     const supabase = createClient();
                     await supabase.from("village_posts").delete().eq("id", p.id);
-                    load();
+                    loadFeed();
                   }}
                   aria-label="削除"
                   className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b]"
