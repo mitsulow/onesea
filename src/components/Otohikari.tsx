@@ -134,7 +134,7 @@ export function Otohikari() {
               "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
           }}
         >
-          ▽OTOHIKARImap
+          <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontStyle: "italic", letterSpacing: "1px" }}>▽OtOHikari-map</span>
         </span>
         <div className="relative">
           <button
@@ -231,16 +231,30 @@ export function Otohikari() {
         )}
 
         {/* 集計 — 南半球の下部に重ねる */}
-        <div className="pointer-events-none absolute bottom-1 left-0 right-0 flex items-end justify-center gap-8 text-center">
-          {stat("TUNE-IN", nowCount)}
-          {stat("TODAY", todayCount != null ? todayCount.toLocaleString() : "—")}
+        <div className="absolute bottom-1 left-0 right-0 flex items-end justify-center gap-8 text-center">
           {stat(
-            "TARGET",
+            "Tune-in",
             <>
-              {SCHUMANN.hz}
-              <span className="ml-1 text-[13px]">Hz</span>
+              {nowCount}
+              <span className="ml-0.5 align-baseline text-[8px] font-normal">人</span>
             </>
           )}
+          {stat(
+            "Today",
+            <>
+              {todayCount != null ? todayCount.toLocaleString() : "—"}
+              <span className="ml-0.5 align-baseline text-[8px] font-normal">人</span>
+            </>
+          )}
+          <a href="/schumann1/index.html" className="pointer-events-auto no-underline">
+            {stat(
+              "Now",
+              <>
+                {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}
+                <span className="ml-1 text-[13px]">Hz</span>
+              </>
+            )}
+          </a>
         </div>
       </div>
 
