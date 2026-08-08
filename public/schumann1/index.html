@@ -2136,9 +2136,9 @@
     const plotW = W - PL - PR;
     const xc = i => PL + plotW * (i + 0.5) / n;
     const y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
-    // 縦軸目盛 (範囲が広いときは1.0刻み、狭いときは0.2刻み)
+    // 縦軸目盛 (範囲が広いときは1.0刻み、狭いときは0.2刻み)。plain=目盛り等なしの素のバー
     const step = (hi - lo) > 3 ? 1 : 0.2;
-    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-6; v += step) {
+    for (let v = Math.ceil(lo / step) * step; !opt.plain && v <= hi + 1e-6; v += step) {
       ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = u;
       ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(W, y(v)); ctx.stroke();
     }
@@ -2148,8 +2148,10 @@
         ctx.fillText(v.toFixed(step < 1 ? 1 : 0), fs * 0.3, y(v) - fs * 0.2);
       }
     };
-    dvRule(g, y(BASELINE_HZ), "rgba(240,198,116,0.5)", "7.83", PL, PR);
-    dvRule(g, y(TARGET_HZ), "rgba(82,250,140,0.85)", "8.02 目標", PL, PR, "left");
+    if (!opt.plain) {
+      dvRule(g, y(BASELINE_HZ), "rgba(240,198,116,0.5)", "7.83", PL, PR);
+      dvRule(g, y(TARGET_HZ), "rgba(82,250,140,0.85)", "8.02 目標", PL, PR, "left");
+    }
     const bw = Math.max(u, Math.min(plotW / n * (opt.barFrac || 0.66), fs * 2.6));
     let lastIdx = -1;
     bars.forEach((b, i) => { if (b.v != null) lastIdx = i; });
@@ -2158,7 +2160,16 @@
       ctx.fillStyle = i === lastIdx && opt.hotLast ? "#7cf9d4" : (b.hot ? "#5ad4b0" : "rgba(58,170,142,0.8)");
       ctx.fillRect(xc(i) - bw / 2, y(b.v), bw, Math.max(u, H - PB - y(b.v)));
     });
-    drawYLabels(); // 目盛り数字は棒の上に薄く重ねる(左の空白を作らない)
+    if (!opt.plain) drawYLabels(); // 目盛り数字は棒の上に薄く重ねる(左の空白を作らない)
+    if (opt.plain) {
+      // 各バーの真上に数値
+      ctx.font = fs * 0.74 + "px monospace"; ctx.textAlign = "center";
+      bars.forEach((b, i) => {
+        if (b.v == null) return;
+        ctx.fillStyle = i === lastIdx && opt.hotLast ? "#7cf9d4" : "rgba(255,255,255,0.75)";
+        ctx.fillText(b.v.toFixed(2), xc(i), y(b.v) - fs * 0.35);
+      });
+    }
     // ラベル
     ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = fs * 0.82 + "px monospace"; ctx.textAlign = "center";
     bars.forEach((b, i) => { if (b.label) ctx.fillText(b.label, xc(i), H - fs * 0.8); });
@@ -2176,7 +2187,7 @@
       ctx.fillStyle = "#f0c674"; ctx.font = fs * 0.82 + "px monospace"; ctx.textAlign = "left";
       ctx.fillText("MMM始動", mx + fs * 0.3, PT + fs * 0.9);
     }
-    if (lastIdx >= 0 && opt.hotLast) {
+    if (lastIdx >= 0 && opt.hotLast && !opt.plain) {
       ctx.fillStyle = "#7cf9d4"; ctx.font = fs * 1.05 + "px monospace"; ctx.textAlign = "center";
       ctx.fillText(bars[lastIdx].v.toFixed(2), xc(lastIdx), y(bars[lastIdx].v) - fs * 0.4);
     }
@@ -2280,7 +2291,7 @@
       // ① 一週間 (過去7日) — 縦軸は自動スケール(データの最小〜最大にピタッと寄せて、日々の違いがハッキリ見える)
       dvBars("dv-week", all.slice(-7).map(e => ({
         v: e.f1, label: Number(e.d.slice(5, 7)) + "/" + Number(e.d.slice(8, 10)),
-      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true });
+      })), { hRatio: 0.42, barFrac: 0.6, hotLast: true, plain: true });
 
       // ② 一カ月 (過去30日)
       dvBars("dv-recent", all.slice(-30).map(e => ({
