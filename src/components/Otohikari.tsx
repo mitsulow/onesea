@@ -99,7 +99,6 @@ export function Otohikari() {
     };
   }, []);
 
-  const needed = live.f1hz != null ? TARGET_HZ - live.f1hz : null;
   const current = MAP_MODES.find((m) => m.id === mode)!;
 
   const stat = (label: string, value: React.ReactNode) => (
@@ -135,7 +134,7 @@ export function Otohikari() {
               "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
           }}
         >
-          ▽MasterMindSystem
+          ▽OTOHIKARImap
         </span>
         <div className="relative">
           <button
@@ -245,14 +244,17 @@ export function Otohikari() {
         </div>
       </div>
 
-      {/* 今の実測値 — タップで F1〜F4 のグラフを展開 */}
-      <details className="mt-1.5 px-2">
-        <summary className="num cursor-pointer list-none text-center text-[11px] text-[#8aa8d0]">
-          今のシューマン電磁波 {live.f1hz != null ? live.f1hz.toFixed(2) : "—"}Hz
-          {needed != null
-            ? `（目標値まで${needed >= 0 ? "＋" : "−"}${Math.abs(needed).toFixed(2)}Hz）`
-            : ""}{" "}
-          ▾
+      {/* 地球儀の下: △MasterMindSystem（同フォント・タップで F1〜F4 のグラフを展開） */}
+      <details className="px-2">
+        <summary
+          className="cursor-pointer list-none text-center text-[13px] font-extrabold tracking-[2px]"
+          style={{
+            color: "#8ff4ff",
+            textShadow:
+              "0 0 6px rgba(120,235,255,.95), 0 0 14px rgba(80,220,255,.7), 0 0 30px rgba(40,200,255,.5)",
+          }}
+        >
+          △MasterMindSystem
         </summary>
         <div className="mt-2 space-y-1.5">
           {(["f1", "f2", "f3", "f4"] as const).map((k) => (
@@ -267,14 +269,6 @@ export function Otohikari() {
           ))}
         </div>
       </details>
-      <div className="mt-1 text-center">
-        <a
-          href="/schumann1/index.html"
-          className="text-[9.5px] text-[#5a7a9a] underline decoration-[#5a7a9a]/50 underline-offset-2"
-        >
-          実際の値をチェック →
-        </a>
-      </div>
     </section>
   );
 }
