@@ -1533,6 +1533,15 @@
       </div>
     </div>
 
+    <!-- ■雷の数 × シューマン共振（蓄積データ） -->
+    <div class="dv-panel">
+      <div class="dv-block">
+        <div class="dv-title">■雷の数 × F1 <span id="lg-sub">データ蓄積中…</span></div>
+        <canvas id="dv-lightning"></canvas>
+        <div class="graph-description"><p>青緑 = F1周波数（左）・黄 = 世界の雷検知数/分（右）。15分ごとに60秒サンプリングで蓄積しています。雷は地球の音の「バチ」— 総数が増えるとシューマン共振のパワーが上がり、雷源の位置で周波数が揺れます。データが貯まるほど、この関係が見えてきます。</p></div>
+      </div>
+    </div>
+
     <!-- ■スポラディックE層 -->
     <div class="graph-description">
       <p><b>■スポラディックE層（Eスポ）</b> — 夏のいたずら者。高度約100km、ちょうどシューマン共振の「天井」のあたりに、<b>電子がぎっしり詰まった薄い板</b>が突然あらわれる現象です。夏の昼〜夕方に多く、普段は届かない遠くのFMラジオが突然聞こえたり、航空無線が数千km飛んだりします。天井の一部が局所的に「低く・硬く」なるため、シューマン共振の周波数がわずかに上ぶれする一因になると考えられています。日本の<b>NICT宇宙天気予報センター</b>（<a href="https://swc.nict.go.jp/" target="_blank" rel="noopener" style="color:#2CB7DE;">swc.nict.go.jp</a>）が毎日、フレア・磁気嵐・Eスポの予報を出しています。8.02Hz観測の照合にどうぞ。</p>
@@ -3525,6 +3534,65 @@
         el.textContent = "⚡ 雷を数えています…（1分ほどお待ちください）";
       }
     }, 5000);
+  })();
+
+  // ■雷の数 × F1 — 0Leiの蓄積(15分粒度)とF1日次を重ねる
+  (async function lightningGraph() {
+    const cv = document.getElementById("dv-lightning");
+    if (!cv || typeof dvCtx !== "function") return;
+    try {
+      const [hist, dsr] = await Promise.all([
+        fetch("https://mitsulow.github.io/0Lei/history/lightning.json", { cache: "no-store" }).then(r => r.json()),
+        fetch("/api/sr/history/daily_summary.json").then(r => r.json()),
+      ]);
+      if (!Array.isArray(hist) || !hist.length) return;
+      // 日ごとの平均 発/分
+      const byDay = {};
+      hist.forEach(([ts, n]) => {
+        const d = ts.slice(0, 10);
+        (byDay[d] = byDay[d] || []).push(n);
+      });
+      const days = Object.keys(byDay).sort().slice(-30);
+      const f1By = {};
+      (dsr.days || []).forEach(e => { if (typeof e.f1 === "number") f1By[e.d] = e.f1; });
+      const rows = days.map(d => ({ d, ln: byDay[d].reduce((a, b) => a + b, 0) / byDay[d].length, f1: f1By[d] ?? null }));
+      const sub = document.getElementById("lg-sub");
+      if (sub) sub.textContent = "蓄積 " + hist.length + "サンプル・" + days.length + "日分（15分ごと採取）";
+      const g = dvCtx("dv-lightning", 0.4, 260);
+      if (!g) return;
+      const { ctx, W, H, u, fs } = g;
+      const PL = fs * 0.5, PR = fs * 0.5, PT = fs * 1.2, PB = fs * 2.0;
+      const X = i => PL + (W - PL - PR) * (rows.length < 2 ? 0.5 : i / (rows.length - 1));
+      const f1s = rows.map(r => r.f1).filter(v => v != null);
+      const lns = rows.map(r => r.ln);
+      const f1lo = Math.min.apply(null, f1s.concat([7.7])) - 0.03, f1hi = Math.max.apply(null, f1s.concat([8.0])) + 0.03;
+      const lnlo = 0, lnhi = Math.max.apply(null, lns) * 1.15 + 1;
+      const Yf = v => PT + (H - PT - PB) * (1 - (v - f1lo) / (f1hi - f1lo));
+      const Yl = v => PT + (H - PT - PB) * (1 - (v - lnlo) / (lnhi - lnlo));
+      // 雷(黄・棒っぽい線)
+      ctx.strokeStyle = "#ffd60a"; ctx.lineWidth = 1.4 * u; ctx.beginPath();
+      rows.forEach((r, i) => { const x = X(i), y = Yl(r.ln); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+      ctx.stroke();
+      rows.forEach((r, i) => { ctx.fillStyle = "#ffd60a"; ctx.beginPath(); ctx.arc(X(i), Yl(r.ln), 2.4 * u, 0, Math.PI * 2); ctx.fill(); });
+      // F1(青緑)
+      ctx.strokeStyle = "#5ad4b0"; ctx.lineWidth = 1.4 * u; ctx.beginPath();
+      let pen = false;
+      rows.forEach((r, i) => { if (r.f1 == null) { pen = false; return; } const x = X(i), y = Yf(r.f1); pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y); pen = true; });
+      ctx.stroke();
+      // 軸ラベル(重ね書き)
+      ctx.font = fs * 0.8 + "px monospace";
+      ctx.fillStyle = "rgba(90,212,176,0.8)"; ctx.textAlign = "left";
+      ctx.fillText(f1hi.toFixed(2), fs * 0.3, PT + fs * 0.8);
+      ctx.fillText(f1lo.toFixed(2), fs * 0.3, H - PB - fs * 0.2);
+      ctx.fillStyle = "rgba(255,214,10,0.85)"; ctx.textAlign = "right";
+      ctx.fillText(Math.round(lnhi) + "発/分", W - fs * 0.3, PT + fs * 0.8);
+      // 日付
+      ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.textAlign = "center";
+      rows.forEach((r, i) => {
+        if (rows.length > 10 && i % Math.ceil(rows.length / 8) !== 0 && i !== rows.length - 1) return;
+        ctx.fillText(Number(r.d.slice(5, 7)) + "/" + Number(r.d.slice(8, 10)), X(i), H - fs * 0.6);
+      });
+    } catch (e) {}
   })();
 </script>
 </body>
