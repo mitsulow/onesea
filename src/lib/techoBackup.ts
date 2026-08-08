@@ -1,3 +1,4 @@
+import { readTecho, writeTecho } from "@/lib/techoStore";
 import { createClient } from "@/lib/supabase/client";
 
 /**
@@ -15,7 +16,7 @@ export function scheduleTechoBackup(userId: string) {
   if (backupTimer) clearTimeout(backupTimer);
   backupTimer = setTimeout(async () => {
     try {
-      const data = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+      const data = JSON.parse(readTecho());
       const pens = JSON.parse(localStorage.getItem("techo-pens") ?? "null");
       const supabase = createClient();
       await supabase
@@ -31,12 +32,12 @@ export function scheduleTechoBackup(userId: string) {
  */
 export async function restoreTechoIfEmpty(userId: string): Promise<boolean> {
   try {
-    const local = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+    const local = JSON.parse(readTecho());
     if (Object.keys(local).length > 0) return false;
     const supabase = createClient();
     const { data } = await supabase.from("techo_backups").select("data, pens").eq("user_id", userId).maybeSingle();
     if (!data || !data.data || Object.keys(data.data as object).length === 0) return false;
-    localStorage.setItem("techo-memos", JSON.stringify(data.data));
+    writeTecho(JSON.stringify(data.data));
     if (data.pens) localStorage.setItem("techo-pens", JSON.stringify(data.pens));
     return true;
   } catch {

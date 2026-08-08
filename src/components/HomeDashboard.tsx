@@ -1,5 +1,6 @@
 "use client";
 
+import { readTecho } from "@/lib/techoStore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -101,7 +102,7 @@ export function HomeDashboard() {
     const schT = setInterval(loadSchumann, 10 * 60000);
     const loadPlans = () => {
     try {
-      const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+      const memos = JSON.parse(readTecho());
       const byDay: Record<string, Array<{ time: string; text: string; color?: string }>> = {};
       const keys: string[] = [];
       for (const [k, day] of Object.entries(memos) as Array<[string, any]>) { // eslint-disable-line @typescript-eslint/no-explicit-any

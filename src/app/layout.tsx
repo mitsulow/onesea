@@ -1,3 +1,4 @@
+import { VersionGuard } from "@/components/VersionGuard";
 import type { Metadata, Viewport } from "next";
 import { BottomNav } from "@/components/BottomNav";
 import { PullToReload } from "@/components/PullToReload";
@@ -46,6 +47,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
+        <VersionGuard />
         <div className="mx-auto min-h-screen max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] bg-washi pb-14">
           <PullToReload />
           <SwipeNav />

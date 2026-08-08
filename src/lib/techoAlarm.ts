@@ -1,3 +1,5 @@
+import { readTecho } from "@/lib/techoStore";
+
 /**
  * 手帳のアラーム — 予定にアラームを付けると、その時刻に通知を鳴らす。
  * サーバー要らずの端末内アラーム: 手帳を開いている/PWAがバックグラウンドにある間、
@@ -40,7 +42,7 @@ export function startAlarmWatcher() {
   const tick = () => {
     try {
       if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-      const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+      const memos = JSON.parse(readTecho());
       const now = new Date();
       const tk = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const day = memos[tk];

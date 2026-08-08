@@ -1,5 +1,6 @@
 "use client";
 
+import { readTecho, writeTecho } from "@/lib/techoStore";
 import { createClient } from "@/lib/supabase/client";
 import { nextMoons } from "@/lib/almanac";
 import type { CotozuteProfile } from "./cotozute";
@@ -113,7 +114,7 @@ export function mootTechoLabel(m: { kind: "new" | "full" }): string {
 
 export function writeMootToTecho(m: Moot) {
   try {
-    const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+    const memos = JSON.parse(readTecho());
     const day = memos[m.dateKey] ?? { note: "", h: {} };
     day.h = day.h ?? {};
     const hr = String(m.hour);
@@ -121,13 +122,13 @@ export function writeMootToTecho(m: Moot) {
     const cur = String(day.h[hr] ?? "");
     if (!cur.split("\n").includes(label)) day.h[hr] = cur ? `${cur}\n${label}` : label;
     memos[m.dateKey] = day;
-    localStorage.setItem("techo-memos", JSON.stringify(memos));
+    writeTecho(JSON.stringify(memos));
   } catch {}
 }
 
 export function removeMootFromTecho(m: Moot) {
   try {
-    const memos = JSON.parse(localStorage.getItem("techo-memos") ?? "{}");
+    const memos = JSON.parse(readTecho());
     const day = memos[m.dateKey];
     const hr = String(m.hour);
     if (day?.h?.[hr]) {
@@ -137,7 +138,7 @@ export function removeMootFromTecho(m: Moot) {
       else delete day.h[hr];
       if (!day.note && Object.keys(day.h ?? {}).length === 0) delete memos[m.dateKey];
       else memos[m.dateKey] = day;
-      localStorage.setItem("techo-memos", JSON.stringify(memos));
+      writeTecho(JSON.stringify(memos));
     }
   } catch {}
 }

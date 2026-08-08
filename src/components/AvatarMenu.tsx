@@ -1,5 +1,6 @@
 "use client";
 
+import { setCurrentUid } from "@/lib/techoStore";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -48,6 +49,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
       if (stop) return;
       setUser(session?.user ?? null);
       userId = session?.user?.id ?? null;
+      setCurrentUid(userId); // 手帳などの端末保存をユーザーごとに分離するための現在uid
       refreshMissing();
       if (userId) {
         import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(userId!).then(setIsAdmin)).catch(() => {});
@@ -79,6 +81,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
 
   const logout = async () => {
     const supabase = createClient();
+    setCurrentUid(null); // ゲストに前の人の予定が見えないように
     await supabase.auth.signOut();
     window.location.href = "/";
   };
@@ -280,6 +283,9 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <button onClick={logout} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[13.5px] font-medium text-[#a05040] active:bg-[#faf4ea]">
               {icon("/icons/icon-logout.webp")} ログアウト
             </button>
+            <div className="px-4 pb-1.5 pt-0.5 text-right text-[8px] text-[#c8c0b0]">
+              build {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev"}
+            </div>
           </div>
         </>,
         document.body

@@ -1,6 +1,17 @@
 // OneSea Service Worker — プッシュ通知 + ホーム画面アイコンの未読バッジ（Badging API）
 self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("activate", (e) =>
+  e.waitUntil(
+    (async () => {
+      // キャッシュ溜まりすぎ対策: 過去に作られたキャッシュは全部掃除（このSWは何もキャッシュしない方針）
+      try {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      } catch {}
+      await self.clients.claim();
+    })()
+  )
+);
 
 self.addEventListener("push", (event) => {
   let data = {};

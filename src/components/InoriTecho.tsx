@@ -1,5 +1,6 @@
 "use client";
 
+import { readTecho, writeTecho, setCurrentUid, migrateLegacyTecho } from "@/lib/techoStore";
 import { useEffect, useRef, useState } from "react";
 import {
   NodeEvent,
@@ -97,8 +98,7 @@ export function savePenLabels(labels: Record<string, string>) {
 
 function loadMemos(): Memos {
   try {
-    const v = localStorage.getItem("techo-memos");
-    return v ? JSON.parse(v) : {};
+    return JSON.parse(readTecho());
   } catch {
     return {};
   }
@@ -131,6 +131,9 @@ export function InoriTecho() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       loggedIn.current = !!session?.user;
       const u = session?.user;
+      setCurrentUid(u?.id ?? null);
+      migrateLegacyTecho(); // 旧・端末共通キーからの一回きり引っ越し
+      setMemos(loadMemos()); // uid確定後のキーで読み直す
       if (!u) return;
       uidRef.current = u.id;
       hasConsent(u.id, "techo").then((v) => { consentOk.current = v; });
@@ -195,7 +198,7 @@ export function InoriTecho() {
       const dd = next[k];
       if (!dd.note && Object.keys(dd.h ?? {}).length === 0 && (dd.ev ?? []).length === 0) delete next[k];
       try {
-        localStorage.setItem("techo-memos", JSON.stringify(next));
+        writeTecho(JSON.stringify(next));
       } catch {}
       window.dispatchEvent(new Event("onesea:techoChanged")); // トップの「次の予定」を即同期
       if (uidRef.current && waraCloud === "warawa") scheduleTechoBackup(uidRef.current);
@@ -216,7 +219,7 @@ export function InoriTecho() {
       const dd = next[k];
       if (!dd.note && Object.keys(dd.h ?? {}).length === 0) delete next[k];
       try {
-        localStorage.setItem("techo-memos", JSON.stringify(next));
+        writeTecho(JSON.stringify(next));
       } catch {}
       window.dispatchEvent(new Event("onesea:techoChanged")); // トップの「次の予定」を即同期
       if (uidRef.current && waraCloud === "warawa") scheduleTechoBackup(uidRef.current);
