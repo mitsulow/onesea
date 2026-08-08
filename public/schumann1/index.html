@@ -1510,26 +1510,26 @@
   </details>
 
   <details class="fold" id="fold-solar">
-    <summary>イナヅマと太陽とシューマン共振</summary>
+    <summary>太陽とイナズマとシューマン共振</summary>
 
     <div class="graph-description">
-      <p>シューマン共振は<b>雷が鳴らす地球の音</b>です。地面と電離層（上空約100km）のすき間は巨大な太鼓の胴のような空洞で、世界中の雷（毎秒約50発）がそこを叩き続けることで、7.83Hzを基音とする定在波が生まれます。だから<b>雷が多くなるとシューマン共振のパワーは上がり</b>、太陽フレアが電離層の高さや密度を変えると、太鼓の胴のサイズが変わって<b>音程（周波数）がわずかにズレ</b>ます。このページでは、その3者のつながりを「いま」と「過去の実測」の両方で見られます。</p>
+      <p>シューマン共振は<b>「太陽×稲妻＝地球の音」</b>という関係。太陽が強まると稲妻の数が増え、地面と電離層の間の「空洞」を鳴らします。更に、太陽が強くなり電離層が押されることで空洞が狭くなり、<b>音程（周波数）が高く</b>なります。シューマン共振とは結局は<b>太陽のご機嫌次第</b>なのです。このページではその3者（太陽・稲妻・シューマン共振）の関連性を、実際のデータをもとに無料公開しています。</p>
     </div>
 
     <!-- ■いまの太陽（リアルタイム・無料API） -->
     <div class="dv-panel">
       <div class="dv-block">
-        <div class="dv-title">■いまの太陽 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
+        <div class="dv-title">〇いまの太陽の姿 <span>NASA SDO衛星 304Å・リアルタイム更新</span></div>
         <img id="sun-img" src="https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg" alt="いまの太陽 (SDO 304Å)" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:100%;max-width:340px;aspect-ratio:1/1;object-fit:cover;margin:0 auto;border-radius:12px;background:#0a0d16;" />
         <div id="sun-now" style="text-align:center;padding:0.5rem 0.9rem 0.2rem;font:600 0.86rem/1.6 'Noto Sans JP',sans-serif;color:#cfe0ec;">☀ X線フラックス 読み込み中…</div>
-        <div class="graph-description"><p>赤い模様が活動領域。明るい爆発がフレアです。X線の強さがC→M→Xと上がるほど大きなフレア。Xクラスが出ると1〜3日後に太陽風の塊が地球に届き、磁気嵐（Kp上昇）→電離層が乱れて、シューマン共振の「天井」が揺れます。</p></div>
+        <div class="graph-description"><p>赤い模様が活動領域。明るい爆発がフレアです。X線の強さは<b>A→B→C→M→X</b>の5段階（1段で10倍）。AとBは「静穏」、Cから小さなフレア、M・Xが本物のフレアです。いま「B2.5」なら静かな太陽ということ。M・Xが出ると<b>1〜3日後</b>に太陽風の塊が地球に届いて電離層が押され、シューマン共振の音程が動きます — だから下の「過去の分析」の散布図は、この1〜3日の時間差（ラグ）を自動で考慮して相関を取っています。</p></div>
       </div>
 
       <!-- ■いまの世界の雷（リアルタイム） -->
       <div class="dv-block">
-        <div class="dv-title">■いまの世界の雷 × シューマン共振 <span>Blitzortung.org 落雷検知網・リアルタイム</span></div>
+        <div class="dv-title">〇いま鳴った世界のイナズマ総数 <span>リアルタイム</span></div>
         <div id="lightning-now" style="text-align:center;padding:0.6rem 0.9rem;font:700 1.0rem/1.7 'Noto Sans JP',sans-serif;color:#ffd60a;">⚡ 雷の検知網に接続中…</div>
-        <div class="graph-description"><p>世界の有志2,000局以上のアンテナが捉えた落雷を、そのまま数えています。地球の雷は「三大雷源」— <b>東南アジア</b>（日本時間の昼すぎ）・<b>アフリカ</b>（日本時間の夜）・<b>南米アマゾン</b>（日本時間の明け方）— が太陽を追いかけて順番に鳴ります。<b>雷の総数が増える時間帯はシューマン共振のパワー（振幅）も上がります</b>。周波数の方は雷の「場所」に敏感で、観測地に近い雷源が鳴るほど高めに出ます。</p></div>
+
       </div>
     </div>
 
@@ -3526,14 +3526,13 @@
         if (shown > 0 || !Array.isArray(hist) || !hist.length) return;
         const [ts, n] = hist[hist.length - 1];
         const d = new Date(ts);
-        el.innerHTML = '⚡ 直近の計測: 1分間に世界で <b style="font-size:1.3em;">' + Number(n).toLocaleString() + '</b> 発'
-          + '<span style="color:#9fb2c8;font-weight:400;font-size:0.8em;">（' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, "0") + ' 時点・毎時更新）</span>';
+        el.innerHTML = '⚡ 1分間に <b style="font-size:1.3em;">' + Number(n).toLocaleString() + '</b> 発のイナズマが地球で鳴った ⚡'
+          + '<span style="color:#9fb2c8;font-weight:400;font-size:0.75em;">（' + d.getHours() + ':' + String(d.getMinutes()).padStart(2, "0") + ' 時点）</span>';
       }).catch(() => {});
     setInterval(() => { shown = count; count = 0; }, 60000);
     setInterval(() => {
       if (shown > 0) {
-        el.innerHTML = '⚡ この1分間に世界で <b style="font-size:1.3em;">' + shown.toLocaleString() + '</b> 発の雷を検知'
-          + '<span style="color:#9fb2c8;font-weight:400;font-size:0.8em;">（Blitzortung観測網）</span>';
+        el.innerHTML = '⚡ この1分間に <b style="font-size:1.3em;">' + shown.toLocaleString() + '</b> 発のイナズマが地球で鳴った ⚡';
       } else {
         el.textContent = "⚡ 雷を数えています…（1分ほどお待ちください）";
       }
