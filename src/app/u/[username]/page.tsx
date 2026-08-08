@@ -435,6 +435,27 @@ export default function UserPage() {
           ) : null}
         </div>
 
+        {/* まだ書いていないセクションへの誘い（せかす） */}
+        {isMe && (
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+            {!profile.rice_work && (
+              <Link href="/settings/profile" className="text-[12px] font-bold text-[#c94d3a] underline">＋ ライスワークを書く</Link>
+            )}
+            {!profile.life_work && (
+              <Link href="/settings/profile" className="text-[12px] font-bold text-[#c94d3a] underline">＋ ライフワークを書く</Link>
+            )}
+            {(!profile.skills || profile.skills.length === 0) && (
+              <Link href="/settings/profile" className="text-[12px] font-bold text-[#c94d3a] underline">＋ スキル「私にできること」を書く</Link>
+            )}
+            {(!profile.wants_to_do || profile.wants_to_do.length === 0) && (
+              <Link href="/settings/profile" className="text-[12px] font-bold text-[#c94d3a] underline">＋ やりたいこと一覧を書く</Link>
+            )}
+            {(!profile.sns || Object.keys(profile.sns as object).length === 0) && (
+              <Link href="/settings/profile" className="text-[12px] font-bold text-[#c94d3a] underline">＋ SNSを登録する</Link>
+            )}
+          </div>
+        )}
+
         {/* アクション */}
         {me && !isMe && (
           <div className="mt-3 flex gap-2">
