@@ -121,7 +121,7 @@ export function Otohikari() {
         border: "none",
         borderRadius: 0,
         margin: "0 -16px 0 -16px",
-        padding: "0 0 10px",
+        padding: "0 0 2px",
       }}
     >
       {/* タイトル + MAPボタン: 文字1行分の薄い帯（背景は地球儀と同じ色） */}
@@ -245,7 +245,7 @@ export function Otohikari() {
       </div>
 
       {/* 地球儀の下: △MasterMindSystem（同フォント・タップで F1〜F4 のグラフを展開） */}
-      <details className="px-2">
+      <details className="px-2 pb-0.5">
         <summary
           className="cursor-pointer list-none text-right text-[13px] font-extrabold tracking-[2px]"
           style={{
