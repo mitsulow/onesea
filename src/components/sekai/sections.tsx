@@ -1,5 +1,6 @@
 "use client";
 
+import { SekaiBadge } from "@/components/WarawaBadge";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -959,6 +960,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                       <span className="ml-1 text-[11.5px] font-bold text-[#9ab3a0]">
                         {p.villages?.prefecture ? `@${p.villages.prefecture}` : ""}
                       </span>
+                      <span className="ml-1"><SekaiBadge size={14} /></span>
                     </div>
                     <div className="num text-[10.5px] text-[#b0bcb0]">
                       {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
