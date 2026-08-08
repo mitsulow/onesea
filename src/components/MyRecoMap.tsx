@@ -133,7 +133,8 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
             return (
               <div
                 key={s.id}
-                className="relative w-[128px] flex-shrink-0 overflow-hidden rounded-xl border bg-white shadow-sm"
+                onClick={() => { window.location.href = "/sekai/map"; }}
+                className="relative w-[128px] flex-shrink-0 cursor-pointer overflow-hidden rounded-xl border bg-white shadow-sm"
                 style={{ borderColor: c.color + "66" }}
               >
                 <div className="flex items-center gap-1 px-2 py-1 text-[9.5px] font-extrabold text-white" style={{ background: c.color }}>
@@ -150,7 +151,7 @@ export function MyRecoMap({ userId, isMe, ownerName, mode = "shop" }: { userId: 
                 </div>
                 {isMe && (
                   <button
-                    onClick={() => remove(s)}
+                    onClick={(e) => { e.stopPropagation(); remove(s); }}
                     className="absolute right-1 top-[26px] flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-[11px] text-[#8a8070]"
                     aria-label="削除"
                   >

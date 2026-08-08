@@ -66,6 +66,9 @@ export default function UserPage() {
   const [recoUrl, setRecoUrl] = useState("");
   const [recoComment, setRecoComment] = useState("");
   const [recoSaving, setRecoSaving] = useState(false);
+  const [recoPaste, setRecoPaste] = useState("");
+  const [recoResolving, setRecoResolving] = useState(false);
+  const [recoMsg, setRecoMsg] = useState<string | null>(null);
   const [stats, setStats] = useState<{ posts: number; leaves: number } | null>(null);
   const [masterDdp, setMasterDdp] = useState<string | null>(null);
   const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string; fulfilled_pct: number | null }>>([]);
@@ -642,6 +645,45 @@ export default function UserPage() {
               )}
             </div>
 
+            {isMe && (
+              <div className="mb-2 rounded-xl border border-[#e0c890] bg-[#fffbf0] p-2.5">
+                <input
+                  value={recoPaste}
+                  onChange={async (e) => {
+                    const v = e.target.value;
+                    setRecoPaste(v);
+                    const mu = v.match(/https?:\/\/[^\s]+/);
+                    if (!mu || recoResolving || !me) return;
+                    setRecoResolving(true);
+                    setRecoMsg(null);
+                    try {
+                      const r = await fetch(`/api/ogp?url=${encodeURIComponent(mu[0])}`);
+                      const d = r.ok ? await r.json() : {};
+                      const title = (d.title as string) || v.replace(mu[0], "").trim() || new URL(mu[0]).hostname;
+                      const supabase = createClient();
+                      await supabase.from("recommendations").insert({
+                        user_id: me.id,
+                        title: title.slice(0, 60),
+                        url: mu[0],
+                        image_url: (d.image as string) ?? null,
+                      });
+                      setRecoPaste("");
+                      setRecoMsg("カードを作りました ✨");
+                      setTimeout(() => setRecoMsg(null), 2500);
+                      setRecos(await fetchRecos(me.id));
+                    } catch {
+                      setRecoMsg("リンクを読めませんでした");
+                    }
+                    setRecoResolving(false);
+                  }}
+                  placeholder="商品ページのURLを貼るだけ（Google検索・Amazon・お店のサイト何でもOK）"
+                  className="w-full rounded-lg border border-[#2CB7DE55] bg-white px-3 py-2.5 text-[12.5px] outline-none focus:border-[#2CB7DE]"
+                />
+                {recoResolving && <p className="mt-1 text-[11px] text-[#2CB7DE]">カードを作っています…</p>}
+                {recoMsg && <p className="mt-1 text-[11px] text-[#8a7a5a]">{recoMsg}</p>}
+              </div>
+            )}
+
             {isMe && recoForm && (
               <div className="mb-3 rounded-xl border border-[#e8dcc4] bg-[#fffbf0] p-3">
                 <input
@@ -707,6 +749,9 @@ export default function UserPage() {
                       <img src="/icons/icon-star.webp" alt="" style={{ width: 11, height: 11 }} />
                       <span>おススメ</span>
                     </div>
+                    {(r as any).image_url && (
+                      <img src={(r as any).image_url} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-[64px] w-full object-cover" />
+                    )}
                     <div className="px-2 py-2">
                       <div className="min-w-0">
                         <div className="line-clamp-2 text-[12px] font-extrabold leading-snug text-[#3a3428]">{r.title}</div>
