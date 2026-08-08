@@ -16,10 +16,10 @@ interface SchumannLive {
 /** [lat, lng, 人数] */
 export type Spot = [number, number, number];
 
-const MAP_MODES: Array<{ id: MapMode; name: string; desc: string }> = [
-  { id: "otohikari", name: "OTOHIKARI MAP", desc: "光の音柱" },
-  { id: "thunder", name: "sprite&thunder MAP", desc: "雷電活動" },
-  { id: "all", name: "ALL MAP", desc: "全てを表示" },
+const MAP_MODES: Array<{ id: MapMode; name: string; short: string; desc: string }> = [
+  { id: "otohikari", name: "OTOHIKARIMAP", short: "OTO", desc: "光の音柱" },
+  { id: "thunder", name: "sprite&thunderMAP", short: "INAZUMA", desc: "雷電活動" },
+  { id: "all", name: "ALLMAP", short: "ALL", desc: "全てを表示" },
 ];
 
 /**
@@ -141,7 +141,7 @@ export function Otohikari() {
             onClick={() => setModeOpen((v) => !v)}
             className="rounded-full border border-[#2a4a5e] bg-[#0c1c2a]/80 px-2.5 py-0.5 text-[9.5px] font-bold tracking-wider text-[#7ab8d8]"
           >
-            {current.name} {modeOpen ? "▴" : "▾"}
+            {current.short} {modeOpen ? "▴" : "▾"}
           </button>
           {modeOpen && (
             <div
@@ -247,7 +247,7 @@ export function Otohikari() {
       {/* 地球儀の下: △MasterMindSystem（同フォント・タップで F1〜F4 のグラフを展開） */}
       <details className="px-2">
         <summary
-          className="cursor-pointer list-none text-center text-[13px] font-extrabold tracking-[2px]"
+          className="cursor-pointer list-none text-left text-[13px] font-extrabold tracking-[2px]"
           style={{
             color: "#8ff4ff",
             textShadow:
