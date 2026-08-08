@@ -937,7 +937,6 @@
   .mode-block {
     margin-bottom: 1.15rem;
     background: #22242c;
-    border-left: 3px solid var(--sr, #52fa8c);
     overflow: hidden;
   }
   .mode-block.m1 { --sr: #5ae08a; }
@@ -1507,7 +1506,7 @@
   </details>
 
   <details class="fold" id="fold-solar">
-    <summary>太陽フレアと雷とシューマン共振</summary>
+    <summary>イナヅマと太陽とシューマン共振</summary>
 
     <div class="graph-description">
       <p>シューマン共振は<b>雷が鳴らす地球の音</b>です。地面と電離層（上空約100km）のすき間は巨大な太鼓の胴のような空洞で、世界中の雷（毎秒約50発）がそこを叩き続けることで、7.83Hzを基音とする定在波が生まれます。だから<b>雷が多くなるとシューマン共振のパワーは上がり</b>、太陽フレアが電離層の高さや密度を変えると、太鼓の胴のサイズが変わって<b>音程（周波数）がわずかにズレ</b>ます。このページでは、その3者のつながりを「いま」と「過去の実測」の両方で見られます。</p>
@@ -2428,7 +2427,7 @@
         const fs = Math.max(9, Math.min(12, W / u / 38)) * u;
         ctx.fillStyle = "#22242c";
         ctx.fillRect(0, 0, W, H);
-        const PL = fs * 0.6, PR = fs * 3.4, PT = fs * 1.0, PB = fs * 2.6;
+        const PL = 0, PR = fs * 3.4, PT = fs * 1.0, PB = fs * 2.6;
         let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
         const mg = (hi - lo) * 0.15 + 1e-6;
         lo -= mg; hi += mg;
@@ -3333,67 +3332,9 @@
     document.addEventListener("click", () => menu.classList.remove("open"));
   })();
 
-  // F1ドットグラフの期間切替（直付け。キャプチャ段階で拾って他のリスナーに横取りされないように）
-  document.querySelectorAll("#dot-tabs .dot-tab").forEach((btn) => {
-    btn.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      dotRange = btn.dataset.range;
-      document.querySelectorAll("#dot-tabs .dot-tab").forEach(b => b.classList.toggle("active", b === btn));
-      loadTrendDays().then(drawDotGraph);
-    }, true);
-  });
   drawMonthlyTrend();
   drawModeGraphs();
 
-  // ■いまの太陽: GOES X線フラックス → フレアクラス表示（NOAA無料API）
-  (function sunNow() {
-    const el = document.getElementById("sun-now");
-    if (!el) return;
-    const cls = f => f >= 1e-4 ? ["X", f / 1e-4, "#ff5540"] : f >= 1e-5 ? ["M", f / 1e-5, "#ffa040"] : f >= 1e-6 ? ["C", f / 1e-6, "#ffd60a"] : f >= 1e-7 ? ["B", f / 1e-7, "#8fd0a0"] : ["A", f / 1e-8, "#9fb2c8"];
-    const tick = () => {
-      fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json")
-        .then(r => r.json())
-        .then(rows => {
-          const longs = rows.filter(r => r.energy === "0.1-0.8nm");
-          const last = longs[longs.length - 1];
-          if (!last) return;
-          const [L, n, col] = cls(last.flux);
-          el.innerHTML = '☀ いまのX線フラックス <b style="color:' + col + ';font-size:1.25em;">' + L + n.toFixed(1) + '</b>'
-            + '<span style="color:#9fb2c8;font-weight:400;"> クラス（' + (L === "X" || L === "M" ? "フレア発生中！" : L === "C" ? "小さなフレア" : "静穏") + '）</span>';
-        }).catch(() => {});
-      // 太陽画像も同時に更新（キャッシュ回避）
-      const img = document.getElementById("sun-img");
-      if (img) img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg?t=" + Date.now();
-    };
-    tick();
-    setInterval(tick, 5 * 60000);
-  })();
-
-  // ■いまの世界の雷: Blitzortung 落雷カウント（1分あたりの検知数）
-  (function lightningCounter() {
-    const el = document.getElementById("lightning-now");
-    if (!el) return;
-    let count = 0, shown = 0, ws = null, rt = null;
-    function connect() {
-      try { ws = new WebSocket("wss://ws1.blitzortung.org/"); } catch (e) { return retry(); }
-      ws.onopen = () => { try { ws.send(JSON.stringify({ a: 111 })); } catch (e) {} };
-      ws.onmessage = () => { count++; };
-      ws.onclose = retry;
-      ws.onerror = () => { try { ws.close(); } catch (e) {} };
-    }
-    function retry() { clearTimeout(rt); rt = setTimeout(connect, 8000); }
-    connect();
-    setInterval(() => { shown = count; count = 0; }, 60000);
-    setInterval(() => {
-      if (shown > 0) {
-        el.innerHTML = '⚡ この1分間に世界で <b style="font-size:1.3em;">' + shown.toLocaleString() + '</b> 発の雷を検知'
-          + '<span style="color:#9fb2c8;font-weight:400;font-size:0.8em;">（Blitzortung観測網）</span>';
-      } else {
-        el.textContent = "⚡ 雷を数えています…（1分ほどお待ちください）";
-      }
-    }, 5000);
-  })();
 </script>
 
 <!-- ★左下: 卵HOMEボタン + 9メニュー（BottomNavと同配色・同配置） -->
@@ -3502,6 +3443,69 @@
   });
   window.addEventListener("resize", function () { if (window.__dotFS) setTimeout(redraw, 200); });
 })();
+</script>
+
+<script>
+  /* ▼このブロックはメインscriptと独立 — 万一メイン側で例外が起きても必ず動く */
+  // F1ドットグラフの期間切替
+  document.querySelectorAll("#dot-tabs .dot-tab").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      window.dotRange = btn.dataset.range;
+      try { dotRange = btn.dataset.range; } catch (e) {}
+      document.querySelectorAll("#dot-tabs .dot-tab").forEach(b => b.classList.toggle("active", b === btn));
+      try { loadTrendDays().then(drawDotGraph); } catch (e) {}
+    }, true);
+  });
+
+  // ■いまの太陽: GOES X線フラックス → フレアクラス表示（NOAA無料API）
+  (function sunNow() {
+    const el = document.getElementById("sun-now");
+    if (!el) return;
+    const cls = f => f >= 1e-4 ? ["X", f / 1e-4, "#ff5540"] : f >= 1e-5 ? ["M", f / 1e-5, "#ffa040"] : f >= 1e-6 ? ["C", f / 1e-6, "#ffd60a"] : f >= 1e-7 ? ["B", f / 1e-7, "#8fd0a0"] : ["A", f / 1e-8, "#9fb2c8"];
+    const tick = () => {
+      fetch("https://services.swpc.noaa.gov/json/goes/primary/xrays-1-day.json")
+        .then(r => r.json())
+        .then(rows => {
+          const longs = rows.filter(r => r.energy === "0.1-0.8nm");
+          const last = longs[longs.length - 1];
+          if (!last) return;
+          const c = cls(last.flux);
+          el.innerHTML = '☀ いまのX線フラックス <b style="color:' + c[2] + ';font-size:1.25em;">' + c[0] + c[1].toFixed(1) + '</b>'
+            + '<span style="color:#9fb2c8;font-weight:400;"> クラス（' + (c[0] === "X" || c[0] === "M" ? "フレア発生中！" : c[0] === "C" ? "小さなフレア" : "静穏") + '）</span>';
+        }).catch(() => {});
+      const img = document.getElementById("sun-img");
+      if (img) img.src = "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg?t=" + Date.now();
+    };
+    tick();
+    setInterval(tick, 5 * 60000);
+  })();
+
+  // ■いまの世界の雷: Blitzortung 落雷カウント（1分あたりの検知数）
+  (function lightningCounter() {
+    const el = document.getElementById("lightning-now");
+    if (!el) return;
+    let count = 0, shown = 0, ws = null, rt = null;
+    function connect() {
+      try { ws = new WebSocket("wss://ws1.blitzortung.org/"); } catch (e) { return retry(); }
+      ws.onopen = () => { try { ws.send(JSON.stringify({ a: 111 })); } catch (e) {} };
+      ws.onmessage = () => { count++; };
+      ws.onclose = retry;
+      ws.onerror = () => { try { ws.close(); } catch (e) {} };
+    }
+    function retry() { clearTimeout(rt); rt = setTimeout(connect, 8000); }
+    connect();
+    setInterval(() => { shown = count; count = 0; }, 60000);
+    setInterval(() => {
+      if (shown > 0) {
+        el.innerHTML = '⚡ この1分間に世界で <b style="font-size:1.3em;">' + shown.toLocaleString() + '</b> 発の雷を検知'
+          + '<span style="color:#9fb2c8;font-weight:400;font-size:0.8em;">（Blitzortung観測網）</span>';
+      } else {
+        el.textContent = "⚡ 雷を数えています…（1分ほどお待ちください）";
+      }
+    }, 5000);
+  })();
 </script>
 </body>
 </html>
