@@ -121,6 +121,7 @@ export function InoriTecho() {
   const [showSignup, setShowSignup] = useState(false);
   const consentOk = useRef<boolean | null>(null); // 初回書き込み前の法的同意
   const [consentDlg, setConsentDlg] = useState(false);
+  const [fsCal, setFsCal] = useState(false); // 全画面カレンダー
   const pendingOpen = useRef<string | null>(null);
 
   useEffect(() => {
@@ -239,7 +240,20 @@ export function InoriTecho() {
           onClose={() => setConsentDlg(false)}
         />
       )}
-      <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={tryOpenDay} openKey={sheetKey} waraCloud={waraCloud} />
+      <MonthCal mi={mi} setMi={setMi} memos={memos} todayK={todayK} onOpenDay={tryOpenDay} openKey={sheetKey} waraCloud={waraCloud} onFullscreen={() => setFsCal(true)} />
+      {fsCal && (
+        <FullscreenCal
+          mi={mi}
+          setMi={setMi}
+          memos={memos}
+          todayK={todayK}
+          onClose={() => setFsCal(false)}
+          onOpenDay={(k) => {
+            setFsCal(false);
+            tryOpenDay(k);
+          }}
+        />
+      )}
       {sheetKey && (
         <BottomSheet
           dk={sheetKey}
@@ -267,6 +281,7 @@ function MonthCal({
   onOpenDay,
   openKey,
   waraCloud,
+  onFullscreen,
 }: {
   mi: number;
   setMi: (n: number) => void;
@@ -275,6 +290,7 @@ function MonthCal({
   onOpenDay: (k: string) => void;
   openKey: string | null;
   waraCloud: "warawa" | "free" | null;
+  onFullscreen?: () => void;
 }) {
   const [dragX, setDragX] = useState(0);
   const [swiping, setSwiping] = useState(false);
@@ -359,6 +375,14 @@ function MonthCal({
       <div className="px-4 pt-1" style={{ background: "#fff" }}>
       </div>
 
+      {/* 全画面表示ボタン（月表示の上・右寄せ） */}
+      {onFullscreen && (
+        <div className="flex justify-end px-2 pt-1">
+          <button onClick={onFullscreen} className="rounded-full border border-[#e0d8c8] bg-white px-2.5 py-0.5 text-[10px] font-bold text-[#8a7a5a]">
+            ↗ 全画面表示
+          </button>
+        </div>
+      )}
       {/* 月ナビ */}
       <div className="flex items-center justify-between border-b border-[#eee] px-1.5 pb-0.5 pt-1.5">
         <button
@@ -1254,5 +1278,153 @@ function BottomSheet({
         </div>
       )}
     </>
+  );
+}
+
+
+/**
+ * ↗ 全画面カレンダー — 1マスの縦幅を最大化して、予定の文字が読める月表示。
+ * 叶いタイム・朔弦望は出さず「純粋に予定だけ」。月アイコンはそのまま、
+ * 一行目に二十四節気クラス以上(level3+)だけ入れる。
+ */
+function FullscreenCal({
+  mi,
+  setMi,
+  memos,
+  todayK,
+  onClose,
+  onOpenDay,
+}: {
+  mi: number;
+  setMi: (n: number) => void;
+  memos: Memos;
+  todayK: string;
+  onClose: () => void;
+  onOpenDay: (k: string) => void;
+}) {
+  const [y, m] = MONTHS[mi];
+  // 指に追従するスワイプで前後の月へ
+  const [dragX, setDragX] = useState(0);
+  const [anim, setAnim] = useState(false);
+  const tr = useRef({ sx: 0, sy: 0, locked: false, dir: "" as "" | "h" | "v" });
+  const onTS = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    tr.current = { sx: t.clientX, sy: t.clientY, locked: false, dir: "" };
+    setAnim(false);
+  };
+  const onTM = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    const dx = t.clientX - tr.current.sx;
+    const dy = t.clientY - tr.current.sy;
+    if (!tr.current.locked) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        tr.current.locked = true;
+        tr.current.dir = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+      }
+      return;
+    }
+    if (tr.current.dir !== "h") return;
+    const maxD = window.innerWidth * 0.55;
+    const ratio = Math.min(Math.abs(dx) / window.innerWidth, 1);
+    setDragX(dx > 0 ? maxD * Math.pow(ratio, 0.72) : -maxD * Math.pow(ratio, 0.72));
+  };
+  const onTE = () => {
+    if (tr.current.dir !== "h") { setDragX(0); return; }
+    const th = window.innerWidth * 0.18;
+    setAnim(true);
+    if (dragX > th && mi > 0) {
+      setDragX(window.innerWidth);
+      setTimeout(() => { setMi(mi - 1); setAnim(false); setDragX(0); }, 180);
+    } else if (dragX < -th && mi < MONTHS.length - 1) {
+      setDragX(-window.innerWidth);
+      setTimeout(() => { setMi(mi + 1); setAnim(false); setDragX(0); }, 180);
+    } else {
+      setDragX(0);
+    }
+  };
+  const first = new Date(y, m, 1);
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const lead = first.getDay();
+  const cells: Array<number | null> = [];
+  for (let i = 0; i < lead; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  const rows = cells.length / 7;
+  const key = (d: number) => keyOf(y, m + 1, d);
+
+  return (
+    <div className="fixed inset-0 z-[120] flex flex-col bg-white" data-noswipe>
+      {/* 上: 年月は小さく・1行だけ */}
+      <div className="flex items-center justify-between border-b border-[#eee] px-2" style={{ paddingTop: "calc(env(safe-area-inset-top) + 4px)", paddingBottom: 4 }}>
+        <button onClick={() => mi > 0 && setMi(mi - 1)} disabled={mi === 0} className="px-2 text-[15px] font-bold text-[#8a7a5a] disabled:opacity-30">‹</button>
+        <span className="num text-[12px] font-extrabold tracking-wider text-[#5a5040]">{y}年{m + 1}月</span>
+        <span className="flex items-center gap-1">
+          <button onClick={() => mi < MONTHS.length - 1 && setMi(mi + 1)} disabled={mi === MONTHS.length - 1} className="px-2 text-[15px] font-bold text-[#8a7a5a] disabled:opacity-30">›</button>
+          <button onClick={onClose} aria-label="閉じる" className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0ece4] text-[12px] text-[#8a8070]">×</button>
+        </span>
+      </div>
+      {/* 曜日+本体: 指に追従して横に動く */}
+      <div
+        className="flex flex-1 flex-col"
+        onTouchStart={onTS}
+        onTouchMove={onTM}
+        onTouchEnd={onTE}
+        style={{ transform: `translateX(${dragX}px)`, transition: anim ? "transform .18s ease-out" : dragX === 0 ? "transform .15s ease-out" : "none" }}
+      >
+      <div className="grid grid-cols-7 border-b border-[#eee]">
+        {"日月火水木金土".split("").map((w, i) => (
+          <div key={w} className="py-[1px] text-center text-[9px] font-bold" style={{ color: i === 0 ? "#c05030" : i === 6 ? "#3070b0" : "#888" }}>
+            {w}
+          </div>
+        ))}
+      </div>
+      {/* 本体: 残り全部を行で山分けして1マスの縦を最大化 */}
+      <div className="grid flex-1 grid-cols-7" style={{ gridTemplateRows: `repeat(${rows}, 1fr)`, paddingBottom: "env(safe-area-inset-bottom)" }}>
+        {cells.map((d, i) => {
+          if (d === null) return <div key={i} className="border-b border-r border-[#f0ede8] bg-[#fbfaf8]" />;
+          const k = key(d);
+          const ev = bestOfComputed(k);
+          const l = ev?.level ?? 0;
+          const moon = moonOf(k);
+          const dayM = memos[k];
+          const di = i % 7;
+          const isT = k === todayK;
+          const chips: Array<{ text: string; c: string }> = [];
+          for (const e of dayM?.ev ?? []) chips.push({ text: e.text, c: penColor(e.color) });
+          for (const [, v] of Object.entries(dayM?.h ?? {})) {
+            for (const line of String(v).split("\n")) if (line.trim()) chips.push({ text: line.trim(), c: "#8a9a80" });
+          }
+          return (
+            <button
+              key={i}
+              onClick={() => onOpenDay(k)}
+              className="overflow-hidden border-b border-r border-[#f0ede8] px-[2px] py-[1px] text-left align-top"
+              style={{ background: isT ? "#fff2ec" : l >= 4 ? "#fdf4f0" : "#fff", boxShadow: isT ? "inset 0 0 0 2px #c05030" : "none" }}
+            >
+              <div className="flex items-center justify-between leading-none">
+                <span className="text-[11px] font-bold" style={{ color: di === 0 ? "#c05030" : di === 6 ? "#3070b0" : "#444" }}>{d}</span>
+                <span className="text-[8px] opacity-85">{moon.emoji}</span>
+              </div>
+              {l >= 3 && ev?.sekki && (
+                <div className="truncate text-[8px] font-extrabold leading-tight" style={{ color: l >= 4 ? "#c05030" : "#8b6914" }}>
+                  {ev.sekki[0]}
+                </div>
+              )}
+              {chips.slice(0, 4).map((c, j) => (
+                <div
+                  key={j}
+                  className="mt-[1px] truncate rounded-[3px] px-[2px] text-[8px] font-bold leading-[1.35] text-white"
+                  style={{ background: c.c }}
+                >
+                  {c.text}
+                </div>
+              ))}
+              {chips.length > 4 && <div className="text-[7px] leading-none text-[#a09880]">+{chips.length - 4}</div>}
+            </button>
+          );
+        })}
+      </div>
+      </div>
+    </div>
   );
 }
