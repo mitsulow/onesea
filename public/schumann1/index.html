@@ -1986,7 +1986,7 @@
     const g = dvCtx(id, opt.hRatio || 0.36);
     if (!g || !bars.length) return;
     const { ctx, W, H, u, fs } = g;
-    const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.4, PB = fs * 2.2;
+    const PL = fs * 0.4, PR = fs * 0.4, PT = fs * 1.4, PB = fs * 2.2; // ★両端いっぱい(緑ドットグラフと同じ)
     const vals = bars.map(b => b.v).filter(v => v != null);
     if (!vals.length) return;
     // 固定軸 (opt.fixedLo/fixedHi) があればそれを使う。日々の比較がしやすいよう
@@ -1999,12 +1999,16 @@
     const y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
     // 縦軸目盛 (範囲が広いときは1.0刻み、狭いときは0.2刻み)
     const step = (hi - lo) > 3 ? 1 : 0.2;
-    ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.font = fs * 0.8 + "px monospace"; ctx.textAlign = "left";
     for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-6; v += step) {
-      ctx.fillText(v.toFixed(step < 1 ? 1 : 0), fs * 0.3, y(v) + fs * 0.3);
       ctx.strokeStyle = "rgba(255,255,255,0.05)"; ctx.lineWidth = u;
-      ctx.beginPath(); ctx.moveTo(PL, y(v)); ctx.lineTo(W - PR, y(v)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(W, y(v)); ctx.stroke();
     }
+    const drawYLabels = () => {
+      ctx.fillStyle = "rgba(255,255,255,0.45)"; ctx.font = fs * 0.8 + "px monospace"; ctx.textAlign = "left";
+      for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-6; v += step) {
+        ctx.fillText(v.toFixed(step < 1 ? 1 : 0), fs * 0.3, y(v) - fs * 0.2);
+      }
+    };
     dvRule(g, y(BASELINE_HZ), "rgba(240,198,116,0.5)", "7.83", PL, PR);
     dvRule(g, y(TARGET_HZ), "rgba(82,250,140,0.85)", "8.02 目標", PL, PR, "left");
     const bw = Math.max(u, Math.min(plotW / n * (opt.barFrac || 0.66), fs * 2.6));
@@ -2015,6 +2019,7 @@
       ctx.fillStyle = i === lastIdx && opt.hotLast ? "#7cf9d4" : (b.hot ? "#5ad4b0" : "rgba(58,170,142,0.8)");
       ctx.fillRect(xc(i) - bw / 2, y(b.v), bw, Math.max(u, H - PB - y(b.v)));
     });
+    drawYLabels(); // 目盛り数字は棒の上に薄く重ねる(左の空白を作らない)
     // ラベル
     ctx.fillStyle = "rgba(255,255,255,0.5)"; ctx.font = fs * 0.82 + "px monospace"; ctx.textAlign = "center";
     bars.forEach((b, i) => { if (b.label) ctx.fillText(b.label, xc(i), H - fs * 0.8); });
@@ -2055,7 +2060,7 @@
       : Date.parse(all[0].d + "T00:00:00Z");
     const pts = all.filter(e => Date.parse(e.d + "T00:00:00Z") >= t0);
     if (!pts.length) return;
-    const PL = fs * 3.0, PR = fs * 0.8, PT = fs * 1.4, PB = fs * 2.2;
+    const PL = fs * 0.5, PR = fs * 0.5, PT = fs * 1.4, PB = fs * 2.2;
     // 縦軸は常に固定（7.2〜8.15Hz）。全期間でも3年でも同じ物差しで見える
     const lo = 7.2, hi = 8.15;
     const t1 = nowT;
@@ -2248,7 +2253,7 @@
       const g = dvCtx("dv-month", 0.36);
       if (g) {
         const { ctx, W, H, u, fs } = g;
-        const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.6, PB = fs * 2.2;
+        const PL = fs * 0.5, PR = fs * 0.5, PT = fs * 1.6, PB = fs * 2.2;
         const vals = means.filter(v => v != null);
         const lo = Math.min.apply(null, vals) - 0.02, hi = Math.max.apply(null, vals) + 0.03;
         const plotW = W - PL - PR;
@@ -2287,7 +2292,7 @@
       const g = dvCtx("dv-moon", 0.34);
       if (g) {
         const { ctx, W, H, u, fs } = g;
-        const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.6, PB = fs * 2.2;
+        const PL = fs * 0.5, PR = fs * 0.5, PT = fs * 1.6, PB = fs * 2.2;
         const vals = means.filter(v => v != null);
         const lo = Math.min.apply(null, vals) - 0.015, hi = Math.max.apply(null, vals) + 0.02;
         const plotW = W - PL - PR;
@@ -2587,7 +2592,7 @@
         const g = dvCtx("dv-scatter", 0.5);
         if (g && pts.length > 10) {
           const { ctx, W, H, u, fs } = g;
-          const PL = fs * 3.2, PR = fs * 0.8, PT = fs * 1.0, PB = fs * 2.4;
+          const PL = fs * 0.5, PR = fs * 0.5, PT = fs * 1.0, PB = fs * 2.4;
           const xmax = Math.min(100, Math.max.apply(null, pts.map(p => p[0])));
           const ys = pts.map(p => p[1]);
           const lo = Math.min.apply(null, ys) - 0.03, hi = Math.max.apply(null, ys) + 0.03;
