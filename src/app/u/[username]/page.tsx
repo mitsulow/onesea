@@ -546,17 +546,29 @@ export default function UserPage() {
         )}
         {profile.wants_to_do && profile.wants_to_do.length > 0 && (
           <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> やってみたいこと（{profile.wants_to_do.length}）</div>
-            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1" data-noswipe>
-              {profile.wants_to_do.map((w) => (
-                <div
-                  key={w}
-                  className="flex min-h-[76px] w-[46%] flex-shrink-0 snap-start items-center justify-center rounded-2xl px-3 py-4 text-center"
-                  style={{ background: "linear-gradient(150deg,#fdf2ec,#f8dcd2)", border: "1.5px solid #e8b0a0" }}
-                >
-                  <span className="text-[17px] font-extrabold leading-snug text-[#a04030]">{w}</span>
-                </div>
-              ))}
+            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私こんなことやってみたい！（{profile.wants_to_do.length}）</div>
+            <div className="hide-scrollbar -mx-1 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1 pb-2 pt-0.5" data-noswipe>
+              {profile.wants_to_do.map((w, i) => {
+                const CARD_COLORS = [
+                  ["#fdf0ee", "#a04030"], // 桜×茜
+                  ["#fffbe8", "#8a6a10"], // 月白×山吹
+                  ["#0e1e2e", "#f0e6c8"], // 紺×金
+                  ["#eef6e8", "#3a5a2c"], // 若葉×深緑
+                  ["#f0f4fa", "#2a4a7a"], // 空×藍
+                  ["#fdf6ec", "#c94d3a"], // 生成り×朱
+                  ["#f4eefa", "#5a3a7a"], // 藤×紫
+                ] as const;
+                const [bg, fg] = CARD_COLORS[i % CARD_COLORS.length];
+                return (
+                  <div
+                    key={w}
+                    className="flex min-h-[84px] w-[46%] flex-shrink-0 snap-start items-center justify-center px-3 py-4 text-center"
+                    style={{ background: bg, color: fg, boxShadow: "2px 3px 10px rgba(0,0,0,.18)", border: "1px solid rgba(0,0,0,.06)" }}
+                  >
+                    <span className="text-[17px] font-extrabold leading-snug" style={{ color: fg }}>{w}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
