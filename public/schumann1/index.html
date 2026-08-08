@@ -3336,11 +3336,24 @@
           url = u?.user_metadata?.avatar_url || u?.user_metadata?.picture || null;
         }
       }
+      let avImg = null;
       if (url) {
-        const img = document.createElement("img");
-        img.src = url; img.alt = ""; img.referrerPolicy = "no-referrer";
-        if (fb) fb.replaceWith(img); else btn.appendChild(img);
+        avImg = document.createElement("img");
+        avImg.src = url; avImg.alt = ""; avImg.referrerPolicy = "no-referrer";
+        if (fb) fb.replaceWith(avImg); else btn.appendChild(avImg);
       }
+      // ★マイページで変えた写真(profiles.avatar_url)を優先 — 旧Googleアバター表示バグ対策
+      try {
+        const se = window.oneseaSessionUser ? window.oneseaSessionUser() : null;
+        if (se && se.user && se.token) {
+          fetch("https://hpgofjkxqguzgrptchqj.supabase.co/rest/v1/profiles?select=avatar_url&id=eq." + se.user.id, {
+            headers: { apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZ29mamt4cWd1emdycHRjaHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MTE4ODEsImV4cCI6MjEwMDk4Nzg4MX0.RUJeAih2h08bfOPiM6DJfm-_cbTx3X4FCheJ8ZUJhKY", Authorization: "Bearer " + se.token }
+          }).then(r => r.json()).then(rows => {
+            const a2 = rows && rows[0] && rows[0].avatar_url;
+            if (a2 && avImg) avImg.src = a2;
+          }).catch(() => {});
+        }
+      } catch (e) {}
     } catch (e) {}
     window.__svcLoggedIn = !!url;
     btn.addEventListener("click", (e) => {

@@ -60,6 +60,11 @@ export default function TsukiyogaPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u: User | null = session?.user ?? null;
       setAvatar((u?.user_metadata?.avatar_url as string) ?? null);
+      if (u) {
+        supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
+          if (data?.avatar_url) setAvatar(data.avatar_url);
+        });
+      }
     });
   }, []);
 

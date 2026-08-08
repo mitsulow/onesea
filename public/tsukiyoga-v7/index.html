@@ -17113,6 +17113,19 @@ if ('serviceWorker' in navigator) {
       document.getElementById('oneseaAvatarInner').innerHTML =
         '<img src="' + av + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
     }
+    // ★マイページで変えた写真(profiles.avatar_url)を優先 — 旧Googleアバター表示バグ対策
+    try {
+      var seAv = window.oneseaSessionUser ? window.oneseaSessionUser() : null;
+      if (seAv && seAv.user && seAv.token) {
+        fetch('https://hpgofjkxqguzgrptchqj.supabase.co/rest/v1/profiles?select=avatar_url&id=eq.' + seAv.user.id, {
+          headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhwZ29mamt4cWd1emdycHRjaHFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU0MTE4ODEsImV4cCI6MjEwMDk4Nzg4MX0.RUJeAih2h08bfOPiM6DJfm-_cbTx3X4FCheJ8ZUJhKY', Authorization: 'Bearer ' + seAv.token }
+        }).then(function (r) { return r.json(); }).then(function (rows) {
+          var a2 = rows && rows[0] && rows[0].avatar_url;
+          var host = document.getElementById('oneseaAvatarInner');
+          if (a2 && host) host.innerHTML = '<img src="' + a2 + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
+        }).catch(function () {});
+      }
+    } catch (e2) {}
     window.__oneseaLoggedIn = !!sess;
   } catch (e) { window.__oneseaLoggedIn = false; }
 

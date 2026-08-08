@@ -56,6 +56,12 @@ export default function MmmPage() {
       const u = session?.user ?? null;
       setMe(u);
       setAvatar((u?.user_metadata?.avatar_url as string) ?? null);
+      if (u) {
+        // マイページで変えた写真を優先
+        supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
+          if (data?.avatar_url) setAvatar(data.avatar_url);
+        });
+      }
       if (!u) {
         setTeam(null);
         return;

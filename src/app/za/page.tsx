@@ -29,6 +29,12 @@ export default function ZaPage() {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
+      const uid = session?.user?.id;
+      if (uid) {
+        supabase.from("profiles").select("avatar_url").eq("id", uid).maybeSingle().then(({ data }) => {
+          if (data?.avatar_url) setAvatar(data.avatar_url);
+        });
+      }
     });
   }, []);
 
