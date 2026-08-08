@@ -187,7 +187,9 @@ export function HomeDashboard() {
           )}
         </span>
         <a href="/schumann1/index.html" className="num text-[10px] font-bold text-[#3aa890] no-underline">
-          今日の周波数 {schumann != null ? schumann.toFixed(2) : "—"}Hz
+          今日の周波数 {schumann != null ? schumann.toFixed(2) : "—"}Hz{" "}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/cel-sun.png" alt="" className="inline-block h-[13px] w-[13px] object-contain align-[-2.5px]" />
         </a>
       </div>
       <div className="pt-0.5" style={{ fontFamily: MINCHO }}>
