@@ -21,6 +21,15 @@ const PHI = 1.6180339887498949;
 const DELTA = 8.0219032748; // 左右差(固定)
 const MINUTES = [10, 15, 20, 25, 30] as const;
 const GEN_KINDS = ["φ", "α", "β", "γ", "θ"] as const;
+const SCHU = 336; // 実録シューマン音の長さ(秒・約5分36秒)
+/** 各モードの5音の整数比(φは 1/5:1/3:1:3:5 を15倍した整数比) */
+const GEN_RATIOS: Record<string, string> = {
+  "φ": "3:5:15:45:75",
+  "α": "44:64:65:84:94",
+  "β": "22:32:33:47:62",
+  "γ": "6:11:16:21:31",
+  "θ": "85:86:112:125:164",
+};
 type GenKind = (typeof GEN_KINDS)[number];
 
 function fmt(sec: number): string {
@@ -57,13 +66,14 @@ interface AlphaSession {
   t0: number; // セッション開始のctx時刻
   total: number; // 秒
   genLabel: string | null;
+  modeLabel: string;
   stop: () => void;
   midBellAt: { v: number | null }; // シューマン音が終わった実時刻(相対秒・進行表示用)
 }
 
 export default function MeditationAlphaPage() {
   const [mins, setMins] = useState<number>(15);
-  const [kind, setKind] = useState<"silence" | "gen" | null>(null);
+  const [kind, setKind] = useState<"silence" | "gen" | "repeat" | null>(null);
   const [gen, setGen] = useState<GenKind>("φ");
   const [modes, setModes] = useState<number[]>(TEXTBOOK_MODES);
   const [modeSrc, setModeSrc] = useState<"live" | "cached" | "textbook">("textbook");
@@ -139,6 +149,9 @@ export default function MeditationAlphaPage() {
     const el = new Audio("/audio/schumann_r8_geshi.mp3");
     el.preload = "auto";
     audioRef.current = el;
+    // リピート: 瞑想時間内に何回流せるかを整数で計算し、あまりの時間は無音
+    const repeats = kind === "repeat" ? Math.max(1, Math.floor(total / SCHU)) : 1;
+    let played = 1;
     let advanced = false;
     const advance = () => {
       if (advanced) return;
@@ -174,10 +187,18 @@ export default function MeditationAlphaPage() {
         }
       }
     };
-    el.addEventListener("ended", advance);
+    el.addEventListener("ended", () => {
+      if (kind === "repeat" && played < repeats) {
+        played += 1;
+        el.currentTime = 0;
+        void el.play().catch(() => advance());
+      } else {
+        advance();
+      }
+    });
     // 万一mp3が読めない環境でも瞑想が始まらないのが最悪 → 6分で強制的に次へ
     el.addEventListener("error", () => setTimeout(advance, 1000));
-    const guard = window.setTimeout(advance, 6 * 60 * 1000);
+    const guard = window.setTimeout(advance, repeats * 6 * 60 * 1000);
     void el.play().catch(() => advance());
 
     const stop = () => {
@@ -196,6 +217,12 @@ export default function MeditationAlphaPage() {
       t0,
       total,
       genLabel: kind === "gen" ? gen : null,
+      modeLabel:
+        kind === "gen"
+          ? `機械生成周波数: ${gen}`
+          : kind === "repeat"
+            ? `シューマン音リピート(${repeats}回)`
+            : "無音瞑想",
       stop,
       midBellAt,
     };
@@ -228,9 +255,9 @@ export default function MeditationAlphaPage() {
   };
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md bg-[#0b1020] px-4 pb-16 pt-5 text-white">
+    <main className="mx-auto min-h-dvh max-w-md px-4 pb-16 pt-5 text-white" style={{ background: "#0abab5" }}>
       <div className="mb-4 flex items-center justify-between">
-        <Link href="/mmm" className="text-[13px] text-white/60 no-underline">
+        <Link href="/mmm" className="text-[13px] text-white/85 no-underline">
           ← MasterMind
         </Link>
         <span className="text-[15px] font-extrabold tracking-widest">瞑想モード音響α版</span>
@@ -240,21 +267,21 @@ export default function MeditationAlphaPage() {
       {!session ? (
         <>
           {/* イヤホン専用の案内 */}
-          <div className="mb-4 rounded-2xl border border-[#d4b96a]/40 bg-[#d4b96a]/10 p-4 text-center">
+          <div className="mb-4 rounded-2xl border border-white/40 bg-white/15 p-4 text-center">
             <div className="flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icons/icon-headphone.webp" alt="" style={{ width: 38, height: 38 }} />
             </div>
             <div className="mt-1 text-[14px] font-extrabold">イヤホン・ヘッドホン専用です</div>
-            <div className="mt-1 text-[11.5px] leading-relaxed text-white/70">
+            <div className="mt-1 text-[11.5px] leading-relaxed text-white/90">
               「周波数自動生成」部分のみ左右で周波数が8.0219Hz異なります。
               そのためスピーカーだと左右の音が混ざり、効果が完全に消えます。
             </div>
           </div>
 
           {/* ① 分数 */}
-          <div className="mb-3 rounded-2xl bg-white/5 p-3">
-            <div className="mb-2 text-[11.5px] font-bold text-white/70">① 分数を選ぶ</div>
+          <div className="mb-3 rounded-2xl bg-white/20 p-3">
+            <div className="mb-2 text-[11.5px] font-bold text-white/90">① 瞑想時間を選ぶ</div>
             <div className="flex gap-1.5">
               {MINUTES.map((m) => (
                 <button
@@ -263,8 +290,8 @@ export default function MeditationAlphaPage() {
                   className="flex-1 rounded-xl border py-2.5 text-[14px] font-extrabold"
                   style={
                     mins === m
-                      ? { background: "#d4b96a", borderColor: "#d4b96a", color: "#0b1020" }
-                      : { background: "transparent", borderColor: "rgba(255,255,255,.18)", color: "rgba(255,255,255,.65)" }
+                      ? { background: "#fff", borderColor: "#fff", color: "#0a8a84" }
+                      : { background: "rgba(255,255,255,.10)", borderColor: "rgba(255,255,255,.45)", color: "rgba(255,255,255,.92)" }
                   }
                 >
                   {m}分
@@ -274,13 +301,14 @@ export default function MeditationAlphaPage() {
           </div>
 
           {/* ② 無音 or 機械生成周波数 */}
-          <div className="mb-3 rounded-2xl bg-white/5 p-3">
-            <div className="mb-2 text-[11.5px] font-bold text-white/70">② シューマン音のあとの過ごし方</div>
+          <div className="mb-3 rounded-2xl bg-white/20 p-3">
+            <div className="mb-2 text-[11.5px] font-bold text-white/90">② シューマン音視聴後</div>
             <div className="flex gap-1.5">
               {(
                 [
                   ["silence", "無音"],
                   ["gen", "機械生成周波数"],
+                  ["repeat", "リピート"],
                 ] as const
               ).map(([k, label]) => (
                 <button
@@ -289,20 +317,26 @@ export default function MeditationAlphaPage() {
                   className="flex-1 rounded-xl border py-3 text-[14px] font-extrabold"
                   style={
                     kind === k
-                      ? { background: "#d4b96a", borderColor: "#d4b96a", color: "#0b1020" }
-                      : { background: "transparent", borderColor: "rgba(255,255,255,.18)", color: "rgba(255,255,255,.65)" }
+                      ? { background: "#fff", borderColor: "#fff", color: "#0a8a84" }
+                      : { background: "rgba(255,255,255,.10)", borderColor: "rgba(255,255,255,.45)", color: "rgba(255,255,255,.92)" }
                   }
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <div className="mt-2 text-[10.5px] leading-relaxed text-white/50">
+            <div className="mt-2 text-[10.5px] leading-relaxed text-white/85">
               約5分間のシューマン音が鳴った後に、鐘が3回鳴ります。
               その後の部分を「無音」で瞑想するか「機械生成周波数」で瞑想するかを選択できます。
               設定した時間が来ると終わりの鐘が3回鳴ります。
             </div>
-            <div className="mt-1.5 border-t border-white/10 pt-1.5 text-[10.5px] leading-relaxed text-white/50">
+            {kind === "repeat" && (
+              <div className="mt-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[10.5px] font-bold leading-relaxed text-white">
+                {mins}分だとシューマン音(約5分36秒)が{Math.max(1, Math.floor((mins * 60) / SCHU))}回流れ、
+                残り{fmt(mins * 60 - Math.max(1, Math.floor((mins * 60) / SCHU)) * SCHU)}は無音になります
+              </div>
+            )}
+            <div className="mt-1.5 border-t border-white/25 pt-1.5 text-[10.5px] leading-relaxed text-white/85">
               シューマン音の後の瞑想におススメは「地球のナチュラルな音（無音）」ですが、
               周囲がうるさい環境などには「機械生成音」をお使いください。
               シューマン音をリピートしてお聴きになる事も可能です。
@@ -311,28 +345,31 @@ export default function MeditationAlphaPage() {
 
           {/* 機械生成周波数: 5種類 */}
           {kind === "gen" && (
-            <div className="mb-3 rounded-2xl bg-white/5 p-3">
-              <div className="mb-2 text-[11.5px] font-bold text-white/70">周波数の種類</div>
+            <div className="mb-3 rounded-2xl bg-white/20 p-3">
+              <div className="mb-2 text-[11.5px] font-bold text-white/90">周波数の種類</div>
               <div className="flex gap-1.5">
                 {GEN_KINDS.map((k) => (
                   <button
                     key={k}
                     onClick={() => setGen(k)}
-                    className="flex-1 rounded-xl border py-2.5 text-[15px] font-extrabold"
+                    className="min-w-0 flex-1 rounded-xl border px-0.5 py-2 text-[15px] font-extrabold"
                     style={
                       gen === k
-                        ? { background: "#d4b96a", borderColor: "#d4b96a", color: "#0b1020" }
-                        : { background: "transparent", borderColor: "rgba(255,255,255,.18)", color: "rgba(255,255,255,.65)" }
+                        ? { background: "#fff", borderColor: "#fff", color: "#0a8a84" }
+                        : { background: "rgba(255,255,255,.10)", borderColor: "rgba(255,255,255,.45)", color: "rgba(255,255,255,.92)" }
                     }
                   >
-                    {k}
+                    <span className="block leading-none">{k}</span>
+                    <span className="num mt-1 block break-all text-[7.5px] font-bold leading-tight tracking-tight opacity-80">
+                      {GEN_RATIOS[k]}
+                    </span>
                   </button>
                 ))}
               </div>
-              <div className="mt-1.5 text-[9.5px] leading-relaxed text-white/40">
+              <div className="mt-1.5 text-[9.5px] leading-relaxed text-white/80">
                 {gen === "φ"
                   ? `その瞬間の実測F1(${modes[0].toFixed(2)}Hz)×φ⁸=${(modes[0] * Math.pow(PHI, 8)).toFixed(1)}Hzを真ん中に、3倍音・5倍音・1/3音・1/5音の5本`
-                  : `実測シューマンを最小整数比にスナップした5音(${gen}帯域)`}
+                  : `実測シューマンを整数比 ${GEN_RATIOS[gen]} にスナップした5音(${gen}帯域)`}
                 ・左右差 8.0219032748Hz
                 <span className="ml-1.5 rounded bg-white/10 px-1.5 py-0.5 text-[9px]">
                   {modeSrc === "live" ? "実測" : modeSrc === "cached" ? "前回の実測" : "教科書値"}
@@ -344,8 +381,7 @@ export default function MeditationAlphaPage() {
           {kind && (
             <button
               onClick={begin}
-              className="w-full rounded-2xl py-4 text-[16px] font-extrabold text-[#0b1020]"
-              style={{ background: "linear-gradient(120deg,#e8dcae,#d4b96a)" }}
+              className="w-full rounded-2xl bg-white py-4 text-[16px] font-extrabold text-[#0a8a84]"
             >
               瞑想を始める（{mins}分）
             </button>
@@ -353,16 +389,16 @@ export default function MeditationAlphaPage() {
         </>
       ) : (
         <>
-          <div className="rounded-2xl bg-white/5 p-4 text-center">
+          <div className="rounded-2xl bg-white/20 p-4 text-center">
             <div className="text-[13px] font-bold text-white/80">{phaseName()}</div>
             <div className="num mt-1 text-[44px] font-extrabold leading-none">{fmt(Math.max(0, session.total - now))}</div>
-            <div className="mt-1 text-[10.5px] text-white/45">
-              {session.genLabel ? `機械生成周波数: ${session.genLabel}` : "無音瞑想"} ・ 全体 {session.total / 60}分
+            <div className="mt-1 text-[10.5px] text-white/80">
+              {session.modeLabel} ・ 全体 {session.total / 60}分
             </div>
           </div>
           <button
             onClick={stopSession}
-            className="mt-4 w-full rounded-2xl border border-white/20 py-3 text-[14px] font-bold text-white/80"
+            className="mt-4 w-full rounded-2xl border border-white/50 py-3 text-[14px] font-bold text-white"
           >
             ■ 終了する
           </button>
