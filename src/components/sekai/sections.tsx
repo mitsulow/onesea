@@ -916,7 +916,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/icon-pen.webp" alt="" style={{ width: 18, height: 18 }} />
               </span>
-              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">セカイムラの活動報告</span>
+              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">セカイムラの活動報告 <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
               <span
                 className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
                 style={{ background: GREEN }}

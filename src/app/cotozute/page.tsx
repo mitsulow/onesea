@@ -692,7 +692,7 @@ export default function CotozutePage() {
             onClick={() => (me && isWara ? setComposing(true) : setShowUpgrade(true))}
             className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14.5px] text-[#65676b]"
           >
-            幸せの波紋を拡げよう
+            幸せの波紋を拡げよう <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
           </button>
         </div>
 

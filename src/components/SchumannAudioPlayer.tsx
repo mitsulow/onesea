@@ -440,7 +440,7 @@ export function SchumannAudioPlayer() {
         borderTop: "1.5px solid rgba(143,244,255,.85)", // OTOHIKARIと繋がる蛍光水色ライン
         boxShadow: "inset 0 2px 12px -2px rgba(143,244,255,.5)",
         background: "#0abab5",
-        padding: "7px 12px 9px",
+        padding: "4px 12px 5px",
       }}
     >
       {/* タイトル行 */}
@@ -464,7 +464,7 @@ export function SchumannAudioPlayer() {
       </div>
 
       {showDlInfo && (
-        <div className="mt-2 rounded-xl bg-white/85 px-3 py-2 text-[11.5px] leading-relaxed text-[#2a6a66]">
+        <div className="mt-1.5 rounded-xl bg-white/85 px-3 py-1.5 text-[11.5px] leading-relaxed text-[#2a6a66]">
           {dl === "cached"
             ? "✅ 音源はこの端末に保存済みです。再生してもギガは減りません（初回の1回だけ約10MBをダウンロードします）。"
             : dl === "loading"
@@ -629,7 +629,7 @@ export function SchumannAudioPlayer() {
 
       {/* プログラム進行表示 */}
       {program && (
-        <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-white/25 px-3 py-2">
+        <div className="mt-1.5 flex items-center justify-between gap-2 rounded-xl bg-white/25 px-3 py-1.5">
           <div className="min-w-0">
             <div className="text-[10.5px] font-extrabold tracking-wider text-white/90">{programLabel}</div>
             <div className="num text-[13px] font-bold text-white">
