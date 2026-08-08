@@ -7,7 +7,6 @@ import { fetchIsWarawa } from "@/lib/warawa";
 import { AUDIO, SCHUMANN, SCHUMANN_DATA_URL } from "@/lib/config";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import {
-  BRAIN_MODES,
   MED_DEFAULTS,
   buildTimeline,
   fetchMeasuredModes,
@@ -62,7 +61,7 @@ export function SchumannAudioPlayer() {
   const previewRef = useRef<number | null>(null);
   const [introKind, setIntroKind] = useState<Exclude<ProgramKind, "meditation"> | null>(null);
   const [program, setProgram] = useState<{ kind: ProgramKind; course?: number; mode?: string } | null>(null);
-  const [medPick, setMedPick] = useState<string>("random"); // 脳波モード（🎲=おまかせ）
+  const [medPick] = useState<string>("random"); // 脳波モード（アイディア/シンクロ用に残置）
   const programRef = useRef(program);
   programRef.current = program;
   const [phase, setPhase] = useState("");
@@ -536,54 +535,20 @@ export function SchumannAudioPlayer() {
               <img src="/icons/mode-meditation.webp" alt="" className="h-10 w-10 flex-shrink-0 rounded-lg object-cover" />
               <div className="min-w-0">
                 <div className="text-[12px] font-extrabold text-white">瞑想モード</div>
-                <div className="text-[9.5px] leading-snug text-white/80">シューマン音 → 鐘 → 不思議な音 → 鐘3打で還る</div>
+                <div className="text-[9.5px] leading-snug text-white/80">地球の音で休息を取ります</div>
               </div>
             </div>
-            <div className="flex flex-shrink-0 gap-1.5">
-              <button
-                onClick={() => beginProgram("meditation", 10)}
-                className="rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
-              >
-                10分
-              </button>
-              <button
-                onClick={() => beginProgram("meditation", 15)}
-                className="rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
-              >
-                15分
-              </button>
-              <button
-                onClick={() => beginProgram("meditation", 30)}
-                className="rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
-              >
-                30分
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                setModeOpen(false);
+                if (!user) return setShowUpgrade(true);
+                window.location.href = "/meditation-alpha";
+              }}
+              className="flex-shrink-0 rounded-lg bg-white px-2.5 py-1.5 text-[11.5px] font-extrabold text-[#0a8a84]"
+            >
+              はじめる
+            </button>
           </div>
-          {/* 脳波モード: 🎲=おまかせ（毎回ランダム）。10分+γ のように分数と組み合わせる */}
-          <div className="flex items-center gap-1.5 pl-12">
-            <span className="text-[9.5px] font-bold text-white/60">脳波:</span>
-            {["random", ...BRAIN_MODES].map((m) => (
-              <button
-                key={m}
-                onClick={() => setMedPick(m)}
-                className="h-7 min-w-7 rounded-lg border px-1.5 text-[12.5px] font-extrabold leading-none"
-                style={
-                  medPick === m
-                    ? { background: "#fff", borderColor: "#fff", color: "#0a8a84" }
-                    : { background: "rgba(255,255,255,.12)", borderColor: "rgba(255,255,255,.25)", color: "rgba(255,255,255,.85)" }
-                }
-              >
-                {m === "random" ? <img src="/icons/icon-dice.webp" alt="おまかせ" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> : m}
-              </button>
-            ))}
-          </div>
-          <a
-            href="/meditation"
-            className="block pl-12 text-[10px] font-bold text-white/75 no-underline"
-          >
-            <img src="/icons/icon-headphone.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 新・音響エンジン（β）を試す →
-          </a>
           <div className="flex items-center justify-between gap-2 border-t border-white/25 pt-1.5">
             <div className="flex min-w-0 items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
