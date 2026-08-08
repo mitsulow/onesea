@@ -830,7 +830,7 @@ function BottomSheet({
                         <div className="mt-1 text-[13px] font-extrabold leading-snug text-[#e8c860]" style={{ textShadow: "0 0 6px #000" }}>
                           ✦{ht.name}（{ht.label}）
                           <br />
-                          <span className="num">{ht.time}</span>
+                          <span className="num" style={{ paddingLeft: "1em" }}>{ht.time}</span>
                         </div>
                       ) : null;
                     })()}
