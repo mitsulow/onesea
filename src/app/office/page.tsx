@@ -89,6 +89,14 @@ export default function OfficePage() {
 
       <div className="mx-auto max-w-[480px] space-y-4 px-4 pt-4">
         {/* ① 一斉送信 */}
+        <Link href="/office/kome" className="block rounded-2xl bg-white p-4 no-underline" style={{ border: "1px solid #e5dcc8" }}>
+          <div className="flex items-center justify-between">
+            <span className="text-[14px] font-extrabold text-[#3a3428]">🌾 米部 — 田んぼ申請の確認・登録</span>
+            <span className="text-[13px] font-bold text-[#a08a30]">開く →</span>
+          </div>
+          <p className="mt-1 text-[11px] text-[#a09a88]">「田んぼを使って欲しい」の申請を確認して、写真を足して田んぼページを作ります</p>
+        </Link>
+
         <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
           <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">■ 会員へ一斉送信</div>
           <div className="mb-2 flex gap-2">

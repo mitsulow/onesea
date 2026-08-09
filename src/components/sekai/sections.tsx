@@ -2702,17 +2702,6 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
         <span className="num text-[10px] text-[#a0aca0]">2025年 全国75枚の田んぼを蘇らせた</span>
       </div>
 
-      <div className="mb-2.5 flex items-end justify-center gap-8 rounded-xl bg-[#f7f4ea] py-3 text-center">
-        <div>
-          <div className="num text-[26px] font-extrabold leading-none text-[#8a7020]">{thisYear}</div>
-          <div className="mt-1 text-[9.5px] tracking-[2px] text-[#a09060]">今年の田んぼ</div>
-        </div>
-        <div>
-          <div className="num text-[26px] font-extrabold leading-none text-[#8a7020]">75</div>
-          <div className="mt-1 text-[9.5px] tracking-[2px] text-[#a09060]">2025年の実績</div>
-        </div>
-      </div>
-
       {/* タブ: 一覧 / マップ / お知らせ（sekaimura.net/komebu と同じ3本柱） */}
       <div className="mb-2 flex gap-1 rounded-xl bg-[#f2efe2] p-1">
         {([["list", "🌾 田んぼ"], ["kome", "🍚 お米を買う"], ["news", "📢 お知らせ"]] as const).map(([k, label]) => (
@@ -2802,13 +2791,9 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
             🌾 田んぼを使って欲しい
           </button>
           {amOffice && (
-          <button
-            onClick={() => setAdding(true)}
-            className="mb-3 w-full rounded-xl border-2 border-dashed py-2.5 text-[12.5px] font-extrabold"
-            style={{ borderColor: "#c8b86a55", color: "#a09060" }}
-          >
-            🌾 田んぼを登録する（事務局）
-          </button>
+            <Link href="/office/kome" className="mb-3 block w-full rounded-xl border-2 border-dashed py-2.5 text-center text-[12.5px] font-extrabold no-underline" style={{ borderColor: "#c8b86a55", color: "#a09060" }}>
+              🗂 申請の確認と田んぼ登録は事務局ページで →
+            </Link>
           )}
           </>
         )}
