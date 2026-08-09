@@ -9,11 +9,12 @@ import { IosBackButton } from "@/components/IosBackButton";
 
 const G = "#2a7a48";
 
-/** 質問定義(Googleフォーム「米部2027【お米農家さん】」を移植) */
-type Q = { id: string; sec: string; label: string; type: "text" | "textarea" | "radio" | "check" | "select"; opts?: string[]; req: boolean; max?: number; desc?: string; ph?: string };
+/** 質問定義。事務局が画面上で編集でき、DB(kome_hearing_config)に保存される。 */
+export type Q = { id: string; sec: string; label: string; type: "text" | "textarea" | "radio" | "check" | "select"; opts?: string[]; req: boolean; max?: number; desc?: string; ph?: string };
 
 const PREF_OPTS = [...PREFS, "その他（海外）"];
-const QUESTIONS: Q[] = [
+/** 初期の質問セット(DB未保存時のデフォルト。保存後はDBが正) */
+const DEFAULT_QUESTIONS: Q[] = [
   { id: "furigana", sec: "1. 田んぼの基本情報", label: "オーナー名のふりがな", type: "text", req: true },
   { id: "who", sec: "1. 田んぼの基本情報", label: "主にお米づくりをされている方はどなたですか？", type: "radio", opts: ["ご本人", "ご家族", "ご友人"], req: true },
   { id: "tanbo_name", sec: "1. 田んぼの基本情報", label: "登録される田んぼの名称", type: "text", req: true, ph: "（例）やまださんちの田んぼ、笑顔の庭 など" },
@@ -46,20 +47,40 @@ const QUESTIONS: Q[] = [
   { id: "feeling", sec: "7. セカイムラ米部についての理解確認", label: "現在のお気持ち", type: "radio", opts: ["ぜひ一緒に活動したい", "楽しみだが、少し不安もある", "事前に事務局に相談したいことがある", "もう少し検討したい"], req: true },
 ];
 
-const SECTIONS = [...new Set(QUESTIONS.map((q) => q.sec))];
+const TYPE_LABELS: Array<[Q["type"], string]> = [
+  ["text", "記述式（1行）"],
+  ["textarea", "記述式（長文）"],
+  ["radio", "1つ選ぶ"],
+  ["check", "複数選べる"],
+  ["select", "プルダウン"],
+];
 
-/** 米部ヒアリングシート — 田んぼ登録者(農家さん)向け */
+/** 米部ヒアリングシート — 農家さん向け。事務局は画面上で質問を修正できる。 */
 export default function KomeHearingPage() {
   const [me, setMe] = useState<User | null>(null);
+  const [amAdmin, setAmAdmin] = useState(false);
+  const [qs, setQs] = useState<Q[]>(DEFAULT_QUESTIONS);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [ans, setAns] = useState<Record<string, string | string[]>>({});
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  // 編集モード(事務局)
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState<Q[]>([]);
+  const [savingCfg, setSavingCfg] = useState(false);
 
   useEffect(() => {
-    createClient().auth.getSession().then(({ data: { session } }) => setMe(session?.user ?? null));
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setMe(u);
+      if (u) import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(u.id).then(setAmAdmin)).catch(() => {});
+    });
+    supabase.from("kome_hearing_config").select("questions").eq("id", 1).maybeSingle().then(({ data }) => {
+      if (data?.questions && Array.isArray(data.questions) && data.questions.length) setQs(data.questions as Q[]);
+    });
   }, []);
 
   const setV = (id: string, v: string) => setAns((a) => ({ ...a, [id]: v }));
@@ -72,12 +93,15 @@ export default function KomeHearingPage() {
 
   const submit = async () => {
     if (!name.trim() || !phone.trim() || !email.trim()) { alert("オーナー名・電話番号・メールアドレスは必須です"); return; }
-    const missing = QUESTIONS.filter((q) => q.req && (!ans[q.id] || (Array.isArray(ans[q.id]) && (ans[q.id] as string[]).length === 0)));
+    const missing = qs.filter((q) => q.req && (!ans[q.id] || (Array.isArray(ans[q.id]) && (ans[q.id] as string[]).length === 0)));
     if (missing.length) { alert(`未回答の必須項目があります: ${missing[0].label}`); return; }
     if (sending) return;
     setSending(true);
+    // 回答は「質問文」をキーに保存(質問が後で変わっても回答が読める)
+    const labeled: Record<string, string | string[]> = {};
+    for (const q of qs) if (ans[q.id] !== undefined && ans[q.id] !== "") labeled[q.label] = ans[q.id];
     const { error } = await createClient().from("kome_hearing").insert({
-      user_id: me?.id ?? null, name: name.trim(), phone: phone.trim(), email: email.trim(), answers: ans,
+      user_id: me?.id ?? null, name: name.trim(), phone: phone.trim(), email: email.trim(), answers: labeled,
     });
     setSending(false);
     if (error) { alert("送信できませんでした。もう一度お試しください"); return; }
@@ -85,16 +109,102 @@ export default function KomeHearingPage() {
     window.scrollTo(0, 0);
   };
 
+  /* ── 編集モード(事務局) ── */
+  const startEdit = () => { setDraft(qs.map((q) => ({ ...q, opts: q.opts ? [...q.opts] : undefined }))); setEditMode(true); window.scrollTo(0, 0); };
+  const updQ = (i: number, patch: Partial<Q>) => setDraft((d) => d.map((q, j) => (j === i ? { ...q, ...patch } : q)));
+  const moveQ = (i: number, dir: -1 | 1) => setDraft((d) => {
+    const j = i + dir;
+    if (j < 0 || j >= d.length) return d;
+    const nd = [...d]; [nd[i], nd[j]] = [nd[j], nd[i]]; return nd;
+  });
+  const delQ = (i: number) => { if (!confirm("この質問を削除しますか？")) return; setDraft((d) => d.filter((_, j) => j !== i)); };
+  const addQ = (i: number) => setDraft((d) => {
+    const nq: Q = { id: `q_${Date.now()}`, sec: d[i]?.sec ?? "新しいセクション", label: "新しい質問", type: "text", req: false };
+    const nd = [...d]; nd.splice(i + 1, 0, nq); return nd;
+  });
+  const saveCfg = async () => {
+    const bad = draft.find((q) => !q.label.trim());
+    if (bad) { alert("質問文が空の項目があります"); return; }
+    if (savingCfg) return;
+    setSavingCfg(true);
+    const clean = draft.map((q) => ({ ...q, opts: (q.type === "radio" || q.type === "check" || q.type === "select") ? (q.opts ?? []).filter((o) => o.trim()) : undefined }));
+    const { error } = await createClient().from("kome_hearing_config").upsert({ id: 1, questions: clean, updated_by: me?.id ?? null, updated_at: new Date().toISOString() });
+    setSavingCfg(false);
+    if (error) { alert("保存できませんでした: " + error.message); return; }
+    setQs(clean as Q[]);
+    setEditMode(false);
+    alert("ヒアリングシートを更新しました。このページを開いた全員に即反映されます🌾");
+  };
+
   if (done)
     return (
       <main className="mx-auto min-h-dvh max-w-md px-5 pt-24 text-center" style={{ background: "#f6faf4" }}>
         <div className="text-[44px]">🌾</div>
         <h1 className="mt-3 text-[18px] font-extrabold text-[#2a3a28]">ご回答ありがとうございました</h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-[#5a6a54]">事務局が内容を確認し、田んぼページの作成など次のご案内をお送りします。</p>
+        <p className="mt-2 text-[13px] leading-relaxed text-[#5a6a54]">事務局が内容を確認し、メールでご連絡いたします。</p>
         <Link href="/sekai/kome" className="mt-6 inline-block rounded-xl px-6 py-3 text-[13.5px] font-extrabold text-white no-underline" style={{ background: G }}>米部トップへ</Link>
       </main>
     );
 
+  /* ══ 事務局の編集モード ══ */
+  if (editMode)
+    return (
+      <main className="mx-auto min-h-dvh max-w-md pb-28" style={{ background: "#f7f4ec" }}>
+        <header className="sticky top-0 z-40 px-4 pb-3 pt-4" style={{ background: "#1a2432" }}>
+          <div className="text-[15px] font-bold text-[#f0e6c8]">✎ ヒアリングシートを修正（事務局）</div>
+          <div className="mt-0.5 text-[10px] text-[#7a9ab4]">保存すると即座に本番の質問が入れ替わります。アドレスは変わりません</div>
+        </header>
+        <div className="space-y-3 px-3 pt-3">
+          {draft.map((q, i) => (
+            <div key={q.id} className="rounded-xl bg-white p-3" style={{ border: "1px solid #e5dcc8" }}>
+              <div className="mb-1.5 flex items-center gap-1.5">
+                <span className="num text-[11px] font-bold text-[#a09a88]">Q{i + 1}</span>
+                <input value={q.sec} onChange={(e) => updQ(i, { sec: e.target.value })} className="min-w-0 flex-1 rounded-lg border border-[#eee8d8] bg-[#faf8f0] px-2 py-1 text-[11px] font-bold text-[#8a7020] outline-none" />
+                <button onClick={() => moveQ(i, -1)} className="h-7 w-7 rounded-lg bg-[#f0ece0] text-[12px]">↑</button>
+                <button onClick={() => moveQ(i, 1)} className="h-7 w-7 rounded-lg bg-[#f0ece0] text-[12px]">↓</button>
+                <button onClick={() => delQ(i)} className="h-7 w-7 rounded-lg bg-[#f8e8e4] text-[12px] text-[#c05a3a]">🗑</button>
+              </div>
+              <textarea value={q.label} onChange={(e) => updQ(i, { label: e.target.value })} rows={2} placeholder="質問文" className="mb-1.5 w-full resize-y rounded-lg border border-[#e5dcc8] px-2.5 py-1.5 text-[13px] font-bold outline-none" />
+              <textarea value={q.desc ?? ""} onChange={(e) => updQ(i, { desc: e.target.value || undefined })} rows={2} placeholder="説明・注意書き（任意）" className="mb-1.5 w-full resize-y rounded-lg border border-[#eee8d8] px-2.5 py-1.5 text-[11.5px] outline-none" />
+              <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                <select value={q.type} onChange={(e) => { const t = e.target.value as Q["type"]; updQ(i, { type: t, opts: (t === "radio" || t === "check" || t === "select") ? (q.opts ?? ["選択肢1", "選択肢2"]) : undefined }); }} className="rounded-lg border border-[#e5dcc8] bg-white px-2 py-1.5 text-[12px] outline-none">
+                  {TYPE_LABELS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                </select>
+                <label className="flex items-center gap-1 text-[12px] font-bold text-[#5a5448]">
+                  <input type="checkbox" checked={q.req} onChange={(e) => updQ(i, { req: e.target.checked })} className="accent-[#c05a3a]" /> 必須
+                </label>
+                {q.type === "check" && (
+                  <label className="flex items-center gap-1 text-[11.5px] text-[#5a5448]">
+                    選択上限
+                    <input type="number" min={0} value={q.max ?? ""} onChange={(e) => updQ(i, { max: e.target.value ? Number(e.target.value) : undefined })} placeholder="なし" className="w-14 rounded-lg border border-[#e5dcc8] px-1.5 py-1 text-[12px] outline-none" />
+                  </label>
+                )}
+                {q.type === "text" && (
+                  <input value={q.ph ?? ""} onChange={(e) => updQ(i, { ph: e.target.value || undefined })} placeholder="記入例(薄字で表示)" className="min-w-0 flex-1 rounded-lg border border-[#eee8d8] px-2 py-1.5 text-[11.5px] outline-none" />
+                )}
+              </div>
+              {(q.type === "radio" || q.type === "check" || q.type === "select") && (
+                <textarea
+                  value={(q.opts ?? []).join("\n")}
+                  onChange={(e) => updQ(i, { opts: e.target.value.split("\n") })}
+                  rows={Math.min(8, Math.max(3, (q.opts ?? []).length))}
+                  placeholder={"選択肢を1行に1つずつ"}
+                  className="w-full resize-y rounded-lg border border-[#e5dcc8] bg-[#fdfcf8] px-2.5 py-1.5 text-[12px] leading-relaxed outline-none"
+                />
+              )}
+              <button onClick={() => addQ(i)} className="mt-1.5 text-[11.5px] font-bold text-[#8a7020]">＋ この下に質問を追加</button>
+            </div>
+          ))}
+        </div>
+        <div className="fixed bottom-0 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 gap-2 px-3 py-3" style={{ background: "linear-gradient(transparent, #f7f4ec 30%)" }}>
+          <button onClick={() => { if (confirm("編集を破棄しますか？")) setEditMode(false); }} className="rounded-xl bg-white px-4 py-3 text-[13px] font-bold text-[#a09a88]" style={{ border: "1px solid #e5dcc8" }}>やめる</button>
+          <button onClick={saveCfg} disabled={savingCfg} className="flex-1 rounded-xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40" style={{ background: G }}>{savingCfg ? "保存中..." : "✓ この内容で本番に反映する"}</button>
+        </div>
+      </main>
+    );
+
+  /* ══ 通常の回答モード ══ */
+  const sections = [...new Set(qs.map((q) => q.sec))];
   return (
     <main className="mx-auto min-h-dvh max-w-md pb-24" style={{ background: "#f6faf4" }}>
       <IosBackButton />
@@ -106,8 +216,15 @@ export default function KomeHearingPage() {
         </p>
       </header>
 
+      {amAdmin && (
+        <div className="px-4 pt-3">
+          <button onClick={startEdit} className="w-full rounded-xl border-2 border-dashed py-2.5 text-[12.5px] font-extrabold" style={{ borderColor: "#a08a3066", color: "#8a7020" }}>
+            ✎ ヒアリングシートページを修正する（事務局）
+          </button>
+        </div>
+      )}
+
       <div className="space-y-4 px-4 pt-4">
-        {/* 基本連絡先 */}
         <section className="rounded-2xl bg-white p-3.5" style={{ border: "1px solid #d8e8d0" }}>
           <div className="mb-2 text-[13px] font-extrabold" style={{ color: G }}>お名前とご連絡先</div>
           <div className="mb-1 text-[11px] font-bold text-[#8aa088]">田んぼのオーナー名（必須）</div>
@@ -118,11 +235,11 @@ export default function KomeHearingPage() {
           <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full rounded-xl border border-[#d8e8d0] bg-white px-3 py-2.5 text-[13.5px] outline-none" />
         </section>
 
-        {SECTIONS.map((sec) => (
+        {sections.map((sec) => (
           <section key={sec} className="rounded-2xl bg-white p-3.5" style={{ border: "1px solid #d8e8d0" }}>
             <div className="mb-2.5 text-[13px] font-extrabold" style={{ color: G }}>{sec}</div>
             <div className="space-y-3.5">
-              {QUESTIONS.filter((q) => q.sec === sec).map((q) => (
+              {qs.filter((q) => q.sec === sec).map((q) => (
                 <div key={q.id}>
                   <div className="mb-1 text-[12.5px] font-bold leading-snug text-[#2a3a28]">
                     {q.label}{q.req && <span className="ml-1 text-[10px] font-extrabold text-[#c05a3a]">必須</span>}
@@ -133,12 +250,12 @@ export default function KomeHearingPage() {
                   {q.type === "select" && (
                     <select value={(ans[q.id] as string) ?? ""} onChange={(e) => setV(q.id, e.target.value)} className="w-full rounded-xl border border-[#d8e8d0] bg-white px-2 py-2 text-[13px] outline-none">
                       <option value="">選んでください</option>
-                      {q.opts!.map((o) => <option key={o}>{o}</option>)}
+                      {(q.opts ?? []).map((o) => <option key={o}>{o}</option>)}
                     </select>
                   )}
                   {q.type === "radio" && (
                     <div className="space-y-1">
-                      {q.opts!.map((o) => (
+                      {(q.opts ?? []).map((o) => (
                         <label key={o} className="flex cursor-pointer items-start gap-2 rounded-lg px-1 py-0.5 text-[12.5px] leading-snug text-[#3a4a34]">
                           <input type="radio" name={q.id} checked={ans[q.id] === o} onChange={() => setV(q.id, o)} className="mt-0.5 accent-[#2a7a48]" />
                           {o}
@@ -148,7 +265,7 @@ export default function KomeHearingPage() {
                   )}
                   {q.type === "check" && (
                     <div className="space-y-1">
-                      {q.opts!.map((o) => (
+                      {(q.opts ?? []).map((o) => (
                         <label key={o} className="flex cursor-pointer items-start gap-2 rounded-lg px-1 py-0.5 text-[12.5px] leading-snug text-[#3a4a34]">
                           <input type="checkbox" checked={((ans[q.id] as string[]) ?? []).includes(o)} onChange={() => toggleC(q, o)} className="mt-0.5 accent-[#2a7a48]" />
                           {o}

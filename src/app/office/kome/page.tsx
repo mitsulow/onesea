@@ -12,22 +12,16 @@ import { AvatarMenu } from "@/components/AvatarMenu";
 
 /* eslint-disable @next/next/no-img-element, @typescript-eslint/no-explicit-any */
 
-/** ヒアリング回答の見出しラベル(主要項目のみ表示) */
-const H_LABELS: Array<[string, string]> = [
-  ["tanbo_name", "田んぼの名称"],
-  ["pref", "都道府県"],
-  ["address", "所在地"],
-  ["map_link", "地図/住所"],
-  ["size", "広さ"],
-  ["method", "栽培方法"],
-  ["crops", "栽培品目"],
-  ["who", "お米づくりをする人"],
-  ["years", "経験年数"],
-  ["beginner", "初心者受け入れ"],
-  ["busy", "繁忙期"],
-  ["niiname", "新嘗祭のお裾分け"],
-  ["feeling", "現在のお気持ち"],
-];
+/** 旧形式(idキー)の回答を読める日本語に変換する表 */
+const LEGACY_LABELS: Record<string, string> = {
+  furigana: "ふりがな", who: "お米づくりをする人", tanbo_name: "田んぼの名称", pref: "都道府県",
+  address: "所在地", map_style: "MAP掲載方法", map_link: "地図/住所", size: "広さ", method: "栽培方法",
+  crops: "栽培品目", sns: "SNS/WEB", years: "経験年数", style: "お米作りのスタイル", support: "サポート",
+  tasks: "参加してほしい作業", busy: "繁忙期", welcome: "受け入れたい関わり方", mismatch: "合わないスタイル",
+  beginner: "初心者受け入れ", fee_style: "運営方法", fee_detail: "費用詳細", benefit: "特典の有無",
+  benefit_detail: "特典内容", benefit_cond: "特典条件", niiname: "新嘗祭のお裾分け", share: "分かち合えること",
+  difficult: "対応が難しいこと", relation: "関係づくり", agree: "理解確認", feeling: "現在のお気持ち",
+};
 
 /**
  * 事務局 > 米部 —「田んぼ待ち」受信箱。
@@ -108,14 +102,22 @@ export default function OfficeKomePage() {
     const h = w.hearing; const a = w.app;
     setOpenKey(w.key);
     const hAns = (h?.answers ?? {}) as Record<string, any>;
-    setRName(hAns.tanbo_name || a?.tanbo_name || `${h?.name ?? a?.applicant_name ?? ""}さんの田んぼ`);
-    const pf = (hAns.pref as string) || a?.prefecture || "東京都";
+    // 旧形式(idキー)と新形式(質問文キー)の両対応で下書き
+    const pick = (...keys: string[]) => { for (const k of keys) { const v = hAns[k]; if (v) return Array.isArray(v) ? v.join("・") : String(v); } return null; };
+    const hTanboName = pick("tanbo_name", "登録される田んぼの名称");
+    const hPref = pick("pref", "田んぼがある都道府県");
+    const hMethod = pick("method", "現在の栽培方法");
+    const hSize = pick("size", "田んぼの広さ");
+    const hCrops = pick("crops", "現在栽培している品目");
+    const hAddr = pick("address", "田んぼの所在地");
+    setRName(hTanboName || a?.tanbo_name || `${h?.name ?? a?.applicant_name ?? ""}さんの田んぼ`);
+    const pf = hPref || a?.prefecture || "東京都";
     setRPref(PREFS.includes(pf as any) ? pf : "東京都");
     const noteBits = [
-      hAns.method ? `${hAns.method}` : null,
-      hAns.size ? `広さ: ${hAns.size}` : null,
-      hAns.crops ? `栽培: ${hAns.crops}` : null,
-      hAns.address || (a ? `${a.prefecture}${a.city}` : null),
+      hMethod,
+      hSize ? `広さ: ${hSize}` : null,
+      hCrops ? `栽培: ${hCrops}` : null,
+      hAddr || (a ? `${a.prefecture}${a.city}` : null),
     ].filter(Boolean);
     setRNote(noteBits.join(" / "));
     setRPhoto(null);
@@ -193,7 +195,9 @@ export default function OfficeKomePage() {
                   <div className="mt-2 space-y-0.5 rounded-xl bg-[#f4faf0] p-2.5 text-[12px] leading-relaxed text-[#4a4438]">
                     <div className="text-[10px] font-extrabold text-[#2a7a48]">② ヒアリングシート</div>
                     <div>📱 {h.phone} ／ ✉️ {h.email}</div>
-                    {H_LABELS.map(([k, l]) => hAns[k] ? <div key={k}>{l}: <b>{Array.isArray(hAns[k]) ? (hAns[k] as string[]).join("・") : String(hAns[k])}</b></div> : null)}
+                    {Object.entries(hAns).map(([k, v]) => (
+                      <div key={k}>{LEGACY_LABELS[k] ?? k}: <b>{Array.isArray(v) ? (v as string[]).join("・") : String(v)}</b></div>
+                    ))}
                   </div>
                 )}
 
