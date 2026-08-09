@@ -2503,6 +2503,11 @@ export function ClubsSection({ me }: { me: User | null }) {
 /* ═══ 米部 — sekaimura.net/komebu を参考に再構築: 一覧(タップで詳細) / マップ / お知らせ ═══ */
 export function KomeSection({ me, myPref }: { me: User | null; myPref: string }) {
   const [tanbo, setTanbo] = useState<any[] | null>(null);
+  const [amOffice, setAmOffice] = useState(false); // 田んぼ登録は事務局のみ
+  useEffect(() => {
+    if (!me) { setAmOffice(false); return; }
+    import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+  }, [me]);
   const [sales, setSales] = useState<any[]>([]); // お米販売(旧サイトから移行)
   const [newsRows, setNewsRows] = useState<any[]>([]); // 米部お知らせ(旧サイトから移行)
   const [saleOpen, setSaleOpen] = useState<string | null>(null); // こだわりを開いた販売
@@ -2569,12 +2574,13 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
   const save = async () => {
     if (!me || !name.trim() || saving) return;
     setSaving(true);
-    await addTanbo(me.id, { name: name.trim(), prefecture: tPref, note: note.trim(), photo_url: photo });
+    const { data: created } = await addTanbo(me.id, { name: name.trim(), prefecture: tPref, note: note.trim(), photo_url: photo });
     setSaving(false);
     setAdding(false);
     setName("");
     setNote("");
     setPhoto(null);
+    if (created?.id) { window.location.href = `/sekai/kome/${created.id}`; return; }
     load();
   };
 
@@ -2672,14 +2678,13 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
                 ))}
               </select>
               {tanbo.filter((t) => !listPref || t.prefecture === listPref).map((t) => (
-                <button
+                <Link
                   key={t.id}
-                  onClick={() => setSel(sel?.id === t.id ? null : t)}
-                  className="flex w-full items-center gap-2.5 rounded-xl border bg-white p-2 text-left"
-                  style={{ borderColor: sel?.id === t.id ? "#a08a30" : "#eef2ec" }}
+                  href={`/sekai/kome/${t.id}`}
+                  className="flex w-full items-center gap-2.5 rounded-xl border border-[#eef2ec] bg-white p-2 text-left no-underline"
                 >
-                  {t.photo_url ? (
-                    <img src={srcCdn(t.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
+                  {t.icon_url || t.photo_url ? (
+                    <img src={srcCdn(t.icon_url ?? t.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
                   ) : (
                     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2f4ea] text-xl">🌾</div>
                   )}
@@ -2690,8 +2695,8 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
                     </div>
                     {t.note && <div className="truncate text-[11px] text-[#8a968a]">{t.note}</div>}
                   </div>
-                  <span className="flex-shrink-0 text-[11px] text-[#c0b890]">{sel?.id === t.id ? "▲" : "▼ 詳細"}</span>
-                </button>
+                  <span className="flex-shrink-0 rounded-full px-2 py-1 text-[10px] font-extrabold text-white" style={{ background: "#a08a30" }}>ページへ →</span>
+                </Link>
               ))}
             </div>
           )}
@@ -2866,13 +2871,17 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
             </div>
           </div>
         ) : (
+          amOffice ? (
           <button
             onClick={() => setAdding(true)}
             className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
             style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
           >
-            🌾 うちの田んぼを米部に登録する（みんなが手伝いに来ます）
+            🌾 田んぼを登録する（事務局）
           </button>
+          ) : (
+          <p className="mt-3 rounded-xl bg-[#faf8ee] px-4 py-2.5 text-center text-[11.5px] text-[#a09060]">田んぼの登録は事務局が行います。登録したい方は事務局までご連絡ください🌾</p>
+          )
         ))}
     </section>
   );

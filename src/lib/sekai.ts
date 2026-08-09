@@ -489,7 +489,8 @@ export async function addTanbo(
   t: { name: string; prefecture: string; note: string; photo_url: string | null }
 ) {
   const supabase = createClient();
-  return supabase.from("tanbo").insert({ ...t, user_id: userId, year: new Date().getFullYear() });
+  const { data, error } = await supabase.from("tanbo").insert({ ...t, user_id: userId, year: new Date().getFullYear() }).select("id").single();
+  return { data, error };
 }
 
 /* ============ 神社町 ============ */
