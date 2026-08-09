@@ -283,7 +283,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               onClick={() => { setOpen(false); setInqOpen(true); setInqDone(false); }}
               className="flex w-full items-center gap-2.5 border-b border-[#f2ece0] px-4 py-2.5 text-left text-[13.5px] font-medium text-[#3a3428] active:bg-[#faf4ea]"
             >
-              {icon("/icons/icon-megaphone.webp")} 事務局への問い合わせ
+              <span className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center text-[17px]">✉️</span> 事務局への問い合わせ
             </button>
             {isAdmin && (
               <Link href="/office" onClick={() => setOpen(false)} className={item + hereCls("/office")}>
