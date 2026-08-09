@@ -16,10 +16,8 @@ export interface PlaceInfo {
 }
 
 export function PlaceOverlay({ place, onClose }: { place: PlaceInfo; onClose: () => void }) {
-  const q =
-    place.lat != null && place.lng != null
-      ? `${place.lat},${place.lng}${place.name ? `(${place.name})` : ""}`
-      : (place.name ?? "");
+  // 座標があれば座標だけで指す(名前を混ぜると構文が壊れて無関係な場所に飛ぶことがある)
+  const q = place.lat != null && place.lng != null ? `${place.lat},${place.lng}` : (place.name ?? "");
   const embed = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&hl=ja&output=embed`;
   const openUrl =
     place.url ||

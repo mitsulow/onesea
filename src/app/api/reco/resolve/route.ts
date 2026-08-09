@@ -134,25 +134,37 @@ export async function GET(req: NextRequest) {
     }
     if (!name && hint) name = hint;
 
-    // 座標: 最終URL → HTML本文
-    coords = pickPin(finalUrl) ?? pickPin(html);
+    // 座標の優先順位:
+    //  ① 最終URLのピン(最も確実) → ② 名前のジオコーディング → ③ HTML内のピン(無関係な座標が混ざることがある・例: 米国の座標) → ④ 画面中心
+    coords = pickPin(finalUrl);
 
     // 画像
     image = pickImage(html, true);
 
-    // 座標がまだ無ければ店名からジオコーディング（無料）
+    // 名前が日本の住所なのに座標が日本の外なら、その座標は誤検出として捨てる
+    const looksJapan = (n: string | null) => !!n && /[都道府県市区町村]|〒/.test(n);
+    const inJapan = (c: { lat: number; lng: number } | null) =>
+      !!c && c.lat >= 20 && c.lat <= 46 && c.lng >= 122 && c.lng <= 154;
+    if (coords && looksJapan(name) && !inJapan(coords)) coords = null;
+
+    // 名前からジオコーディング（無料）。〒やビル名を削って当たりやすくする
     if (!coords && name) {
-      const g = await nominatim(name + (hint && hint !== name ? " " + hint : ""));
-      if (!g && name.includes(" ")) {
-        const g2 = await nominatim(name.split(" ")[0]);
-        if (g2) coords = { lat: g2.lat, lng: g2.lng };
-      } else if (g) {
-        coords = { lat: g.lat, lng: g.lng };
-      }
+      const clean = name.replace(/〒?\d{3}-?\d{4}\s*/, "").replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+      const g = (await nominatim(clean)) ?? (await nominatim(clean.split(/\s+/)[0]));
+      if (g) coords = { lat: g.lat, lng: g.lng };
     }
 
-    // 最終手段: 地図画面の中心（共有者の現在地かもしれないので一番最後）
-    if (!coords) coords = pickViewport(finalUrl);
+    // HTML内のピン(信頼度低): 日本住所なのに国外を指すものは捨てる
+    if (!coords) {
+      const hp = pickPin(html);
+      if (hp && !(looksJapan(name) && !inJapan(hp))) coords = hp;
+    }
+
+    // 最終手段: 地図画面の中心（共有者の現在地かもしれないので一番最後。これも日本チェック）
+    if (!coords) {
+      const vp = pickViewport(finalUrl);
+      if (vp && !(looksJapan(name) && !inJapan(vp))) coords = vp;
+    }
 
     if (!name && !coords) {
       return NextResponse.json({ error: "parse_failed" }, { status: 422 });
