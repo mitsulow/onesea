@@ -75,10 +75,10 @@ export default function MoaiListPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md pb-16" style={{ background: "#fbf7f5" }}>
       <IosBackButton />
-      <header className="relative flex h-[52px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "#fff" }}>
+      <header className="relative flex h-[64px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "url(/icons/bg-kawara.webp) center/cover" }}>
         <span className="absolute left-3 top-1/2 -translate-y-1/2"><ServiceMenuButton /></span>
-        <div className="text-[10px] tracking-[3px] text-[#a08078]">シュミサークル部活道</div>
-        <div className="text-[17px] font-extrabold tracking-[6px] text-[#3a2420]">MOAI</div>
+        <div className="text-[10px] font-bold tracking-[3px] text-[#5a3420]" style={{ textShadow: "0 0 6px #fff, 0 0 3px #fff" }}>シュミサークル部活道</div>
+        <div className="text-[17px] font-extrabold tracking-[6px] text-[#3a2420]" style={{ textShadow: "0 0 8px #fff, 0 0 4px #fff" }}>MOAI</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2"><AvatarMenu /></span>
       </header>
 

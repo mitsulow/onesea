@@ -631,7 +631,8 @@ export default function CotozutePage() {
           <button onClick={() => setDrawer(true)} aria-label="メニュー" className="text-[22px] leading-none text-[#1c1e21]">
             ☰
           </button>
-          <span className="text-[22px] font-extrabold tracking-tight" style={{ color: TIFFANY }}>
+          <span className="flex items-center gap-1.5 text-[22px] font-extrabold tracking-tight" style={{ color: TIFFANY }}>
+            <img src="/icons/tab-cotozute5.webp" alt="" className="h-[26px] w-[26px] object-contain" />
             CotoZute →
           </span>
           <span className="ml-auto">
