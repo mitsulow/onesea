@@ -180,20 +180,20 @@ export function Otohikari() {
         </div>
       </div>
 
-      {/* 地球儀 + オーバーレイ */}
+      {/* 実測時刻 — 地球儀の上(iOS Safari対策: WebGLキャンバスにDOMを重ねない) */}
+      {live.updated && (
+        <div className="num pr-3 text-right text-[9px] text-[#5a7a9a]">
+          実測 {new Date(live.updated).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} 更新
+        </div>
+      )}
+
+      {/* 地球儀(重ねるDOMはタップ時のfaces一覧のみ) */}
       <div className="relative">
         <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
 
-        {/* 実測時刻 — セクションの一番下・右端 */}
-        {live.updated && (
-          <span className="num pointer-events-none absolute right-3 top-1 z-20 text-[9px] text-[#5a7a9a]">
-            実測 {new Date(live.updated).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })} 更新
-          </span>
-        )}
-
-        {/* MasterMind接続中 — ヘッドホン + パルス波形 */}
+        {/* MasterMind接続中 — 地球儀の下(キャンバス非重畳・iOS対策) */}
         {connected && (
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <div className="mt-2 flex flex-col items-center justify-center">
             <div className="flex items-center gap-2.5">
               <svg
                 width="22"
@@ -275,8 +275,8 @@ export function Otohikari() {
           </div>
         )}
 
-        {/* 集計 — 南半球の下部に重ねる */}
-        <div className="absolute bottom-1 left-0 right-0 flex items-end justify-center gap-8 text-center">
+        {/* 集計 — 地球儀の下(キャンバス非重畳・iOS対策) */}
+        <div className="mt-1 flex items-end justify-center gap-8 text-center">
           <button
             type="button"
             className="pointer-events-auto"
