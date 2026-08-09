@@ -1060,85 +1060,25 @@ export function ActivitySection({ me }: { me: User | null }) {
 
       {/* 活動を報告する（自分の村がある人だけ） */}
       {me && (myVills.length > 0 || amOffice) && (
-        writing ? (
-          <div className="mx-2 mb-2 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
-            <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-              <img src="/icons/icon-megaphone.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3 }} /> 活動を報告する
-            </div>
-            {myVills.length > 1 && (
-              <select
-                value={wVillage}
-                onChange={(e) => setWVillage(e.target.value)}
-                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
-              >
-                {myVills.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {v.name}（{v.prefecture}）
-                  </option>
-                ))}
-              </select>
-            )}
-            <textarea
-              value={wBody}
-              onChange={(e) => setWBody(e.target.value)}
-              rows={2}
-              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
-              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
-            />
-            <div className="mb-2 flex items-center gap-2">
-              {wPhoto && <img src={srcCdn(wPhoto)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
-              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
-                {wUploading ? "⏳" : <CameraIcon size={16} />}
-                写真
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f || !me) return;
-                    setWUploading(true);
-                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
-                    setWUploading(false);
-                  }}
-                />
-              </label>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                キャンセル
-              </button>
-              <button
-                onClick={publish}
-                disabled={!wBody.trim() || wSaving || wUploading}
-                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
-                style={{ background: "#4a8a5c" }}
-              >
-                {wSaving ? "投稿中..." : "全国に報告する"}
-              </button>
-            </div>
-          </div>
-        ) : (
           <button
-            onClick={() => setWChoose(true)}
-            className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
-            style={{ borderColor: "#c8dccb" }}
-          >
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/icon-pen.webp" alt="" style={{ width: 18, height: 18 }} />
-              </span>
-              <span className="flex-1 text-[13.5px] text-[#9ab3a0]">村からの投稿 <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
-              <span
-                className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
-                style={{ background: GREEN }}
-              >
-                投稿
-              </span>
-            </div>
-          </button>
-        )
+          onClick={() => setWChoose(true)}
+          className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
+          style={{ borderColor: "#c8dccb" }}
+        >
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/icon-pen.webp" alt="" style={{ width: 18, height: 18 }} />
+            </span>
+            <span className="flex-1 text-[13.5px] text-[#9ab3a0]">村からの投稿 <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
+            <span
+              className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
+              style={{ background: GREEN }}
+            >
+              投稿
+            </span>
+          </div>
+        </button>
       )}
 
 
@@ -1408,6 +1348,75 @@ export function ActivitySection({ me }: { me: User | null }) {
       {seedOpen && <SeedSection me={me} />}
 
 
+
+      {/* ✏️ 村の報告シート(下から出てくる — イベント作成と同じ挙動) */}
+      {writing && me && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => setWriting(false)}>
+          <div
+            className="w-full max-w-[480px] md:max-w-[820px] rounded-t-2xl bg-white px-4 pt-3"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#ddd]" />
+            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
+              ✏️ 村の報告
+            </div>
+            {myVills.length > 1 && (
+              <select
+                value={wVillage}
+                onChange={(e) => setWVillage(e.target.value)}
+                className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+              >
+                {myVills.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}（{v.prefecture}）
+                  </option>
+                ))}
+              </select>
+            )}
+            <textarea
+              value={wBody}
+              onChange={(e) => setWBody(e.target.value)}
+              rows={3}
+              autoFocus
+              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
+              className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
+            />
+            <div className="mb-2 flex items-center gap-2">
+              {wPhoto && <img src={srcCdn(wPhoto)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2eae0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: GREEN }}>
+                {wUploading ? "⏳" : <CameraIcon size={16} />}
+                写真
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me) return;
+                    setWUploading(true);
+                    setWPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
+                    setWUploading(false);
+                  }}
+                />
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+                キャンセル
+              </button>
+              <button
+                onClick={publish}
+                disabled={!wBody.trim() || wSaving || wUploading}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#4a8a5c" }}
+              >
+                {wSaving ? "投稿中..." : "全国に報告する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 投稿の2択: ①イベントを作成 ②村の報告 */}
       {wChoose && me && (
