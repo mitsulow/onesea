@@ -878,90 +878,125 @@ export function ActivitySection({ me }: { me: User | null }) {
         className="mb-2 px-4 pb-2.5 pt-3.5"
         style={{ background: "linear-gradient(150deg,#0e2a4e,#1a4a7a)" }}
       >
-        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#cfe4f8]">全国セカイムラ一覧</div>
+        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#cfe4f8]">村人便り</div>
       </div>
 
-      {/* <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 各地のセカイムラ拠点 — レジェンドが近い順にズラリ（横スワイプ） */}
-      <div className="hide-scrollbar mb-2 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1">
-        {villages.map((v) => (
-          <Link
-            key={v.id}
-            href={`/sekai/village/${v.id}`}
-            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#e2eae0] bg-white no-underline shadow-sm"
-          >
-            <div className="relative h-[86px] bg-[#eaf2ea]">
-              {v.cover_url ? (
-                <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
-              ) : (
-                <div
-                  className="flex h-full w-full items-center justify-center text-[22px]"
-                  style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
+      {/* 📅 これからのイベント（横スクロール・旧セカイムラ式） */}
+      {(events.length > 0 || (me && myVills.length > 0)) && (
+        <div className="mb-2">
+          <div className="px-3 pb-1 text-[12px] font-extrabold" style={{ color: GREEN }}>
+            📅 イベント
+          </div>
+          <div className="hide-scrollbar flex gap-2.5 overflow-x-auto px-3 pb-1.5">
+            {/* 一番左: イベントを投稿するカード */}
+            {me && myVills.length > 0 && (
+              <button
+                onClick={() => {
+                  setWKind("event");
+                  setEvWriting(true);
+                }}
+                className="flex w-[76px] flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed bg-white py-4"
+                style={{ borderColor: "#4a9a5a" }}
+              >
+                <span
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-[18px] font-extrabold text-white"
+                  style={{ background: "#4a9a5a" }}
                 >
-                  🏡
-                </div>
-              )}
-              {v.is_official && (
-                <span className="absolute left-1.5 top-1.5 rounded-full bg-[#d4b96a] px-1.5 py-0.5 text-[8.5px] font-extrabold text-[#1a2432]">
-                  公式
+                  ＋
                 </span>
-              )}
-            </div>
-            <div className="px-2 py-1.5">
-              <div className="truncate text-[12px] font-extrabold" style={{ color: GREEN }}>
-                {v.name}
-              </div>
-              <div className="truncate text-[10px] text-[#a0aca0]">
-                {v.prefecture ?? ""}
-                {v.village_members?.[0]?.count ? ` ・ ${v.village_members[0].count}人` : ""}
-              </div>
-            </div>
-          </Link>
-        ))}
-        {/* 村の予備軍 — 1人でも立ち上げたらここに並ぶ */}
-        {stripSeeds.map((sd) => (
-          <button
-            key={sd.id}
-            onClick={() => setSeedOpen(true)}
-            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#c8dcc0] bg-white text-left shadow-sm"
-          >
-            <div className="relative h-[86px] bg-[#eef6ea]">
-              {sd.cover_url ? (
-                <img src={srcCdn(sd.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#d8ecd0,#a8cca0)" }}>
-                  <img src="/icons/icon-sprout.webp" alt="" style={{ width: 30, height: 30 }} />
+                <span className="px-1 text-center text-[10px] font-extrabold leading-snug" style={{ color: GREEN }}>
+                  イベントを
+                  <br />
+                  作成
+                </span>
+              </button>
+            )}
+            {events.map((p) => {
+              const d = new Date(p.event_at);
+              const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][d.getMonth()];
+              const title = String(p.body ?? "").split("\n")[0];
+              const people = rsvps[p.id] ?? [];
+              const joined = joinedEv.has(p.id);
+              const dday = Math.ceil((d.getTime() - Date.now()) / 86400000);
+              return (
+                <div
+                  key={p.id}
+                  onClick={() => setEvDetail(p)}
+                  className="w-[230px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-[#e2eae0] bg-white shadow-sm"
+                >
+                  <div className="relative h-[110px] bg-[#eaf2ea]">
+                    {p.photo_url ? (
+                      <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <div
+                        className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
+                        style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
+                      >
+                        <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {p.villages?.name ?? "セカイムラ"}
+                      </div>
+                    )}
+                    <span
+                      className="absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[9px] font-extrabold text-white"
+                      style={{ background: "#4a9a5a" }}
+                    >
+                      {p.villages?.name ?? "セカイムラ"}
+                    </span>
+                  </div>
+                  <div className="flex gap-2.5 px-2.5 pt-2">
+                    <div className="flex-shrink-0 text-center">
+                      <div className="text-[10px] font-extrabold leading-none text-[#d04030]">{MON}</div>
+                      <div className="num text-[26px] font-extrabold leading-tight text-[#2a3428]">{d.getDate()}</div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="num text-[13px] font-extrabold text-[#3a4438]">
+                        {d.getMonth() + 1}月{d.getDate()}日{d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}〜
+                      </div>
+                      <div className="mt-0.5 line-clamp-2 text-[12.5px] font-extrabold leading-snug" style={{ color: GREEN }}>
+                        {title}
+                      </div>
+                      <div className="num mt-0.5 text-[10px] text-[#a0aca0]">
+                        {dday <= 0 ? "今日" : `残り${dday}日`}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between px-2.5 pb-2.5 pt-1.5">
+                    <div className="flex items-center">
+                      {people.slice(0, 5).map((pr: any, i: number) => (
+                        <span key={i} style={{ marginLeft: i === 0 ? 0 : -7 }}>
+                          <AvatarSm p={pr} size={24} />
+                        </span>
+                      ))}
+                      {people.length > 5 && (
+                        <span className="num ml-1 text-[10px] font-bold text-[#8a9a8a]">+{people.length - 5}</span>
+                      )}
+                      {people.length === 0 && <span className="text-[10px] text-[#b0bcb0]">参加者募集中</span>}
+                    </div>
+                    {me &&
+                      (joined ? (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); cancelEvent(p); }}
+                          className="rounded-full border px-2.5 py-1 text-[10.5px] font-bold"
+                          style={{ borderColor: "#4a9a5a", color: GREEN, background: "#fff" }}
+                        >
+                          ✓ 参加予定
+                        </button>
+                      ) : (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); joinEvent(p); }}
+                          className="rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white"
+                          style={{ background: GREEN }}
+                        >
+                          参加する
+                        </button>
+                      ))}
+                  </div>
                 </div>
-              )}
-              <span className="absolute left-1.5 top-1.5 rounded-full bg-[#4a8a5c] px-1.5 py-0.5 text-[8.5px] font-extrabold text-white">
-                募集中
-              </span>
-            </div>
-            <div className="px-2 py-1.5">
-              <div className="truncate text-[11.5px] font-extrabold" style={{ color: GREEN }}>
-                村を作る人募集{sd.prefecture ? `（${sd.prefecture}）` : ""}
-              </div>
-              <div className="truncate text-[10px] text-[#a0aca0]">{sd.name} ▼</div>
-            </div>
-          </button>
-        ))}
-        {/* 一番右: 村を作るカード（押すと下に村の種セクションが開く） */}
-        <button
-          onClick={() => setSeedOpen((o) => !o)}
-          className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border-2 border-dashed bg-white text-left shadow-sm"
-          style={{ borderColor: seedOpen ? "#4a8a5c" : "#c8dccb" }}
-        >
-          <div className="flex h-[86px] w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#eaf6ec,#d8ecdc)" }}>
-            <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
+              );
+            })}
           </div>
-          <div className="px-2 py-1.5">
-            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作りたい</div>
-            <div className="truncate text-[10px] text-[#a0aca0]">{seedOpen ? "閉じる ▲" : "3人集めて申請 ▼"}</div>
-          </div>
-        </button>
-      </div>
+        </div>
+      )}
 
-      {/* 🌱 一緒に村を作りたい人へ（村の種）— 「村を作る」カードで開閉 */}
-      {seedOpen && <SeedSection me={me} />}
 
       {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
       {me && myVills.length === 0 && (
@@ -1236,121 +1271,93 @@ export function ActivitySection({ me }: { me: User | null }) {
         </button>
       )}
 
-      {/* 📅 これからのイベント（横スクロール・旧セカイムラ式） */}
-      {(events.length > 0 || (me && myVills.length > 0)) && (
-        <div className="mb-2">
-          <div className="px-3 pb-1 text-[12px] font-extrabold" style={{ color: GREEN }}>
-            📅 イベント
-          </div>
-          <div className="hide-scrollbar flex gap-2.5 overflow-x-auto px-3 pb-1.5">
-            {/* 一番左: イベントを投稿するカード */}
-            {me && myVills.length > 0 && (
-              <button
-                onClick={() => {
-                  setWKind("event");
-                  setEvWriting(true);
-                }}
-                className="flex w-[76px] flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed bg-white py-4"
-                style={{ borderColor: "#4a9a5a" }}
-              >
-                <span
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-[18px] font-extrabold text-white"
-                  style={{ background: "#4a9a5a" }}
-                >
-                  ＋
-                </span>
-                <span className="px-1 text-center text-[10px] font-extrabold leading-snug" style={{ color: GREEN }}>
-                  イベントを
-                  <br />
-                  作成
-                </span>
-              </button>
-            )}
-            {events.map((p) => {
-              const d = new Date(p.event_at);
-              const MON = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"][d.getMonth()];
-              const title = String(p.body ?? "").split("\n")[0];
-              const people = rsvps[p.id] ?? [];
-              const joined = joinedEv.has(p.id);
-              const dday = Math.ceil((d.getTime() - Date.now()) / 86400000);
-              return (
+      {/* 見出し: 全国のセカイムラ一覧（拠点ストリップはこの下へ移動） */}
+      <div className="mb-2 mt-3 px-4 pb-2.5 pt-3.5" style={{ background: "linear-gradient(150deg,#0e2a4e,#1a4a7a)" }}>
+        <div className="text-center text-[15px] font-extrabold tracking-[3px] text-[#cfe4f8]">全国のセカイムラ一覧</div>
+      </div>
+
+      {/* <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> 各地のセカイムラ拠点 — レジェンドが近い順にズラリ（横スワイプ） */}
+      <div className="hide-scrollbar mb-2 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1">
+        {villages.map((v) => (
+          <Link
+            key={v.id}
+            href={`/sekai/village/${v.id}`}
+            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#e2eae0] bg-white no-underline shadow-sm"
+          >
+            <div className="relative h-[86px] bg-[#eaf2ea]">
+              {v.cover_url ? (
+                <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+              ) : (
                 <div
-                  key={p.id}
-                  onClick={() => setEvDetail(p)}
-                  className="w-[230px] flex-shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-[#e2eae0] bg-white shadow-sm"
+                  className="flex h-full w-full items-center justify-center text-[22px]"
+                  style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
                 >
-                  <div className="relative h-[110px] bg-[#eaf2ea]">
-                    {p.photo_url ? (
-                      <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
-                    ) : (
-                      <div
-                        className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
-                        style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
-                      >
-                        <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {p.villages?.name ?? "セカイムラ"}
-                      </div>
-                    )}
-                    <span
-                      className="absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[9px] font-extrabold text-white"
-                      style={{ background: "#4a9a5a" }}
-                    >
-                      {p.villages?.name ?? "セカイムラ"}
-                    </span>
-                  </div>
-                  <div className="flex gap-2.5 px-2.5 pt-2">
-                    <div className="flex-shrink-0 text-center">
-                      <div className="text-[10px] font-extrabold leading-none text-[#d04030]">{MON}</div>
-                      <div className="num text-[26px] font-extrabold leading-tight text-[#2a3428]">{d.getDate()}</div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="num text-[13px] font-extrabold text-[#3a4438]">
-                        {d.getMonth() + 1}月{d.getDate()}日{d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}〜
-                      </div>
-                      <div className="mt-0.5 line-clamp-2 text-[12.5px] font-extrabold leading-snug" style={{ color: GREEN }}>
-                        {title}
-                      </div>
-                      <div className="num mt-0.5 text-[10px] text-[#a0aca0]">
-                        {dday <= 0 ? "今日" : `残り${dday}日`}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between px-2.5 pb-2.5 pt-1.5">
-                    <div className="flex items-center">
-                      {people.slice(0, 5).map((pr: any, i: number) => (
-                        <span key={i} style={{ marginLeft: i === 0 ? 0 : -7 }}>
-                          <AvatarSm p={pr} size={24} />
-                        </span>
-                      ))}
-                      {people.length > 5 && (
-                        <span className="num ml-1 text-[10px] font-bold text-[#8a9a8a]">+{people.length - 5}</span>
-                      )}
-                      {people.length === 0 && <span className="text-[10px] text-[#b0bcb0]">参加者募集中</span>}
-                    </div>
-                    {me &&
-                      (joined ? (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); cancelEvent(p); }}
-                          className="rounded-full border px-2.5 py-1 text-[10.5px] font-bold"
-                          style={{ borderColor: "#4a9a5a", color: GREEN, background: "#fff" }}
-                        >
-                          ✓ 参加予定
-                        </button>
-                      ) : (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); joinEvent(p); }}
-                          className="rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white"
-                          style={{ background: GREEN }}
-                        >
-                          参加する
-                        </button>
-                      ))}
-                  </div>
+                  🏡
                 </div>
-              );
-            })}
+              )}
+              {v.is_official && (
+                <span className="absolute left-1.5 top-1.5 rounded-full bg-[#d4b96a] px-1.5 py-0.5 text-[8.5px] font-extrabold text-[#1a2432]">
+                  公式
+                </span>
+              )}
+            </div>
+            <div className="px-2 py-1.5">
+              <div className="truncate text-[12px] font-extrabold" style={{ color: GREEN }}>
+                {v.name}
+              </div>
+              <div className="truncate text-[10px] text-[#a0aca0]">
+                {v.prefecture ?? ""}
+                {v.village_members?.[0]?.count ? ` ・ ${v.village_members[0].count}人` : ""}
+              </div>
+            </div>
+          </Link>
+        ))}
+        {/* 村の予備軍 — 1人でも立ち上げたらここに並ぶ */}
+        {stripSeeds.map((sd) => (
+          <button
+            key={sd.id}
+            onClick={() => setSeedOpen(true)}
+            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#c8dcc0] bg-white text-left shadow-sm"
+          >
+            <div className="relative h-[86px] bg-[#eef6ea]">
+              {sd.cover_url ? (
+                <img src={srcCdn(sd.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#d8ecd0,#a8cca0)" }}>
+                  <img src="/icons/icon-sprout.webp" alt="" style={{ width: 30, height: 30 }} />
+                </div>
+              )}
+              <span className="absolute left-1.5 top-1.5 rounded-full bg-[#4a8a5c] px-1.5 py-0.5 text-[8.5px] font-extrabold text-white">
+                募集中
+              </span>
+            </div>
+            <div className="px-2 py-1.5">
+              <div className="truncate text-[11.5px] font-extrabold" style={{ color: GREEN }}>
+                村を作る人募集{sd.prefecture ? `（${sd.prefecture}）` : ""}
+              </div>
+              <div className="truncate text-[10px] text-[#a0aca0]">{sd.name} ▼</div>
+            </div>
+          </button>
+        ))}
+        {/* 一番右: 村を作るカード（押すと下に村の種セクションが開く） */}
+        <button
+          onClick={() => setSeedOpen((o) => !o)}
+          className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border-2 border-dashed bg-white text-left shadow-sm"
+          style={{ borderColor: seedOpen ? "#4a8a5c" : "#c8dccb" }}
+        >
+          <div className="flex h-[86px] w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#eaf6ec,#d8ecdc)" }}>
+            <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
           </div>
-        </div>
-      )}
+          <div className="px-2 py-1.5">
+            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作りたい</div>
+            <div className="truncate text-[10px] text-[#a0aca0]">{seedOpen ? "閉じる ▲" : "3人集めて申請 ▼"}</div>
+          </div>
+        </button>
+      </div>
+
+      {/* 🌱 一緒に村を作りたい人へ（村の種）— 「村を作る」カードで開閉 */}
+      {seedOpen && <SeedSection me={me} />}
+
 
 
       {/* 投稿の2択: ①イベントを作成 ②村の報告 */}
