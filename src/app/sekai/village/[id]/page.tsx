@@ -183,7 +183,7 @@ export default function VillagePage() {
     <main className="pb-20">
       <SekaiMenuButton floating />
       <header
-        className="px-4 pb-5 pt-4 text-center"
+        className="relative px-4 pb-5 pt-4 text-center"
         style={{
           background: village.cover_url
             ? `linear-gradient(165deg, rgba(10,22,14,.72) 0%, rgba(14,32,20,.78) 60%, rgba(20,44,30,.85) 100%), url(${village.cover_url}) center/cover`
@@ -255,6 +255,27 @@ export default function VillagePage() {
           <p className="mx-auto mt-2 max-w-[340px] text-[12px] leading-relaxed text-[#c8dcc8]">{village.description}</p>
         )}
         <VillageSns village={village} isLeader={!!me && village.created_by === me.id} onSaved={load} villageId={villageId} />
+        {/* 背景の変更: 参加中の村人なら誰でも(アイコンの📷と同じ作法・右下の境目) */}
+        {joined && me && (
+          <label className="absolute bottom-2 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg">
+            📷
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f || !me) return;
+                const url = await uploadImage("post-images", me.id, f, 1600, 0.75);
+                if (url) {
+                  const supabase = createClient();
+                  await supabase.rpc("set_village_cover", { vid: villageId, url });
+                  load();
+                }
+              }}
+            />
+          </label>
+        )}
         <div className="mt-3 flex justify-center gap-2">
           {village.recruiting === false && !joined && (
             <span className="rounded-xl border border-white/20 px-4 py-2.5 text-[12px] font-bold text-[#a8b8a8]">現在は募集を締め切っています</span>
@@ -299,21 +320,6 @@ export default function VillagePage() {
             </button>
           )}
           {joined && <span className="rounded-xl border border-[#4a9a6a] px-4 py-2.5 text-[12.5px] font-bold text-[#a8d8b8]">✓ あなたの村</span>}
-          {joined && me && village.created_by !== me.id && (
-            <label className="cursor-pointer rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]">
-              背景を変更
-              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                const f = e.target.files?.[0];
-                if (!f || !me) return;
-                const url = await uploadImage("post-images", me.id, f, 1600, 0.75);
-                if (url) {
-                  const supabase = createClient();
-                  await supabase.rpc("set_village_cover", { vid: villageId, url });
-                  load();
-                }
-              }} />
-            </label>
-          )}
           {me && village.created_by === me.id && (
             <button
               onClick={async () => {
