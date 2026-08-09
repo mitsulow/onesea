@@ -11,6 +11,7 @@ import { IosBackButton } from "@/components/IosBackButton";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { fetchMoai, joinMoai, leaveMoai, fetchMoaiMemberIds, fetchMoaiMembers, updateMoai, deleteMoai, fetchMoaiComments, addMoaiComment, moaiCat, MOAI_CATEGORIES, type Moai } from "@/lib/moai";
 import { readTecho, writeTecho } from "@/lib/techoStore";
+import { PREFS } from "@/lib/sekai";
 import { useRouter } from "next/navigation";
 
 const YOBI = ["日", "月", "火", "水", "木", "金", "土"];
@@ -61,6 +62,13 @@ export default function MoaiDetailPage() {
   const [eName, setEName] = useState("");
   const [eCat, setECat] = useState("music");
   const [eDesc, setEDesc] = useState("");
+  const [ePref, setEPref] = useState("東京都");
+  const [eCity, setECity] = useState("");
+  const [eCities, setECities] = useState<string[]>([]);
+  useEffect(() => {
+    if (!editing) return;
+    fetch("/data-municipalities.json").then((r) => r.json()).then((muni) => setECities((muni[ePref] ?? []).map((x: any) => x[0]))).catch(() => setECities([]));
+  }, [ePref, editing]);
   const isOwner = !!me && moai?.created_by === me.id;
   const [amAdmin, setAmAdmin] = useState(false);
   useEffect(() => {
@@ -205,18 +213,18 @@ export default function MoaiDetailPage() {
           </label>
         </div>
         <h1 className="mt-2 text-[20px] font-extrabold tracking-[1px] text-[#3a2420]">{moai.name}</h1>
-        <div className="mt-0.5 text-[11.5px] text-[#a08078]">{moaiCat(moai.category).emoji} {moaiCat(moai.category).label} ・ {members.size}人{isOwner ? "（あなたがOYA）" : ""}</div>
+        <div className="mt-0.5 text-[11.5px] text-[#a08078]">{moaiCat(moai.category).emoji} {moaiCat(moai.category).label}{moai.prefecture ? ` ・ 📍${moai.prefecture}${moai.city ?? ""}` : ""} ・ {members.size}人{isOwner ? "（あなたがOYA）" : ""}</div>
         {moai.description && <p className="mx-auto mt-1.5 max-w-[320px] text-[12px] leading-relaxed text-[#6a5048]">{moai.description}</p>}
         {/* 部員アイコンをずらっと */}
         {memberProfs.length > 0 && (
-          <div className="hide-scrollbar mt-2 flex items-center justify-center gap-1 overflow-x-auto px-2">
+          <div className="hide-scrollbar mt-2 flex items-center justify-center gap-1.5 overflow-x-auto px-2 pb-3">
             {memberProfs.map((pr: any, i: number) => (
               <span key={i} className="relative flex-shrink-0">
                 {pr?.avatar_url
                   ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full border border-[#f0d8d4] object-cover" />
                   : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3ded9] text-[11px]">🗿</span>}
                 {pr.user_id === moai.created_by && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full px-1 text-[7px] font-extrabold text-white" style={{ background: "#c9a94a" }}>OYA</span>
+                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-[1px] text-[8px] font-extrabold text-white shadow" style={{ background: "#c9a94a" }}>OYA</span>
                 )}
               </span>
             ))}
@@ -232,7 +240,7 @@ export default function MoaiDetailPage() {
             {joined ? "✓ 参加中（タップで退会）" : "入部希望（このMOAIに参加）"}
           </button>
           {canManage && (
-            <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
+            <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEPref(moai.prefecture ?? "東京都"); setECity(moai.city ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
           )}
           {canManage && (
             <button onClick={async () => { if (!confirm("このMOAIを削除しますか？（投稿もすべて消えます）")) return; await deleteMoai(moaiId); router.push("/moai"); }} className="rounded-xl border border-[#a05a6a] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">🗑</button>
@@ -395,10 +403,19 @@ export default function MoaiDetailPage() {
             <select value={eCat} onChange={(e) => setECat(e.target.value)} className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
               {MOAI_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
             </select>
+            <div className="mb-2 flex gap-2">
+              <select value={ePref} onChange={(e) => { setEPref(e.target.value); setECity(""); }} className="rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
+                {PREFS.map((p) => <option key={p}>{p}</option>)}
+              </select>
+              <select value={eCity} onChange={(e) => setECity(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
+                <option value="">市町村を選ぶ</option>
+                {eCities.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
             <textarea value={eDesc} onChange={(e) => setEDesc(e.target.value)} rows={2} className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none" />
             <div className="flex gap-2">
               <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
-              <button onClick={async () => { await updateMoai(moaiId, { name: eName.trim(), category: eCat, description: eDesc.trim() || null }); setEditing(false); load(); }} disabled={!eName.trim()} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>保存する</button>
+              <button onClick={async () => { await updateMoai(moaiId, { name: eName.trim(), category: eCat, description: eDesc.trim() || null, prefecture: ePref, city: eCity || null }); setEditing(false); load(); }} disabled={!eName.trim()} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>保存する</button>
             </div>
           </div>
         </div>

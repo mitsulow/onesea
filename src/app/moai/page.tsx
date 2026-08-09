@@ -8,6 +8,7 @@ import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
 import { fetchMoais, createMoai, fetchMoaiFeed, moaiNameTaken, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
+import { PREFS } from "@/lib/sekai";
 
 /** MOAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
 export default function MoaiListPage() {
@@ -22,6 +23,17 @@ export default function MoaiListPage() {
   const [busy, setBusy] = useState(false);
   const [feed, setFeed] = useState<any[] | null>(null);
   const [nameTaken, setNameTaken] = useState<boolean | null>(null);
+  const [pref, setPref] = useState("東京都");
+  const [city, setCity] = useState("");
+  const [cities, setCities] = useState<string[]>([]);
+  useEffect(() => {
+    fetch("/data-municipalities.json").then((r) => r.json()).then((muni) => {
+      const arr = (muni[pref] ?? []).map((x: any) => x[0]);
+      setCities(arr);
+      if (!arr.includes(city)) setCity(arr[0] ?? "");
+    }).catch(() => setCities([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pref]);
   const [q, setQ] = useState("");
 
   const load = () => { fetchMoais().then(setMoais); fetchMoaiFeed().then(setFeed); };
@@ -33,9 +45,10 @@ export default function MoaiListPage() {
 
   const submit = async () => {
     if (!me || !name.trim() || busy) return;
+    if (!city) { alert("主な活動場所（市町村）を選んでください"); return; }
     if (await moaiNameTaken(name)) { setNameTaken(true); return; }
     setBusy(true);
-    const id = await createMoai(me.id, { name: name.trim(), category: cat, description: desc.trim() || null, icon_url: icon, cover_url: cover });
+    const id = await createMoai(me.id, { name: name.trim(), category: cat, description: desc.trim() || null, prefecture: pref, city, icon_url: icon, cover_url: cover });
     setBusy(false);
     if (id) {
       window.location.href = `/moai/${id}`;
@@ -110,6 +123,15 @@ export default function MoaiListPage() {
             <select value={cat} onChange={(e) => setCat(e.target.value)} className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
               {MOAI_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
             </select>
+            <div className="mb-1 text-[11px] font-bold text-[#a08078]">主な活動場所（必須）</div>
+            <div className="mb-2 flex gap-2">
+              <select value={pref} onChange={(e) => setPref(e.target.value)} className="rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
+                {PREFS.map((p) => <option key={p}>{p}</option>)}
+              </select>
+              <select value={city} onChange={(e) => setCity(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
+                {cities.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} placeholder="どんな集まり？（ひとことでOK）" className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
             <div className="flex gap-2">
               <button onClick={() => setCreating(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
