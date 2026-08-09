@@ -10,11 +10,11 @@ const ALL = [
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
   { href: "/cotozute", icon: "/icons/tab-cotozute5.webp", label: "コトヅテ" },
-  { href: "/moai", icon: "/icons/icon-moai.webp", label: "MOAI" },
+  { href: "/moai", icon: "/icons/icon-atsumaru.webp", label: "MOAI" },
   { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
-  { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
+  { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
   { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
 ];
 

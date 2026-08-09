@@ -42,7 +42,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       .select("onboarded_at, display_name")
       .eq("id", user.id)
       .maybeSingle()
-      // display_name が既にある人（マイページ編集済み等）にも再登録は求めない
+      // display_name が既にある人（マイページ済み等）にも再登録は求めない
       .then(({ data }) => setOnboarded(!!data?.onboarded_at || !!data?.display_name));
   }, [user]);
 

@@ -304,7 +304,7 @@ export default function VillagePage() {
             <button
               onClick={async () => {
                 if (!amWara) {
-                  alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。\nメニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏");
+                  alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。\nメニュー → マイページ の「わらわ〜アップグレード」からどうぞ🙏");
                   return;
                 }
                 await joinVillage(me.id, villageId);

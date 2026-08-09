@@ -1186,7 +1186,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       {me && (myVills.length > 0 || amOffice) && (
           <button
           onClick={() => {
-            if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。メニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏"); return; }
+            if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。メニュー → マイページ の「わらわ〜アップグレード」からどうぞ🙏"); return; }
             setWChoose(true);
           }}
           className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
@@ -1562,7 +1562,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
             <button
               onClick={() => {
-                if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。メニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏"); return; }
+                if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。メニュー → マイページ の「わらわ〜アップグレード」からどうぞ🙏"); return; }
                 setWChoose(false);
                 setWKind("event");
                 if (amOffice && myVills.length === 0) setWVillage("__all__");

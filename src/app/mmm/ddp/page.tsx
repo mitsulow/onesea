@@ -93,7 +93,7 @@ export default function DdpPage() {
     <main className="min-h-screen pb-24" style={{ background: "linear-gradient(180deg,#0a1410,#0f1a25)" }}>
       <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
         <span className="text-[16px] font-extrabold tracking-[3px]" style={GREEN_NEON}>
-          <img src="/icons/icon-ddp.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> DDP設定
+          <img src="/icons/icon-rashinban.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> DDP設定
         </span>
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           <AvatarMenu ring="#7de0a0" />
@@ -103,13 +103,13 @@ export default function DdpPage() {
       <div className="px-5 pt-6">
         {done ? (
           <div className="text-center">
-            <div className="flex justify-center"><img src="/icons/icon-ddp.webp" alt="" style={{ width: 56, height: 56 }} /></div>
+            <div className="flex justify-center"><img src="/icons/icon-rashinban.webp" alt="" style={{ width: 56, height: 56 }} /></div>
             <div className="mt-2 text-[15px] font-extrabold text-[#d8f0e0]">DDPを掲げました</div>
             <div className="mt-3 rounded-2xl border border-[#2a4a3a] bg-[#0c1812] px-4 py-4 text-[16px] font-extrabold leading-relaxed text-[#7de0a0]">
               {draft}
             </div>
             <p className="mt-3 text-[11.5px] leading-relaxed text-[#5a7a68]">
-              あなたのDDPはマイページとニューラFIVEの班に表示されます。
+              あなたのDDPはマイページとニューラ5の班に表示されます。
               <br />
               節分かれつ刻ごとに、いつでも書き換えてOK。
             </p>
@@ -118,12 +118,12 @@ export default function DdpPage() {
               className="mt-5 w-full rounded-xl py-3 text-[14px] font-extrabold text-[#0a1410]"
               style={{ background: "linear-gradient(135deg,#a0e8b8,#7de0a0)" }}
             >
-              <img src="/icons/icon-neura5.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラFIVEへ →
+              <img src="/icons/icon-neura-red.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラ5へ →
             </button>
           </div>
         ) : step === -1 ? (
           <div>
-            <div className="flex justify-center"><img src="/icons/icon-ddp.webp" alt="" style={{ width: 52, height: 52 }} /></div>
+            <div className="flex justify-center"><img src="/icons/icon-rashinban.webp" alt="" style={{ width: 52, height: 52 }} /></div>
             <h1 className="mt-2 text-center text-[17px] font-extrabold leading-snug text-[#d8f0e0]">
               質問に答えていくだけで、
               <br />

@@ -15,7 +15,7 @@ const NAV: Array<{ href: string; icon: string; label: string; ext?: boolean }> =
   { href: "/cotozute", icon: "/icons/tab-cotozute5.webp", label: "コトヅテ" },
   { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
-  { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ" },
+  { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
   { href: "/talk", icon: "💬", label: "TalK" },
 ];
 

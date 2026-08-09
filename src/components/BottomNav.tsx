@@ -59,9 +59,9 @@ const SERVICES: Service[] = [
     inactive: "#c8dcd0",
     tabs: [
       { href: "/mmm/kouryu", icon: "/icons/icon-keijiban.webp", label: "交流" },
-      { href: "/mmm/neura", icon: "/icons/icon-neura5.webp", label: "ニューラFIVE" },
-      { href: "/schumann1/index.html", icon: "/icons/icon-schumann.webp", label: "シューマン共振", ext: true },
-      { href: "/mmm/ddp-app", icon: "/icons/icon-ddp.webp", label: "夢叶えナビ" },
+      { href: "/mmm/neura", icon: "/icons/icon-neura-red.webp", label: "ニューラ5" },
+      { href: "/schumann1/index.html", icon: "/icons/icon-schumann2.webp", label: "シューマン共振", ext: true },
+      { href: "/mmm/ddp-app", icon: "/icons/icon-rashinban.webp", label: "夢叶えナビ" },
       { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
     ],
   },
@@ -74,7 +74,7 @@ const SERVICES: Service[] = [
     inactive: "#7a6a90",
     tabs: [
       { href: "/tsukiyoga-v7/index.html", icon: "🌕", label: "ツキヨガv7", ext: true },
-      { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
+      { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
     ],
   },
   {
@@ -106,7 +106,7 @@ const SERVICES: Service[] = [
     inactive: "#a09888",
     tabs: [
       { href: "/za/new", icon: "/icons/icon-listing.webp", label: "出品する" },
-      { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
+      { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
     ],
   },
   {
@@ -129,9 +129,9 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/cotozute", icon: "/icons/tab-cotozute5.webp", label: "コトヅテ" },
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
-  { href: "/moai", icon: "/icons/icon-moai.webp", label: "MOAI" },
+  { href: "/moai", icon: "/icons/icon-atsumaru.webp", label: "MOAI" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
-  { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
+  { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
   { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
 ];
 

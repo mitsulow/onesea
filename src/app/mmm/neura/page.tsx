@@ -17,7 +17,7 @@ import { srcCdn } from "@/lib/images";
 /* eslint-disable @next/next/no-img-element, @typescript-eslint/no-explicit-any */
 
 /**
- * 🧠 ニューラFIVE — わらわ〜会員が入った順に5人1チーム（事務局自動編成）。
+ * 🧠 ニューラ5 — わらわ〜会員が入った順に5人1チーム（事務局自動編成）。
  * 仲間 / ニューラガイド（二十四節気ミッション） / チャット（TalKグループと同期）の3タブ。
  * ゴールは11月末（小雪）— 5人でDDPを叶える。
  */
@@ -35,7 +35,7 @@ const MISSIONS: Array<{
     sekki: "立秋", yomi: "りっしゅう", from: "2026-08-07", to: "2026-08-22",
     theme: "Zoomで5人で会ってみよう",
     body: [
-      "ニューラFIVEの始まりです。まずはチャットで自己紹介をして、5人全員がオンラインで繋がる日にちを決めてください。",
+      "ニューラ5の始まりです。まずはチャットで自己紹介をして、5人全員がオンラインで繋がる日にちを決めてください。",
       "●チャットでやること",
       "・自己紹介（住んでいる町、好きなこと）",
       "・5人でZoomする日程を決める",
@@ -73,7 +73,7 @@ const MISSIONS: Array<{
     sekki: "秋分", yomi: "しゅうぶん", from: "2026-09-23", to: "2026-10-07",
     theme: "メンバーのDDPを叶える情報を集めよう",
     body: [
-      "ここからがニューラFIVEの本番。自分以外の4人のDDPが叶うために動きます。",
+      "ここからがニューラ5の本番。自分以外の4人のDDPが叶うために動きます。",
       "●4人の役目",
       "・メンバーのDDPが叶うための情報を集めてチャットで届ける",
       "・役に立ちそうな人、場所、本、イベント…何でもOK",
@@ -122,7 +122,7 @@ const MISSIONS: Array<{
     sekki: "小雪", yomi: "しょうせつ", from: "2026-11-22", to: "2026-12-06",
     theme: "DDPが叶う——5人で祝おう",
     body: [
-      "ニューラFIVEのゴールです。",
+      "ニューラ5のゴールです。",
       "●この期間にやること",
       "・5人で集まり、それぞれのDDPに起きたことを発表し合う",
       "・叶ったことは全力で祝う。叶いつつあることは、その証拠を全員で確認する",
@@ -173,7 +173,7 @@ export default function NeuraPage() {
     <main className="min-h-screen pb-24" style={{ background: "linear-gradient(180deg,#0a1410,#101a28)" }}>
       <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
         <span className="text-[16px] font-extrabold tracking-[3px]" style={{ color: "#a8b8f0", textShadow: "0 0 10px rgba(140,160,255,.6)" }}>
-          <img src="/icons/icon-neura5.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラFIVE
+          <img src="/icons/icon-neura-red.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラ5
         </span>
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           <AvatarMenu ring="#a8b8f0" />
@@ -196,7 +196,7 @@ export default function NeuraPage() {
       ) : !isWara && !team ? (
         <div className="mx-4 mt-3 rounded-2xl border border-[#2a3a55] bg-white/5 p-4 text-center">
           <p className="text-[12.5px] leading-relaxed text-[#8a9ab8]">
-            ニューラFIVEは<b className="text-[#c8d4f8]">わらわ〜会員</b>の活動です。
+            ニューラ5は<b className="text-[#c8d4f8]">わらわ〜会員</b>の活動です。
             <br />登録すると、入った順に5人チームが自動で組まれます。
           </p>
           <Link href="/lp/mmm" className="mt-2.5 inline-block rounded-xl px-5 py-2.5 text-[13px] font-extrabold text-[#101a28] no-underline" style={{ background: "linear-gradient(135deg,#b8c8ff,#8a9af0)" }}>
@@ -249,7 +249,7 @@ export default function NeuraPage() {
                       <img src={srcCdn(m.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-12 w-12 rounded-full border-2 border-[#8a9af0]/40 object-cover" />
                     ) : (
                       <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-[#8a9af0]/40 bg-[#2a3a55]">
-                        <img src="/icons/icon-neura5.webp" alt="" style={{ width: 24, height: 24 }} />
+                        <img src="/icons/icon-neura-red.webp" alt="" style={{ width: 24, height: 24 }} />
                       </span>
                     )}
                     <span className="max-w-[56px] truncate text-[9px] text-[#8a9ab8]">
@@ -267,7 +267,7 @@ export default function NeuraPage() {
 
               {/* 役目の説明 */}
               <div className="mb-3 rounded-2xl border border-[#2a3a55] bg-white/5 p-3.5">
-                <div className="mb-1.5 text-[11.5px] font-extrabold tracking-[1.5px] text-[#c8d4f8]">■ ニューラFIVEの役目</div>
+                <div className="mb-1.5 text-[11.5px] font-extrabold tracking-[1.5px] text-[#c8d4f8]">■ ニューラ5の役目</div>
                 <p className="text-[12px] leading-relaxed text-[#8a9ab8]">
                   <b className="text-[#c8d4f8]">本人の役目</b> — 自分のDDPを詳細に描き、しっかり仲間に伝えること。
                   <br />
@@ -277,7 +277,7 @@ export default function NeuraPage() {
 
               {!myDdp && (
                 <Link href="/mmm/ddp" className="mb-3 block rounded-xl border border-[#2a4a3a] bg-[#0c1812] px-3 py-2.5 text-center text-[12.5px] font-bold text-[#7de0a0] no-underline">
-                  <img src="/icons/icon-ddp.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> まずは自分のDDPを設定する →
+                  <img src="/icons/icon-rashinban.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> まずは自分のDDPを設定する →
                 </Link>
               )}
 
@@ -288,7 +288,7 @@ export default function NeuraPage() {
                     {m.profiles?.avatar_url ? (
                       <img src={srcCdn(m.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
                     ) : (
-                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2a3a55]"><img src="/icons/icon-neura5.webp" alt="" style={{ width: 20, height: 20 }} /></span>
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2a3a55]"><img src="/icons/icon-neura-red.webp" alt="" style={{ width: 20, height: 20 }} /></span>
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="text-[12px] font-bold text-[#c8d4f8]">
@@ -296,7 +296,7 @@ export default function NeuraPage() {
                         {m.user_id === me?.id && <span className="ml-1 text-[9px] text-[#8a9ab8]">（あなた）</span>}
                       </div>
                       <div className="truncate text-[12.5px] text-[#e8ecff]">
-                        {m.ddp ? <><img src="/icons/icon-ddp.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {m.ddp}</> : <span className="text-[#4a5a78]">DDP未設定</span>}
+                        {m.ddp ? <><img src="/icons/icon-rashinban.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {m.ddp}</> : <span className="text-[#4a5a78]">DDP未設定</span>}
                       </div>
                     </div>
                   </div>

@@ -120,7 +120,7 @@ export default function DdpRitualPage() {
     const next = { ...st, sealed: false, sealedAt: null, step: 4 };
     save(next, me?.id ?? null);
     try { localStorage.setItem(skey(me?.id ?? null), JSON.stringify(next)); } catch {}
-    // ニューラFIVEの仲間・マイページに見えるDDP（短い夢）に反映
+    // ニューラ5の仲間・マイページに見えるDDP（短い夢）に反映
     if (me) await saveMyDdp(me.id, st.ddp.trim());
     alert("DDPを保存しました。マイページの一番上にも表示されます✨");
   };
@@ -198,7 +198,7 @@ export default function DdpRitualPage() {
               <br />仲間の願いを叶えることに集中してください。
             </p>
             <a href="/mmm/neura" className="mt-4 inline-block rounded-xl px-5 py-2.5 text-[13px] font-bold no-underline" style={{ background: C.gold, color: "#0E1230" }}>
-              ニューラFIVEへ →
+              ニューラ5へ →
             </a>
           </div>
         ) : st.sealed && unsealed ? (

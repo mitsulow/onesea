@@ -264,7 +264,7 @@ export default function LinePage() {
                   className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[22px]"
                   style={{ background: "linear-gradient(140deg,#d8e8cf,#a8cca8)" }}
                 >
-                  {g.emoji === "🧠" ? <img src="/icons/icon-neura5.webp" alt="" style={{ width: 22, height: 22 }} /> : g.emoji}
+                  {g.emoji === "🧠" ? <img src="/icons/icon-neura-red.webp" alt="" style={{ width: 22, height: 22 }} /> : g.emoji}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline justify-between gap-2">
