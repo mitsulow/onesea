@@ -2571,9 +2571,12 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
           await sendMessage(chatId, me.id, lines.join("\n"));
         }
       } catch {}
+      // 自動返信: TalKに事務局名義でお礼+資料+ヒアリング案内 / メールはResend設定時のみ
+      try { await supabase.rpc("kome_apply_autoreply", { p_name: apName.trim() }); } catch {}
+      fetch("/api/kome-thanks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: apEmail.trim(), name: apName.trim() }) }).catch(() => {});
       setApplyOpen(false);
       setApName(""); setApPhone(""); setApEmail(""); setApAddr(""); setApTanboName("");
-      alert("申請を送りました！事務局が確認して田んぼのページを作ります🌾");
+      alert("申請を送りました！TalKにご案内が届いています。事務局が確認して田んぼのページを作ります🌾");
     } else {
       alert("送信できませんでした。もう一度お試しください");
     }
