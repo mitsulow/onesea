@@ -9,7 +9,7 @@ const ALL = [
   { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
-  { href: "/cotozute", icon: "/icons/tab-cotozute3.webp", label: "コトヅテ" },
+  { href: "/cotozute", icon: "/icons/tab-cotozute4.webp", label: "コトヅテ" },
   { href: "/moai", icon: "/icons/icon-moai.webp", label: "MOAI" },
   { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },

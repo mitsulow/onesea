@@ -242,7 +242,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               {icon("/icons/cel-moon.png")} ツキヨガ
             </a>
             <Link href="/cotozute" onClick={() => setOpen(false)} className={item + hereCls("/cotozute")}>
-              {icon("/icons/tab-cotozute3.webp")} コトヅテ
+              {icon("/icons/tab-cotozute4.webp")} コトヅテ
             </Link>
             <Link href="/" onClick={() => setOpen(false)} className={item + hereCls("/")}>
               {icon("/icons/tab-home.png")} OneSea
