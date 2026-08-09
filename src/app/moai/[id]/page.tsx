@@ -11,6 +11,7 @@ import { IosBackButton } from "@/components/IosBackButton";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { fetchMoai, joinMoai, leaveMoai, fetchMoaiMemberIds, fetchMoaiMembers, updateMoai, deleteMoai, fetchMoaiComments, addMoaiComment, fetchMoaiPending, approveMoaiMember, rejectMoaiMember, myMoaiStatus, moaiCat, MOAI_CATEGORIES, type Moai } from "@/lib/moai";
 import { readTecho, writeTecho } from "@/lib/techoStore";
+import { fetchGroupMessages, sendGroupMessage } from "@/lib/line";
 import { PREFS } from "@/lib/sekai";
 import { useRouter } from "next/navigation";
 
@@ -36,6 +37,9 @@ export default function MoaiDetailPage() {
   const [evEnd, setEvEnd] = useState("");
   const [saving, setSaving] = useState(false);
   const [editEvId, setEditEvId] = useState<string | null>(null);
+  const [chat, setChat] = useState<any[]>([]);
+  const [chatBody, setChatBody] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
   const [evPlace, setEvPlace] = useState<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null>(null);
   const [evPaste, setEvPaste] = useState("");
   const [evPlaceBusy, setEvPlaceBusy] = useState(false);
@@ -101,6 +105,7 @@ export default function MoaiDetailPage() {
     if (m && m.created_by) fetchMoaiPending(moaiId).then(setPending);
     fetchMoaiComments(all.map((x: any) => x.id)).then(setComments);
     setEvents(all.filter((p: any) => p.kind === "event" && p.event_at && new Date(p.event_at) >= new Date(Date.now() - 3 * 3600e3)).sort((a: any, b: any) => new Date(a.event_at).getTime() - new Date(b.event_at).getTime()));
+    fetchGroupMessages("moai", moaiId).then((r) => setChat(r.slice(-30)));
   }, [moaiId]);
 
   useEffect(() => {
@@ -111,6 +116,7 @@ export default function MoaiDetailPage() {
 
   const toggleJoin = async () => {
     if (!me) { alert("ログインすると参加できます（無料のGoogleログイン）"); return; }
+    if (myStatus === "rejected") return;
     if (joined) {
       if (!confirm("このMOAIから抜けますか？")) return;
       await leaveMoai(moaiId, me.id);
@@ -156,6 +162,14 @@ export default function MoaiDetailPage() {
     setEditEvId(null);
     setBody(""); setPhoto(null); setEvAt(""); setEvEnd(""); setEvPlace(null); setEvPaste(""); setEvPlaceMsg(null);
     load();
+  };
+
+  const sendChat = async () => {
+    if (!me || !chatBody.trim()) return;
+    const t = chatBody.trim();
+    setChatBody("");
+    await sendGroupMessage("moai", moaiId, me.id, t);
+    fetchGroupMessages("moai", moaiId).then((r) => setChat(r.slice(-30)));
   };
 
   const joinEvent = async (p: any) => {
@@ -244,10 +258,11 @@ export default function MoaiDetailPage() {
         <div className="mt-3 flex items-center justify-center gap-2">
           <button
             onClick={toggleJoin}
-            className="rounded-xl px-6 py-2.5 text-[13px] font-extrabold"
-            style={joined ? { border: "1px solid #c0392b", color: "#c0392b", background: "transparent" } : { background: "#c0392b", color: "#fff" }}
+            disabled={myStatus === "rejected"}
+            className="rounded-xl px-6 py-2.5 text-[13px] font-extrabold disabled:opacity-50"
+            style={joined ? { border: "1px solid #c0392b", color: "#c0392b", background: "transparent" } : myStatus === "rejected" ? { background: "#b0a8a4", color: "#fff" } : { background: "#c0392b", color: "#fff" }}
           >
-            {joined ? "✓ 参加中（タップで退会）" : myStatus === "pending" ? "申請中（承認待ち・タップで取消）" : moai.join_policy === "approval" ? "入部を申請する（承認制）" : "入部希望（このMOAIに参加）"}
+            {joined ? "✓ 参加中（タップで退会）" : myStatus === "rejected" ? "入部は見送りになりました" : myStatus === "pending" ? "申請中（承認待ち・タップで取消）" : moai.join_policy === "approval" ? "入部を申請する（承認制）" : "入部希望（このMOAIに参加）"}
           </button>
           {canManage && (
             <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEKw((moai as any).keywords ?? ""); setEPolicy(((moai as any).join_policy === "approval") ? "approval" : "open"); setEPref(moai.prefecture ?? "東京都"); setECity(moai.city ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
@@ -311,6 +326,40 @@ export default function MoaiDetailPage() {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* グループトーク（TalKのグループ欄と同期） */}
+        {joined && (
+          <div className="mb-3 rounded-2xl p-3" style={{ background: "#fff", border: "1px solid #f0d8d4" }}>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[12.5px] font-extrabold text-[#c0392b]">💬 グループトーク</span>
+              <div className="flex items-center gap-2">
+                <a href={`/talk/g/moai/${moaiId}`} className="text-[11px] font-bold text-[#c0392b] no-underline">TalKで開く →</a>
+                <button onClick={() => setChatOpen((o) => !o)} className="text-[11px] font-bold text-[#a08078]">{chatOpen ? "たたむ" : "開く"}</button>
+              </div>
+            </div>
+            {chatOpen && (
+              <>
+                <div className="mb-2 max-h-64 space-y-1.5 overflow-y-auto rounded-xl bg-[#faf4f2] p-2">
+                  {chat.length === 0 ? <p className="py-3 text-center text-[11px] text-[#b09088]">まだ会話がありません。ひとこと目をどうぞ🗿</p> : chat.map((m: any) => {
+                    const mine = m.sender_id === me?.id;
+                    return (
+                      <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                        <div className="max-w-[80%]">
+                          {!mine && <div className="pl-1 text-[9px] text-[#a08078]">{m.profiles?.display_name ?? "メンバー"}</div>}
+                          <div className={`rounded-2xl px-3 py-1.5 text-[13px] ${mine ? "bg-[#c0392b] text-white" : "bg-white text-[#3a2420]"}`}>{(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" className="mb-1 max-w-[180px] rounded-lg" />}{m.body === "📷 写真" && (m as any).image_url ? "" : m.body}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-end gap-1.5">
+                  <textarea value={chatBody} onChange={(e) => setChatBody(e.target.value)} rows={1} placeholder="メッセージ..." className="hide-scrollbar max-h-24 min-h-[36px] flex-1 resize-none rounded-2xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
+                  <button onClick={sendChat} disabled={!chatBody.trim()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40" style={{ background: "#c0392b" }}>➤</button>
+                </div>
+              </>
+            )}
           </div>
         )}
 

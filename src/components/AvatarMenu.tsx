@@ -251,6 +251,9 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               <img src="/rakuichi/logo-emblem.webp" alt="" className="h-[20px] w-[20px] flex-shrink-0 rounded-full object-cover" />
               楽市楽座
             </Link>
+            <Link href="/moai" onClick={() => setOpen(false)} className={item + hereCls("/moai")}>
+              {icon("/icons/icon-moai.webp")} MOAI
+            </Link>
             <Link href="/#techo" onClick={() => setOpen(false)} className={item + hereCls("/#techo")}>
               {icon("/icons/icon-techo.webp")} 手帳
             </Link>

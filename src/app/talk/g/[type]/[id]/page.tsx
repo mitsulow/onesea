@@ -107,6 +107,14 @@ export default function GroupChatPage() {
         if (v?.name) setName(v.name);
         setEmoji("⛺");
         setMemberCount(count ?? null);
+      } else if (type === "moai") {
+        const [{ data: mo }, { count }] = await Promise.all([
+          supabase.from("moai").select("name").eq("id", id).maybeSingle(),
+          supabase.from("moai_members").select("user_id", { count: "exact", head: true }).eq("moai_id", id).eq("status", "approved"),
+        ]);
+        if (mo?.name) setName(mo.name);
+        setEmoji("🗿");
+        setMemberCount(count ?? null);
       } else {
         const [{ data: c }, { count }] = await Promise.all([
           supabase.from("clubs").select("name, emoji").eq("id", id).maybeSingle(),
@@ -157,7 +165,7 @@ export default function GroupChatPage() {
         </div>
         {type !== "neura" && (
           <Link
-            href={type === "village" ? `/sekai/village/${id}` : `/sekai/club/${id}`}
+            href={type === "village" ? `/sekai/village/${id}` : type === "moai" ? `/moai/${id}` : `/sekai/club/${id}`}
             className="flex-shrink-0 text-[11px] text-[#7a9ab4] no-underline"
           >
             詳細 →

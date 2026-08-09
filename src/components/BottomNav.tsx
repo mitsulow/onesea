@@ -93,7 +93,7 @@ const SERVICES: Service[] = [
     active: "#fff",
     inactive: "#f0c8c2",
     tabs: [
-      { href: "/moai", icon: "/icons/icon-moai.webp", label: "サークル" },
+      { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
     ],
   },
   {
@@ -131,7 +131,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/moai", icon: "/icons/icon-moai.webp", label: "MOAI" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
-  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK", talk: true },
+  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
 ];
 
 function TabIcon({ icon, active }: { icon: string; active: boolean }) {

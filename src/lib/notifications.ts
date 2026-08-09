@@ -41,6 +41,10 @@ export function notifText(n: NotificationRow): string {
       return `${who}さんに指名されました🌸「この人が欲しい♪」`;
     case "quest_join":
       return `${who}さんが花いちもんめの仲間になりました`;
+    case "moai_approved":
+      return `サークルへの入部が承認されました🎉`;
+    case "moai_rejected":
+      return `サークルへの入部は今回は見送りになりました`;
     default:
       return `${who}さんからお知らせがあります`;
   }

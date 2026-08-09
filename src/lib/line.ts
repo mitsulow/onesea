@@ -278,7 +278,7 @@ export async function markBroadcastRead(myId: string) {
 
 export interface GroupSummary {
   key: string; // `${type}:${id}`
-  type: "village" | "club" | "neura";
+  type: "village" | "club" | "neura" | "moai";
   id: string;
   name: string;
   emoji: string;
@@ -299,13 +299,14 @@ export interface GroupMessageRow {
 /** 自分が入っている村・部活のグループ一覧（最新メッセージ・未読つき） */
 export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   const supabase = createClient();
-  const [vm, cm, nm] = await Promise.all([
+  const [vm, cm, nm, mm] = await Promise.all([
     supabase.from("village_members").select("village_id, villages(name)").eq("user_id", myId).eq("status", "approved"),
     supabase.from("club_members").select("club_id, clubs(name, emoji)").eq("user_id", myId),
     supabase.from("neura_members").select("team_id, neura_teams(name, prefecture, city)").eq("user_id", myId),
+    supabase.from("moai_members").select("moai_id, moai(name)").eq("user_id", myId).eq("status", "approved"),
   ]);
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const groups: Array<{ type: "village" | "club" | "neura"; id: string; name: string; emoji: string }> = [
+  const groups: Array<{ type: "village" | "club" | "neura" | "moai"; id: string; name: string; emoji: string }> = [
     ...((vm.data ?? []) as any[]).map((r) => ({
       type: "village" as const,
       id: r.village_id as string,
@@ -324,6 +325,12 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
       name: (r.neura_teams?.name as string) ?? `ニューラ班（${(r.neura_teams?.city as string) ?? (r.neura_teams?.prefecture as string) ?? ""}）`,
       emoji: "🧠",
     })),
+    ...((mm.data ?? []) as any[]).map((r) => ({
+      type: "moai" as const,
+      id: r.moai_id as string,
+      name: (r.moai?.name as string) ?? "サークル",
+      emoji: "🗿",
+    })),
   ];
   /* eslint-enable @typescript-eslint/no-explicit-any */
   if (groups.length === 0) return [];
@@ -332,7 +339,8 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   const vIds = groups.filter((g) => g.type === "village").map((g) => g.id);
   const cIds = groups.filter((g) => g.type === "club").map((g) => g.id);
   const nIds = groups.filter((g) => g.type === "neura").map((g) => g.id);
-  const [{ data: msgs }, { data: reads }, vCnt, cCnt, nCnt] = await Promise.all([
+  const mIds = groups.filter((g) => g.type === "moai").map((g) => g.id);
+  const [{ data: msgs }, { data: reads }, vCnt, cCnt, nCnt, mCnt] = await Promise.all([
     supabase
       .from("group_messages")
       .select("scope_type, scope_id, sender_id, body, created_at")
@@ -343,6 +351,7 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
     vIds.length ? supabase.from("village_members").select("village_id").in("village_id", vIds) : Promise.resolve({ data: [] }),
     cIds.length ? supabase.from("club_members").select("club_id").in("club_id", cIds) : Promise.resolve({ data: [] }),
     nIds.length ? supabase.from("neura_members").select("team_id").in("team_id", nIds) : Promise.resolve({ data: [] }),
+    mIds.length ? supabase.from("moai_members").select("moai_id").eq("status", "approved").in("moai_id", mIds) : Promise.resolve({ data: [] }),
   ]);
   const countBy = new Map<string, number>();
   for (const r of (vCnt.data ?? []) as Array<{ village_id: string }>) {
@@ -355,6 +364,10 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   }
   for (const r of (nCnt.data ?? []) as Array<{ team_id: string }>) {
     const k = `neura:${r.team_id}`;
+    countBy.set(k, (countBy.get(k) ?? 0) + 1);
+  }
+  for (const r of ((mCnt as { data?: Array<{ moai_id: string }> }).data ?? [])) {
+    const k = `moai:${r.moai_id}`;
     countBy.set(k, (countBy.get(k) ?? 0) + 1);
   }
   const readBy = new Map((reads ?? []).map((r) => [`${r.scope_type}:${r.scope_id}`, r.last_read_at as string]));

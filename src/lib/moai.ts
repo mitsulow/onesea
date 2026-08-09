@@ -166,11 +166,11 @@ export async function fetchMoaiPending(moaiId: string) {
 }
 export async function approveMoaiMember(moaiId: string, userId: string) {
   const supabase = createClient();
-  return supabase.from("moai_members").update({ status: "approved" }).eq("moai_id", moaiId).eq("user_id", userId);
+  return supabase.rpc("moai_decide", { p_moai: moaiId, p_user: userId, p_approve: true });
 }
 export async function rejectMoaiMember(moaiId: string, userId: string) {
   const supabase = createClient();
-  return supabase.from("moai_members").delete().eq("moai_id", moaiId).eq("user_id", userId);
+  return supabase.rpc("moai_decide", { p_moai: moaiId, p_user: userId, p_approve: false });
 }
 export async function myMoaiStatus(moaiId: string, userId: string): Promise<string | null> {
   const supabase = createClient();
