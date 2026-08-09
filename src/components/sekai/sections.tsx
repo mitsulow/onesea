@@ -2730,6 +2730,85 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       {/* ── 一覧 ── */}
       {tab === "list" && (
         <>
+      {me &&
+        (adding ? (
+          <div className="mb-3 rounded-xl border border-[#c8b86a88] bg-[#fbf9f0] p-3">
+            <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]">🌾 田んぼを登録する</div>
+            <div className="mb-2 flex gap-2">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="例: ◯◯さんちの棚田"
+                className="min-w-0 flex-1 rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[14px] outline-none"
+              />
+              <select
+                value={tPref}
+                onChange={(e) => setTPref(e.target.value)}
+                className="rounded-xl border border-[#e8e2cc] bg-white px-2 py-2 text-[13px] outline-none"
+              >
+                {PREFS.map((p) => (
+                  <option key={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="ひとこと（例: 5年放棄→今年田植え！）"
+              className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] outline-none"
+            />
+            <div className="mb-2 flex items-center gap-2">
+              {photo && <img src={srcCdn(photo)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
+                {uploading ? "⏳" : <CameraIcon size={16} />}
+                写真
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me) return;
+                    setUploading(true);
+                    setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
+                    setUploading(false);
+                  }}
+                />
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setAdding(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+                キャンセル
+              </button>
+              <button
+                onClick={save}
+                disabled={!name.trim() || saving || uploading}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#a08a30" }}
+              >
+                {saving ? "登録中..." : "登録する"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          amOffice ? (
+          <button
+            onClick={() => setAdding(true)}
+            className="mb-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
+            style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
+          >
+            🌾 田んぼを登録する（事務局）
+          </button>
+          ) : (
+          <button
+            onClick={() => setApplyOpen(true)}
+            className="mb-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
+            style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
+          >
+            🌾 田んぼを使って欲しい
+          </button>
+          )
+        ))}
           {tanbo === null ? (
             <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
           ) : tanbo.length === 0 ? (
@@ -2883,85 +2962,6 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
         </div>
       )}
 
-      {me &&
-        (adding ? (
-          <div className="mt-3 rounded-xl border border-[#c8b86a88] bg-[#fbf9f0] p-3">
-            <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]">🌾 田んぼを登録する</div>
-            <div className="mb-2 flex gap-2">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="例: ◯◯さんちの棚田"
-                className="min-w-0 flex-1 rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[14px] outline-none"
-              />
-              <select
-                value={tPref}
-                onChange={(e) => setTPref(e.target.value)}
-                className="rounded-xl border border-[#e8e2cc] bg-white px-2 py-2 text-[13px] outline-none"
-              >
-                {PREFS.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </div>
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="ひとこと（例: 5年放棄→今年田植え！）"
-              className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] outline-none"
-            />
-            <div className="mb-2 flex items-center gap-2">
-              {photo && <img src={srcCdn(photo)} alt="" className="h-14 w-14 rounded-lg object-cover" />}
-              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8e2cc] bg-white px-3 py-2 text-[12px] font-bold text-[#8a7020]">
-                {uploading ? "⏳" : <CameraIcon size={16} />}
-                写真
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f || !me) return;
-                    setUploading(true);
-                    setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55));
-                    setUploading(false);
-                  }}
-                />
-              </label>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => setAdding(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
-                キャンセル
-              </button>
-              <button
-                onClick={save}
-                disabled={!name.trim() || saving || uploading}
-                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
-                style={{ background: "#a08a30" }}
-              >
-                {saving ? "登録中..." : "登録する"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          amOffice ? (
-          <button
-            onClick={() => setAdding(true)}
-            className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
-            style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
-          >
-            🌾 田んぼを登録する（事務局）
-          </button>
-          ) : (
-          <button
-            onClick={() => setApplyOpen(true)}
-            className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
-            style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
-          >
-            🌾 田んぼを申請したい（事務局がページを作ります）
-          </button>
-          )
-        ))}
       {/* 田んぼ申請フォーム(→事務局hidamariさんへ) */}
       {applyOpen && (
         <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/50" onClick={() => setApplyOpen(false)}>
