@@ -107,6 +107,14 @@ export default function GroupChatPage() {
         if (v?.name) setName(v.name);
         setEmoji("⛺");
         setMemberCount(count ?? null);
+      } else if (type === "pref") {
+        const [{ data: pf }, { count }] = await Promise.all([
+          supabase.from("pref_rooms").select("prefecture").eq("id", id).maybeSingle(),
+          supabase.from("pref_room_members").select("user_id", { count: "exact", head: true }).eq("room_id", id),
+        ]);
+        if (pf?.prefecture) setName(`${pf.prefecture}交流`);
+        setEmoji("🗾");
+        setMemberCount(count ?? null);
       } else if (type === "tanbo") {
         const [{ data: tb }, { count }] = await Promise.all([
           supabase.from("tanbo").select("name").eq("id", id).maybeSingle(),
@@ -173,7 +181,7 @@ export default function GroupChatPage() {
         </div>
         {type !== "neura" && (
           <Link
-            href={type === "village" ? `/sekai/village/${id}` : type === "moai" ? `/moai/${id}` : type === "tanbo" ? `/sekai/kome/${id}` : `/sekai/club/${id}`}
+            href={type === "village" ? `/sekai/village/${id}` : type === "moai" ? `/moai/${id}` : type === "tanbo" ? `/sekai/kome/${id}` : type === "pref" ? `/mmm/kouryu/${id}` : `/sekai/club/${id}`}
             className="flex-shrink-0 text-[11px] text-[#7a9ab4] no-underline"
           >
             詳細 →

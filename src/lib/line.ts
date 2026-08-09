@@ -278,7 +278,7 @@ export async function markBroadcastRead(myId: string) {
 
 export interface GroupSummary {
   key: string; // `${type}:${id}`
-  type: "village" | "club" | "neura" | "moai" | "tanbo";
+  type: "village" | "club" | "neura" | "moai" | "tanbo" | "pref";
   id: string;
   name: string;
   emoji: string;
@@ -299,15 +299,16 @@ export interface GroupMessageRow {
 /** 自分が入っている村・部活のグループ一覧（最新メッセージ・未読つき） */
 export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   const supabase = createClient();
-  const [vm, cm, nm, mm, tb] = await Promise.all([
+  const [vm, cm, nm, mm, tb, pr] = await Promise.all([
     supabase.from("village_members").select("village_id, villages(name)").eq("user_id", myId).eq("status", "approved"),
     supabase.from("club_members").select("club_id, clubs(name, emoji)").eq("user_id", myId),
     supabase.from("neura_members").select("team_id, neura_teams(name, prefecture, city)").eq("user_id", myId),
     supabase.from("moai_members").select("moai_id, moai(name)").eq("user_id", myId).eq("status", "approved"),
     supabase.from("tanbo_members").select("tanbo_id, tanbo(name)").eq("user_id", myId),
+    supabase.from("pref_room_members").select("room_id, pref_rooms(prefecture)").eq("user_id", myId),
   ]);
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  const groups: Array<{ type: "village" | "club" | "neura" | "moai" | "tanbo"; id: string; name: string; emoji: string }> = [
+  const groups: Array<{ type: "village" | "club" | "neura" | "moai" | "tanbo" | "pref"; id: string; name: string; emoji: string }> = [
     ...((vm.data ?? []) as any[]).map((r) => ({
       type: "village" as const,
       id: r.village_id as string,
@@ -338,6 +339,12 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
       name: (r.tanbo?.name as string) ?? "田んぼ",
       emoji: "🌾",
     })),
+    ...((pr.data ?? []) as any[]).map((r) => ({
+      type: "pref" as const,
+      id: r.room_id as string,
+      name: `${(r.pref_rooms?.prefecture as string) ?? ""}交流`,
+      emoji: "🗾",
+    })),
   ];
   /* eslint-enable @typescript-eslint/no-explicit-any */
   if (groups.length === 0) return [];
@@ -348,7 +355,8 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   const nIds = groups.filter((g) => g.type === "neura").map((g) => g.id);
   const mIds = groups.filter((g) => g.type === "moai").map((g) => g.id);
   const tIds = groups.filter((g) => g.type === "tanbo").map((g) => g.id);
-  const [{ data: msgs }, { data: reads }, vCnt, cCnt, nCnt, mCnt, tCnt] = await Promise.all([
+  const pIds = groups.filter((g) => g.type === "pref").map((g) => g.id);
+  const [{ data: msgs }, { data: reads }, vCnt, cCnt, nCnt, mCnt, tCnt, pCnt] = await Promise.all([
     supabase
       .from("group_messages")
       .select("scope_type, scope_id, sender_id, body, created_at")
@@ -361,6 +369,7 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
     nIds.length ? supabase.from("neura_members").select("team_id").in("team_id", nIds) : Promise.resolve({ data: [] }),
     mIds.length ? supabase.from("moai_members").select("moai_id").eq("status", "approved").in("moai_id", mIds) : Promise.resolve({ data: [] }),
     tIds.length ? supabase.from("tanbo_members").select("tanbo_id").in("tanbo_id", tIds) : Promise.resolve({ data: [] }),
+    pIds.length ? supabase.from("pref_room_members").select("room_id").in("room_id", pIds) : Promise.resolve({ data: [] }),
   ]);
   const countBy = new Map<string, number>();
   for (const r of (vCnt.data ?? []) as Array<{ village_id: string }>) {
@@ -381,6 +390,10 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
   }
   for (const r of ((tCnt as { data?: Array<{ tanbo_id: string }> }).data ?? [])) {
     const k = `tanbo:${r.tanbo_id}`;
+    countBy.set(k, (countBy.get(k) ?? 0) + 1);
+  }
+  for (const r of ((pCnt as { data?: Array<{ room_id: string }> }).data ?? [])) {
+    const k = `pref:${r.room_id}`;
     countBy.set(k, (countBy.get(k) ?? 0) + 1);
   }
   const readBy = new Map((reads ?? []).map((r) => [`${r.scope_type}:${r.scope_id}`, r.last_read_at as string]));
