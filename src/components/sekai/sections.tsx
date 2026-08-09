@@ -695,7 +695,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   };
 
   const eventLabel = (p: any) =>
-    `🏡${p.villages?.name ?? "セカイムラ"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
+    `🏡${p.villages?.name ?? "セカイムラ全国"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`;
 
   /** 参加を取り消す → 手帳からその行を消す */
   const cancelEvent = (p: any) => {
@@ -820,14 +820,15 @@ export function ActivitySection({ me }: { me: User | null }) {
   }, [me, villages]);
 
   const publish = async () => {
-    if (!me || !wVillage || !wBody.trim() || wSaving) return;
+    const nationwide = wVillage === "__all__" && amOffice; // 事務局の全国イベント
+    if (!me || (!wVillage && !nationwide) || !wBody.trim() || wSaving) return;
     setWSaving(true);
     const supabase = createClient();
     const eventAt = wKind === "event" && wEventAt ? new Date(wEventAt).toISOString() : null;
     const { data: inserted } = await supabase
       .from("village_posts")
       .insert({
-        village_id: wVillage,
+        village_id: nationwide ? null : wVillage,
         user_id: me.id,
         body: wBody.trim(),
         photo_url: wPhoto ?? (wKind === "event" ? wPlace?.image ?? null : null),
@@ -850,7 +851,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         place_lat: wPlace?.lat ?? null,
         place_lng: wPlace?.lng ?? null,
         place_url: wPlace?.url ?? null,
-        villages: { name: myVills.find((v) => v.id === wVillage)?.name },
+        villages: nationwide ? null : { name: myVills.find((v) => v.id === wVillage)?.name },
       });
     }
     setWSaving(false);
@@ -889,7 +890,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           </div>
           <div className="hide-scrollbar flex gap-2.5 overflow-x-auto px-3 pb-1.5">
             {/* 一番左: イベントを投稿するカード */}
-            {me && myVills.length > 0 && (
+            {me && (myVills.length > 0 || amOffice) && (
               <button
                 onClick={() => {
                   setWKind("event");
@@ -932,14 +933,14 @@ export function ActivitySection({ me }: { me: User | null }) {
                         className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
                         style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
                       >
-                        <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {p.villages?.name ?? "セカイムラ"}
+                        <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {p.villages?.name ?? "🌏 セカイムラ全国"}
                       </div>
                     )}
                     <span
                       className="absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[9px] font-extrabold text-white"
                       style={{ background: "#4a9a5a" }}
                     >
-                      {p.villages?.name ?? "セカイムラ"}
+                      {p.villages?.name ?? "🌏 全国"}
                     </span>
                   </div>
                   <div className="flex gap-2.5 px-2.5 pt-2">
@@ -1010,7 +1011,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       )}
 
       {/* 活動を報告する（自分の村がある人だけ） */}
-      {me && myVills.length > 0 && (
+      {me && (myVills.length > 0 || amOffice) && (
         writing ? (
           <div className="mx-2 mb-2 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
             <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
@@ -1376,6 +1377,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               onClick={() => {
                 setWChoose(false);
                 setWKind("event");
+                if (amOffice && myVills.length === 0) setWVillage("__all__");
                 setEvWriting(true);
               }}
               className="mb-2 flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left"
@@ -1418,15 +1420,16 @@ export function ActivitySection({ me }: { me: User | null }) {
             <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
               📅 イベントを作成
             </div>
-            {myVills.length > 1 && (
+            {(myVills.length > 1 || amOffice) && (
               <select
                 value={wVillage}
                 onChange={(e) => setWVillage(e.target.value)}
                 className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
               >
+                {amOffice && <option value="__all__">🌏 全国のみんなへ（事務局イベント）</option>}
                 {myVills.map((v) => (
                   <option key={v.id} value={v.id}>
-                    <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {v.name}（{v.prefecture}）
+                    {v.name}（{v.prefecture}）
                   </option>
                 ))}
               </select>
@@ -1542,7 +1545,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             <div className="p-4">
               <Link href={`/sekai/village/${evDetail.villages?.id}`} className="no-underline" onClick={() => setEvDetail(null)}>
                 <span className="text-[16px] font-extrabold" style={{ color: GREEN }}>
-                  {evDetail.villages?.name ?? "セカイムラ"}
+                  {evDetail.villages?.name ?? "🌏 セカイムラ事務局（全国のみんなへ）"}
                 </span>
                 <span className="ml-1 text-[12px] font-bold text-[#9ab3a0]">
                   {evDetail.villages?.prefecture ? `@${evDetail.villages.prefecture}` : ""}
