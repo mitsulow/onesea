@@ -58,7 +58,7 @@ const SERVICES: Service[] = [
     active: "#7de0a0",
     inactive: "#c8dcd0",
     tabs: [
-      { href: "/mmm/kouryu", icon: "🗾", label: "交流チャット" },
+      { href: "/mmm/kouryu", icon: "/icons/icon-keijiban.webp", label: "交流" },
       { href: "/mmm/neura", icon: "/icons/icon-neura5.webp", label: "ニューラFIVE" },
       { href: "/schumann1/index.html", icon: "/icons/icon-schumann.webp", label: "シューマン共振", ext: true },
       { href: "/mmm/ddp-app", icon: "/icons/icon-ddp.webp", label: "夢叶えナビ" },
@@ -126,7 +126,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
-  { href: "/cotozute", icon: "/icons/tab-cotozute4.webp", label: "コトヅテ" },
+  { href: "/cotozute", icon: "/icons/tab-cotozute5.webp", label: "コトヅテ" },
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
   { href: "/moai", icon: "/icons/icon-moai.webp", label: "MOAI" },
