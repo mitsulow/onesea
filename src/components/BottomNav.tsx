@@ -61,7 +61,7 @@ const SERVICES: Service[] = [
     tabs: [
       { href: "/mmm/neura", icon: "/icons/icon-neura5.webp", label: "ニューラFIVE" },
       { href: "/schumann1/index.html", icon: "/icons/icon-schumann.webp", label: "シューマン共振", ext: true },
-      { href: "/mmm/ddp-app", icon: "/icons/icon-ddp.webp", label: "DDP設定" },
+      { href: "/mmm/ddp-app", icon: "/icons/icon-ddp.webp", label: "夢叶えナビ" },
       { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
     ],
   },
