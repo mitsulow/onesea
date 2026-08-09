@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
-import { fetchMoais, createMoai, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
+import { fetchMoais, createMoai, fetchMoaiFeed, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
 
 /** MOAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
 export default function MoaiListPage() {
@@ -20,8 +20,9 @@ export default function MoaiListPage() {
   const [icon, setIcon] = useState<string | null>(null);
   const [cover, setCover] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [feed, setFeed] = useState<any[] | null>(null);
 
-  const load = () => fetchMoais().then(setMoais);
+  const load = () => { fetchMoais().then(setMoais); fetchMoaiFeed().then(setFeed); };
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => setMe(session?.user ?? null));
@@ -129,6 +130,42 @@ export default function MoaiListPage() {
             ))}
           </div>
         )}
+
+        {/* 全サークル横断の活動フィード */}
+        <div className="mt-5">
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <span className="text-[13px] font-extrabold tracking-[2px] text-[#c8b8f0]">みんなのMOAI活動</span>
+            <span className="h-px flex-1" style={{ background: "#4a3a6a" }} />
+          </div>
+          {feed === null ? (
+            <p className="py-4 text-center text-[12px] text-[#9a8ac0]">読み込み中...</p>
+          ) : feed.length === 0 ? (
+            <p className="py-4 text-center text-[12px] text-[#9a8ac0]">まだ投稿がありません</p>
+          ) : (
+            <div className="space-y-2.5">
+              {feed.map((p: any) => (
+                <Link key={p.id} href={`/moai/${p.moai_id}`} className="block rounded-xl p-3 no-underline" style={{ background: "rgba(255,255,255,.06)", border: "1px solid #4a3a6a" }}>
+                  <div className="flex items-center gap-2.5">
+                    {p.moai?.icon_url ? (
+                      <img src={srcCdn(p.moai.icon_url)} alt="" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#3a2a5e] text-[15px]">{moaiCat(p.moai?.category ?? null).emoji}</span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[13px] font-extrabold text-[#eee6ff]">{p.moai?.name ?? "MOAI"}<span className="text-[11px] font-normal text-[#a898d0]">からの投稿</span></div>
+                      <div className="num text-[10px] text-[#a898d0]">{p.profiles?.display_name ?? "メンバー"} ・ {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}</div>
+                    </div>
+                    {p.kind === "event" && p.event_at && (
+                      <span className="num flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: "rgba(122,90,192,.25)", color: "#c8b8f0" }}>📅 {new Date(p.event_at).getMonth() + 1}/{new Date(p.event_at).getDate()}</span>
+                    )}
+                  </div>
+                  <p className="mt-2 line-clamp-4 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#e0d8f4]">{p.body}</p>
+                  {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-72 w-full rounded-xl object-cover" />}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
