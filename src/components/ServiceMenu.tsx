@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 
 /** 全サービス一覧(下タブの卵メニューと同じ並び) */
@@ -23,13 +24,15 @@ const ALL = [
  */
 export function ServiceMenuButton({ color = "#c0392b", textColor = "#c0392b" }: { color?: string; textColor?: string }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const path = typeof window !== "undefined" ? window.location.pathname : "";
   return (
     <>
       <button onClick={() => setOpen(true)} aria-label="メニュー" className="text-[22px] leading-none" style={{ color: textColor }}>
         ☰
       </button>
-      {open && (
+      {open && mounted && createPortal(
         <>
           <div className="fixed inset-0 z-[150] bg-black/40" onClick={() => setOpen(false)} />
           <div className="fixed left-0 top-0 z-[151] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
@@ -56,7 +59,8 @@ export function ServiceMenuButton({ color = "#c0392b", textColor = "#c0392b" }: 
               );
             })}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </>
   );

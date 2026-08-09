@@ -240,7 +240,7 @@ export default function MoaiDetailPage() {
           </label>
         </div>
         <h1 className="mt-2 text-[20px] font-extrabold tracking-[1px] text-[#3a2420]">{moai.name}</h1>
-        <div className="mt-0.5 text-[11.5px] font-bold text-[#a08078]">{moaiCat(moai.category).emoji} {moaiCat(moai.category).label}{moai.prefecture ? ` ・ 📍${moai.prefecture}${moai.city ?? ""}` : ""} ・ {members.size}人{isOwner ? "（あなたがOYA）" : ""}</div>
+        <div className="mt-0.5 text-[11.5px] font-bold text-[#a08078]">{moaiCat(moai.category).emoji} {moaiCat(moai.category).label}{moai.prefecture ? ` ・ 📍${moai.prefecture}${moai.city && moai.city !== moai.prefecture ? moai.city : ""}` : ""} ・ {members.size}人{isOwner ? "（あなたがOYA）" : ""}</div>
         {moai.description && <p className="mx-auto mt-1.5 max-w-[320px] text-[12px] leading-relaxed text-[#6a5048]">{moai.description}</p>}
         {/* 部員アイコンをずらっと */}
         {memberProfs.length > 0 && (
