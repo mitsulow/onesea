@@ -545,14 +545,25 @@ export default function UserPage() {
           </div>
         )}
         {profile.skills && profile.skills.length > 0 && (
-          <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-tools.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんな事が出来ます（Skill Card{profile.skills.length}）</div>
+          <div className="mt-3 rounded-2xl p-3" style={{ background: "linear-gradient(135deg,#fdf8ec,#f8efd8)", border: "1.5px solid #e0cfa0" }}>
+            {/* 枚数を主役に: 「7 Skill Card」— 出来ることの多さがひと目で伝わる */}
+            <div className="mb-1.5 flex items-baseline gap-1.5">
+              <img src="/icons/icon-tools.webp" alt="" style={{ width: 18, height: 18, alignSelf: "center" }} />
+              <span className="num text-[24px] font-extrabold leading-none" style={{ color: "#a07820" }}>{profile.skills.length}</span>
+              <span className="text-[14px] font-extrabold tracking-wide" style={{ color: "#a07820" }}>Skill Card</span>
+              <span className="min-w-0 truncate text-[11.5px] font-bold text-[#8a7a5a]">私はこんな事が出来ます！</span>
+            </div>
             <CardDeck items={profile.skills} />
           </div>
         )}
         {profile.wants_to_do && profile.wants_to_do.length > 0 && (
-          <div className="mt-2.5">
-            <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]"><img src="/icons/icon-sparkle.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 私はこんなことやってみたい！（Quest Card{profile.wants_to_do.length}）</div>
+          <div className="mt-2.5 rounded-2xl p-3" style={{ background: "linear-gradient(135deg,#f0f6ff,#e2eefc)", border: "1.5px solid #a8c8e8" }}>
+            <div className="mb-1.5 flex items-baseline gap-1.5">
+              <img src="/icons/icon-sparkle.webp" alt="" style={{ width: 18, height: 18, alignSelf: "center" }} />
+              <span className="num text-[24px] font-extrabold leading-none" style={{ color: "#3070b0" }}>{profile.wants_to_do.length}</span>
+              <span className="text-[14px] font-extrabold tracking-wide" style={{ color: "#3070b0" }}>Quest Card</span>
+              <span className="min-w-0 truncate text-[11.5px] font-bold text-[#5a7a9a]">私はこんなことやってみたい！</span>
+            </div>
             <CardDeck items={profile.wants_to_do} startColor={3} />
           </div>
         )}
