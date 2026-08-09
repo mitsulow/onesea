@@ -189,7 +189,7 @@ export default function ProfileSettingsPage() {
               value={skills}
               onChange={(e) => setSkills(e.target.value)}
               rows={3}
-              placeholder="料理、デザイン、パソコン仕事、大工仕事、励ますこと、肩もみ、…"
+              placeholder="料理、デザイン、大工仕事、皿洗い、パソコン、運転、畑仕事、子守り、英語、動画編集、写真、経理、裁縫、マッサージ、話を聴くこと、片づけ、力仕事、歌、楽器、絵、文章、営業、励ますこと、肩もみ、…（多いほどマッチングします）"
               className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
             />
             <p className="mt-0.5 text-[10px] text-[#b8ae9c]">※できるかぎり沢山のスキルを入力すると依頼が舞い込みます。「、」区切りで並べて行ってね（何個でもOK）</p>
@@ -201,7 +201,7 @@ export default function ProfileSettingsPage() {
               value={wants}
               onChange={(e) => setWants(e.target.value)}
               rows={3}
-              placeholder="田舎暮らし、パン屋さん、世界一周、出店、…"
+              placeholder="田舎暮らし、パン屋さん、世界一周、出店、古民家再生、田植え、味噌づくり、バンド結成、映画づくり、絵本を出す、コミュニティ運営、月で暮らす、…（いくつでも）"
               className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
             />
             <p className="mt-0.5 text-[10px] text-[#b8ae9c]">「、」区切りで何個でもOK</p>

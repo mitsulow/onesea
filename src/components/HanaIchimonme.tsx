@@ -116,7 +116,7 @@ export function HanaIchimonme({ me }: { me: User | null }) {
             <input
               value={needs}
               onChange={(e) => setNeeds(e.target.value)}
-              placeholder="欲しいスキル（例: デザイン、パソコン仕事、税理士）「、」区切り"
+              placeholder="欲しいスキル（例: 料理、デザイン、大工仕事、皿洗い、パソコン、運転、税理士、動画編集…）「、」区切りで何個でも"
               className="mt-1.5 w-full rounded-xl border border-[#ede5d8] bg-white px-3 py-2 text-[12.5px] outline-none focus:border-[#c94d3a]"
             />
             <p className="mt-1 text-[10px] text-[#b0a890]">※このスキルをプロフィールに書いている人へ🔔が飛びます</p>
