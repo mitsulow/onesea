@@ -569,6 +569,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [evWriting, setEvWriting] = useState(false); // イベント作成モーダル
   const [wChoose, setWChoose] = useState(false); // 投稿の2択(①イベント作成 ②村の報告)
   const [evDetail, setEvDetail] = useState<any | null>(null); // イベントカードを開いた詳細
+  const [evEditId, setEvEditId] = useState<string | null>(null); // 変更中のイベントid(nullなら新規作成)
   const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所オーバーレイ
   const [wPlace, setWPlace] = useState<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null>(null);
   const [wPlacePaste, setWPlacePaste] = useState("");
@@ -844,6 +845,34 @@ export function ActivitySection({ me }: { me: User | null }) {
     setWSaving(true);
     const supabase = createClient();
     const eventAt = wKind === "event" && wEventAt ? new Date(wEventAt).toISOString() : null;
+    if (evEditId) {
+      // 既存イベントの変更(日時・内容・写真・場所)
+      await supabase
+        .from("village_posts")
+        .update({
+          body: wBody.trim(),
+          photo_url: wPhoto ?? wPlace?.image ?? null,
+          event_at: eventAt,
+          place_name: wPlace?.name ?? null,
+          place_lat: wPlace?.lat ?? null,
+          place_lng: wPlace?.lng ?? null,
+          place_url: wPlace?.url ?? null,
+        })
+        .eq("id", evEditId);
+      setWSaving(false);
+      setEvWriting(false);
+      setEvEditId(null);
+      setWKind("normal");
+      setWBody("");
+      setWPhoto(null);
+      setWEventAt("");
+      setWPlace(null);
+      setWPlacePaste("");
+      setWPlaceMsg(null);
+      loadEvents();
+      loadFeed();
+      return;
+    }
     const { data: inserted } = await supabase
       .from("village_posts")
       .insert({
@@ -1429,7 +1458,7 @@ export function ActivitySection({ me }: { me: User | null }) {
 
       {/* 📅 イベント作成モーダル */}
       {evWriting && me && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => setEvWriting(false)}>
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => { setEvWriting(false); setEvEditId(null); }}>
           <div
             className="w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] rounded-t-2xl bg-white px-4 pt-3"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
@@ -1437,7 +1466,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           >
             <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#ddd]" />
             <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
-              📅 イベントを作成
+              📅 {evEditId ? "イベントを変更" : "イベントを作成"}
             </div>
             {(myVills.length > 1 || amOffice) && (
               <select
@@ -1530,7 +1559,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >
-                {wSaving ? "作成中..." : "📅 イベントを作成する"}
+                {wSaving ? "保存中..." : evEditId ? "✏️ 変更を保存する" : "📅 イベントを作成する"}
               </button>
             </div>
           </div>
@@ -1618,6 +1647,51 @@ export function ActivitySection({ me }: { me: User | null }) {
               <p className="mt-2 text-[10.5px] text-[#a0aca0]">
                 「参加する」を押すと、あなたの手帳のこの日にイベントが入ります。手帳側でタップすると場所の地図が開きます。
               </p>
+              {/* 作成者は変更・削除、事務局は削除ができる */}
+              {me && (me.id === evDetail.user_id || amOffice) && (
+                <div className="mt-2.5 flex gap-2 border-t border-[#eef2ec] pt-2.5">
+                  {me.id === evDetail.user_id && (
+                    <button
+                      onClick={() => {
+                        const d = evDetail.event_at ? new Date(evDetail.event_at) : null;
+                        const pad2 = (n: number) => String(n).padStart(2, "0");
+                        setWKind("event");
+                        setWVillage(evDetail.villages?.id ?? "__all__");
+                        setWEventAt(d ? `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}` : "");
+                        setWBody(String(evDetail.body ?? ""));
+                        setWPhoto(evDetail.photo_url ?? null);
+                        setWPlace(
+                          evDetail.place_name || evDetail.place_lat != null
+                            ? { name: evDetail.place_name ?? null, lat: evDetail.place_lat ?? null, lng: evDetail.place_lng ?? null, url: evDetail.place_url ?? "", image: null }
+                            : null
+                        );
+                        setEvEditId(evDetail.id);
+                        setEvDetail(null);
+                        setEvWriting(true);
+                      }}
+                      className="flex-1 rounded-xl border py-2.5 text-[12.5px] font-extrabold"
+                      style={{ borderColor: "#4a8a5c", color: GREEN, background: "#f4faf5" }}
+                    >
+                      ✏️ 変更する
+                    </button>
+                  )}
+                  <button
+                    onClick={async () => {
+                      if (!confirm("本当にイベントを削除しますか？")) return;
+                      const supabase = createClient();
+                      await supabase.from("village_posts").delete().eq("id", evDetail.id);
+                      cancelEvent(evDetail); // 自分の手帳からも消す
+                      setEvDetail(null);
+                      loadEvents();
+                      loadFeed();
+                    }}
+                    className="flex-1 rounded-xl border py-2.5 text-[12.5px] font-extrabold"
+                    style={{ borderColor: "#e0b0a8", color: "#c05030", background: "#fdf6f4" }}
+                  >
+                    🗑 イベントを削除
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
