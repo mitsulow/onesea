@@ -586,9 +586,9 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [wPlaceMsg, setWPlaceMsg] = useState<string | null>(null);
   const [wPlaceBusy, setWPlaceBusy] = useState(false);
   /** Google共有リンク → 場所を自動取り込み(マイページのおススメ地図と同じ最新解決API) */
-  const resolvePlace = async (raw: string) => {
+  const resolvePlace = async (raw: string): Promise<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null> => {
     const m = raw.match(/https?:\/\/[^\s]+/);
-    if (!m || wPlaceBusy) return;
+    if (!m || wPlaceBusy) return null;
     const url = m[0];
     const hint = raw.replace(url, "").replace(/[\n\r"']+/g, " ").trim().slice(0, 100);
     setWPlaceBusy(true);
@@ -601,13 +601,17 @@ export function ActivitySection({ me }: { me: User | null }) {
       } else if (d.lat == null || d.lng == null) {
         setWPlaceMsg("場所（座標）が読めませんでした。Googleマップのアプリで場所を開いて「共有→リンクをコピー」だと確実です");
       } else {
-        setWPlace({ name: (d.name as string) ?? null, lat: d.lat as number, lng: d.lng as number, url, image: (d.image as string) ?? null });
+        const got = { name: (d.name as string) ?? null, lat: d.lat as number, lng: d.lng as number, url, image: (d.image as string) ?? null };
+        setWPlace(got);
         setWPlacePaste("");
+        setWPlaceBusy(false);
+        return got;
       }
     } catch {
       setWPlaceMsg("通信に失敗しました");
     }
     setWPlaceBusy(false);
+    return null;
   };
   const [wKind, setWKind] = useState<"normal" | "event">("normal");
   const [wEventAt, setWEventAt] = useState("");
@@ -853,6 +857,11 @@ export function ActivitySection({ me }: { me: User | null }) {
   const publish = async () => {
     const nationwide = wVillage === "__all__" && amOffice; // 事務局の全国イベント
     if (!me || (!wVillage && !nationwide) || !wBody.trim() || wSaving) return;
+    // 場所リンクが貼られたのに未取り込みなら、保存前にここで取り込む(押すのが早くても場所が落ちない)
+    let placeNow = wPlace;
+    if (wKind === "event" && !placeNow && /https?:\/\//.test(wPlacePaste)) {
+      placeNow = await resolvePlace(wPlacePaste);
+    }
     setWSaving(true);
     const supabase = createClient();
     const eventAt = wKind === "event" && wEventAt ? new Date(wEventAt).toISOString() : null;
@@ -890,13 +899,13 @@ export function ActivitySection({ me }: { me: User | null }) {
         village_id: nationwide ? null : wVillage,
         user_id: me.id,
         body: wBody.trim(),
-        photo_url: wPhoto ?? (wKind === "event" ? wPlace?.image ?? null : null),
+        photo_url: wPhoto ?? (wKind === "event" ? placeNow?.image ?? null : null),
         kind: wKind,
         event_at: eventAt,
-        place_name: wKind === "event" ? wPlace?.name ?? null : null,
-        place_lat: wKind === "event" ? wPlace?.lat ?? null : null,
-        place_lng: wKind === "event" ? wPlace?.lng ?? null : null,
-        place_url: wKind === "event" ? wPlace?.url ?? null : null,
+        place_name: wKind === "event" ? placeNow?.name ?? null : null,
+        place_lat: wKind === "event" ? placeNow?.lat ?? null : null,
+        place_lng: wKind === "event" ? placeNow?.lng ?? null : null,
+        place_url: wKind === "event" ? placeNow?.url ?? null : null,
       })
       .select("id")
       .single();
@@ -906,10 +915,10 @@ export function ActivitySection({ me }: { me: User | null }) {
         id: inserted.id,
         event_at: eventAt,
         body: wBody.trim(),
-        place_name: wPlace?.name ?? null,
-        place_lat: wPlace?.lat ?? null,
-        place_lng: wPlace?.lng ?? null,
-        place_url: wPlace?.url ?? null,
+        place_name: placeNow?.name ?? null,
+        place_lat: placeNow?.lat ?? null,
+        place_lng: placeNow?.lng ?? null,
+        place_url: placeNow?.url ?? null,
         villages: nationwide ? null : { name: myVills.find((v) => v.id === wVillage)?.name },
       });
     }
@@ -1589,7 +1598,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               </button>
               <button
                 onClick={publish}
-                disabled={!wBody.trim() || !wEventAt || wSaving || wUploading}
+                disabled={!wBody.trim() || !wEventAt || wSaving || wUploading || wPlaceBusy}
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >

@@ -562,6 +562,25 @@ function BottomSheet({
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
   const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所の詳細(Googleマップのオーバーレイ)
   const [delEvId, setDelEvId] = useState<string | null>(null); // 長押しで×が出ている予定
+  /** セカイムラ由来の予定はDBの最新の場所で地図を開く(古い保存値の誤座標を自動修正) */
+  const openEvPlace = async (ev: TechoEv) => {
+    if (!ev.place) return;
+    if (typeof ev.id === "string" && ev.id.startsWith("sekai-")) {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const { data } = await createClient()
+          .from("village_posts")
+          .select("place_name, place_lat, place_lng, place_url")
+          .eq("id", ev.id.slice(6))
+          .maybeSingle();
+        if (data && (data.place_lat != null || data.place_name)) {
+          setPlaceView({ name: data.place_name, lat: data.place_lat, lng: data.place_lng, url: data.place_url });
+          return;
+        }
+      } catch {}
+    }
+    setPlaceView(ev.place);
+  };
   const evPress = useRef<ReturnType<typeof setTimeout> | null>(null);
   const evLongFired = useRef(false);
   const [portPick, setPortPick] = useState(false); // 港選択モーダル
@@ -956,7 +975,7 @@ function BottomSheet({
                         <div
                           key={ev.id}
                           data-ev
-                          onClick={() => (ev.place ? setPlaceView(ev.place) : setEvEdit(ev))}
+                          onClick={() => (ev.place ? void openEvPlace(ev) : setEvEdit(ev))}
                           className="absolute bottom-0 top-0 w-[4px] cursor-pointer rounded"
                           style={{ left: 1 + i * 6, background: penColor(ev.color), opacity: 0.55 }}
                         />
@@ -1040,7 +1059,7 @@ function BottomSheet({
                                   setDelEvId(null);
                                   return;
                                 }
-                                if (ev.place) setPlaceView(ev.place);
+                                if (ev.place) void openEvPlace(ev);
                                 else setEvEdit(ev);
                               }}
                               className="mb-0.5 block w-full rounded-md px-1.5 py-0.5 text-left text-[11px] leading-snug"

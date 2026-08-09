@@ -147,11 +147,30 @@ export async function GET(req: NextRequest) {
       !!c && c.lat >= 20 && c.lat <= 46 && c.lng >= 122 && c.lng <= 154;
     if (coords && looksJapan(name) && !inJapan(coords)) coords = null;
 
-    // 名前からジオコーディング（無料）。〒やビル名を削って当たりやすくする
+    // 名前からジオコーディング（無料）。日本の住所は「フル→丁目番地→町名→市区町村」と
+    // 段階的に短くして当てる(番地+ビル名入りはそのままだとヒットしないため)
     if (!coords && name) {
-      const clean = name.replace(/〒?\d{3}-?\d{4}\s*/, "").replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
-      const g = (await nominatim(clean)) ?? (await nominatim(clean.split(/\s+/)[0]));
-      if (g) coords = { lat: g.lat, lng: g.lng };
+      const clean = name
+        .replace(/〒?\d{3}-?\d{4}\s*/, "")
+        .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+        .replace(/[−ー–]/g, "-")
+        .trim();
+      const tries: string[] = [clean];
+      const mBanchi = clean.match(/^(.+?\d+丁目\d+(?:-\d+)*)/);
+      if (mBanchi) tries.push(mBanchi[1]);
+      const mCho = clean.match(/^((?:.+?[都道府県])?.+?[市区町村][^\d\s]+)/);
+      if (mCho) tries.push(mCho[1]);
+      const mCity = clean.match(/^((?:.+?[都道府県])?.+?[市区町村])/);
+      if (mCity) tries.push(mCity[1]);
+      const first = clean.split(/\s+/)[0];
+      if (first && first !== clean) tries.push(first);
+      for (const t of [...new Set(tries)]) {
+        const g = await nominatim(t);
+        if (g) {
+          coords = { lat: g.lat, lng: g.lng };
+          break;
+        }
+      }
     }
 
     // HTML内のピン(信頼度低): 日本住所なのに国外を指すものは捨てる

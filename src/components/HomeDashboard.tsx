@@ -91,6 +91,7 @@ export function HomeDashboard() {
   const [delIdx, setDelIdx] = useState<number | null>(null); // 長押しで×が出ている行
   const planPress = useRef<ReturnType<typeof setTimeout> | null>(null);
   const planLongFired = useRef(false); // 長押し後のタップ暴発防止
+  const planStart = useRef<{ x: number; y: number } | null>(null);
   /** 予定を手帳から削除(長押し→×→確認) */
   const deletePlan = (k: string, it: { src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }) => {
     if (!it.src) return;
@@ -402,14 +403,21 @@ export function HomeDashboard() {
                     <div
                       key={i}
                       className="flex items-baseline gap-2.5"
-                      onTouchStart={() => {
+                      onTouchStart={(e) => {
+                        const t = e.touches[0];
+                        planStart.current = { x: t.clientX, y: t.clientY };
                         planPress.current = setTimeout(() => {
                           planLongFired.current = true;
                           setDelIdx(i);
                         }, 550);
                       }}
                       onTouchEnd={() => planPress.current && clearTimeout(planPress.current)}
-                      onTouchMove={() => planPress.current && clearTimeout(planPress.current)}
+                      onTouchMove={(e) => {
+                        // 指の微ブレでは長押しを取り消さない(10px以上動いたらキャンセル)
+                        const t = e.touches[0];
+                        const st = planStart.current;
+                        if (st && Math.hypot(t.clientX - st.x, t.clientY - st.y) > 10 && planPress.current) clearTimeout(planPress.current);
+                      }}
                       onMouseDown={() => {
                         planPress.current = setTimeout(() => {
                           planLongFired.current = true;
@@ -427,9 +435,23 @@ export function HomeDashboard() {
                         <span
                           role="button"
                           tabIndex={0}
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
                             e.preventDefault();
+                            // セカイムラ由来はDBの最新の場所で開く(古い誤座標の自動修正)
+                            if (p.evPost) {
+                              try {
+                                const { data } = await createClient()
+                                  .from("village_posts")
+                                  .select("place_name, place_lat, place_lng, place_url")
+                                  .eq("id", p.evPost)
+                                  .maybeSingle();
+                                if (data && (data.place_lat != null || data.place_name)) {
+                                  setHomePlace({ name: data.place_name, lat: data.place_lat, lng: data.place_lng, url: data.place_url });
+                                  return;
+                                }
+                              } catch {}
+                            }
                             setHomePlace(p.place!);
                           }}
                           className="flex-shrink-0 self-center rounded-full border px-1.5 py-[1px] text-[9.5px] font-extrabold"
