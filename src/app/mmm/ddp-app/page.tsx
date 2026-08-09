@@ -117,12 +117,12 @@ export default function DdpRitualPage() {
 
   const seal = async () => {
     if (!st.ddp.trim()) return;
-    if (!confirm("DDPを封印します。冬至の朝まで、本文は読めなくなります。\n（確定したら完全に忘れて、仲間の願いを叶えることに集中）\nよろしいですか？")) return;
-    const next = { ...st, sealed: true, sealedAt: new Date().toISOString(), step: 4 };
+    const next = { ...st, sealed: false, sealedAt: null, step: 4 };
     save(next, me?.id ?? null);
     try { localStorage.setItem(skey(me?.id ?? null), JSON.stringify(next)); } catch {}
-    // ニューラFIVEの仲間に見えるDDP（短い夢）にも反映
+    // ニューラFIVEの仲間・マイページに見えるDDP（短い夢）に反映
     if (me) await saveMyDdp(me.id, st.ddp.trim());
+    alert("DDPを保存しました。マイページの一番上にも表示されます✨");
   };
 
   const runAi = async () => {
@@ -181,7 +181,7 @@ export default function DdpRitualPage() {
 
       <div className="mx-auto max-w-[640px] px-4 pt-4">
         {/* ===== 封印済み ===== */}
-        {st.sealed && !unsealed ? (
+        {false ? (
           <div className="rounded-2xl p-8 text-center" style={{ background: C.card, border: `1px solid ${C.goldDim}` }}>
             <div
               className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full"
@@ -425,10 +425,10 @@ export default function DdpRitualPage() {
                   </div>
                 )}
                 <button onClick={seal} disabled={!st.ddp.trim()} className="mincho mt-3 w-full rounded-xl py-3.5 text-[15px] font-bold tracking-[3px] disabled:opacity-30" style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldDim})`, color: "#0E1230" }}>
-                  封印する
+                  このDDPで確定する
                 </button>
                 <p className="mt-1.5 text-center text-[10.5px]" style={{ color: C.sub }}>
-                  封印すると冬至の朝まで本文は読めなくなります（忘れることを、機能にする）
+                  確定するとマイページの一番上に表示されます（いつでも書き直せます）
                 </p>
               </div>
             )}
