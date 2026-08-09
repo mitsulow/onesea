@@ -61,6 +61,17 @@ export default function VillagePage() {
   const [cSending, setCSending] = useState<string | null>(null);
   /* 拠点の修正（立ち上げ村長のみ） */
   const [editing, setEditing] = useState(false);
+  const [amWara, setAmWara] = useState<boolean | null>(null); // わらわ〜会員か(無料はnullでなくfalse)
+  useEffect(() => {
+    if (!me) return;
+    const supabase = createClient();
+    supabase
+      .from("profiles")
+      .select("warawa_until")
+      .eq("id", me.id)
+      .maybeSingle()
+      .then(({ data }) => setAmWara(!!(data?.warawa_until && new Date(data.warawa_until) > new Date())));
+  }, [me]);
   const [eName, setEName] = useState("");
   const [ePref, setEPref] = useState("東京都");
   const [eCity, setECity] = useState("");
@@ -290,6 +301,10 @@ export default function VillagePage() {
           {village.recruiting !== false && village.policy !== "paused" && village.policy !== "full" && me && !joined && !members.some((mm: any) => mm.user_id === me.id) && (
             <button
               onClick={async () => {
+                if (!amWara) {
+                  alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。\nメニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏");
+                  return;
+                }
                 await joinVillage(me.id, villageId);
                 // 村長へTalKで申請通知
                 try {
