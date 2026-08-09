@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
-import { fetchMoais, createMoai, fetchMoaiFeed, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
+import { fetchMoais, createMoai, fetchMoaiFeed, moaiNameTaken, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
 
 /** MOAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
 export default function MoaiListPage() {
@@ -21,6 +21,7 @@ export default function MoaiListPage() {
   const [cover, setCover] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [feed, setFeed] = useState<any[] | null>(null);
+  const [nameTaken, setNameTaken] = useState<boolean | null>(null);
   const [q, setQ] = useState("");
 
   const load = () => { fetchMoais().then(setMoais); fetchMoaiFeed().then(setFeed); };
@@ -32,6 +33,7 @@ export default function MoaiListPage() {
 
   const submit = async () => {
     if (!me || !name.trim() || busy) return;
+    if (await moaiNameTaken(name)) { setNameTaken(true); return; }
     setBusy(true);
     const id = await createMoai(me.id, { name: name.trim(), category: cat, description: desc.trim() || null, icon_url: icon, cover_url: cover });
     setBusy(false);
@@ -102,14 +104,16 @@ export default function MoaiListPage() {
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => up(e.target.files?.[0] ?? null, setIcon, false)} />
               </label>
             </div>
-            <input value={name} onChange={(e) => setName(e.target.value)} placeholder="MOAIの名前（例: 朝ラン部、味噌づくりの会）" className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13.5px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
+            <input value={name} onChange={(e) => { setName(e.target.value); setNameTaken(null); }} onBlur={async () => { if (name.trim()) setNameTaken(await moaiNameTaken(name)); }} placeholder="MOAIの名前（例: 朝ラン部、味噌づくりの会）" className="mb-1 w-full rounded-xl border bg-[#fff] px-3 py-2 text-[13.5px] text-[#3a2420] outline-none" style={{ borderColor: nameTaken ? "#c0392b" : "#f0d8d4" }} />
+            {nameTaken === true && <p className="mb-2 text-[11px] font-bold text-[#c0392b]">⚠️ 同じ名前のMOAIが既にあります。別の名前にしてください</p>}
+            {nameTaken === false && name.trim() && <p className="mb-2 text-[11px] font-bold text-[#2a8a4a]">✓ この名前は使えます</p>}
             <select value={cat} onChange={(e) => setCat(e.target.value)} className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
               {MOAI_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
             </select>
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} placeholder="どんな集まり？（ひとことでOK）" className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
             <div className="flex gap-2">
               <button onClick={() => setCreating(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
-              <button onClick={submit} disabled={!name.trim() || busy} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{busy ? "作成中..." : "つくる"}</button>
+              <button onClick={submit} disabled={!name.trim() || busy || nameTaken === true} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{busy ? "作成中..." : "つくる"}</button>
             </div>
           </div>
         )}

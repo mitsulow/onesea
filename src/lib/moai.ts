@@ -131,3 +131,10 @@ export async function addMoaiComment(postId: string, userId: string, body: strin
   const supabase = createClient();
   return supabase.from("moai_post_comments").insert({ post_id: postId, user_id: userId, body: body.trim() });
 }
+
+/** 同名のMOAIが既にあるか(大文字小文字・前後空白を無視) */
+export async function moaiNameTaken(name: string): Promise<boolean> {
+  const supabase = createClient();
+  const { data } = await supabase.rpc("moai_name_taken", { nm: name });
+  return data === true;
+}

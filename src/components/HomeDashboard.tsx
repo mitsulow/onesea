@@ -661,12 +661,12 @@ export function ServiceDock() {
           aria-label="MOAIへ"
         >
           <img
-            src="/icons/tab-home.png"
-            alt="OneSea"
+            src="/icons/icon-moai.webp"
+            alt="MOAI"
             className="mx-auto object-contain"
-            style={{ height: open ? 46 : 34, width: open ? 36 : 27, transition: "all .35s", filter: "drop-shadow(0 0 14px rgba(212,185,106,.55))" }}
+            style={{ height: open ? 46 : 36, width: open ? 46 : 36, transition: "all .35s", filter: "drop-shadow(0 0 14px rgba(201,57,43,.5))" }}
           />
-          <div className="mt-0.5 text-[8px] font-bold tracking-[2px] text-[#d4b96a]/80">OneSea</div>
+          <div className="mt-0.5 text-[8px] font-bold tracking-[2px] text-[#c0392b]/90">MOAI</div>
         </button>
 
         {/* 公転する6つのサービス */}
