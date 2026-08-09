@@ -2612,7 +2612,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
 
   /* マップタブ: 県の代表点に🌾マーカー */
   useEffect(() => {
-    if (tab !== "map" || !tanbo || mapRef.current) return;
+    if (tab !== "list" || !tanbo || mapRef.current) return;
     let disposed = false;
     (async () => {
       const L = (await import("leaflet")).default;
@@ -2629,7 +2629,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
         })
           .addTo(map)
           .bindPopup(`<b>${t.name}</b><br>${t.prefecture ?? ""}`);
-        mk.on("click", () => setSel(t));
+        mk.on("click", () => { window.location.href = `/sekai/kome/${t.id}`; });
       }
     })();
     return () => {
@@ -2715,7 +2715,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
 
       {/* タブ: 一覧 / マップ / お知らせ（sekaimura.net/komebu と同じ3本柱） */}
       <div className="mb-2 flex gap-1 rounded-xl bg-[#f2efe2] p-1">
-        {([["list", "🌾 田んぼ"], ["map", "🗾 マップ"], ["kome", "🍚 お米を買う"], ["news", "📢 お知らせ"]] as const).map(([k, label]) => (
+        {([["list", "🌾 田んぼ"], ["kome", "🍚 お米を買う"], ["news", "📢 お知らせ"]] as const).map(([k, label]) => (
           <button
             key={k}
             onClick={() => { setTab(k); setSel(null); }}
@@ -2730,6 +2730,9 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       {/* ── 一覧 ── */}
       {tab === "list" && (
         <>
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <div ref={mapHost} className="mb-1 h-[240px] w-full overflow-hidden rounded-xl border border-[#e8e2cc]" data-noswipe />
+      <p className="mb-2 text-center text-[10px] text-[#a0aca0]">🌾を押すとその田んぼのページへ（位置は県の代表点）</p>
       {(adding && me) ? (
           <div className="mb-3 rounded-xl border border-[#c8b86a88] bg-[#fbf9f0] p-3">
             <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]">🌾 田んぼを登録する</div>
@@ -2857,15 +2860,6 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       )}
 
       {/* ── マップ ── */}
-      {tab === "map" && (
-        <>
-          <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-          <div ref={mapHost} className="h-[300px] w-full overflow-hidden rounded-xl border border-[#e8e2cc]" data-noswipe />
-          <p className="mt-1 text-center text-[10px] text-[#a0aca0]">🌾を押すと下に詳細が開きます（位置は県の代表点）</p>
-          {detail}
-        </>
-      )}
-
       {/* ── 🍚 お米を買う（旧サイトの販売情報を全部移行・デザイン刷新） ── */}
       {tab === "kome" && (
         <div className="space-y-3">
