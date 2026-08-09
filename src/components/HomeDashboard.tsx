@@ -86,7 +86,7 @@ export function HomeDashboard() {
   }, [tk]);
 
   /* 予定（手帳から）— 予定が入っている日だけをスワイプで前後に渡り歩ける */
-  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo }>>>({});
+  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string }>>>({});
   const [homePlace, setHomePlace] = useState<PlaceInfo | null>(null); // 予定の「地図」ボタンで開くオーバーレイ
   const [planKeys, setPlanKeys] = useState<string[]>([]);
   const [viewKey, setViewKey] = useState(tk);
@@ -105,12 +105,13 @@ export function HomeDashboard() {
     const loadPlans = () => {
     try {
       const memos = JSON.parse(readTecho());
-      const byDay: Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo }>> = {};
+      const byDay: Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string }>> = {};
       const keys: string[] = [];
       for (const [k, day] of Object.entries(memos) as Array<[string, any]>) { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const list: Array<{ time: string; text: string; color?: string; place?: PlaceInfo }> = [];
+        const list: Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string }> = [];
         for (const ev of day?.ev ?? []) {
-          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color, place: ev.place });
+          const evPost = typeof ev.id === "string" && ev.id.startsWith("sekai-") ? ev.id.slice(6) : undefined;
+          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color, place: ev.place, evPost });
         }
         for (const [h, v] of Object.entries(day?.h ?? {})) {
           for (const line of String(v).split("\n")) {
@@ -364,7 +365,7 @@ export function HomeDashboard() {
                     <div key={i} className="flex items-baseline gap-2.5">
                       <span className="num flex-shrink-0 text-[13px] text-[#a09880]">{p.time}</span>
                       {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
-                      {/* 場所つきの予定: 行タップ(=日付を開く)と分けて、地図だけをここで開けるボタン */}
+                      {/* 行タップ(=日付を開く)とは別に、地図と詳細だけをここで開ける小ボタン */}
                       {p.place && (
                         <span
                           role="button"
@@ -374,10 +375,25 @@ export function HomeDashboard() {
                             e.preventDefault();
                             setHomePlace(p.place!);
                           }}
-                          className="flex-shrink-0 self-center rounded-full border px-2 py-0.5 text-[10.5px] font-extrabold"
+                          className="flex-shrink-0 self-center rounded-full border px-1.5 py-[1px] text-[9.5px] font-extrabold"
                           style={{ borderColor: "#7ba05b", color: "#4a7a3a", background: "#f2f8ec" }}
                         >
-                          📍地図
+                          地図
+                        </span>
+                      )}
+                      {p.evPost && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            window.location.href = "/sekai?event=" + p.evPost;
+                          }}
+                          className="flex-shrink-0 self-center rounded-full border px-1.5 py-[1px] text-[9.5px] font-extrabold"
+                          style={{ borderColor: "#c8a030", color: "#a07820", background: "#fdf6e4" }}
+                        >
+                          詳細
                         </span>
                       )}
                       <span className="truncate text-[18px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>

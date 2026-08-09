@@ -652,6 +652,25 @@ export function ActivitySection({ me }: { me: User | null }) {
     loadEvents();
   }, [loadEvents]);
 
+  // 手帳の「詳細」ボタンから /sekai?event=ID で来たら、そのイベントを開く
+  useEffect(() => {
+    try {
+      const evId = new URLSearchParams(window.location.search).get("event");
+      if (!evId) return;
+      const supabase = createClient();
+      supabase
+        .from("village_posts")
+        .select(
+          "id, body, photo_url, kind, event_at, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+        )
+        .eq("id", evId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setEvDetail(data);
+        });
+    } catch {}
+  }, []);
+
   // Cotozuteの「＋」から来たら、イベント投稿モードで開く
   useEffect(() => {
     try {
