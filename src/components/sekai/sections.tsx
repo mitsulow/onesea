@@ -549,6 +549,17 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [feed, setFeed] = useState<any[] | null>(null);
   const [seedOpen, setSeedOpen] = useState(false); // 「村を作る」カードで開く
   const [amOffice, setAmOffice] = useState(false); // 事務局は全報告を消せる
+  const [amWara, setAmWara] = useState(false); // わらわ〜会員か(村の投稿・イベント作成の資格)
+  useEffect(() => {
+    if (!me) return;
+    const supabase = createClient();
+    supabase
+      .from("profiles")
+      .select("warawa_until")
+      .eq("id", me.id)
+      .maybeSingle()
+      .then(({ data }) => setAmWara(!!(data?.warawa_until && new Date(data.warawa_until) > new Date())));
+  }, [me]);
   useEffect(() => {
     if (!me) return;
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
@@ -1176,8 +1187,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       {me && (myVills.length > 0 || amOffice) && (
           <button
           onClick={() => {
-            if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。
-メニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏"); return; }
+            if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。メニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏"); return; }
             setWChoose(true);
           }}
           className="mx-2 mb-2 block w-[calc(100%-16px)] rounded-2xl border bg-white px-3.5 py-3 text-left shadow-sm"
@@ -1553,8 +1563,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
             <button
               onClick={() => {
-                if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。
-メニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏"); return; }
+                if (!amWara && !amOffice) { alert("セカイムラへの参加・投稿は わらわ〜会員（有料）の機能です。メニュー → マイページ編集 の「わらわ〜アップグレード」からどうぞ🙏"); return; }
                 setWChoose(false);
                 setWKind("event");
                 if (amOffice && myVills.length === 0) setWVillage("__all__");

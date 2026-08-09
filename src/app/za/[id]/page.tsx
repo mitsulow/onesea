@@ -81,7 +81,8 @@ export default function ShopDetailPage() {
   };
 
   const propose = async () => {
-    if (!me || !shop || proposing) return;
+    if (!shop || proposing) return;
+    if (!me) { alert("OneSeaにログインすると連絡できます（無料のGoogleログイン）。メニューからログインしてね🙏"); return; }
     const offerShop = myShops?.find((s) => s.id === offerId) ?? null;
     const offer = offerShop ? offerShop.name : offerText.trim();
     if (!offer) return;
@@ -118,7 +119,8 @@ export default function ShopDetailPage() {
   };
 
   const contact = async () => {
-    if (!me || !shop || contacting) return;
+    if (!shop || contacting) return;
+    if (!me) { alert("OneSeaにログインすると連絡できます（無料のGoogleログイン）。メニューからログインしてね🙏"); return; }
     setContacting(true);
     const chatId = await getOrCreateChat(me.id, shop.owner_id);
     setContacting(false);
