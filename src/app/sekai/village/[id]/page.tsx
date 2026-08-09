@@ -1,5 +1,6 @@
 "use client";
 
+import { ReportDialog } from "@/components/ReportDialog";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -62,6 +63,7 @@ export default function VillagePage() {
   /* 拠点の修正（立ち上げ村長のみ） */
   const [editing, setEditing] = useState(false);
   const [amWara, setAmWara] = useState<boolean | null>(null); // わらわ〜会員か(無料はnullでなくfalse)
+  const [reportPost, setReportPost] = useState<{ id: string; body: string } | null>(null);
   useEffect(() => {
     if (!me) return;
     const supabase = createClient();
@@ -618,13 +620,7 @@ export default function VillagePage() {
                   )}
                   {me && (
                     <button
-                      onClick={async () => {
-                        const reason = prompt("この投稿の削除を事務局に依頼します。理由を教えてください");
-                        if (reason === null) return;
-                        const supabase = createClient();
-                        await supabase.from("post_reports").insert({ kind: "village_post", target_id: p.id, target_url: `/sekai/village/${villageId}`, excerpt: String(p.body ?? "").slice(0, 120), reporter: me.id, reason: reason || null });
-                        alert("事務局に削除依頼を送りました");
-                      }}
+                      onClick={() => setReportPost({ id: p.id, body: String(p.body ?? "") })}
                       className="ml-1 text-[9px] text-[#c0c8c0] underline"
                     >通報</button>
                   )}
@@ -699,6 +695,9 @@ export default function VillagePage() {
           )}
         </section>
       </div>
+      {reportPost && (
+        <ReportDialog kind="village_post" targetId={reportPost.id} targetUrl={`/sekai/village/${villageId}`} excerpt={reportPost.body} meId={me?.id ?? null} onClose={() => setReportPost(null)} />
+      )}
     </main>
   );
 }

@@ -247,6 +247,11 @@ export default function OfficePage() {
                   {r.status !== "open" && <span className="font-bold text-[#2a7a4a]">対応済み</span>}
                 </div>
                 {r.reason && <div className="mt-1 text-[12.5px] font-bold text-[#c94d3a]">理由: {r.reason}</div>}
+                {(r.reporter_name || r.reporter_phone) && (
+                  <div className="mt-0.5 text-[11.5px] font-bold text-[#8a5a2a]">
+                    通報者: {r.reporter_name ?? "—"}{r.reporter_phone ? ' / ' + r.reporter_phone : ''}（通りすがり）
+                  </div>
+                )}
                 {r.excerpt && <div className="mt-0.5 line-clamp-2 text-[12px] text-[#5a5448]">「{r.excerpt}」</div>}
                 <div className="mt-1.5 flex flex-wrap gap-2">
                   {r.target_url && (

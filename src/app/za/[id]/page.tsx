@@ -1,5 +1,6 @@
 "use client";
 
+import { ReportDialog } from "@/components/ReportDialog";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -128,6 +129,7 @@ export default function ShopDetailPage() {
   };
 
   const [amOffice, setAmOffice] = useState(false); // 事務局は出品を削除できる
+  const [reportOpen, setReportOpen] = useState(false);
   useEffect(() => {
     if (!me) return;
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
@@ -428,18 +430,16 @@ export default function ShopDetailPage() {
             <img src="/icons/icon-share2.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> シェアする
           </button>
           <button
-            onClick={async () => {
-              const reason = prompt("この商品を事務局に通報します。理由を教えてください（白タク・無許可の営業など）");
-              if (reason === null) return;
-              const supabase = createClient();
-              await supabase.from("post_reports").insert({ kind: "za", target_id: params.id, target_url: `/za/${params.id}`, excerpt: (shop?.name ?? "").slice(0, 120), reporter: me?.id ?? null, reason: reason || null });
-              alert("事務局に通報しました");
-            }}
+            onClick={() => setReportOpen(true)}
             className="rounded-xl border border-[#e8c4b8] bg-white py-2 text-[11px] font-bold text-[#c05030]"
           >
             ⚑ 通報する
           </button>
         </div>
+
+        {reportOpen && (
+          <ReportDialog kind="za" targetId={params.id} targetUrl={`/za/${params.id}`} excerpt={shop?.name ?? ""} meId={me?.id ?? null} onClose={() => setReportOpen(false)} />
+        )}
 
         {/* ブツブツ交換の提案ダイアログ */}
         {barterOpen && shop && (

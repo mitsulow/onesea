@@ -54,7 +54,7 @@ export default function ZaPage() {
     return (
       (s.name ?? "").toLowerCase().includes(k) ||
       (s.description ?? "").toLowerCase().includes(k) ||
-      (categoryOf(s.category).label ?? "").toLowerCase().includes(k)
+      (categoryOf(s.category)?.label ?? "").toLowerCase().includes(k)
     );
   };
 

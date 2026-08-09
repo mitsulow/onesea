@@ -1,5 +1,6 @@
 "use client";
 
+import { ReportDialog } from "@/components/ReportDialog";
 import { fetchFollowees, toggleFollow } from "@/lib/follows";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,6 +60,7 @@ export function PostCard({
   const [likeCount, setLikeCount] = useState(post.likes?.[0]?.count ?? 0);
   const commentCount = post.comments?.[0]?.count ?? 0;
   const [gone, setGone] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [meishi, setMeishi] = useState(false);
   const [expanded, setExpanded] = useState(hd);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -260,17 +262,13 @@ export function PostCard({
         )}
         {me && me.id !== post.user_id && (
           <button
-            onClick={async () => {
-              const reason = prompt("この投稿の削除を事務局に依頼します。理由を教えてください");
-              if (reason === null) return;
-              const { createClient } = await import("@/lib/supabase/client");
-              const supabase = createClient();
-              await supabase.from("post_reports").insert({ kind: "cotozute", target_id: post.id, target_url: `/post/${post.id}`, excerpt: (post.body ?? "").slice(0, 120), reporter: me.id, reason: reason || null });
-              alert("事務局に削除依頼を送りました");
-            }}
+            onClick={() => setReportOpen(true)}
             className="flex w-9 items-center justify-center py-1.5 text-[10px] text-[#b0b3b8]"
             aria-label="削除依頼"
           >⚑</button>
+        )}
+        {reportOpen && (
+          <ReportDialog kind="cotozute" targetId={post.id} targetUrl={`/post/${post.id}`} excerpt={post.body ?? ""} meId={me?.id ?? null} onClose={() => setReportOpen(false)} />
         )}
       </div>
 
