@@ -28,6 +28,7 @@ export default function MoaiListPage() {
   const [pref, setPref] = useState("オンライン");
   const [city, setCity] = useState("");
   const [keywords, setKeywords] = useState("");
+  const [policy, setPolicy] = useState<"open"|"approval">("open");
   const [cities, setCities] = useState<string[]>([]);
   useEffect(() => {
     if (pref === "オンライン" || pref === "海外") { setCities([]); setCity(pref); return; }
@@ -56,7 +57,7 @@ export default function MoaiListPage() {
     if (!city) { alert("主な活動場所（市町村）を選んでください"); return; }
     if (await moaiNameTaken(name)) { setNameTaken(true); return; }
     setBusy(true);
-    const id = await createMoai(me.id, { name: name.trim(), category: cat, description: desc.trim() || null, keywords: keywords.trim() || null, prefecture: pref, city, icon_url: icon, cover_url: cover });
+    const id = await createMoai(me.id, { name: name.trim(), category: cat, description: desc.trim() || null, keywords: keywords.trim() || null, join_policy: policy, prefecture: pref, city, icon_url: icon, cover_url: cover });
     setBusy(false);
     if (id) {
       window.location.href = `/moai/${id}`;
@@ -117,6 +118,12 @@ export default function MoaiListPage() {
             <select value={cat} onChange={(e) => setCat(e.target.value)} className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
               {MOAI_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
             </select>
+            <div className="mb-1 text-[11px] font-bold text-[#a08078]">参加のしかた</div>
+            <div className="mb-2 flex gap-2">
+              {([["open","誰でも参加OK"],["approval","承認制（OYAが承認）"]] as const).map(([v,l]) => (
+                <button key={v} type="button" onClick={() => setPolicy(v)} className="flex-1 rounded-xl border-2 py-2 text-[12px] font-extrabold" style={policy===v ? {borderColor:"#c0392b",background:"#c0392b",color:"#fff"} : {borderColor:"#f0d8d4",color:"#a08078",background:"#fff"}}>{l}</button>
+              ))}
+            </div>
             <div className="mb-1 text-[11px] font-bold text-[#a08078]">主な活動場所（必須）</div>
             <div className="mb-2 flex gap-2">
               <select value={pref} onChange={(e) => setPref(e.target.value)} className="rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">

@@ -9,7 +9,7 @@ import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
-import { fetchMoai, joinMoai, leaveMoai, fetchMoaiMemberIds, fetchMoaiMembers, updateMoai, deleteMoai, fetchMoaiComments, addMoaiComment, moaiCat, MOAI_CATEGORIES, type Moai } from "@/lib/moai";
+import { fetchMoai, joinMoai, leaveMoai, fetchMoaiMemberIds, fetchMoaiMembers, updateMoai, deleteMoai, fetchMoaiComments, addMoaiComment, fetchMoaiPending, approveMoaiMember, rejectMoaiMember, myMoaiStatus, moaiCat, MOAI_CATEGORIES, type Moai } from "@/lib/moai";
 import { readTecho, writeTecho } from "@/lib/techoStore";
 import { PREFS } from "@/lib/sekai";
 import { useRouter } from "next/navigation";
@@ -65,12 +65,15 @@ export default function MoaiDetailPage() {
   const [eKw, setEKw] = useState("");
   const [ePref, setEPref] = useState("東京都");
   const [eCity, setECity] = useState("");
+  const [ePolicy, setEPolicy] = useState<"open"|"approval">("open");
   const [eCities, setECities] = useState<string[]>([]);
   useEffect(() => {
     if (!editing) return;
     fetch("/data-municipalities.json").then((r) => r.json()).then((muni) => setECities((muni[ePref] ?? []).map((x: any) => x[0]))).catch(() => setECities([]));
   }, [ePref, editing]);
   const isOwner = !!me && moai?.created_by === me.id;
+  const [myStatus, setMyStatus] = useState<string | null>(null);
+  const [pending, setPending] = useState<any[]>([]);
   const [amAdmin, setAmAdmin] = useState(false);
   useEffect(() => {
     if (!me) return;
@@ -93,6 +96,8 @@ export default function MoaiDetailPage() {
     const normals = all.filter((p: any) => p.kind !== "event");
     setPosts(normals);
     fetchMoaiMembers(moaiId).then(setMemberProfs);
+    { const supa = createClient(); supa.auth.getSession().then(({ data: { session } }) => { const uid = session?.user?.id; if (uid) myMoaiStatus(moaiId, uid).then(setMyStatus); }); }
+    if (m && m.created_by) fetchMoaiPending(moaiId).then(setPending);
     fetchMoaiComments(all.map((x: any) => x.id)).then(setComments);
     setEvents(all.filter((p: any) => p.kind === "event" && p.event_at && new Date(p.event_at) >= new Date(Date.now() - 3 * 3600e3)).sort((a: any, b: any) => new Date(a.event_at).getTime() - new Date(b.event_at).getTime()));
   }, [moaiId]);
@@ -109,7 +114,8 @@ export default function MoaiDetailPage() {
       if (!confirm("このMOAIから抜けますか？")) return;
       await leaveMoai(moaiId, me.id);
     } else {
-      await joinMoai(moaiId, me.id);
+      await joinMoai(moaiId, me.id, moai?.join_policy);
+      if (moai?.join_policy === "approval") alert("入部を申請しました。OYAの承認をお待ちください🙏");
     }
     load();
   };
@@ -239,10 +245,10 @@ export default function MoaiDetailPage() {
             className="rounded-xl px-6 py-2.5 text-[13px] font-extrabold"
             style={joined ? { border: "1px solid #c0392b", color: "#c0392b", background: "transparent" } : { background: "#c0392b", color: "#fff" }}
           >
-            {joined ? "✓ 参加中（タップで退会）" : "入部希望（このMOAIに参加）"}
+            {joined ? "✓ 参加中（タップで退会）" : myStatus === "pending" ? "申請中（承認待ち・タップで取消）" : moai.join_policy === "approval" ? "入部を申請する（承認制）" : "入部希望（このMOAIに参加）"}
           </button>
           {canManage && (
-            <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEKw((moai as any).keywords ?? ""); setEPref(moai.prefecture ?? "東京都"); setECity(moai.city ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
+            <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEKw((moai as any).keywords ?? ""); setEPolicy(((moai as any).join_policy === "approval") ? "approval" : "open"); setEPref(moai.prefecture ?? "東京都"); setECity(moai.city ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
           )}
           {canManage && (
             <button onClick={async () => { if (!confirm("このMOAIを削除しますか？（投稿もすべて消えます）")) return; await deleteMoai(moaiId); router.push("/moai"); }} className="rounded-xl border border-[#a05a6a] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">🗑</button>
@@ -251,6 +257,20 @@ export default function MoaiDetailPage() {
       </header>
 
       <div className="px-3 pt-6">
+        {/* 承認待ちの入部申請(OYA・管理者のみ) */}
+        {canManage && pending.length > 0 && (
+          <div className="mb-3 rounded-xl p-3" style={{ background: "#fff", border: "1px solid #e8c4b8" }}>
+            <div className="mb-1.5 text-[12px] font-extrabold text-[#c0392b]">入部申請 {pending.length}件</div>
+            {pending.map((pr: any) => (
+              <div key={pr.user_id} className="flex items-center gap-2 border-b border-[#f0ece8] py-1.5 last:border-b-0">
+                {pr.avatar_url ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3ded9] text-[11px]">🗿</span>}
+                <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#3a2420]">{pr.display_name ?? "むらびと"}</span>
+                <button onClick={async () => { await approveMoaiMember(moaiId, pr.user_id); load(); }} className="rounded-lg px-3 py-1 text-[11px] font-extrabold text-white" style={{ background: "#2a8a4a" }}>承認</button>
+                <button onClick={async () => { await rejectMoaiMember(moaiId, pr.user_id); load(); }} className="rounded-lg border px-2.5 py-1 text-[11px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}>却下</button>
+              </div>
+            ))}
+          </div>
+        )}
         {/* 近々のイベント（横スクロール・トップ） */}
         {events.length > 0 && (
           <div className="mb-3">
@@ -400,6 +420,11 @@ export default function MoaiDetailPage() {
               {MOAI_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
             </select>
             <div className="mb-2 flex gap-2">
+              {([["open","誰でも参加OK"],["approval","承認制"]] as const).map(([v,l]) => (
+                <button key={v} type="button" onClick={() => setEPolicy(v)} className="flex-1 rounded-xl border-2 py-2 text-[12px] font-extrabold" style={ePolicy===v ? {borderColor:"#c0392b",background:"#c0392b",color:"#fff"} : {borderColor:"#f0d8d4",color:"#a08078",background:"#fff"}}>{l}</button>
+              ))}
+            </div>
+            <div className="mb-2 flex gap-2">
               <select value={ePref} onChange={(e) => { setEPref(e.target.value); setECity(""); }} className="rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
                 <option>オンライン</option>{PREFS.map((p) => <option key={p}>{p}</option>)}<option>海外</option>
               </select>
@@ -412,7 +437,7 @@ export default function MoaiDetailPage() {
             <textarea value={eKw} onChange={(e) => setEKw(e.target.value)} rows={2} placeholder="検索キーワード（沢山ほど見つかりやすい）" className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none" />
             <div className="flex gap-2">
               <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
-              <button onClick={async () => { await updateMoai(moaiId, { name: eName.trim(), category: eCat, description: eDesc.trim() || null, keywords: eKw.trim() || null, prefecture: ePref, city: eCity || null }); setEditing(false); load(); }} disabled={!eName.trim()} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>保存する</button>
+              <button onClick={async () => { await updateMoai(moaiId, { name: eName.trim(), category: eCat, description: eDesc.trim() || null, keywords: eKw.trim() || null, join_policy: ePolicy, prefecture: ePref, city: eCity || null }); setEditing(false); load(); }} disabled={!eName.trim()} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>保存する</button>
             </div>
           </div>
         </div>
