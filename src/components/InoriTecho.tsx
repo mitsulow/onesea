@@ -561,6 +561,9 @@ function BottomSheet({
   const [tide, setTide] = useState<TideDay | null>(null);
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
   const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所の詳細(Googleマップのオーバーレイ)
+  const [delEvId, setDelEvId] = useState<string | null>(null); // 長押しで×が出ている予定
+  const evPress = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const evLongFired = useRef(false);
   const [portPick, setPortPick] = useState(false); // 港選択モーダル
   const [celSel, setCelSel] = useState<"sun" | "earth" | "moon" | null>(null); // 天体トリオの選択
   const [celSeen, setCelSeen] = useState<Set<string>>(new Set()); // 既読(バッジ消し)
@@ -1012,7 +1015,34 @@ function BottomSheet({
                             <button
                               key={ev.id}
                               data-ev
-                              onClick={() => (ev.place ? setPlaceView(ev.place) : setEvEdit(ev))}
+                              onTouchStart={() => {
+                                evPress.current = setTimeout(() => {
+                                  evLongFired.current = true;
+                                  setDelEvId(ev.id);
+                                }, 550);
+                              }}
+                              onTouchEnd={() => evPress.current && clearTimeout(evPress.current)}
+                              onTouchMove={() => evPress.current && clearTimeout(evPress.current)}
+                              onMouseDown={() => {
+                                evPress.current = setTimeout(() => {
+                                  evLongFired.current = true;
+                                  setDelEvId(ev.id);
+                                }, 550);
+                              }}
+                              onMouseUp={() => evPress.current && clearTimeout(evPress.current)}
+                              onContextMenu={(e) => e.preventDefault()}
+                              onClick={() => {
+                                if (evLongFired.current) {
+                                  evLongFired.current = false;
+                                  return;
+                                }
+                                if (delEvId) {
+                                  setDelEvId(null);
+                                  return;
+                                }
+                                if (ev.place) setPlaceView(ev.place);
+                                else setEvEdit(ev);
+                              }}
                               className="mb-0.5 block w-full rounded-md px-1.5 py-0.5 text-left text-[11px] leading-snug"
                               style={{
                                 background: penColor(ev.color) + "18",
@@ -1024,6 +1054,24 @@ function BottomSheet({
                                 {String(ev.sh).padStart(2, "0")}:{String(ev.sm).padStart(2, "0")}〜{String(ev.eh).padStart(2, "0")}:{String(ev.em).padStart(2, "0")}
                               </span>{" "}
                               {ev.text}
+                              {delEvId === ev.id && (
+                                <span
+                                  role="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!confirm("本当に削除しますか？")) {
+                                      setDelEvId(null);
+                                      return;
+                                    }
+                                    onSaveEv(dk, dayEvs.filter((x) => x.id !== ev.id));
+                                    setDelEvId(null);
+                                  }}
+                                  className="float-right ml-2 flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-bold text-white"
+                                  style={{ background: "#c05030" }}
+                                >
+                                  ×
+                                </span>
+                              )}
                             </button>
                           ))}
                           {hNote && (

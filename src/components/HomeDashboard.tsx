@@ -1,7 +1,7 @@
 "use client";
 
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
-import { readTecho } from "@/lib/techoStore";
+import { readTecho, writeTecho } from "@/lib/techoStore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -86,8 +86,35 @@ export function HomeDashboard() {
   }, [tk]);
 
   /* 予定（手帳から）— 予定が入っている日だけをスワイプで前後に渡り歩ける */
-  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string }>>>({});
+  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }>>>({});
   const [homePlace, setHomePlace] = useState<PlaceInfo | null>(null); // 予定の「地図」ボタンで開くオーバーレイ
+  const [delIdx, setDelIdx] = useState<number | null>(null); // 長押しで×が出ている行
+  const planPress = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const planLongFired = useRef(false); // 長押し後のタップ暴発防止
+  /** 予定を手帳から削除(長押し→×→確認) */
+  const deletePlan = (k: string, it: { src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }) => {
+    if (!it.src) return;
+    if (!confirm("本当に削除しますか？")) return;
+    try {
+      const memos = JSON.parse(readTecho());
+      const day = memos[k];
+      if (!day) return;
+      if (it.src.t === "ev") {
+        day.ev = (day.ev ?? []).filter((x: { id: string }) => x.id !== (it.src as { id: string }).id);
+        if (!day.ev.length) delete day.ev;
+      } else {
+        const src = it.src;
+        const rest = String(day.h?.[src.hour] ?? "").split("\n").filter((l: string) => l.trim() !== src.line);
+        if (rest.filter((l: string) => l.trim()).length) day.h[src.hour] = rest.join("\n");
+        else if (day.h) delete day.h[src.hour];
+      }
+      if (!day.note && Object.keys(day.h ?? {}).length === 0 && !(day.ev ?? []).length) delete memos[k];
+      else memos[k] = day;
+      writeTecho(JSON.stringify(memos));
+      window.dispatchEvent(new Event("onesea:techoChanged"));
+    } catch {}
+    setDelIdx(null);
+  };
   const [planKeys, setPlanKeys] = useState<string[]>([]);
   const [viewKey, setViewKey] = useState(tk);
   const [planDragX, setPlanDragX] = useState(0);
@@ -105,17 +132,17 @@ export function HomeDashboard() {
     const loadPlans = () => {
     try {
       const memos = JSON.parse(readTecho());
-      const byDay: Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string }>> = {};
+      const byDay: Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }>> = {};
       const keys: string[] = [];
       for (const [k, day] of Object.entries(memos) as Array<[string, any]>) { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const list: Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string }> = [];
+        const list: Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }> = [];
         for (const ev of day?.ev ?? []) {
           const evPost = typeof ev.id === "string" && ev.id.startsWith("sekai-") ? ev.id.slice(6) : undefined;
-          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color, place: ev.place, evPost });
+          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color, place: ev.place, evPost, src: { t: "ev", id: ev.id } });
         }
         for (const [h, v] of Object.entries(day?.h ?? {})) {
           for (const line of String(v).split("\n")) {
-            if (line.trim()) list.push({ time: `${pad(Number(h))}:00`, text: line.trim() });
+            if (line.trim()) list.push({ time: `${pad(Number(h))}:00`, text: line.trim(), src: { t: "h", hour: h, line: line.trim() } });
           }
         }
         if (list.length) {
@@ -351,7 +378,17 @@ export function HomeDashboard() {
               </button>
             </div>
             <button
-              onClick={openView}
+              onClick={() => {
+                if (planLongFired.current) {
+                  planLongFired.current = false;
+                  return; // 長押し直後のタップ暴発は無視(×を出すだけ)
+                }
+                if (delIdx != null) {
+                  setDelIdx(null); // ×が出ている時のタップは解除
+                  return;
+                }
+                openView();
+              }}
               className="block w-full px-4 pb-3 pt-1 text-left"
               style={{
                 transform: `translateX(${planDragX}px)`,
@@ -362,7 +399,27 @@ export function HomeDashboard() {
               <div className="space-y-2">
                 {plans.length ? (
                   plans.map((p, i) => (
-                    <div key={i} className="flex items-baseline gap-2.5">
+                    <div
+                      key={i}
+                      className="flex items-baseline gap-2.5"
+                      onTouchStart={() => {
+                        planPress.current = setTimeout(() => {
+                          planLongFired.current = true;
+                          setDelIdx(i);
+                        }, 550);
+                      }}
+                      onTouchEnd={() => planPress.current && clearTimeout(planPress.current)}
+                      onTouchMove={() => planPress.current && clearTimeout(planPress.current)}
+                      onMouseDown={() => {
+                        planPress.current = setTimeout(() => {
+                          planLongFired.current = true;
+                          setDelIdx(i);
+                        }, 550);
+                      }}
+                      onMouseUp={() => planPress.current && clearTimeout(planPress.current)}
+                      onMouseLeave={() => planPress.current && clearTimeout(planPress.current)}
+                      onContextMenu={(e) => e.preventDefault()}
+                    >
                       <span className="num flex-shrink-0 text-[13px] text-[#a09880]">{p.time}</span>
                       {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
                       {/* 行タップ(=日付を開く)とは別に、地図と詳細だけをここで開ける小ボタン */}
@@ -399,6 +456,20 @@ export function HomeDashboard() {
                       <span className="truncate text-[18px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
                         {p.text}
                       </span>
+                      {delIdx === i && p.src && (
+                        <span
+                          role="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            deletePlan(viewKey, p);
+                          }}
+                          className="ml-auto flex h-6 w-6 flex-shrink-0 items-center justify-center self-center rounded-full text-[13px] font-bold text-white"
+                          style={{ background: "#c05030" }}
+                        >
+                          ×
+                        </span>
+                      )}
                     </div>
                   ))
                 ) : (
