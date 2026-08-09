@@ -61,7 +61,7 @@ const SERVICES: Service[] = [
       { href: "/mmm/neura", icon: "/icons/icon-neura5.webp", label: "ニューラFIVE" },
       { href: "/schumann1/index.html", icon: "/icons/icon-schumann.webp", label: "シューマン共振", ext: true },
       { href: "/mmm/ddp-app", icon: "/icons/icon-ddp.webp", label: "夢叶えナビ" },
-      { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
+      { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
     ],
   },
   {
@@ -93,7 +93,7 @@ const SERVICES: Service[] = [
     active: "#fff",
     inactive: "#f0c8c2",
     tabs: [
-      { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
+      { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
     ],
   },
   {
@@ -131,7 +131,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/moai", icon: "/icons/icon-moai.webp", label: "MOAI" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
-  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
+  { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
 ];
 
 function TabIcon({ icon, active }: { icon: string; active: boolean }) {

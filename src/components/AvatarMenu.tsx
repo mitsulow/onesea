@@ -269,7 +269,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               )}
             </Link>
             <Link href="/talk" onClick={() => setOpen(false)} className={item + hereCls("/talk")}>
-              {icon("/icons/icon-chat.webp")} TalK
+              {icon("/icons/icon-talk-green.webp")} TalK
               {unread > 0 && (
                 <span
                   className="ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"

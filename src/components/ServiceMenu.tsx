@@ -15,7 +15,7 @@ const ALL = [
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
-  { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
+  { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
 ];
 
 /**
