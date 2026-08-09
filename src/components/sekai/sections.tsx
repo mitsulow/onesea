@@ -2511,6 +2511,8 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
   }, [me]);
   // 田んぼ申請フォーム(一般向け→事務局へ届く)
   const [applyOpen, setApplyOpen] = useState(false);
+  const [apDragY, setApDragY] = useState(0); // シートを引っ張った距離
+  const apDragStart = useRef<number | null>(null);
   const [apName, setApName] = useState("");
   const [apPhone, setApPhone] = useState("");
   const [apEmail, setApEmail] = useState("");
@@ -2953,8 +2955,20 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       {/* 田んぼ申請フォーム(→事務局hidamariさんへ) */}
       {applyOpen && (
         <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/50" onClick={() => setApplyOpen(false)}>
-          <div className="max-h-[88dvh] w-full max-w-[480px] overflow-y-auto rounded-t-2xl bg-white p-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }} onClick={(e) => e.stopPropagation()}>
-            <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#e0d8c0]" />
+          <div
+            className="max-h-[88dvh] w-full max-w-[480px] overflow-y-auto rounded-t-2xl bg-white p-4"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)", transform: apDragY ? `translateY(${apDragY}px)` : undefined, transition: apDragStart.current == null ? "transform .18s" : "none" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* つまみ: 下に引っ張るとシートが閉じる */}
+            <div
+              className="-mx-4 -mt-4 cursor-grab touch-none px-4 pb-1 pt-4"
+              onTouchStart={(e) => { apDragStart.current = e.touches[0].clientY; }}
+              onTouchMove={(e) => { if (apDragStart.current != null) setApDragY(Math.max(0, e.touches[0].clientY - apDragStart.current)); }}
+              onTouchEnd={() => { const d = apDragY; apDragStart.current = null; if (d > 70) { setApplyOpen(false); } setApDragY(0); }}
+            >
+              <div className="mx-auto mb-1.5 h-1 w-10 rounded-full bg-[#e0d8c0]" />
+            </div>
             <div className="mb-0.5 text-[14px] font-extrabold text-[#5a4a20]">🌾 田んぼを申請する</div>
             <p className="mb-3 text-[11px] text-[#a09060]">事務局が内容を確認して、田んぼのページを作ります</p>
 
