@@ -624,7 +624,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     const { data: evs } = await supabase
       .from("village_posts")
       .select(
-        "id, body, photo_url, kind, event_at, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+        "id, body, photo_url, kind, event_at, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
       )
       .eq("kind", "event")
       .gte("event_at", new Date().toISOString())
@@ -1096,16 +1096,29 @@ export function ActivitySection({ me }: { me: User | null }) {
                   href={`/sekai/village/${p.villages?.id}`}
                   className="flex items-center gap-2.5 no-underline"
                 >
-                  <AvatarSm p={p.profiles} size={44} />
+                  {/* 拠点(=ページ)のアイコン。個人ではなく村の顔で発信する */}
+                  {p.villages?.icon_url ? (
+                    <img
+                      src={srcCdn(p.villages.icon_url)}
+                      alt=""
+                      className="h-11 w-11 flex-shrink-0 rounded-full border border-[#dce8dc] object-cover"
+                    />
+                  ) : (
+                    <span
+                      className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[20px]"
+                      style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
+                    >
+                      🏡
+                    </span>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="min-w-0 truncate text-[14.5px] font-extrabold" style={{ color: GREEN }}>
                       {p.villages?.name ?? "セカイムラ"}
-                      <span className="ml-1 text-[11.5px] font-bold text-[#9ab3a0]">
-                        {p.villages?.prefecture ? `@${p.villages.prefecture}` : ""}
-                      </span>
+                      <span className="text-[12px] font-bold text-[#7a9a80]">からの投稿</span>
                       <span className="ml-1"><SekaiBadge size={14} /></span>
                     </div>
                     <div className="num text-[10.5px] text-[#b0bcb0]">
+                      {p.villages?.prefecture ? `@${p.villages.prefecture} ・ ` : ""}
                       {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                       {p.profiles?.display_name ? ` ・ ${p.profiles.display_name}` : ""}
                     </div>
@@ -1320,7 +1333,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                           className="rounded-full border px-2.5 py-1 text-[10.5px] font-bold"
                           style={{ borderColor: "#4a9a5a", color: GREEN, background: "#fff" }}
                         >
-                          ✓ 参加中
+                          ✓ 参加予定
                         </button>
                       ) : (
                         <button

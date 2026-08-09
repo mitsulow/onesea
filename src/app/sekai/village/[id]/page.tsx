@@ -208,7 +208,45 @@ export default function VillagePage() {
             </span>
           </span>
         </div>
-        {!village.cover_url && <div className="mt-3 text-[40px] leading-none">🏡</div>}
+        {/* 拠点(=ページ)のアイコン。村長はタップして変更できる */}
+        <div className="mt-3 flex justify-center">
+          <label className={me && village.created_by === me.id ? "relative cursor-pointer" : "relative"}>
+            {village.icon_url ? (
+              <img
+                src={srcCdn(village.icon_url)}
+                alt=""
+                className="h-[76px] w-[76px] rounded-full border-4 border-white/60 object-cover shadow-lg"
+              />
+            ) : (
+              <span className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white/40 text-[34px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
+                🏡
+              </span>
+            )}
+            {me && village.created_by === me.id && (
+              <>
+                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[13px] shadow">
+                  📷
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me) return;
+                    const { uploadImage } = await import("@/lib/images");
+                    const url = await uploadImage("post-images", me.id, f, 512, 0.8);
+                    if (url) {
+                      const supabase = createClient();
+                      await supabase.from("villages").update({ icon_url: url }).eq("id", villageId).eq("created_by", me.id);
+                      load();
+                    }
+                  }}
+                />
+              </>
+            )}
+          </label>
+        </div>
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{village.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
           {village.prefecture} ・ 村人 {members.length}人 ・ 村長 {steward?.display_name ?? "—"}

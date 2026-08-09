@@ -1,5 +1,6 @@
 "use client";
 
+import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { readTecho } from "@/lib/techoStore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -85,7 +86,8 @@ export function HomeDashboard() {
   }, [tk]);
 
   /* 予定（手帳から）— 予定が入っている日だけをスワイプで前後に渡り歩ける */
-  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string }>>>({});
+  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo }>>>({});
+  const [homePlace, setHomePlace] = useState<PlaceInfo | null>(null); // 予定の「地図」ボタンで開くオーバーレイ
   const [planKeys, setPlanKeys] = useState<string[]>([]);
   const [viewKey, setViewKey] = useState(tk);
   const [planDragX, setPlanDragX] = useState(0);
@@ -103,12 +105,12 @@ export function HomeDashboard() {
     const loadPlans = () => {
     try {
       const memos = JSON.parse(readTecho());
-      const byDay: Record<string, Array<{ time: string; text: string; color?: string }>> = {};
+      const byDay: Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo }>> = {};
       const keys: string[] = [];
       for (const [k, day] of Object.entries(memos) as Array<[string, any]>) { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const list: Array<{ time: string; text: string; color?: string }> = [];
+        const list: Array<{ time: string; text: string; color?: string; place?: PlaceInfo }> = [];
         for (const ev of day?.ev ?? []) {
-          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color });
+          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color, place: ev.place });
         }
         for (const [h, v] of Object.entries(day?.h ?? {})) {
           for (const line of String(v).split("\n")) {
@@ -268,6 +270,7 @@ export function HomeDashboard() {
       })()}
 
 
+      {homePlace && <PlaceOverlay place={homePlace} onClose={() => setHomePlace(null)} />}
       {/* 予定 — 予定が入っている日だけをスワイプ/矢印で前後に渡れる */}
       {(() => {
         const plans = dayPlans[viewKey] ?? [];
@@ -361,6 +364,22 @@ export function HomeDashboard() {
                     <div key={i} className="flex items-baseline gap-2.5">
                       <span className="num flex-shrink-0 text-[13px] text-[#a09880]">{p.time}</span>
                       {p.color && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ background: p.color }} />}
+                      {/* 場所つきの予定: 行タップ(=日付を開く)と分けて、地図だけをここで開けるボタン */}
+                      {p.place && (
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setHomePlace(p.place!);
+                          }}
+                          className="flex-shrink-0 self-center rounded-full border px-2 py-0.5 text-[10.5px] font-extrabold"
+                          style={{ borderColor: "#7ba05b", color: "#4a7a3a", background: "#f2f8ec" }}
+                        >
+                          📍地図
+                        </span>
+                      )}
                       <span className="truncate text-[18px] text-[#3a352c]" style={{ fontFamily: MINCHO }}>
                         {p.text}
                       </span>

@@ -233,6 +233,7 @@ export interface Village {
   profiles: P | null;
   village_members: Array<{ count: number }>;
   cover_url?: string | null;
+  icon_url?: string | null; // 拠点(=ページ)のアイコン
 }
 
 export interface Club {
@@ -348,7 +349,7 @@ export async function fetchActivityFeed(limit = 10, offset = 0) {
   const { data } = await supabase
     .from("village_posts")
     .select(
-      "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, created_by), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+      "id, body, photo_url, kind, event_at, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, created_by, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
     )
     .neq("kind", "event") // イベントは横スクロールのイベント欄だけに出す(フィードは拠点の報告専用)
     .order("created_at", { ascending: false })
