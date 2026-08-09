@@ -93,11 +93,25 @@ export default function ChatPage() {
   const startCall = async () => {
     if (!me) return;
     setInCall(true);
-    // まだ誰もいなければ「発信」— 相手のTALKに📞メッセージが届く（未読/プッシュ経由）
+    // まだ誰もいなければ「発信」— 相手にはどのページに居ても着信ポップアップが垂れてくる
     if (callActive === 0) {
       await sendMessage(chatId, me.id, "📞 ビデオ通話をはじめました — TALKを開いて、上の「参加する」からどうぞ");
+      try {
+        if (partner?.id) {
+          const supabase = createClient();
+          await supabase.from("call_rings").insert({ chat_id: chatId, caller_id: me.id, callee_id: partner.id });
+        }
+      } catch {}
     }
   };
+
+  // 着信ポップアップの「応答」から来たら、すぐ通話に入る
+  useEffect(() => {
+    if (!me) return;
+    try {
+      if (new URLSearchParams(window.location.search).get("call") === "1") setInCall(true);
+    } catch {}
+  }, [me]);
 
   const cursorRef = useRef<string | null>(null);
   const tickRef = useRef(0);
