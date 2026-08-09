@@ -615,6 +615,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   };
   const [wKind, setWKind] = useState<"normal" | "event">("normal");
   const [wEventAt, setWEventAt] = useState("");
+  const [wEventEnd, setWEventEnd] = useState(""); // 終了時刻(任意)
   const [joinedEv, setJoinedEv] = useState<Set<string>>(new Set());
   const [wVillage, setWVillage] = useState("");
   const [wBody, setWBody] = useState("");
@@ -639,7 +640,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     const { data: evs } = await supabase
       .from("village_posts")
       .select(
-        "id, body, photo_url, kind, event_at, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+        "id, body, photo_url, kind, event_at, event_end, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
       )
       .eq("kind", "event")
       .gte("event_at", new Date().toISOString())
@@ -677,7 +678,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       supabase
         .from("village_posts")
         .select(
-          "id, body, photo_url, kind, event_at, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+          "id, body, photo_url, kind, event_at, event_end, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
         )
         .eq("id", evId)
         .maybeSingle()
@@ -781,12 +782,15 @@ export function ActivitySection({ me }: { me: User | null }) {
       day.ev = day.ev ?? [];
       const evId = `sekai-${p.id}`;
       if (!day.ev.some((x: any) => x.id === evId)) {
+        // 終了時刻: 登録があればそれを、無ければ開始+2時間(同日内)
+        const de = p.event_end ? new Date(p.event_end) : null;
+        const sameDay = de && de.getFullYear() === d.getFullYear() && de.getMonth() === d.getMonth() && de.getDate() === d.getDate();
         day.ev.push({
           id: evId,
           sh: d.getHours(),
           sm: d.getMinutes(),
-          eh: Math.min(23, d.getHours() + 2),
-          em: d.getMinutes(),
+          eh: sameDay ? de!.getHours() : Math.min(23, d.getHours() + 2),
+          em: sameDay ? de!.getMinutes() : d.getMinutes(),
           text: eventLabel(p),
           color: "green",
           place:
@@ -865,6 +869,8 @@ export function ActivitySection({ me }: { me: User | null }) {
     setWSaving(true);
     const supabase = createClient();
     const eventAt = wKind === "event" && wEventAt ? new Date(wEventAt).toISOString() : null;
+    let eventEnd = wKind === "event" && wEventEnd ? new Date(wEventEnd).toISOString() : null;
+    if (eventAt && eventEnd && eventEnd <= eventAt) eventEnd = null; // 開始より前の終了は無効
     if (evEditId) {
       // 既存イベントの変更(日時・内容・写真・場所)
       await supabase
@@ -873,6 +879,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           body: wBody.trim(),
           photo_url: wPhoto ?? wPlace?.image ?? null,
           event_at: eventAt,
+          event_end: eventEnd,
           place_name: wPlace?.name ?? null,
           place_lat: wPlace?.lat ?? null,
           place_lng: wPlace?.lng ?? null,
@@ -886,6 +893,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       setWBody("");
       setWPhoto(null);
       setWEventAt("");
+      setWEventEnd("");
       setWPlace(null);
       setWPlacePaste("");
       setWPlaceMsg(null);
@@ -902,6 +910,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         photo_url: wPhoto ?? (wKind === "event" ? placeNow?.image ?? null : null),
         kind: wKind,
         event_at: eventAt,
+        event_end: eventEnd,
         place_name: wKind === "event" ? placeNow?.name ?? null : null,
         place_lat: wKind === "event" ? placeNow?.lat ?? null : null,
         place_lng: wKind === "event" ? placeNow?.lng ?? null : null,
@@ -914,6 +923,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       joinEvent({
         id: inserted.id,
         event_at: eventAt,
+        event_end: eventEnd,
         body: wBody.trim(),
         place_name: placeNow?.name ?? null,
         place_lat: placeNow?.lat ?? null,
@@ -929,6 +939,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     setWBody("");
     setWPhoto(null);
     setWEventAt("");
+    setWEventEnd("");
     setWPlace(null);
     setWPlacePaste("");
     setWPlaceMsg(null);
@@ -1019,6 +1030,9 @@ export function ActivitySection({ me }: { me: User | null }) {
                     <div className="min-w-0 flex-1">
                       <div className="num text-[13px] font-extrabold text-[#3a4438]">
                         {d.getMonth() + 1}月{d.getDate()}日{d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}〜
+                        {p.event_end && new Date(p.event_end).toDateString() === d.toDateString()
+                          ? `${new Date(p.event_end).getHours()}:${String(new Date(p.event_end).getMinutes()).padStart(2, "0")}`
+                          : ""}
                       </div>
                       <div className="mt-0.5 line-clamp-2 text-[12.5px] font-extrabold leading-snug" style={{ color: GREEN }}>
                         {title}
@@ -1511,12 +1525,25 @@ export function ActivitySection({ me }: { me: User | null }) {
                 ))}
               </select>
             )}
-            <input
-              type="datetime-local"
-              value={wEventAt}
-              onChange={(e) => setWEventAt(e.target.value)}
-              className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
-            />
+            <div className="mb-2 flex items-center gap-2">
+              <span className="w-9 flex-shrink-0 text-[11px] font-extrabold text-[#8a9a8a]">開始</span>
+              <input
+                type="datetime-local"
+                value={wEventAt}
+                onChange={(e) => setWEventAt(e.target.value)}
+                className="min-w-0 flex-1 rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
+              />
+            </div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="w-9 flex-shrink-0 text-[11px] font-extrabold text-[#8a9a8a]">終了</span>
+              <input
+                type="datetime-local"
+                value={wEventEnd}
+                onChange={(e) => setWEventEnd(e.target.value)}
+                className="min-w-0 flex-1 rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[13px] outline-none"
+              />
+              <span className="flex-shrink-0 text-[10px] text-[#a0aca0]">任意</span>
+            </div>
             <textarea
               value={wBody}
               onChange={(e) => setWBody(e.target.value)}
@@ -1647,7 +1674,13 @@ export function ActivitySection({ me }: { me: User | null }) {
               {evDetail.event_at && (
                 <div className="mt-2 flex items-center justify-between gap-2 rounded-xl px-3 py-2.5" style={{ background: "#fdf6e4", border: "1px solid #e8d8a8" }}>
                   <span className="num min-w-0 text-[13.5px] font-extrabold text-[#a07820]">
-                    📅 {(() => { const d = new Date(evDetail.event_at); return `${d.getMonth() + 1}月${d.getDate()}日（${YOBI[d.getDay()]}）${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}〜`; })()}
+                    📅 {(() => {
+                      const d = new Date(evDetail.event_at);
+                      const de = evDetail.event_end ? new Date(evDetail.event_end) : null;
+                      const sameDay = de && de.toDateString() === d.toDateString();
+                      const t = (x: Date) => `${x.getHours()}:${String(x.getMinutes()).padStart(2, "0")}`;
+                      return `${d.getMonth() + 1}月${d.getDate()}日（${YOBI[d.getDay()]}）${t(d)}〜${de ? (sameDay ? t(de) : `${de.getMonth() + 1}/${de.getDate()} ${t(de)}`) : ""}`;
+                    })()}
                   </span>
                   {me &&
                     (joinedEv.has(evDetail.id) ? (
@@ -1693,7 +1726,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               {/* 作成者は変更・削除、事務局は削除ができる */}
               {me && (me.id === evDetail.user_id || amOffice) && (
                 <div className="mt-2.5 flex gap-2 border-t border-[#eef2ec] pt-2.5">
-                  {me.id === evDetail.user_id && (
+                  {(me.id === evDetail.user_id || amOffice) && (
                     <button
                       onClick={() => {
                         const d = evDetail.event_at ? new Date(evDetail.event_at) : null;
@@ -1701,6 +1734,8 @@ export function ActivitySection({ me }: { me: User | null }) {
                         setWKind("event");
                         setWVillage(evDetail.villages?.id ?? "__all__");
                         setWEventAt(d ? `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}` : "");
+                        const de = evDetail.event_end ? new Date(evDetail.event_end) : null;
+                        setWEventEnd(de ? `${de.getFullYear()}-${pad2(de.getMonth() + 1)}-${pad2(de.getDate())}T${pad2(de.getHours())}:${pad2(de.getMinutes())}` : "");
                         setWBody(String(evDetail.body ?? ""));
                         setWPhoto(evDetail.photo_url ?? null);
                         setWPlace(
