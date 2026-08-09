@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn } from "@/lib/images";
-import { fetchGroupMessages, sendGroupMessage, markGroupRead, type GroupMessageRow } from "@/lib/line";
+import { fetchGroupMessages, sendGroupMessage, markGroupRead, fetchGroupReads, type GroupMessageRow } from "@/lib/line";
 
 const GOLD = "#d4b96a";
 
@@ -19,6 +19,7 @@ export default function KouryuRoomPage() {
   const [pref, setPref] = useState("");
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [messages, setMessages] = useState<GroupMessageRow[]>([]);
+  const [reads, setReads] = useState<Array<{ user_id: string; last_read_at: string }>>([]);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -39,6 +40,7 @@ export default function KouryuRoomPage() {
     const list = await fetchGroupMessages("pref", roomId);
     setMessages(list);
     if (meRef.current) markGroupRead("pref", roomId, meRef.current.id);
+    fetchGroupReads("pref", roomId).then(setReads);
   }, [roomId]);
 
   useEffect(() => {
@@ -106,6 +108,7 @@ export default function KouryuRoomPage() {
           const mine = m.sender_id === me?.id;
           const d = new Date(m.created_at);
           const time = `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+          const kidoku = mine ? reads.filter((r) => r.user_id !== me?.id && r.last_read_at >= m.created_at).length : 0;
           const prof = (m as any).profiles;
           return (
             <div key={m.id} className={`flex items-start gap-2 ${mine ? "flex-row-reverse" : ""}`}>
@@ -113,7 +116,7 @@ export default function KouryuRoomPage() {
                 ? <img src={srcCdn(prof.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
                 : <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1e3a52] text-[13px]">🗾</span>}
               <div className={`max-w-[75%] ${mine ? "text-right" : ""}`}>
-                <div className={`text-[10px] text-[#5a7a94] ${mine ? "pr-1" : "pl-1"}`}>{prof?.display_name ?? "むらびと"} ・ {time}</div>
+                <div className={`text-[10px] text-[#5a7a94] ${mine ? "pr-1" : "pl-1"}`}>{mine && kidoku > 0 ? `既読${kidoku} ・ ` : ""}{prof?.display_name ?? "むらびと"} ・ {time}</div>
                 <div className={`mt-0.5 inline-block rounded-2xl px-3.5 py-2 text-left text-[13.5px] leading-relaxed ${mine ? "text-[#0e1e2e]" : "bg-[#1e3a52] text-[#e8f0f8]"}`} style={mine ? { background: GOLD } : undefined}>
                   {(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" className="mb-1 max-w-[200px] rounded-lg" />}
                   {m.body === "📷 写真" && (m as any).image_url ? "" : m.body}

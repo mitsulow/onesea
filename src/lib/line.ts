@@ -445,3 +445,14 @@ export async function markGroupRead(type: string, id: string, myId: string) {
     .upsert({ user_id: myId, scope_type: type, scope_id: id, last_read_at: new Date().toISOString() });
   window.dispatchEvent(new Event("onesea:unreadRefresh"));
 }
+
+/** グループの既読タイムスタンプ一覧(既読◯人の計算用) */
+export async function fetchGroupReads(type: string, id: string): Promise<Array<{ user_id: string; last_read_at: string }>> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("group_reads")
+    .select("user_id, last_read_at")
+    .eq("scope_type", type)
+    .eq("scope_id", id);
+  return (data ?? []) as Array<{ user_id: string; last_read_at: string }>;
+}

@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { GroupMessageRow, fetchGroupMessages, sendGroupMessage, markGroupRead } from "@/lib/line";
+import { GroupMessageRow, fetchGroupMessages, sendGroupMessage, markGroupRead, fetchGroupReads } from "@/lib/line";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -20,6 +20,7 @@ export default function GroupChatPage() {
   const [emoji, setEmoji] = useState("👥");
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [messages, setMessages] = useState<GroupMessageRow[]>([]);
+  const [reads, setReads] = useState<Array<{ user_id: string; last_read_at: string }>>([]);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -82,6 +83,7 @@ export default function GroupChatPage() {
     const list = await fetchGroupMessages(type, id);
     setMessages(list);
     if (meRef.current) markGroupRead(type, id, meRef.current.id);
+    fetchGroupReads(type, id).then(setReads);
   }, [type, id]);
 
   useEffect(() => {
@@ -202,6 +204,7 @@ export default function GroupChatPage() {
           const mine = m.sender_id === me?.id;
           const d = new Date(m.created_at);
           const time = `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+          const kidoku = mine ? reads.filter((r) => r.user_id !== me?.id && r.last_read_at >= m.created_at).length : 0;
           return (
             <div key={m.id} className={`flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"}`}>
               {!mine &&
@@ -228,7 +231,7 @@ export default function GroupChatPage() {
                   <div className="mb-0.5 pl-1 text-[10px] text-[#8a8070]">{m.profiles?.display_name ?? "むらびと"}</div>
                 )}
                 <div className={`flex items-end gap-1.5 ${mine ? "justify-end" : ""}`}>
-                  {mine && <span className="text-[9px] text-[#a89e8c]">{time}</span>}
+                  {mine && <span className="text-[9px] text-[#a89e8c]">{kidoku > 0 ? `既読${kidoku} ` : ""}{time}</span>}
                   <div
                     className={`whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-[14px] leading-relaxed ${
                       mine ? "rounded-br-md bg-[#8de055] text-[#1a2a10]" : "rounded-bl-md bg-white text-[#3a3428]"
