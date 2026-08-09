@@ -571,7 +571,7 @@ export function ServiceDock() {
     { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
     { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
     { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
-    { href: "/cotozute", icon: "/icons/tab-cotozute2.webp", label: "コトヅテ" },
+    { href: "/cotozute", icon: "/icons/tab-cotozute3.webp", label: "コトヅテ" },
     { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
     { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK", talk: true },
   ];
