@@ -1073,6 +1073,36 @@ function BottomSheet({
                                 {String(ev.sh).padStart(2, "0")}:{String(ev.sm).padStart(2, "0")}〜{String(ev.eh).padStart(2, "0")}:{String(ev.em).padStart(2, "0")}
                               </span>{" "}
                               {ev.text}
+                              {(ev.place || String(ev.id).startsWith("sekai-")) && (
+                                <span className="ml-1.5 inline-flex gap-1 align-middle">
+                                  {ev.place && (
+                                    <span
+                                      role="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        void openEvPlace(ev);
+                                      }}
+                                      className="rounded-full border px-1 text-[8.5px] font-extrabold leading-[1.5]"
+                                      style={{ borderColor: "#7ba05b", color: "#4a7a3a", background: "#f2f8ec" }}
+                                    >
+                                      地図
+                                    </span>
+                                  )}
+                                  {String(ev.id).startsWith("sekai-") && (
+                                    <span
+                                      role="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.location.href = "/sekai?event=" + String(ev.id).slice(6);
+                                      }}
+                                      className="rounded-full border px-1 text-[8.5px] font-extrabold leading-[1.5]"
+                                      style={{ borderColor: "#c8a030", color: "#a07820", background: "#fdf6e4" }}
+                                    >
+                                      詳細
+                                    </span>
+                                  )}
+                                </span>
+                              )}
                               {delEvId === ev.id && (
                                 <span
                                   role="button"

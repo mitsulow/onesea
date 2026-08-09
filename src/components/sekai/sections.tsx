@@ -571,6 +571,24 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [evDetail, setEvDetail] = useState<any | null>(null); // イベントカードを開いた詳細
   const [evEditId, setEvEditId] = useState<string | null>(null); // 変更中のイベントid(nullなら新規作成)
   const evFromTecho = useRef(false); // 手帳の「詳細」から来た(閉じたら手帳へ戻す)
+  const [evPeople, setEvPeople] = useState<{ list: any[]; total: number }>({ list: [], total: 0 }); // 詳細の参加者(先頭50人)
+  useEffect(() => {
+    if (!evDetail?.id) {
+      setEvPeople({ list: [], total: 0 });
+      return;
+    }
+    const supabase = createClient();
+    Promise.all([
+      supabase
+        .from("event_rsvps")
+        .select("user_id, profiles!event_rsvps_user_id_fkey(username, display_name, avatar_url)")
+        .eq("post_id", evDetail.id)
+        .limit(50),
+      supabase.from("event_rsvps").select("post_id", { count: "exact", head: true }).eq("post_id", evDetail.id),
+    ]).then(([{ data }, { count }]) => {
+      setEvPeople({ list: (data ?? []).map((r: any) => r.profiles).filter(Boolean), total: count ?? (data ?? []).length });
+    });
+  }, [evDetail?.id]);
   const closeEvDetail = () => {
     setEvDetail(null);
     if (evFromTecho.current) {
@@ -1719,6 +1737,28 @@ export function ActivitySection({ me }: { me: User | null }) {
                   📍 <span className="min-w-0 flex-1 truncate">{evDetail.place_name ?? "場所の詳細"}</span>
                   <span className="flex-shrink-0 text-[11px]">地図を見る →</span>
                 </button>
+              )}
+              {/* 参加者: 先頭50人をスワイプでズラーッと */}
+              {evPeople.total > 0 && (
+                <div className="mt-3">
+                  <div className="mb-1 text-[11.5px] font-extrabold" style={{ color: GREEN }}>
+                    参加者 {evPeople.total}人
+                    {evPeople.total > 5 && <span className="ml-1 font-normal text-[#a0aca0]">（スワイプで{Math.min(50, evPeople.total)}人まで見られます）</span>}
+                  </div>
+                  <div className="hide-scrollbar flex items-center gap-1.5 overflow-x-auto pb-1">
+                    {evPeople.list.map((pr: any, i: number) => (
+                      <span key={i} className="flex w-[44px] flex-shrink-0 flex-col items-center">
+                        <AvatarSm p={pr} size={38} />
+                        <span className="mt-0.5 w-full truncate text-center text-[8.5px] text-[#8a9a8a]">{pr?.display_name ?? ""}</span>
+                      </span>
+                    ))}
+                    {evPeople.total > evPeople.list.length && (
+                      <span className="flex h-[38px] flex-shrink-0 items-center rounded-full bg-[#eef4ee] px-3 text-[11px] font-extrabold" style={{ color: GREEN }}>
+                        ほか{evPeople.total - evPeople.list.length}人
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
               <p className="mt-2 text-[10.5px] text-[#a0aca0]">
                 「参加する」を押すと、あなたの手帳のこの日にイベントが入ります。手帳側でタップすると場所の地図が開きます。

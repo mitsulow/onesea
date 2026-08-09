@@ -454,7 +454,7 @@ export function HomeDashboard() {
                             }
                             setHomePlace(p.place!);
                           }}
-                          className="flex-shrink-0 self-center rounded-full border px-1.5 py-[1px] text-[9.5px] font-extrabold"
+                          className="flex-shrink-0 self-center rounded-full border px-1 text-[8.5px] font-extrabold leading-[1.6]"
                           style={{ borderColor: "#7ba05b", color: "#4a7a3a", background: "#f2f8ec" }}
                         >
                           地図
@@ -469,7 +469,7 @@ export function HomeDashboard() {
                             e.preventDefault();
                             window.location.href = "/sekai?event=" + p.evPost;
                           }}
-                          className="flex-shrink-0 self-center rounded-full border px-1.5 py-[1px] text-[9.5px] font-extrabold"
+                          className="flex-shrink-0 self-center rounded-full border px-1 text-[8.5px] font-extrabold leading-[1.6]"
                           style={{ borderColor: "#c8a030", color: "#a07820", background: "#fdf6e4" }}
                         >
                           詳細
