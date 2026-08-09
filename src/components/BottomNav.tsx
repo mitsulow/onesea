@@ -87,6 +87,17 @@ const SERVICES: Service[] = [
     tabs: [{ href: "/talk/broadcast", icon: "/icons/icon-megaphone.webp", label: "お知らせ" }],
   },
   {
+    match: (p) => p.startsWith("/moai"),
+    home: "/moai",
+    bg: "linear-gradient(160deg,#c0392bf2,#9a2018f2)",
+    border: "#e0554a",
+    active: "#fff",
+    inactive: "#f0c8c2",
+    tabs: [
+      { href: "/moai", icon: "🗿", label: "サークル" },
+    ],
+  },
+  {
     match: (p) => p.startsWith("/za"),
     home: "/za",
     bg: "rgba(255,253,248,.96)",
@@ -118,6 +129,7 @@ const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; ta
   { href: "/cotozute", icon: "/icons/tab-cotozute2.webp", label: "コトヅテ" },
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
+  { href: "/moai", icon: "🗿", label: "MOAI" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-profile.webp", label: "マイページ編集" },
   { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK", talk: true },

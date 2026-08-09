@@ -91,3 +91,43 @@ export async function fetchMoaiFeed(limit = 40) {
     .limit(limit);
   return data ?? [];
 }
+
+export async function updateMoai(id: string, m: { name?: string; category?: string; description?: string | null }) {
+  const supabase = createClient();
+  return supabase.from("moai").update(m).eq("id", id);
+}
+
+export async function deleteMoai(id: string) {
+  const supabase = createClient();
+  return supabase.from("moai").delete().eq("id", id);
+}
+
+/** 部員のプロフィール(アイコン列用・先頭50人) */
+export async function fetchMoaiMembers(moaiId: string) {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("moai_members")
+    .select("user_id, joined_at, profiles!moai_members_user_id_fkey(username, display_name, avatar_url)")
+    .eq("moai_id", moaiId)
+    .order("joined_at", { ascending: true })
+    .limit(50);
+  return (data ?? []).map((r: any) => ({ ...r.profiles, user_id: r.user_id })).filter((x: any) => x && x.user_id);
+}
+
+export async function fetchMoaiComments(postIds: string[]) {
+  if (!postIds.length) return {} as Record<string, any[]>;
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("moai_post_comments")
+    .select("id, post_id, user_id, body, created_at, profiles!moai_post_comments_user_id_fkey(username, display_name, avatar_url)")
+    .in("post_id", postIds)
+    .order("created_at", { ascending: true });
+  const map: Record<string, any[]> = {};
+  for (const c of data ?? []) (map[c.post_id] = map[c.post_id] ?? []).push(c);
+  return map;
+}
+
+export async function addMoaiComment(postId: string, userId: string, body: string) {
+  const supabase = createClient();
+  return supabase.from("moai_post_comments").insert({ post_id: postId, user_id: userId, body: body.trim() });
+}
