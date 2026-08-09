@@ -27,6 +27,7 @@ export interface MessageRow {
   body: string;
   read_at: string | null;
   created_at: string;
+  image_url?: string | null;
 }
 
 const CHAT_SELECT =
@@ -105,7 +106,7 @@ export async function fetchMessages(chatId: string): Promise<MessageRow[]> {
   const supabase = createClient();
   const { data } = await supabase
     .from("messages")
-    .select("id, chat_id, sender_id, body, read_at, created_at")
+    .select("id, chat_id, sender_id, body, image_url, read_at, created_at")
     .eq("chat_id", chatId)
     .order("created_at", { ascending: true })
     .limit(200);
@@ -117,7 +118,7 @@ export async function fetchMessagesSince(chatId: string, sinceIso: string): Prom
   const supabase = createClient();
   const { data } = await supabase
     .from("messages")
-    .select("id, chat_id, sender_id, body, read_at, created_at")
+    .select("id, chat_id, sender_id, body, image_url, read_at, created_at")
     .eq("chat_id", chatId)
     .gt("created_at", sinceIso)
     .order("created_at", { ascending: true })
@@ -125,9 +126,9 @@ export async function fetchMessagesSince(chatId: string, sinceIso: string): Prom
   return (data as MessageRow[]) ?? [];
 }
 
-export async function sendMessage(chatId: string, myId: string, body: string) {
+export async function sendMessage(chatId: string, myId: string, body: string, imageUrl?: string | null) {
   const supabase = createClient();
-  const { error } = await supabase.from("messages").insert({ chat_id: chatId, sender_id: myId, body });
+  const { error } = await supabase.from("messages").insert({ chat_id: chatId, sender_id: myId, body, image_url: imageUrl ?? null });
   if (!error) {
     await supabase.from("chats").update({ last_message_at: new Date().toISOString() }).eq("id", chatId);
     // 相手のホーム画面バッジ・通知を更新（失敗しても本文送信には影響させない）
@@ -385,7 +386,7 @@ export async function fetchGroupMessages(type: string, id: string): Promise<Grou
   const supabase = createClient();
   const { data } = await supabase
     .from("group_messages")
-    .select("id, sender_id, body, created_at, profiles!group_messages_sender_id_fkey(username, display_name, avatar_url)")
+    .select("id, sender_id, body, image_url, created_at, profiles!group_messages_sender_id_fkey(username, display_name, avatar_url)")
     .eq("scope_type", type)
     .eq("scope_id", id)
     .order("created_at", { ascending: true })
@@ -393,9 +394,9 @@ export async function fetchGroupMessages(type: string, id: string): Promise<Grou
   return (data as unknown as GroupMessageRow[]) ?? [];
 }
 
-export async function sendGroupMessage(type: string, id: string, myId: string, body: string) {
+export async function sendGroupMessage(type: string, id: string, myId: string, body: string, imageUrl?: string | null) {
   const supabase = createClient();
-  return supabase.from("group_messages").insert({ scope_type: type, scope_id: id, sender_id: myId, body });
+  return supabase.from("group_messages").insert({ scope_type: type, scope_id: id, sender_id: myId, body, image_url: imageUrl ?? null });
 }
 
 export async function markGroupRead(type: string, id: string, myId: string) {

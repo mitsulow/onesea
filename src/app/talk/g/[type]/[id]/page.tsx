@@ -24,6 +24,31 @@ export default function GroupChatPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null); // 入力欄(自動で膨らむ)
+  const [photoPick, setPhotoPick] = useState(false); // 📷の2択シート
+  const [photoSending, setPhotoSending] = useState(false);
+  const camInput = useRef<HTMLInputElement | null>(null);
+  const albInput = useRef<HTMLInputElement | null>(null);
+  /** 写真を強圧縮(長辺1280px/WebP)してR2へ→メッセージ送信。表示はR2直なのでうちの転送料ゼロ */
+  const sendPhoto = async (f: File) => {
+    if (!me || photoSending) return;
+    setPhotoSending(true);
+    try {
+      const { compressImage } = await import("@/lib/images");
+      const blob = await compressImage(f, 1280, 0.55);
+      const fd = new FormData();
+      fd.append("file", blob);
+      fd.append("folder", "talk");
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const d = await r.json();
+      if (!r.ok || !d.url) throw new Error(d.error ?? "upload");
+      await sendGroupMessage(String(params.type), String(params.id), me.id, "📷 写真", d.url);
+      await load();
+    } catch {
+      alert("写真を送れませんでした。通信環境を確認してもう一度どうぞ");
+    }
+    setPhotoSending(false);
+  };
+
   const [kb, setKb] = useState(0); // ソフトキーボードの高さ(入力欄をその真上に貼り付ける)
   useEffect(() => {
     const vv = window.visualViewport;
@@ -170,7 +195,12 @@ export default function GroupChatPage() {
                       mine ? "rounded-br-md bg-[#8de055] text-[#1a2a10]" : "rounded-bl-md bg-white text-[#3a3428]"
                     }`}
                   >
-                    {m.body}
+                    {(m as any).image_url && (
+                      <a href={(m as any).image_url} target="_blank" rel="noopener">
+                        <img src={(m as any).image_url} alt="" loading="lazy" className="mb-1 max-h-[280px] w-full rounded-xl object-contain" style={{ maxWidth: 220 }} />
+                      </a>
+                    )}
+                    {(m as any).image_url && m.body === "📷 写真" ? null : m.body}
                   </div>
                   {!mine && <span className="text-[9px] text-[#a89e8c]">{time}</span>}
                 </div>
@@ -183,6 +213,38 @@ export default function GroupChatPage() {
 
       {/* 入力欄 */}
       <div className="fixed inset-x-0 z-40 flex items-end gap-2 border-t border-[#e5dccb] bg-[#fffdf8] px-3 py-2" style={{ bottom: kb > 0 ? kb : 56 }}>
+        {/* 📷 写真(LINE式・R2直行でうちの転送料ゼロ) */}
+        <button
+          onClick={() => setPhotoPick(true)}
+          disabled={photoSending}
+          aria-label="写真を送る"
+          className="flex h-10 w-8 flex-shrink-0 items-center justify-center text-[20px] disabled:opacity-40"
+        >
+          {photoSending ? "⏳" : "📷"}
+        </button>
+        <input
+          ref={camInput}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) void sendPhoto(f);
+          }}
+        />
+        <input
+          ref={albInput}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) void sendPhoto(f);
+          }}
+        />
         <textarea
           ref={taRef}
           value={body}
@@ -206,6 +268,36 @@ export default function GroupChatPage() {
           ➤
         </button>
       </div>
+      {/* 写真の出どころ2択 */}
+      {photoPick && (
+        <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/45" onClick={() => setPhotoPick(false)}>
+          <div
+            className="w-full max-w-[480px] rounded-t-2xl bg-white px-4 pt-3"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 18px)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#ddd]" />
+            <button
+              onClick={() => {
+                setPhotoPick(false);
+                camInput.current?.click();
+              }}
+              className="mb-2 flex w-full items-center gap-3 rounded-2xl border-2 border-[#c8dccb] bg-[#f4faf5] px-4 py-3.5 text-left text-[14px] font-extrabold text-[#2a5a3a]"
+            >
+              📷 カメラで撮る
+            </button>
+            <button
+              onClick={() => {
+                setPhotoPick(false);
+                albInput.current?.click();
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl border-2 border-[#c8d4e8] bg-[#f4f8ff] px-4 py-3.5 text-left text-[14px] font-extrabold text-[#2a4a7a]"
+            >
+              🖼 アルバムから選ぶ
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
