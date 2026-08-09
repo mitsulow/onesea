@@ -77,6 +77,9 @@ export default function UserPage() {
   const [dailyDdps, setDailyDdps] = useState<Array<{ day: string; body: string; fulfilled_pct: number | null }>>([]);
   const pctTimers = useRef<Record<string, number>>({});
   const [ddpOpen, setDdpOpen] = useState(false);
+  const [editDdp, setEditDdp] = useState(false);
+  const [ddpDraft, setDdpDraft] = useState("");
+  const [ddpSaving, setDdpSaving] = useState(false);
   const [ideas, setIdeas] = useState<Array<{ id: string; body: string; created_at: string }>>([]);
   const [ideasOpen, setIdeasOpen] = useState(false);
   const coverInput = useRef<HTMLInputElement>(null);
@@ -398,15 +401,55 @@ export default function UserPage() {
         {/* わらわ〜会員の未入力情報（本人のみ・全部埋まるまでバッジが消えない） */}
         {isMe && <PremiumSetupCard userId={profile.id} />}
 
-        {/* DDP（端的な夢） */}
-        {masterDdp && (
+        {/* DDP（端的な夢）— 本人は左の✎から修正できる */}
+        {(masterDdp || isMe) && (
           <div
             id="ddp-sec"
             className="mt-2.5 px-4 py-3.5"
             style={{ background: "linear-gradient(135deg,#ede6d6,#f6f1e4)", border: "1px solid #ddd2ba" }}
           >
-            <div className="text-[10px] font-bold tracking-[2px] text-[#8a6a42]">{profile.display_name ?? "この人"}のDDP</div>
-            <div className="mt-1 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-[#4a4030]">{masterDdp}</div>
+            <div className="flex items-center gap-2">
+              {isMe && !editDdp && (
+                <button
+                  onClick={() => { setDdpDraft(masterDdp ?? ""); setEditDdp(true); }}
+                  aria-label="DDPを修正"
+                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-[#c9b98a] bg-white text-[11px]"
+                >✎</button>
+              )}
+              <div className="text-[10px] font-bold tracking-[2px] text-[#8a6a42]">{profile.display_name ?? "この人"}のDDP</div>
+            </div>
+            {editDdp ? (
+              <div className="mt-1.5">
+                <textarea
+                  value={ddpDraft}
+                  onChange={(e) => setDdpDraft(e.target.value)}
+                  rows={3}
+                  maxLength={200}
+                  placeholder="あなたの端的な夢（DDP）を書いてください"
+                  className="w-full resize-y rounded-xl border border-[#ddd2ba] bg-white p-2.5 text-[14px] font-bold leading-relaxed outline-none focus:border-[#c9a94a]"
+                />
+                <div className="mt-1.5 flex justify-end gap-2">
+                  <button onClick={() => setEditDdp(false)} className="px-3 py-1.5 text-[12px] font-bold text-[#a09888]">キャンセル</button>
+                  <button
+                    disabled={ddpSaving}
+                    onClick={async () => {
+                      setDdpSaving(true);
+                      const { saveMyDdp } = await import("@/lib/mmm");
+                      await saveMyDdp(profile.id, ddpDraft);
+                      setMasterDdp(ddpDraft.trim() || null);
+                      setDdpSaving(false);
+                      setEditDdp(false);
+                    }}
+                    className="rounded-lg px-4 py-1.5 text-[12.5px] font-extrabold text-white disabled:opacity-40"
+                    style={{ background: "#c9a94a" }}
+                  >{ddpSaving ? "保存中..." : "保存する"}</button>
+                </div>
+              </div>
+            ) : masterDdp ? (
+              <div className="mt-1 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-[#4a4030]">{masterDdp}</div>
+            ) : (
+              <div className="mt-1 text-[12.5px] text-[#a89878]">まだDDP（端的な夢）が未設定です。✎から書いてみましょう。</div>
+            )}
           </div>
         )}
 

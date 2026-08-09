@@ -35,6 +35,7 @@ export default function ProfileSettingsPage() {
   const [city, setCity] = useState("");
   const [riceWork, setRiceWork] = useState("");
   const [lifeWork, setLifeWork] = useState("");
+  const [ddp, setDdp] = useState(""); // DDP(端的な夢)
   const [skills, setSkills] = useState("");
   const [wants, setWants] = useState("");
   const [sns, setSns] = useState<Record<string, string>>({});
@@ -127,6 +128,10 @@ export default function ProfileSettingsPage() {
       if (priv?.birth_city) setBirthCity(priv.birth_city as string);
       if (priv?.birth_date && !data?.birthday) setBirthday(priv.birth_date as string);
       // 読込が終わってから、残っている下書きを上書き復元(入力途中の方が新しい)
+      try {
+        const { data: dd } = await supabase.from("ddp").select("body").eq("user_id", u.id).maybeSingle();
+        if (dd?.body) setDdp(dd.body as string);
+      } catch {}
       restoreDraft();
       setTimeout(() => {
         draftReady.current = true;
@@ -150,6 +155,10 @@ export default function ProfileSettingsPage() {
         .filter(Boolean); // 無制限 — スキルは多いほど依頼が舞い込む
     const snsClean: Record<string, string> = {};
     for (const [k, v] of Object.entries(sns)) if (v.trim()) snsClean[k] = v.trim();
+    try {
+      const { saveMyDdp } = await import("@/lib/mmm");
+      await saveMyDdp(me.id, ddp);
+    } catch {}
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -233,6 +242,19 @@ export default function ProfileSettingsPage() {
         <div className="space-y-4 px-4 pt-4">
           {field("名前", displayName, setDisplayName, "名前（ニックネームもOK）")}
           {field("みんなへひとこと", statusLine, setStatusLine, "例: 沖縄で自然栽培はじめました")}
+
+          <div>
+            <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">DDP（あなたの端的な夢）</label>
+            <textarea
+              value={ddp}
+              onChange={(e) => setDdp(e.target.value)}
+              rows={2}
+              maxLength={200}
+              placeholder="例: 世界中に村をつくる / 家族と笑って暮らす"
+              className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
+            />
+            <p className="mt-0.5 text-[10px] text-[#b8ae9c]">マイページの一番上に大きく表示されます</p>
+          </div>
 
           <div>
             <label className="mb-1 block text-[12px] font-bold text-[#8a7a5a]">スキル（私はこんなことが出来ます）</label>
