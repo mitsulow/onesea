@@ -2730,8 +2730,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       {/* ── 一覧 ── */}
       {tab === "list" && (
         <>
-      {me &&
-        (adding ? (
+      {(adding && me) ? (
           <div className="mb-3 rounded-xl border border-[#c8b86a88] bg-[#fbf9f0] p-3">
             <div className="mb-2 text-[12.5px] font-extrabold text-[#8a7020]">🌾 田んぼを登録する</div>
             <div className="mb-2 flex gap-2">
@@ -2791,24 +2790,25 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
             </div>
           </div>
         ) : (
-          amOffice ? (
-          <button
-            onClick={() => setAdding(true)}
-            className="mb-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
-            style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
-          >
-            🌾 田んぼを登録する（事務局）
-          </button>
-          ) : (
+          <>
           <button
             onClick={() => setApplyOpen(true)}
-            className="mb-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
+            className="mb-2 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
             style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
           >
             🌾 田んぼを使って欲しい
           </button>
-          )
-        ))}
+          {amOffice && (
+          <button
+            onClick={() => setAdding(true)}
+            className="mb-3 w-full rounded-xl border-2 border-dashed py-2.5 text-[12.5px] font-extrabold"
+            style={{ borderColor: "#c8b86a55", color: "#a09060" }}
+          >
+            🌾 田んぼを登録する（事務局）
+          </button>
+          )}
+          </>
+        )}
           {tanbo === null ? (
             <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
           ) : tanbo.length === 0 ? (
