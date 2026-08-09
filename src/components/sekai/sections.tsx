@@ -450,7 +450,6 @@ export function MootsSection({
   );
 }
 
-
 /* ═══ 月例会の通し番号（2021年8月の満月会 = 第1回。開催日ベース） ═══ */
 const MOOT_NO_YEARS = [2021, 2022, 2023, 2024, 2025, 2026, 2027];
 let MOOT_NO_LIST: Array<{ dateKey: string; kind: "new" | "full"; no: number }> | null = null;
@@ -604,6 +603,7 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [wPlacePaste, setWPlacePaste] = useState("");
   const [wPlaceMsg, setWPlaceMsg] = useState<string | null>(null);
   const [wPlaceBusy, setWPlaceBusy] = useState(false);
+
   /** Google共有リンク → 場所を自動取り込み(マイページのおススメ地図と同じ最新解決API) */
   const resolvePlace = async (raw: string): Promise<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null> => {
     const m = raw.match(/https?:\/\/[^\s]+/);
@@ -641,6 +641,47 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [wPhoto, setWPhoto] = useState<string | null>(null);
   const [wUploading, setWUploading] = useState(false);
   const [wSaving, setWSaving] = useState(false);
+
+  /* ── 下書き自動保存: アプリ切替・スリープ・強制終了でも入力が消えない ── */
+  const VDRAFT_KEY = "onesea-vpost-draft";
+  const clearVDraft = () => {
+    try {
+      localStorage.removeItem(VDRAFT_KEY);
+    } catch {}
+  };
+  useEffect(() => {
+    if (evEditId) return; // 既存イベントの編集は下書き対象外
+    if (!evWriting && !writing) return;
+    try {
+      localStorage.setItem(
+        VDRAFT_KEY,
+        JSON.stringify({ ts: Date.now(), open: evWriting ? "event" : "report", kind: wKind, body: wBody, eventAt: wEventAt, eventEnd: wEventEnd, village: wVillage, photo: wPhoto, place: wPlace })
+      );
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [evWriting, writing, wKind, wBody, wEventAt, wEventEnd, wVillage, wPhoto, wPlace]);
+  useEffect(() => {
+    // 復元: 書きかけがあれば同じシートを開いて中身を戻す
+    try {
+      const raw = localStorage.getItem(VDRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (!d.ts || Date.now() - d.ts > 3 * 86400000 || !(d.body || d.eventAt)) {
+        localStorage.removeItem(VDRAFT_KEY);
+        return;
+      }
+      setWKind(d.kind ?? (d.open === "event" ? "event" : "normal"));
+      setWBody(d.body ?? "");
+      setWEventAt(d.eventAt ?? "");
+      setWEventEnd(d.eventEnd ?? "");
+      if (d.village) setWVillage(d.village);
+      setWPhoto(d.photo ?? null);
+      setWPlace(d.place ?? null);
+      if (d.open === "event") setEvWriting(true);
+      else if (d.open === "report") setWriting(true);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [cmts, setCmts] = useState<Record<string, VillagePostComment[]>>({});
   const [cOpen, setCOpen] = useState<Set<string>>(new Set());
@@ -916,6 +957,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       setWPlace(null);
       setWPlacePaste("");
       setWPlaceMsg(null);
+      clearVDraft();
       loadEvents();
       loadFeed();
       return;
@@ -981,6 +1023,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     setWPlace(null);
     setWPlacePaste("");
     setWPlaceMsg(null);
+    clearVDraft();
     loadFeed();
     loadEvents();
   };
@@ -1118,7 +1161,6 @@ export function ActivitySection({ me }: { me: User | null }) {
         </div>
       )}
 
-
       {/* 拠点未所属の人には入口を案内（投稿欄の場所が常に見える） */}
       {me && myVills.length === 0 && (
         <a
@@ -1152,7 +1194,6 @@ export function ActivitySection({ me }: { me: User | null }) {
           </div>
         </button>
       )}
-
 
 
       {/* 活動報告フィード */}
@@ -1425,10 +1466,9 @@ export function ActivitySection({ me }: { me: User | null }) {
       {seedOpen && <SeedSection me={me} />}
 
 
-
       {/* ✏️ 村の報告シート(下から出てくる — イベント作成と同じ挙動) */}
       {writing && me && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => setWriting(false)}>
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => { setWriting(false); clearVDraft(); }}>
           <div
             className="w-full max-w-[480px] md:max-w-[820px] rounded-t-2xl bg-white px-4 pt-3"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
@@ -1479,7 +1519,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               </label>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+              <button onClick={() => { setWriting(false); clearVDraft(); }} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
                 キャンセル
               </button>
               <button
@@ -1544,7 +1584,7 @@ export function ActivitySection({ me }: { me: User | null }) {
 
       {/* 📅 イベント作成モーダル */}
       {evWriting && me && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => { setEvWriting(false); setEvEditId(null); }}>
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/45" onClick={() => { setEvWriting(false); setEvEditId(null); clearVDraft(); }}>
           <div
             className="w-full max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] rounded-t-2xl bg-white px-4 pt-3"
             style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
@@ -1663,7 +1703,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               )}
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setEvWriting(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
+              <button onClick={() => { setEvWriting(false); setEvEditId(null); clearVDraft(); }} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
                 キャンセル
               </button>
               <button
@@ -3364,7 +3404,6 @@ export function MapLoader() {
   if (villages === null) return <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>;
   return <SekaiMap villages={villages} />;
 }
-
 
 /* ═══ 🌱 村の種 — 3人集まったら事務局へ拠点申請できる予備軍 ═══ */
 export function SeedSection({ me }: { me: User | null }) {

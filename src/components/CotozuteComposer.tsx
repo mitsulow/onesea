@@ -61,6 +61,19 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const [body, setBody] = useState("");
+  /* 下書き: アプリ切替・スリープでも本文が消えない(投稿・意図的クリアで破棄) */
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem("coto-draft");
+      if (d) setBody(d);
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      if (body) localStorage.setItem("coto-draft", body);
+      else localStorage.removeItem("coto-draft");
+    } catch {}
+  }, [body]);
   const [linkUrl, setLinkUrl] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [sending, setSending] = useState(false);

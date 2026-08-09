@@ -23,6 +23,21 @@ export default function ChatPage() {
   const [callActive, setCallActive] = useState(0); // 相手が通話ルームにいる人数
   const bottomRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null); // 入力欄(自動で膨らむ)
+  const draftKey = "talk-draft:" + String(chatId);
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem(draftKey);
+      if (d) setBody(d);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try {
+      if (body) localStorage.setItem(draftKey, body);
+      else localStorage.removeItem(draftKey);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [body]);
   const [photoPick, setPhotoPick] = useState(false); // 📷の2択シート
   const [photoSending, setPhotoSending] = useState(false);
   const camInput = useRef<HTMLInputElement | null>(null);

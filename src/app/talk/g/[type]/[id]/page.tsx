@@ -24,6 +24,21 @@ export default function GroupChatPage() {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement | null>(null); // 入力欄(自動で膨らむ)
+  const draftKey = "talk-draft:g:" + String(params.type) + ":" + String(params.id);
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem(draftKey);
+      if (d) setBody(d);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try {
+      if (body) localStorage.setItem(draftKey, body);
+      else localStorage.removeItem(draftKey);
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [body]);
   const [photoPick, setPhotoPick] = useState(false); // 📷の2択シート
   const [photoSending, setPhotoSending] = useState(false);
   const camInput = useRef<HTMLInputElement | null>(null);
