@@ -9,6 +9,7 @@ import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
 import { fetchMoais, createMoai, fetchMoaiFeed, moaiNameTaken, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
 import { PREFS } from "@/lib/sekai";
+import { ServiceMenuButton } from "@/components/ServiceMenu";
 
 /** MOAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
 export default function MoaiListPage() {
@@ -23,11 +24,13 @@ export default function MoaiListPage() {
   const [busy, setBusy] = useState(false);
   const [feed, setFeed] = useState<any[] | null>(null);
   const [nameTaken, setNameTaken] = useState<boolean | null>(null);
-  const [pref, setPref] = useState("東京都");
+  const [myIds, setMyIds] = useState<Set<string>>(new Set());
+  const [pref, setPref] = useState("オンライン");
   const [city, setCity] = useState("");
   const [keywords, setKeywords] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   useEffect(() => {
+    if (pref === "オンライン" || pref === "海外") { setCities([]); setCity(pref); return; }
     fetch("/data-municipalities.json").then((r) => r.json()).then((muni) => {
       const arr = (muni[pref] ?? []).map((x: any) => x[0]);
       setCities(arr);
@@ -40,7 +43,11 @@ export default function MoaiListPage() {
   const load = () => { fetchMoais().then(setMoais); fetchMoaiFeed().then(setFeed); };
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => setMe(session?.user ?? null));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const u = session?.user ?? null;
+      setMe(u);
+      if (u) supabase.from("moai_members").select("moai_id").eq("user_id", u.id).then(({ data }) => setMyIds(new Set((data ?? []).map((r: any) => r.moai_id))));
+    });
     load();
   }, []);
 
@@ -68,6 +75,7 @@ export default function MoaiListPage() {
     <main className="mx-auto min-h-dvh max-w-md pb-16" style={{ background: "#fbf7f5" }}>
       <IosBackButton />
       <header className="relative flex h-[52px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "#fff" }}>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2"><ServiceMenuButton /></span>
         <div className="text-[10px] tracking-[3px] text-[#a08078]">好きなことで、寄り集まろう。</div>
         <div className="text-[17px] font-extrabold tracking-[6px] text-[#3a2420]">MOAI</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2"><AvatarMenu /></span>
@@ -87,21 +95,6 @@ export default function MoaiListPage() {
             <button onClick={() => setQ("")} aria-label="消す" className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-[#f0ece8] text-[12px] font-bold text-[#a08078]">×</button>
           )}
         </div>
-
-        {/* つくるボタン */}
-        {me && !creating && (
-          <button
-            onClick={() => setCreating(true)}
-            className="mb-3 flex w-full items-center gap-3 rounded-2xl border-2 border-dashed px-4 py-3.5 text-left"
-            style={{ borderColor: "#c0392b", background: "rgba(200,60,50,.08)" }}
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full text-[20px] font-extrabold text-white" style={{ background: "#c0392b" }}>＋</span>
-            <span>
-              <span className="block text-[14px] font-extrabold text-[#3a2420]">MOAIをつくる</span>
-              <span className="block text-[11px] text-[#a08078]">「こんな趣味の人あつまれ！」— 拠点づくりと同じ手軽さ</span>
-            </span>
-          </button>
-        )}
 
         {/* 作成フォーム */}
         {me && creating && (
@@ -127,11 +120,13 @@ export default function MoaiListPage() {
             <div className="mb-1 text-[11px] font-bold text-[#a08078]">主な活動場所（必須）</div>
             <div className="mb-2 flex gap-2">
               <select value={pref} onChange={(e) => setPref(e.target.value)} className="rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
-                {PREFS.map((p) => <option key={p}>{p}</option>)}
+                <option>オンライン</option>{PREFS.map((p) => <option key={p}>{p}</option>)}<option>海外</option>
               </select>
-              <select value={city} onChange={(e) => setCity(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
-                {cities.map((c) => <option key={c}>{c}</option>)}
-              </select>
+              {pref !== "オンライン" && pref !== "海外" && (
+                <select value={city} onChange={(e) => setCity(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
+                  {cities.map((c) => <option key={c}>{c}</option>)}
+                </select>
+              )}
             </div>
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} placeholder="どんな集まり？（ひとことでOK）" className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
             <div className="mb-1 text-[11px] font-bold text-[#a08078]">検索キーワード（できる限り沢山！）</div>
@@ -150,36 +145,42 @@ export default function MoaiListPage() {
           </p>
         )}
 
-        {/* 一覧 */}
-        {moais === null ? (
-          <p className="py-8 text-center text-[12px] text-[#b09088]">読み込み中...</p>
-        ) : moais.length === 0 ? (
-          <p className="py-8 text-center text-[12px] text-[#b09088]">まだMOAIがありません。最初のひとつを作ってみましょう</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {moais.filter((m) => {
-              const k = q.trim().toLowerCase();
-              if (!k) return true;
-              return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || ((m as any).keywords ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k) || ((m as any).prefecture ?? "").toLowerCase().includes(k) || ((m as any).city ?? "").toLowerCase().includes(k);
-            }).map((m) => (
-              <Link key={m.id} href={`/moai/${m.id}`} className="overflow-hidden rounded-2xl no-underline shadow-md" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
-                <div className="relative h-20 bg-[#f6e4e0]">
-                  {m.cover_url ? <img src={srcCdn(m.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[22px]">{moaiCat(m.category).emoji}</div>}
-                  <span className="absolute -bottom-4 left-2 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#fff] bg-[#f3ded9] text-[15px]">
-                    {m.icon_url ? <img src={srcCdn(m.icon_url)} alt="" className="h-full w-full object-cover" /> : "🗿"}
-                  </span>
+        {/* サークル横スクロール（先頭に「MOAIをつくる」カード・セカイムラのイベント作成と同じ流儀） */}
+        <div className="hide-scrollbar -mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1">
+          {me && (
+            <button
+              onClick={() => setCreating(true)}
+              className="flex w-[110px] flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed py-5"
+              style={{ borderColor: "#c0392b", background: "rgba(200,60,50,.06)" }}
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full text-[18px] font-extrabold text-white" style={{ background: "#c0392b" }}>＋</span>
+              <span className="px-1 text-center text-[10.5px] font-extrabold leading-snug text-[#c0392b]">MOAIを<br />つくる</span>
+            </button>
+          )}
+          {(moais ?? []).filter((m) => {
+            const k = q.trim().toLowerCase();
+            if (!k) return true;
+            return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || ((m as any).keywords ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k) || ((m as any).prefecture ?? "").toLowerCase().includes(k) || ((m as any).city ?? "").toLowerCase().includes(k);
+          }).map((m) => (
+            <Link key={m.id} href={`/moai/${m.id}`} className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl no-underline shadow-md" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
+              <div className="relative h-20 bg-[#f6e4e0]">
+                {m.cover_url ? <img src={srcCdn(m.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[22px]">{moaiCat(m.category).emoji}</div>}
+                <span className="absolute -bottom-4 left-2 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#fff] bg-[#f3ded9] text-[15px]">
+                  {m.icon_url ? <img src={srcCdn(m.icon_url)} alt="" className="h-full w-full object-cover" /> : "🗿"}
+                </span>
+              </div>
+              <div className="px-2.5 pb-2 pt-5">
+                <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{m.name}</div>
+                {myIds.has(m.id)
+                  ? <div className="mt-1 inline-block rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold" style={{ borderColor: "#c0392b", color: "#c0392b" }}>✓ 参加中</div>
+                  : <div className="mt-1 inline-block rounded-full px-2 py-0.5 text-[9.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>入部希望 →</div>}
+                <div className="mt-0.5 truncate text-[10px] text-[#b09088]">
+                  {moaiCat(m.category).label}{m.moai_members?.[0]?.count ? ` ・ ${m.moai_members[0].count}人` : ""}
                 </div>
-                <div className="px-2.5 pb-2 pt-5">
-                  <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{m.name}</div>
-                  <div className="mt-1 inline-block rounded-full px-2 py-0.5 text-[9.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>入部希望 →</div>
-                  <div className="mt-0.5 truncate text-[10px] text-[#b09088]">
-                    {moaiCat(m.category).label}{m.moai_members?.[0]?.count ? ` ・ ${m.moai_members[0].count}人` : ""}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+              </div>
+            </Link>
+          ))}
+        </div>
 
         {/* 全サークル横断の活動フィード */}
         <div className="mt-5">

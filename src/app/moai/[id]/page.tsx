@@ -187,22 +187,23 @@ export default function MoaiDetailPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md pb-20" style={{ background: "#fbf7f5" }}>
       <IosBackButton />
-      {/* ヘッダー: カバー + アイコン + 参加 */}
-      <header
-        className="relative px-4 pb-4 pt-3 text-center"
-        style={{
-          background: moai.cover_url
-            ? `linear-gradient(165deg, rgba(150,30,25,.28), rgba(120,20,15,.45)), url(${moai.cover_url}) center/cover`
-            : "linear-gradient(165deg,#fff,#fff)",
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <Link href="/moai" className="text-[13px] font-bold text-[#c0392b] no-underline">◀ MOAI</Link>
-          <span className="absolute right-3 top-3"><AvatarMenu /></span>
-        </div>
-        <div className="mt-2 flex justify-center">
+      {/* カバー画像ブロック（写真だけ・文字は乗せない） */}
+      <div className="relative h-[150px]" style={{ background: moai.cover_url ? `url(${moai.cover_url}) center/cover` : "linear-gradient(160deg,#e8564a,#c0392b)" }}>
+        <div className="absolute left-3 top-3"><Link href="/moai" className="rounded-full bg-black/35 px-2.5 py-1 text-[12px] font-bold text-white no-underline">◀ MOAI</Link></div>
+        <div className="absolute right-3 top-3"><AvatarMenu /></div>
+        {isLeader && (
+          <label className="absolute bottom-2 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg">
+            📷
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("cover", e.target.files?.[0] ?? null)} />
+          </label>
+        )}
+      </div>
+
+      {/* 文字情報は画像の下・明るい背景で（アイコンは境目にめり込み） */}
+      <header className="relative px-4 pb-4 text-center" style={{ background: "#fbf7f5" }}>
+        <div className="-mt-9 flex justify-center">
           <label className={isLeader ? "relative cursor-pointer" : "relative"}>
-            <span className="flex h-[74px] w-[74px] items-center justify-center overflow-hidden rounded-full border-4 border-[#fff] bg-[#f3ded9] text-[30px] shadow-lg">
+            <span className="flex h-[74px] w-[74px] items-center justify-center overflow-hidden rounded-full border-4 border-[#fbf7f5] bg-[#f3ded9] text-[30px] shadow-lg">
               {moai.icon_url ? <img src={srcCdn(moai.icon_url)} alt="" className="h-full w-full object-cover" /> : moaiCat(moai.category).emoji}
             </span>
             {isLeader && (
@@ -214,7 +215,7 @@ export default function MoaiDetailPage() {
           </label>
         </div>
         <h1 className="mt-2 text-[20px] font-extrabold tracking-[1px] text-[#3a2420]">{moai.name}</h1>
-        <div className="mt-0.5 text-[11.5px] text-[#a08078]">{moaiCat(moai.category).emoji} {moaiCat(moai.category).label}{moai.prefecture ? ` ・ 📍${moai.prefecture}${moai.city ?? ""}` : ""} ・ {members.size}人{isOwner ? "（あなたがOYA）" : ""}</div>
+        <div className="mt-0.5 text-[11.5px] font-bold text-[#a08078]">{moaiCat(moai.category).emoji} {moaiCat(moai.category).label}{moai.prefecture ? ` ・ 📍${moai.prefecture}${moai.city ?? ""}` : ""} ・ {members.size}人{isOwner ? "（あなたがOYA）" : ""}</div>
         {moai.description && <p className="mx-auto mt-1.5 max-w-[320px] text-[12px] leading-relaxed text-[#6a5048]">{moai.description}</p>}
         {/* 部員アイコンをずらっと */}
         {memberProfs.length > 0 && (
@@ -247,12 +248,6 @@ export default function MoaiDetailPage() {
             <button onClick={async () => { if (!confirm("このMOAIを削除しますか？（投稿もすべて消えます）")) return; await deleteMoai(moaiId); router.push("/moai"); }} className="rounded-xl border border-[#a05a6a] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">🗑</button>
           )}
         </div>
-        {isLeader && (
-          <label className="absolute right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg" style={{ bottom: -18 }}>
-            📷
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("cover", e.target.files?.[0] ?? null)} />
-          </label>
-        )}
       </header>
 
       <div className="px-3 pt-6">
@@ -406,7 +401,7 @@ export default function MoaiDetailPage() {
             </select>
             <div className="mb-2 flex gap-2">
               <select value={ePref} onChange={(e) => { setEPref(e.target.value); setECity(""); }} className="rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
-                {PREFS.map((p) => <option key={p}>{p}</option>)}
+                <option>オンライン</option>{PREFS.map((p) => <option key={p}>{p}</option>)}<option>海外</option>
               </select>
               <select value={eCity} onChange={(e) => setECity(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
                 <option value="">市町村を選ぶ</option>
