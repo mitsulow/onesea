@@ -2496,6 +2496,7 @@ export function ClubsSection({ me }: { me: User | null }) {
             🚩 部活をつくる
           </button>
         ))}
+
     </section>
   );
 }
@@ -2508,6 +2509,74 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
     if (!me) { setAmOffice(false); return; }
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
   }, [me]);
+  // 田んぼ申請フォーム(一般向け→事務局へ届く)
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [apName, setApName] = useState("");
+  const [apPhone, setApPhone] = useState("");
+  const [apEmail, setApEmail] = useState("");
+  const [apWho, setApWho] = useState("休耕田（耕作放棄）");
+  const [apPref, setApPref] = useState("東京都");
+  const [apCity, setApCity] = useState("");
+  const [apCities, setApCities] = useState<string[]>([]);
+  const [apAddr, setApAddr] = useState("");
+  const [apTanboName, setApTanboName] = useState("");
+  const [apFarmer, setApFarmer] = useState("農家");
+  const [apSending, setApSending] = useState(false);
+  useEffect(() => {
+    if (!applyOpen) return;
+    fetch("/data-municipalities.json").then((r) => r.json()).then((muni) => {
+      const arr = ((muni[apPref] ?? []) as any[]).map((x) => x[0]);
+      setApCities(arr);
+      if (!arr.includes(apCity)) setApCity(arr[0] ?? "");
+    }).catch(() => setApCities([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apPref, applyOpen]);
+  const OFFICE_HIDAMARI = "0f854cb5-fad3-47ee-885f-0646f6b94b93"; // 事務局(hidamari.1221)
+  const submitApply = async () => {
+    if (!me) { alert("ログインすると申請できます（無料のGoogleログイン）"); return; }
+    if (!apName.trim() || !apPhone.trim() || !apEmail.trim() || !apCity) { alert("名前・携帯番号・メールアドレス・住所（市町村まで）は必須です"); return; }
+    if (apSending) return;
+    setApSending(true);
+    const supabase = createClient();
+    const { error } = await supabase.from("tanbo_applications").insert({
+      user_id: me.id,
+      applicant_name: apName.trim(),
+      phone: apPhone.trim(),
+      email: apEmail.trim(),
+      farmer_who: apWho,
+      prefecture: apPref,
+      city: apCity,
+      address_detail: apAddr.trim() || null,
+      tanbo_name: apTanboName.trim() || null,
+      farmer_type: apFarmer,
+    });
+    if (!error) {
+      // 事務局(ひだまりさん)のTalKへ申請内容を届ける
+      try {
+        const { getOrCreateChat, sendMessage } = await import("@/lib/line");
+        const chatId = await getOrCreateChat(me.id, OFFICE_HIDAMARI);
+        if (chatId) {
+          const lines = [
+            "【田んぼ申請】🌾",
+            `お名前: ${apName.trim()}`,
+            `携帯: ${apPhone.trim()}`,
+            `メール: ${apEmail.trim()}`,
+            `お米作りをしている人: ${apWho}`,
+            `場所: ${apPref}${apCity}${apAddr.trim() ? " " + apAddr.trim() : ""}`,
+            apTanboName.trim() ? `田んぼの名前: ${apTanboName.trim()}` : "",
+            `農家区分: ${apFarmer}`,
+          ].filter(Boolean);
+          await sendMessage(chatId, me.id, lines.join("\n"));
+        }
+      } catch {}
+      setApplyOpen(false);
+      setApName(""); setApPhone(""); setApEmail(""); setApAddr(""); setApTanboName("");
+      alert("申請を送りました！事務局が確認して田んぼのページを作ります🌾");
+    } else {
+      alert("送信できませんでした。もう一度お試しください");
+    }
+    setApSending(false);
+  };
   const [sales, setSales] = useState<any[]>([]); // お米販売(旧サイトから移行)
   const [newsRows, setNewsRows] = useState<any[]>([]); // 米部お知らせ(旧サイトから移行)
   const [saleOpen, setSaleOpen] = useState<string | null>(null); // こだわりを開いた販売
@@ -2666,38 +2735,42 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
           ) : tanbo.length === 0 ? (
             <p className="py-2 text-[12px] text-[#a0aca0]">まだ田んぼが登録されていません</p>
           ) : (
-            <div className="space-y-2">
+            <div>
               <select
                 value={listPref}
                 onChange={(e) => setListPref(e.target.value)}
-                className="w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] font-bold text-[#8a7020] outline-none"
+                className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] font-bold text-[#8a7020] outline-none"
               >
                 <option value="">全国の田んぼ（{tanbo.length}）</option>
                 {[...new Set(tanbo.map((t) => t.prefecture).filter(Boolean))].map((pf) => (
                   <option key={pf} value={pf}>{pf}（{tanbo.filter((t) => t.prefecture === pf).length}）</option>
                 ))}
               </select>
-              {tanbo.filter((t) => !listPref || t.prefecture === listPref).map((t) => (
-                <Link
-                  key={t.id}
-                  href={`/sekai/kome/${t.id}`}
-                  className="flex w-full items-center gap-2.5 rounded-xl border border-[#eef2ec] bg-white p-2 text-left no-underline"
-                >
-                  {t.icon_url || t.photo_url ? (
-                    <img src={srcCdn(t.icon_url ?? t.photo_url)} alt="" className="h-12 w-12 flex-shrink-0 rounded-lg object-cover" />
-                  ) : (
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-[#f2f4ea] text-xl">🌾</div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[13px] font-bold text-[#3a4a34]">{t.name}</div>
-                    <div className="text-[10.5px] text-[#a0aca0]">
-                      {t.prefecture} ・ {t.profiles?.display_name ?? ""}
+              {/* 楽市楽座の出品カードと同じ2列グリッド */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {tanbo.filter((t) => !listPref || t.prefecture === listPref).map((t) => (
+                  <Link
+                    key={t.id}
+                    href={`/sekai/kome/${t.id}`}
+                    className="overflow-hidden rounded-xl border border-[#eef2ec] bg-white no-underline shadow-sm"
+                  >
+                    <div className="h-[110px] w-full bg-[#f2f4ea]">
+                      {t.cover_url || t.photo_url || t.icon_url ? (
+                        <img src={srcCdn(t.cover_url ?? t.photo_url ?? t.icon_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[30px]" style={{ background: "linear-gradient(160deg,#dcecc8,#a8cc88)" }}>🌾</div>
+                      )}
                     </div>
-                    {t.note && <div className="truncate text-[11px] text-[#8a968a]">{t.note}</div>}
-                  </div>
-                  <span className="flex-shrink-0 rounded-full px-2 py-1 text-[10px] font-extrabold text-white" style={{ background: "#a08a30" }}>ページへ →</span>
-                </Link>
-              ))}
+                    <div className="px-2 py-1.5">
+                      <div className="line-clamp-1 text-[12.5px] font-bold text-[#3a4a34]">{t.name}</div>
+                      <div className="mt-0.5 flex items-center justify-between">
+                        <span className="truncate text-[10px] text-[#a0aca0]">{t.prefecture}</span>
+                        <span className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-extrabold text-white" style={{ background: "#a08a30" }}>ページへ →</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
           {detail}
@@ -2880,9 +2953,63 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
             🌾 田んぼを登録する（事務局）
           </button>
           ) : (
-          <p className="mt-3 rounded-xl bg-[#faf8ee] px-4 py-2.5 text-center text-[11.5px] text-[#a09060]">田んぼの登録は事務局が行います。登録したい方は事務局までご連絡ください🌾</p>
+          <button
+            onClick={() => setApplyOpen(true)}
+            className="mt-3 w-full rounded-xl border-2 border-dashed py-3 text-[13.5px] font-extrabold"
+            style={{ borderColor: "#c8b86a88", color: "#8a7020" }}
+          >
+            🌾 田んぼを申請したい（事務局がページを作ります）
+          </button>
           )
         ))}
+      {/* 田んぼ申請フォーム(→事務局hidamariさんへ) */}
+      {applyOpen && (
+        <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/50" onClick={() => setApplyOpen(false)}>
+          <div className="max-h-[88dvh] w-full max-w-[480px] overflow-y-auto rounded-t-2xl bg-white p-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }} onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#e0d8c0]" />
+            <div className="mb-0.5 text-[14px] font-extrabold text-[#5a4a20]">🌾 田んぼを申請する</div>
+            <p className="mb-3 text-[11px] text-[#a09060]">事務局が内容を確認して、田んぼのページを作ります</p>
+
+            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">お名前（必須）</div>
+            <input value={apName} onChange={(e) => setApName(e.target.value)} placeholder="例: 佐藤みつろう" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
+
+            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">携帯番号（必須）</div>
+            <input value={apPhone} onChange={(e) => setApPhone(e.target.value)} type="tel" placeholder="例: 090-1234-5678" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
+
+            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">メールアドレス（必須）</div>
+            <input value={apEmail} onChange={(e) => setApEmail(e.target.value)} type="email" placeholder="例: example@gmail.com" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
+
+            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">この田んぼでお米作りをしている人はどなたですか？</div>
+            <select value={apWho} onChange={(e) => setApWho(e.target.value)} className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-2 py-2.5 text-[13px] outline-none">
+              {["休耕田（耕作放棄）", "本人", "家族", "友人", "その他"].map((o) => <option key={o}>{o}</option>)}
+            </select>
+
+            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">田んぼの場所（住所）</div>
+            <div className="mb-2 flex gap-2">
+              <select value={apPref} onChange={(e) => setApPref(e.target.value)} className="rounded-xl border border-[#e8e2cc] bg-white px-2 py-2.5 text-[13px] outline-none">
+                {PREFS.map((p) => <option key={p}>{p}</option>)}
+              </select>
+              <select value={apCity} onChange={(e) => setApCity(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#e8e2cc] bg-white px-2 py-2.5 text-[13px] outline-none">
+                {apCities.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <input value={apAddr} onChange={(e) => setApAddr(e.target.value)} placeholder="番地など（例: 大字◯◯ 123-4）" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
+
+            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">その田んぼに名前がある場合は入れて下さい</div>
+            <input value={apTanboName} onChange={(e) => setApTanboName(e.target.value)} placeholder="例: よろしくのんた" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
+
+            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">農家さんですか？</div>
+            <select value={apFarmer} onChange={(e) => setApFarmer(e.target.value)} className="mb-3 w-full rounded-xl border border-[#e8e2cc] bg-white px-2 py-2.5 text-[13px] outline-none">
+              {["農家", "兼業", "自分の家の米だけ作っている"].map((o) => <option key={o}>{o}</option>)}
+            </select>
+
+            <div className="flex gap-2">
+              <button onClick={() => setApplyOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">キャンセル</button>
+              <button onClick={submitApply} disabled={apSending || !apName.trim() || !apPhone.trim() || !apEmail.trim()} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#a08a30" }}>{apSending ? "送信中..." : "この内容で申請する"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
