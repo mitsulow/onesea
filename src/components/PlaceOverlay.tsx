@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 /**
  * 場所の詳細オーバーレイ — OneSeaの画面の上にGoogleマップを重ねて表示。
  * ×を押すと元のOneSea画面に戻る(アプリの外へ飛ばない)。
@@ -16,6 +18,7 @@ export interface PlaceInfo {
 }
 
 export function PlaceOverlay({ place, onClose }: { place: PlaceInfo; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
   // 座標があれば座標だけで指す(名前を混ぜると構文が壊れて無関係な場所に飛ぶことがある)
   const q = place.lat != null && place.lng != null ? `${place.lat},${place.lng}` : (place.name ?? "");
   const embed = `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&hl=ja&output=embed`;
@@ -34,6 +37,21 @@ export function PlaceOverlay({ place, onClose }: { place: PlaceInfo; onClose: ()
           <div className="min-w-0 truncate text-[14px] font-extrabold text-[#3a3428]">
             📍 {place.name || "場所の詳細"}
           </div>
+          {place.name && (
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(place.name!);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1800);
+                } catch {}
+              }}
+              className="flex-shrink-0 rounded-full border px-2.5 py-1 text-[10.5px] font-extrabold"
+              style={copied ? { borderColor: "#2a8a4a", color: "#2a8a4a", background: "#eefaf0" } : { borderColor: "#c8bfa8", color: "#6a5f4e", background: "#faf6ec" }}
+            >
+              {copied ? "✓ コピーした" : "住所をコピー"}
+            </button>
+          )}
           <button
             onClick={onClose}
             aria-label="とじる"
