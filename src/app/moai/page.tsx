@@ -25,6 +25,7 @@ export default function MoaiListPage() {
   const [nameTaken, setNameTaken] = useState<boolean | null>(null);
   const [pref, setPref] = useState("東京都");
   const [city, setCity] = useState("");
+  const [keywords, setKeywords] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   useEffect(() => {
     fetch("/data-municipalities.json").then((r) => r.json()).then((muni) => {
@@ -48,7 +49,7 @@ export default function MoaiListPage() {
     if (!city) { alert("主な活動場所（市町村）を選んでください"); return; }
     if (await moaiNameTaken(name)) { setNameTaken(true); return; }
     setBusy(true);
-    const id = await createMoai(me.id, { name: name.trim(), category: cat, description: desc.trim() || null, prefecture: pref, city, icon_url: icon, cover_url: cover });
+    const id = await createMoai(me.id, { name: name.trim(), category: cat, description: desc.trim() || null, keywords: keywords.trim() || null, prefecture: pref, city, icon_url: icon, cover_url: cover });
     setBusy(false);
     if (id) {
       window.location.href = `/moai/${id}`;
@@ -133,6 +134,9 @@ export default function MoaiListPage() {
               </select>
             </div>
             <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} placeholder="どんな集まり？（ひとことでOK）" className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
+            <div className="mb-1 text-[11px] font-bold text-[#a08078]">検索キーワード（できる限り沢山！）</div>
+            <textarea value={keywords} onChange={(e) => setKeywords(e.target.value)} rows={2} placeholder="例: ランニング マラソン 朝活 健康 ダイエット 皇居 5km 初心者歓迎 …（スペースや「、」区切りで沢山）" className="mb-1 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
+            <p className="mb-2 text-[10px] text-[#b09088]">※ ここに書いた言葉で検索に引っかかりやすくなります</p>
             <div className="flex gap-2">
               <button onClick={() => setCreating(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
               <button onClick={submit} disabled={!name.trim() || busy || nameTaken === true} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{busy ? "作成中..." : "つくる"}</button>
@@ -156,7 +160,7 @@ export default function MoaiListPage() {
             {moais.filter((m) => {
               const k = q.trim().toLowerCase();
               if (!k) return true;
-              return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k);
+              return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || ((m as any).keywords ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k) || ((m as any).prefecture ?? "").toLowerCase().includes(k) || ((m as any).city ?? "").toLowerCase().includes(k);
             }).map((m) => (
               <Link key={m.id} href={`/moai/${m.id}`} className="overflow-hidden rounded-2xl no-underline shadow-md" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
                 <div className="relative h-20 bg-[#f6e4e0]">

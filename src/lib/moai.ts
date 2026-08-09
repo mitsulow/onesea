@@ -15,6 +15,7 @@ export interface Moai {
   cover_url: string | null;
   prefecture?: string | null;
   city?: string | null;
+  keywords?: string | null;
   created_by: string;
   created_at: string;
   moai_members?: Array<{ count: number }>;
@@ -40,13 +41,15 @@ export const MOAI_CATEGORIES = [
   { id: "travel", label: "旅行", emoji: "✈️" },
   { id: "onsen", label: "温泉", emoji: "♨️" },
   { id: "love", label: "恋愛", emoji: "💕" },
+  { id: "space", label: "宇宙", emoji: "🌌" },
+  { id: "fashion", label: "ファッション", emoji: "👗" },
   { id: "other", label: "その他", emoji: "✨" },
 ] as const;
 
 export const moaiCat = (id: string | null) =>
   MOAI_CATEGORIES.find((c) => c.id === id) ?? MOAI_CATEGORIES[MOAI_CATEGORIES.length - 1];
 
-const SELECT = "id, name, category, description, prefecture, city, icon_url, cover_url, created_by, created_at, moai_members(count)";
+const SELECT = "id, name, category, description, keywords, prefecture, city, icon_url, cover_url, created_by, created_at, moai_members(count)";
 
 export async function fetchMoais(): Promise<Moai[]> {
   const supabase = createClient();
@@ -62,7 +65,7 @@ export async function fetchMoai(id: string): Promise<Moai | null> {
 
 export async function createMoai(
   userId: string,
-  m: { name: string; category: string; description?: string | null; prefecture?: string | null; city?: string | null; icon_url?: string | null; cover_url?: string | null }
+  m: { name: string; category: string; description?: string | null; keywords?: string | null; prefecture?: string | null; city?: string | null; icon_url?: string | null; cover_url?: string | null }
 ): Promise<string | null> {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -103,7 +106,7 @@ export async function fetchMoaiFeed(limit = 40) {
   return data ?? [];
 }
 
-export async function updateMoai(id: string, m: { name?: string; category?: string; description?: string | null; prefecture?: string | null; city?: string | null }) {
+export async function updateMoai(id: string, m: { name?: string; category?: string; description?: string | null; keywords?: string | null; prefecture?: string | null; city?: string | null }) {
   const supabase = createClient();
   return supabase.from("moai").update(m).eq("id", id);
 }

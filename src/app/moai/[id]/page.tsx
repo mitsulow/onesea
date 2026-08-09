@@ -62,6 +62,7 @@ export default function MoaiDetailPage() {
   const [eName, setEName] = useState("");
   const [eCat, setECat] = useState("music");
   const [eDesc, setEDesc] = useState("");
+  const [eKw, setEKw] = useState("");
   const [ePref, setEPref] = useState("東京都");
   const [eCity, setECity] = useState("");
   const [eCities, setECities] = useState<string[]>([]);
@@ -240,7 +241,7 @@ export default function MoaiDetailPage() {
             {joined ? "✓ 参加中（タップで退会）" : "入部希望（このMOAIに参加）"}
           </button>
           {canManage && (
-            <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEPref(moai.prefecture ?? "東京都"); setECity(moai.city ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
+            <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEKw((moai as any).keywords ?? ""); setEPref(moai.prefecture ?? "東京都"); setECity(moai.city ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
           )}
           {canManage && (
             <button onClick={async () => { if (!confirm("このMOAIを削除しますか？（投稿もすべて消えます）")) return; await deleteMoai(moaiId); router.push("/moai"); }} className="rounded-xl border border-[#a05a6a] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">🗑</button>
@@ -413,9 +414,10 @@ export default function MoaiDetailPage() {
               </select>
             </div>
             <textarea value={eDesc} onChange={(e) => setEDesc(e.target.value)} rows={2} className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none" />
+            <textarea value={eKw} onChange={(e) => setEKw(e.target.value)} rows={2} placeholder="検索キーワード（沢山ほど見つかりやすい）" className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none" />
             <div className="flex gap-2">
               <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
-              <button onClick={async () => { await updateMoai(moaiId, { name: eName.trim(), category: eCat, description: eDesc.trim() || null, prefecture: ePref, city: eCity || null }); setEditing(false); load(); }} disabled={!eName.trim()} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>保存する</button>
+              <button onClick={async () => { await updateMoai(moaiId, { name: eName.trim(), category: eCat, description: eDesc.trim() || null, keywords: eKw.trim() || null, prefecture: ePref, city: eCity || null }); setEditing(false); load(); }} disabled={!eName.trim()} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>保存する</button>
             </div>
           </div>
         </div>
