@@ -2981,10 +2981,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
                 {apCities.map((c) => <option key={c}>{c}</option>)}
               </select>
             </div>
-            <input value={apAddr} onChange={(e) => setApAddr(e.target.value)} placeholder="番地など（例: 大字◯◯ 123-4）" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
 
-            <div className="mb-1 text-[11px] font-bold text-[#8a7020]">その田んぼに名前がある場合は入れて下さい</div>
-            <input value={apTanboName} onChange={(e) => setApTanboName(e.target.value)} placeholder="例: よろしくのんた" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
 
             <div className="mb-1 text-[11px] font-bold text-[#8a7020]">農家さんですか？</div>
             <select value={apFarmer} onChange={(e) => setApFarmer(e.target.value)} className="mb-3 w-full rounded-xl border border-[#e8e2cc] bg-white px-2 py-2.5 text-[13px] outline-none">
