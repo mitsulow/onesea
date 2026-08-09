@@ -165,6 +165,8 @@ export function HomeDashboard() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const uid = session?.user?.id;
       if (!uid) return;
+      // 手帳の端末間同期(スマホで入れた予定がPCでも出る): 開いた時に取り込み+書いたら自動預け
+      import("@/lib/techoSync").then(({ startTechoSync }) => startTechoSync(uid)).catch(() => {});
       const { data: prof } = await supabase.from("profiles").select("birthday").eq("id", uid).maybeSingle();
       if (prof?.birthday) {
         setAdvDays(Math.floor((Date.now() - new Date(prof.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1);
