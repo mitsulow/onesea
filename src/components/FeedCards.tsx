@@ -57,15 +57,15 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
       {/* ヘッダー: 拠点名（県）が太字の名前になる */}
       <div className="flex items-center gap-2.5">
         <button onClick={() => v && router.push(`/sekai/village/${v.id}`)} className="flex-shrink-0">
-          {mura.profiles?.avatar_url ? (
+          {/* 個人ではなく拠点(=ページ)のアイコンで発信 — 過去の投稿もセカイムラ◯◯の顔になる */}
+          {v?.icon_url ? (
             <img
-              src={srcCdn(mura.profiles.avatar_url)}
+              src={srcCdn(v.icon_url)}
               alt=""
-              referrerPolicy="no-referrer"
-              className="h-[40px] w-[40px] rounded-full object-cover"
+              className="h-[40px] w-[40px] rounded-full border border-[#dce8dc] object-cover"
             />
           ) : (
-            <span className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-[#d8eef8] text-[16px]">
+            <span className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-[16px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
               🏡
             </span>
           )}
@@ -75,9 +75,10 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
             onClick={() => v && router.push(`/sekai/village/${v.id}`)}
             className="block max-w-full truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21]"
           >
-            {v ? `${v.name}${v.prefecture ? `（${v.prefecture}）` : ""}` : "セカイムラ"} <SekaiBadge size={14} />
+            {v ? v.name : "セカイムラ"}<span className="text-[12px] font-normal text-[#7a9a80]">からの投稿</span> <SekaiBadge size={14} />
           </button>
           <div className="text-[11.5px] leading-tight text-[#8a8d91]">
+            {v?.prefecture ? `@${v.prefecture} ・ ` : ""}
             {relTime(mura.created_at)}
             {mura.profiles?.display_name && <span className="ml-1.5">{mura.profiles.display_name}</span>}
           </div>
