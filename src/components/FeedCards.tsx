@@ -1,5 +1,6 @@
 "use client";
 
+import { EmbedCard } from "@/components/EmbedCard";
 import { SekaiBadge } from "@/components/WarawaBadge";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -131,6 +132,11 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
       {mura.photo_url && (
         <div className="-mx-4 mt-2">
           <img src={srcCdn(mura.photo_url)} alt="" loading="lazy" className="w-full object-cover" style={{ maxHeight: 480 }} />
+        </div>
+      )}
+      {mura.embed && (
+        <div className="mt-2">
+          <EmbedCard embed={mura.embed} />
         </div>
       )}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { EmbedCard } from "@/components/EmbedCard";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { readTecho, writeTecho } from "@/lib/techoStore";
 import { SekaiBadge } from "@/components/WarawaBadge";
@@ -919,12 +920,31 @@ export function ActivitySection({ me }: { me: User | null }) {
       loadFeed();
       return;
     }
+    // 本文にSNS等のリンクがあれば、コトヅテと同じ自動切り抜き埋め込みを作る(入力欄は1つのまま)
+    let embed: { url: string; title?: string; description?: string; image?: string; platform?: string } | null = null;
+    if (wKind === "normal") {
+      const um = wBody.match(/https?:\/\/[^\s]+/);
+      if (um) {
+        try {
+          const r = await fetch(`/api/ogp?url=${encodeURIComponent(um[0])}`);
+          if (r.ok) {
+            const d = await r.json();
+            embed = { url: um[0], title: d.title, description: d.description, image: d.image, platform: d.platform };
+          } else {
+            embed = { url: um[0] };
+          }
+        } catch {
+          embed = { url: um[0] };
+        }
+      }
+    }
     const { data: inserted } = await supabase
       .from("village_posts")
       .insert({
         village_id: nationwide ? null : wVillage,
         user_id: me.id,
         body: wBody.trim(),
+        embed,
         photo_url: wPhoto ?? (wKind === "event" ? placeNow?.image ?? null : null),
         kind: wKind,
         event_at: eventAt,
@@ -1239,6 +1259,11 @@ export function ActivitySection({ me }: { me: User | null }) {
                 {p.photo_url && (
                   <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-96 w-full rounded-xl object-cover" />
                 )}
+                {p.embed && (
+                  <div className="mt-2">
+                    <EmbedCard embed={p.embed} />
+                  </div>
+                )}
                 {/* コメント（5件まで表示、以降は折りたたみ） */}
                 {(() => {
                   const list = cmts[p.id] ?? [];
@@ -1431,7 +1456,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               onChange={(e) => setWBody(e.target.value)}
               rows={3}
               autoFocus
-              placeholder="例: 今日は田植えをしました / 古民家の床を張り替えました"
+              placeholder="例: 今日は田植えをした / 古民家の床を張り替えました / ここに他社SNSのリンクを貼る事も出来ます"
               className="mb-2 w-full resize-y rounded-xl border border-[#e2eae0] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none focus:border-[#4a8a5c]"
             />
             <div className="mb-2 flex items-center gap-2">
