@@ -23,13 +23,25 @@ export interface MuraPost {
   profiles: { username: string | null; display_name: string | null; avatar_url: string | null; member_no?: number | null; warawa_until?: string | null } | null;
 }
 
+export interface MoaiFeedPost {
+  id: string;
+  body: string;
+  photo_url: string | null;
+  kind: string | null;
+  created_at: string;
+  user_id: string;
+  moai: { id: string; name: string; icon_url: string | null; category: string | null } | null;
+  profiles: { username: string | null; display_name: string | null; avatar_url: string | null } | null;
+}
+
 export type FeedItem =
   | { kind: "coto"; at: string; post: CotozutePost }
   | { kind: "mura"; at: string; mura: MuraPost }
-  | { kind: "shop"; at: string; shop: Shop };
+  | { kind: "shop"; at: string; shop: Shop }
+  | { kind: "moai"; at: string; moaiPost: MoaiFeedPost };
 
 export function feedKey(it: FeedItem): string {
-  return it.kind + ":" + (it.kind === "coto" ? it.post.id : it.kind === "mura" ? it.mura.id : it.shop.id);
+  return it.kind + ":" + (it.kind === "coto" ? it.post.id : it.kind === "mura" ? it.mura.id : it.kind === "moai" ? it.moaiPost.id : it.shop.id);
 }
 
 const POST_SELECT =
@@ -45,11 +57,13 @@ export async function fetchMixedFeed(cursor: string | null, limit = 20): Promise
 
   let qP = supabase.from("posts").select(POST_SELECT).order("created_at", { ascending: false }).limit(limit);
   let qM = supabase.from("village_posts").select(MURA_SELECT).order("created_at", { ascending: false }).limit(limit);
+  let qMo = supabase.from("moai_posts").select("id, body, photo_url, kind, created_at, user_id, moai!moai_posts_moai_id_fkey(id, name, icon_url, category), profiles!moai_posts_user_id_fkey(username, display_name, avatar_url)").eq("kind", "normal").order("created_at", { ascending: false }).limit(limit);
   if (cursor) {
     qP = qP.lt("created_at", cursor);
     qM = qM.lt("created_at", cursor);
+    qMo = qMo.lt("created_at", cursor);
   }
-  const [p, m] = await Promise.all([qP, qM]);
+  const [p, m, mo] = await Promise.all([qP, qM, qMo]);
   const sh = { data: [] as unknown[] };
 
   // これからのイベントは上のストーリー欄に出るので、フィードからは除外（重複防止）。
@@ -63,6 +77,7 @@ export async function fetchMixedFeed(cursor: string | null, limit = 20): Promise
       (post): FeedItem => ({ kind: "coto", at: post.created_at, post })
     ),
     ...muraRows.map((mura): FeedItem => ({ kind: "mura", at: mura.created_at, mura })),
+    ...(((mo.data ?? []) as unknown) as MoaiFeedPost[]).map((moaiPost): FeedItem => ({ kind: "moai", at: moaiPost.created_at, moaiPost })),
     ...(((sh.data ?? []) as unknown) as Shop[]).map(
       (shop): FeedItem => ({ kind: "shop", at: shop.created_at, shop })
     ),

@@ -11,7 +11,7 @@ import { FeedItem, Story, feedKey, fetchMixedFeed, fetchLatestShops, fetchLikers
 import type { Shop } from "@/lib/za";
 import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
-import { MuraFeedCard, ShopStripCard } from "@/components/FeedCards";
+import { MuraFeedCard, MoaiFeedCard, ShopStripCard } from "@/components/FeedCards";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
@@ -76,6 +76,7 @@ export default function CotozutePage() {
   const [shops, setShops] = useState<Shop[]>([]);
   const [drawer, setDrawer] = useState(false);
   const [stories, setStoriesList] = useState<Story[]>([]);
+  const [moais, setMoais] = useState<any[]>([]);
   const [storyView, setStoryView] = useState<number | null>(null); // 表示中のストーリーindex
   const [storyUploading, setStoryUploading] = useState(false);
   const [storyDraft, setStoryDraft] = useState<{ file: File; url: string } | null>(null);
@@ -173,6 +174,7 @@ export default function CotozutePage() {
       loadLikers(list);
     });
     fetchLatestShops(10).then(setShops);
+    import("@/lib/moai").then(({ fetchMoais }) => fetchMoais().then((r) => setMoais(r.slice(0, 12)))).catch(() => {});
     fetchStories().then(setStoriesList);
     supabase
       .from("village_posts")
@@ -487,6 +489,32 @@ export default function CotozutePage() {
     </div>
   );
 
+  /* 部員募集！ MOAIサークル横スクロール */
+  const moaiStrip = moais.length > 0 && (
+    <div className="py-2.5">
+      <div className="mb-1.5 flex items-baseline justify-between px-0.5">
+        <span className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#1c1e21]">
+          <img src="/icons/icon-moai.webp" alt="" className="h-[18px] w-[18px] rounded-full object-cover" /> 部員募集！
+        </span>
+        <Link href="/moai" className="text-[12px] font-bold no-underline" style={{ color: "#c0392b" }}>すべて見る</Link>
+      </div>
+      <DragScroll className="hide-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+        {moais.map((m) => (
+          <Link key={m.id} href={`/moai/${m.id}`} className="w-[132px] flex-shrink-0 overflow-hidden rounded-xl border border-[#f0d8d4] bg-white no-underline shadow-sm">
+            <div className="relative h-[84px] bg-[#f6e4e0]">
+              {m.cover_url ? <img src={srcCdn(m.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[22px]">🗿</div>}
+              <span className="absolute -bottom-3 left-2 flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-[#f3ded9] text-[13px]">{m.icon_url ? <img src={srcCdn(m.icon_url)} alt="" className="h-full w-full object-cover" /> : "🗿"}</span>
+            </div>
+            <div className="px-2 pb-1.5 pt-4">
+              <div className="truncate text-[11.5px] font-bold text-[#3a2420]">{m.name}</div>
+              <div className="mt-0.5 inline-block rounded-full px-1.5 py-0.5 text-[8.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>入部希望 →</div>
+            </div>
+          </Link>
+        ))}
+      </DragScroll>
+    </div>
+  );
+
   /* イベント横スクロール（中盤・リール位置） */
   const eventStrip = events.length > 0 && (
     <div className="py-2.5">
@@ -548,6 +576,8 @@ export default function CotozutePage() {
             />
           ) : it.kind === "mura" ? (
             <MuraFeedCard mura={it.mura} />
+          ) : it.kind === "moai" ? (
+            <MoaiFeedCard post={it.moaiPost} />
           ) : null}
         </div>
       );
@@ -563,6 +593,12 @@ export default function CotozutePage() {
         out.push(<BandDouble key={`bd2-${feedKey(it)}`} />);
         out.push(<div key="shop-strip">{shopStrip}</div>);
         out.push(<BandDouble key="shop-band" />);
+      }
+      if (i === 9 && moaiStrip) {
+        out.pop();
+        out.push(<BandDouble key={`bd4-${feedKey(it)}`} />);
+        out.push(<div key="moai-strip">{moaiStrip}</div>);
+        out.push(<BandDouble key="moai-band" />);
       }
       if (i === 12) {
         out.pop();

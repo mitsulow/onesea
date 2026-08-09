@@ -90,7 +90,7 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
             className="rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white"
             style={{ background: "#2a8a4a" }}
           >
-            公認拠点
+            セカイムラ村人投稿
           </span>
           {canDelete && (
             <button
@@ -219,5 +219,34 @@ function EventJoinButton({ postId }: { postId: string }) {
     >
       {joined ? `✓ 参加します（${count}人）` : `参加する${count ? `（${count}人）` : ""}`}
     </button>
+  );
+}
+
+export function MoaiFeedCard({ post }: { post: import("@/lib/feed").MoaiFeedPost }) {
+  const router = useRouter();
+  const v = post.moai;
+  return (
+    <div className="py-2.5">
+      <div className="flex items-center gap-2.5">
+        <button onClick={() => v && router.push(`/moai/${v.id}`)} className="flex-shrink-0">
+          {v?.icon_url ? (
+            <img src={srcCdn(v.icon_url)} alt="" className="h-[40px] w-[40px] rounded-full border border-[#f0d8d4] object-cover" />
+          ) : (
+            <span className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-[16px]" style={{ background: "#f3ded9" }}>🗿</span>
+          )}
+        </button>
+        <div className="min-w-0 flex-1">
+          <button onClick={() => v && router.push(`/moai/${v.id}`)} className="block max-w-full truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21]">
+            {v ? v.name : "MOAI"}<span className="text-[12px] font-normal text-[#a08078]">からの投稿</span>
+          </button>
+          <div className="text-[11.5px] leading-tight text-[#8a8d91]">{relTime(post.created_at)}{post.profiles?.display_name ? ` ・ ${post.profiles.display_name}` : ""}</div>
+        </div>
+        <span className="flex-shrink-0 self-start rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>モアイからの投稿</span>
+      </div>
+      <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#1c1e21]">{post.body}</p>
+      {post.photo_url && (
+        <div className="-mx-4 mt-2"><img src={srcCdn(post.photo_url)} alt="" loading="lazy" className="w-full object-cover" style={{ maxHeight: 480 }} /></div>
+      )}
+    </div>
   );
 }
