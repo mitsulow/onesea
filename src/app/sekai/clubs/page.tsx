@@ -1,14 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { SekaiShell, ClubsSection, JinjaSection, useSekaiMe } from "@/components/sekai/sections";
-
-/** セカイムラ部活情報（+ 神社町） */
-export default function SekaiClubsPage() {
-  const { me, myPref } = useSekaiMe();
-  return (
-    <SekaiShell>
-      <ClubsSection me={me} />
-      <JinjaSection me={me} myPref={myPref} />
-    </SekaiShell>
-  );
+/** 部活はMOAIに統合されました。旧URLはMOAIへ転送。 */
+export default function ClubsRedirect() {
+  redirect("/moai");
 }
