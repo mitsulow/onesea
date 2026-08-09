@@ -2504,6 +2504,7 @@ export function ClubsSection({ me }: { me: User | null }) {
 /* ═══ 米部 — sekaimura.net/komebu を参考に再構築: 一覧(タップで詳細) / マップ / お知らせ ═══ */
 export function KomeSection({ me, myPref }: { me: User | null; myPref: string }) {
   const [tanbo, setTanbo] = useState<any[] | null>(null);
+  const [tanboFeed, setTanboFeed] = useState<any[]>([]); // 全田んぼ横断の活動報告
   const [amOffice, setAmOffice] = useState(false); // 田んぼ登録は事務局のみ
   useEffect(() => {
     if (!me) { setAmOffice(false); return; }
@@ -2608,6 +2609,12 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
     ]);
     setSales(ks ?? []);
     setNewsRows(kn ?? []);
+    const { data: tf } = await supabase
+      .from("tanbo_posts")
+      .select("id, tanbo_id, body, photo_url, kind, event_at, created_at, tanbo!tanbo_posts_tanbo_id_fkey(id, name, icon_url, photo_url), profiles!tanbo_posts_user_id_fkey(display_name)")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setTanboFeed(tf ?? []);
   }, []);
   useEffect(() => {
     load();
@@ -2724,6 +2731,36 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       {/* ── 一覧 ── */}
       {tab === "list" && (
         <>
+      {/* 全田んぼ横断の活動FEED(トップ) */}
+      {tanboFeed.length > 0 && (
+        <div className="mb-3">
+          <div className="mb-1.5 px-0.5 text-[12px] font-extrabold text-[#8a7020]">🌾 田んぼのいま（みんなの活動報告）</div>
+          <div className="space-y-2">
+            {tanboFeed.map((tp: any) => (
+              <Link key={tp.id} href={`/sekai/kome/${tp.tanbo_id}`} className="block rounded-xl border border-[#eef2ec] bg-white p-2.5 no-underline">
+                <div className="flex items-center gap-2">
+                  {tp.tanbo?.icon_url || tp.tanbo?.photo_url ? (
+                    <img src={srcCdn(tp.tanbo.icon_url ?? tp.tanbo.photo_url)} alt="" loading="lazy" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f2f4ea] text-[13px]">🌾</span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[12.5px] font-extrabold text-[#3a4a34]">{tp.tanbo?.name ?? "田んぼ"}<span className="text-[10.5px] font-normal text-[#a0aca0]">からの報告</span></div>
+                    <div className="num text-[9.5px] text-[#a0aca0]">{tp.profiles?.display_name ?? ""} ・ {new Date(tp.created_at).getMonth() + 1}/{new Date(tp.created_at).getDate()}</div>
+                  </div>
+                  {tp.kind === "event" && tp.event_at && (
+                    <span className="num flex-shrink-0 rounded-full bg-[#f2f4e0] px-2 py-0.5 text-[9.5px] font-bold text-[#8a7020]">📅 {new Date(tp.event_at).getMonth() + 1}/{new Date(tp.event_at).getDate()}</span>
+                  )}
+                </div>
+                <p className="mt-1.5 line-clamp-3 whitespace-pre-wrap break-words text-[12.5px] leading-relaxed text-[#4a5444]">{tp.body}</p>
+                {tp.photo_url && <img src={srcCdn(tp.photo_url)} alt="" loading="lazy" className="mt-1.5 max-h-64 w-full rounded-lg object-cover" />}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-1.5 px-0.5 text-[12px] font-extrabold text-[#8a7020]">🗾 全国の田んぼマップ</div>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       <div ref={mapHost} className="relative z-0 mb-1 h-[240px] w-full overflow-hidden rounded-xl border border-[#e8e2cc]" style={{ isolation: "isolate" }} data-noswipe />
       <p className="mb-2 text-center text-[10px] text-[#a0aca0]">🌾を押すとその田んぼのページへ（位置は県の代表点）</p>
