@@ -158,7 +158,7 @@ export default function DdpRitualPage() {
 
       <header className="relative z-[60] flex items-center justify-center px-6 py-2.5" style={{ background: "#0a0e26" }}>
         <span className="mincho text-[16px] font-bold tracking-[4px]" style={{ color: C.ink }}>
-          DDP <span className="text-[11px]" style={{ color: C.sub }}>— 願いを、通す。</span>
+夢叶えナビ <span className="text-[11px]" style={{ color: C.sub }}>〜DDPを設定する〜</span>
         </span>
         <span className="absolute right-3 top-1/2 -translate-y-1/2"><AvatarMenu ring={C.gold} /></span>
       </header>
