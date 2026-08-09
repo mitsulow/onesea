@@ -31,6 +31,15 @@ export const MOAI_CATEGORIES = [
   { id: "heal", label: "癒し・スピリチュアル", emoji: "🌙" },
   { id: "biz", label: "仕事・起業", emoji: "💼" },
   { id: "game", label: "ゲーム・IT", emoji: "🎮" },
+  { id: "life", label: "暮らし", emoji: "🏠" },
+  { id: "animal", label: "動物", emoji: "🐾" },
+  { id: "fortune", label: "占い", emoji: "🔮" },
+  { id: "history", label: "歴史", emoji: "🏯" },
+  { id: "license", label: "資格取得", emoji: "📜" },
+  { id: "ferment", label: "発酵", emoji: "🍶" },
+  { id: "travel", label: "旅行", emoji: "✈️" },
+  { id: "onsen", label: "温泉", emoji: "♨️" },
+  { id: "love", label: "恋愛", emoji: "💕" },
   { id: "other", label: "その他", emoji: "✨" },
 ] as const;
 
