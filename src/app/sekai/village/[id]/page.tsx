@@ -285,7 +285,18 @@ export default function VillagePage() {
             </button>
           )}
           {me && !joined && members.some((mm: any) => mm.user_id === me.id && mm.status === "pending") && (
-            <span className="rounded-xl border border-[#c8a860] px-4 py-2.5 text-[12.5px] font-bold text-[#e8d5a0]">申請中（村長の承認待ち）</span>
+            <button
+              onClick={async () => {
+                if (!confirm("参加申請を取り消しますか？")) return;
+                const { rejectVillageMember } = await import("@/lib/sekai");
+                await rejectVillageMember(villageId, me.id);
+                load();
+              }}
+              className="rounded-xl border border-[#c8a860] px-4 py-2.5 text-[12.5px] font-bold text-[#e8d5a0]"
+            >
+              申請中（村長の承認待ち）
+              <span className="block text-[10px] font-normal text-[#c8b080]">もう一度押すと取り消せます</span>
+            </button>
           )}
           {joined && <span className="rounded-xl border border-[#4a9a6a] px-4 py-2.5 text-[12.5px] font-bold text-[#a8d8b8]">✓ あなたの村</span>}
           {joined && me && village.created_by !== me.id && (
