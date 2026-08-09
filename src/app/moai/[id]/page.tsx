@@ -40,7 +40,8 @@ export default function MoaiDetailPage() {
   const [editPostId, setEditPostId] = useState<string | null>(null);
   const [chat, setChat] = useState<any[]>([]);
   const [chatBody, setChatBody] = useState("");
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
+  const [tab, setTab] = useState<"feed"|"members"|"chat">("feed");
   const [evPlace, setEvPlace] = useState<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null>(null);
   const [evPaste, setEvPaste] = useState("");
   const [evPlaceBusy, setEvPlaceBusy] = useState(false);
@@ -295,6 +296,16 @@ export default function MoaiDetailPage() {
             ))}
           </div>
         )}
+
+        {/* ページ内タブ: FEED / MEMBERS / CHAT */}
+        <div className="mb-3 flex gap-1.5">
+          {([["feed","FEED"],["members",`MEMBERS ${members.size}`],["chat","CHAT"]] as const).map(([v,l]) => (
+            <button key={v} onClick={() => setTab(v)} className="flex-1 rounded-full py-2 text-[12px] font-extrabold" style={tab===v ? {background:"#c0392b",color:"#fff"} : {background:"#fff",color:"#a08078",border:"1px solid #f0d8d4"}}>{l}</button>
+          ))}
+        </div>
+
+        {/* ===== FEED ===== */}
+        {tab === "feed" && (<>
         {/* 近々のイベント（横スクロール・トップ） */}
         {events.length > 0 && (
           <div className="mb-3">
@@ -333,40 +344,6 @@ export default function MoaiDetailPage() {
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* グループトーク（TalKのグループ欄と同期） */}
-        {joined && (
-          <div className="mb-3 rounded-2xl p-3" style={{ background: "#fff", border: "1px solid #f0d8d4" }}>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[12.5px] font-extrabold text-[#c0392b]">💬 グループトーク</span>
-              <div className="flex items-center gap-2">
-                <a href={`/talk/g/moai/${moaiId}`} className="text-[11px] font-bold text-[#c0392b] no-underline">TalKで開く →</a>
-                <button onClick={() => setChatOpen((o) => !o)} className="text-[11px] font-bold text-[#a08078]">{chatOpen ? "たたむ" : "開く"}</button>
-              </div>
-            </div>
-            {chatOpen && (
-              <>
-                <div className="mb-2 max-h-64 space-y-1.5 overflow-y-auto rounded-xl bg-[#faf4f2] p-2">
-                  {chat.length === 0 ? <p className="py-3 text-center text-[11px] text-[#b09088]">まだ会話がありません。ひとこと目をどうぞ🗿</p> : chat.map((m: any) => {
-                    const mine = m.sender_id === me?.id;
-                    return (
-                      <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                        <div className="max-w-[80%]">
-                          {!mine && <div className="pl-1 text-[9px] text-[#a08078]">{m.profiles?.display_name ?? "メンバー"}</div>}
-                          <div className={`rounded-2xl px-3 py-1.5 text-[13px] ${mine ? "bg-[#c0392b] text-white" : "bg-white text-[#3a2420]"}`}>{(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" className="mb-1 max-w-[180px] rounded-lg" />}{m.body === "📷 写真" && (m as any).image_url ? "" : m.body}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex items-end gap-1.5">
-                  <textarea value={chatBody} onChange={(e) => setChatBody(e.target.value)} rows={1} placeholder="メッセージ..." className="hide-scrollbar max-h-24 min-h-[36px] flex-1 resize-none rounded-2xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
-                  <button onClick={sendChat} disabled={!chatBody.trim()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40" style={{ background: "#c0392b" }}>➤</button>
-                </div>
-              </>
-            )}
           </div>
         )}
 
@@ -443,6 +420,63 @@ export default function MoaiDetailPage() {
               </div>
             ))}
           </div>
+        )}
+        </>)}
+
+        {/* ===== MEMBERS ===== */}
+        {tab === "members" && (
+          <div className="space-y-1.5">
+            {memberProfs.length === 0 ? <p className="py-6 text-center text-[12px] text-[#b09088]">メンバーがいません</p> : memberProfs.map((pr: any, i: number) => {
+              const row = (
+                <div className="flex items-center gap-3 rounded-xl bg-white p-2.5" style={{ border: "1px solid #f0d8d4" }}>
+                  {pr?.avatar_url ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" /> : <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3ded9] text-[15px]">🗿</span>}
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-[#3a2420]">{pr.display_name ?? "メンバー"}</span>
+                  {pr.user_id === moai.created_by && <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "#c9a94a" }}>OYA（部長）</span>}
+                </div>
+              );
+              return pr.username ? <Link key={i} href={`/u/${pr.username}`} className="block no-underline">{row}</Link> : <div key={i}>{row}</div>;
+            })}
+            {members.size > memberProfs.length && <p className="py-2 text-center text-[11px] text-[#b09088]">ほか{members.size - memberProfs.length}人</p>}
+          </div>
+        )}
+
+        {/* ===== CHAT ===== */}
+        {tab === "chat" && (
+          joined ? (
+
+          <div className="mb-3 rounded-2xl p-3" style={{ background: "#fff", border: "1px solid #f0d8d4" }}>
+            <div className="mb-1.5 flex items-center justify-between">
+              <span className="text-[12.5px] font-extrabold text-[#c0392b]">💬 グループトーク</span>
+              <div className="flex items-center gap-2">
+                <a href={`/talk/g/moai/${moaiId}`} className="text-[11px] font-bold text-[#c0392b] no-underline">TalKで開く →</a>
+                <button onClick={() => setChatOpen((o) => !o)} className="text-[11px] font-bold text-[#a08078]">{chatOpen ? "たたむ" : "開く"}</button>
+              </div>
+            </div>
+            {chatOpen && (
+              <>
+                <div className="mb-2 max-h-64 space-y-1.5 overflow-y-auto rounded-xl bg-[#faf4f2] p-2">
+                  {chat.length === 0 ? <p className="py-3 text-center text-[11px] text-[#b09088]">まだ会話がありません。ひとこと目をどうぞ🗿</p> : chat.map((m: any) => {
+                    const mine = m.sender_id === me?.id;
+                    return (
+                      <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                        <div className="max-w-[80%]">
+                          {!mine && <div className="pl-1 text-[9px] text-[#a08078]">{m.profiles?.display_name ?? "メンバー"}</div>}
+                          <div className={`rounded-2xl px-3 py-1.5 text-[13px] ${mine ? "bg-[#c0392b] text-white" : "bg-white text-[#3a2420]"}`}>{(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" className="mb-1 max-w-[180px] rounded-lg" />}{m.body === "📷 写真" && (m as any).image_url ? "" : m.body}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex items-end gap-1.5">
+                  <textarea value={chatBody} onChange={(e) => setChatBody(e.target.value)} rows={1} placeholder="メッセージ..." className="hide-scrollbar max-h-24 min-h-[36px] flex-1 resize-none rounded-2xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
+                  <button onClick={sendChat} disabled={!chatBody.trim()} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40" style={{ background: "#c0392b" }}>➤</button>
+                </div>
+              </>
+            )}
+          </div>
+          ) : (
+            <p className="py-8 text-center text-[12px] text-[#b09088]">参加するとグループトークが使えます</p>
+          )
         )}
       </div>
 
