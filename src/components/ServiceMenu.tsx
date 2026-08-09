@@ -31,8 +31,8 @@ export function ServiceMenuButton({ color = "#c0392b", textColor = "#c0392b" }: 
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-[85] bg-black/35" onClick={() => setOpen(false)} />
-          <div className="fixed left-0 top-0 z-[86] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
+          <div className="fixed inset-0 z-[150] bg-black/40" onClick={() => setOpen(false)} />
+          <div className="fixed left-0 top-0 z-[151] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
             <div className="px-5 pb-2 pt-5 text-[19px] font-extrabold" style={{ color }}>
               サービス一覧
             </div>

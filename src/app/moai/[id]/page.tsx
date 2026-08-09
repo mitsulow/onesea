@@ -35,6 +35,7 @@ export default function MoaiDetailPage() {
   const [evAt, setEvAt] = useState("");
   const [evEnd, setEvEnd] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editEvId, setEditEvId] = useState<string | null>(null);
   const [evPlace, setEvPlace] = useState<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null>(null);
   const [evPaste, setEvPaste] = useState("");
   const [evPlaceBusy, setEvPlaceBusy] = useState(false);
@@ -137,9 +138,7 @@ export default function MoaiDetailPage() {
     // 貼ったリンクが未取り込みなら保存前に取り込む
     let placeNow = evPlace;
     if (isEvent && !placeNow && /https?:\/\//.test(evPaste)) placeNow = await (async () => { await resolveEvPlace(evPaste); return evPlace; })();
-    await supabase.from("moai_posts").insert({
-      moai_id: moaiId,
-      user_id: me.id,
+    const payload = {
       body: body.trim(),
       photo_url: photo,
       kind: isEvent ? "event" : "normal",
@@ -149,9 +148,12 @@ export default function MoaiDetailPage() {
       place_lat: isEvent ? placeNow?.lat ?? null : null,
       place_lng: isEvent ? placeNow?.lng ?? null : null,
       place_url: isEvent ? placeNow?.url ?? null : null,
-    });
+    };
+    if (editEvId) await supabase.from("moai_posts").update(payload).eq("id", editEvId);
+    else await supabase.from("moai_posts").insert({ moai_id: moaiId, user_id: me.id, ...payload });
     setSaving(false);
     setSheet(null);
+    setEditEvId(null);
     setBody(""); setPhoto(null); setEvAt(""); setEvEnd(""); setEvPlace(null); setEvPaste(""); setEvPlaceMsg(null);
     load();
   };
@@ -290,6 +292,18 @@ export default function MoaiDetailPage() {
                         {(p.place_name || p.place_lat != null) && (
                           <button onClick={() => setPlace({ name: p.place_name, lat: p.place_lat, lng: p.place_lng, url: p.place_url })} className="rounded-full border border-[#e0a89f] px-2 py-0.5 text-[10px] font-bold text-[#c0392b]">📍地図</button>
                         )}
+                        {me && (me.id === p.user_id || moai.created_by === me.id || amAdmin) && (
+                          <>
+                            <button onClick={() => {
+                              const d0 = new Date(p.event_at); const de = p.event_end ? new Date(p.event_end) : null; const pad = (n: number) => String(n).padStart(2, "0");
+                              setSheet("event"); setEditEvId(p.id); setBody(p.body ?? ""); setPhoto(p.photo_url ?? null);
+                              setEvAt(`${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}T${pad(d0.getHours())}:${pad(d0.getMinutes())}`);
+                              setEvEnd(de ? `${de.getFullYear()}-${pad(de.getMonth() + 1)}-${pad(de.getDate())}T${pad(de.getHours())}:${pad(de.getMinutes())}` : "");
+                              setEvPlace(p.place_name || p.place_lat != null ? { name: p.place_name ?? null, lat: p.place_lat ?? null, lng: p.place_lng ?? null, url: p.place_url ?? "", image: null } : null);
+                            }} className="rounded-full border px-2 py-0.5 text-[10px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}>✎</button>
+                            <button onClick={async () => { if (!confirm("このイベントを削除しますか？")) return; await createClient().from("moai_posts").delete().eq("id", p.id); load(); }} className="rounded-full border px-2 py-0.5 text-[10px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}>🗑</button>
+                          </>
+                        )}
                         <button onClick={() => joinEvent(p)} className="ml-auto rounded-full px-3 py-1 text-[11px] font-extrabold text-white" style={{ background: "#c0392b" }}>参加する</button>
                       </div>
                     </div>
@@ -372,10 +386,10 @@ export default function MoaiDetailPage() {
 
       {/* 投稿シート */}
       {sheet && me && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50" onClick={() => setSheet(null)}>
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50" onClick={() => { setSheet(null); setEditEvId(null); }}>
           <div className="w-full max-w-[480px] rounded-t-2xl p-4" style={{ background: "#fff", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }} onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#e0d0cc]" />
-            <div className="mb-2 text-[13.5px] font-extrabold text-[#3a2420]">{sheet === "event" ? "📅 イベントを作る" : "✏️ 活動を投稿"}</div>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#3a2420]">{sheet === "event" ? (editEvId ? "📅 イベントを編集" : "📅 イベントを作る") : "✏️ 活動を投稿"}</div>
             {sheet === "event" && (
               <div className="mb-2 space-y-1.5">
                 <div className="flex items-center gap-2"><span className="w-8 text-[11px] font-bold text-[#a08078]">開始</span><input type="datetime-local" value={evAt} onChange={(e) => setEvAt(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none" /></div>
@@ -405,7 +419,7 @@ export default function MoaiDetailPage() {
             </label>
             <div className="flex gap-2">
               <button onClick={() => setSheet(null)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
-              <button onClick={publish} disabled={!body.trim() || saving || (sheet === "event" && !evAt)} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{saving ? "投稿中..." : "投稿する"}</button>
+              <button onClick={publish} disabled={!body.trim() || saving || (sheet === "event" && !evAt)} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{saving ? "保存中..." : editEvId ? "変更を保存" : "投稿する"}</button>
             </div>
           </div>
         </div>

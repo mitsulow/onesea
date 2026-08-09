@@ -21,6 +21,7 @@ const RING = [
   "/cotozute",
   "/mmm",
   "/sekai",
+  "/moai",
   "/tsukiyoga-v7/index.html", // 静的ページ
   "/za",
   "/talk",
@@ -32,10 +33,11 @@ function ringIndex(pathname: string): number {
   if (pathname === "/cotozute") return 1;
   if (pathname === "/mmm") return 2;
   if (pathname === "/sekai") return 3;
-  // ツキヨガは別ページなのでここには来ない (4)
-  if (pathname === "/za") return 5;
-  if (pathname === "/talk") return 6;
-  if (pathname === "/my" || pathname.startsWith("/u/")) return 7; // マイページ(名刺)は /u/xxx に居る
+  if (pathname === "/moai") return 4;
+  // ツキヨガは別ページなのでここには来ない (5)
+  if (pathname === "/za") return 6;
+  if (pathname === "/talk") return 7;
+  if (pathname === "/my" || pathname.startsWith("/u/")) return 8; // マイページ(名刺)は /u/xxx に居る
   return -1;
 }
 
