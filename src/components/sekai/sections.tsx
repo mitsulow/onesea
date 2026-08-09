@@ -2535,13 +2535,12 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
   }, [apPref, applyOpen]);
   const OFFICE_HIDAMARI = "0f854cb5-fad3-47ee-885f-0646f6b94b93"; // 事務局(hidamari.1221)
   const submitApply = async () => {
-    if (!me) { alert("ログインすると申請できます（無料のGoogleログイン）"); return; }
     if (!apName.trim() || !apPhone.trim() || !apEmail.trim() || !apCity) { alert("名前・携帯番号・メールアドレス・住所（市町村まで）は必須です"); return; }
     if (apSending) return;
     setApSending(true);
     const supabase = createClient();
     const { error } = await supabase.from("tanbo_applications").insert({
-      user_id: me.id,
+      user_id: me?.id ?? null,
       applicant_name: apName.trim(),
       phone: apPhone.trim(),
       email: apEmail.trim(),
@@ -2553,8 +2552,9 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       farmer_type: apFarmer,
     });
     if (!error) {
-      // 事務局(ひだまりさん)のTalKへ申請内容を届ける
+      // 事務局(ひだまりさん)のTalKへ申請内容を届ける(ログイン時のみ・未ログインは受信箱で確認)
       try {
+        if (!me) throw new Error("anon");
         const { getOrCreateChat, sendMessage } = await import("@/lib/line");
         const chatId = await getOrCreateChat(me.id, OFFICE_HIDAMARI);
         if (chatId) {
@@ -2571,12 +2571,12 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
           await sendMessage(chatId, me.id, lines.join("\n"));
         }
       } catch {}
-      // 自動返信: TalKに事務局名義でお礼+資料+ヒアリング案内 / メールはResend設定時のみ
-      try { await supabase.rpc("kome_apply_autoreply", { p_name: apName.trim() }); } catch {}
+      // 自動返信: ログイン中ならTalKにも / メールはResend設定時に自動送信
+      if (me) { try { await supabase.rpc("kome_apply_autoreply", { p_name: apName.trim() }); } catch {} }
       fetch("/api/kome-thanks", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: apEmail.trim(), name: apName.trim() }) }).catch(() => {});
       setApplyOpen(false);
       setApName(""); setApPhone(""); setApEmail(""); setApAddr(""); setApTanboName("");
-      alert("申請を送りました！TalKにご案内が届いています。事務局が確認して田んぼのページを作ります🌾");
+      alert("申請を送りました！ご記入のメールアドレスに事務局からご案内をお送りします🌾");
     } else {
       alert("送信できませんでした。もう一度お試しください");
     }

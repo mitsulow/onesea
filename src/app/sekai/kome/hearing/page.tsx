@@ -71,14 +71,13 @@ export default function KomeHearingPage() {
   });
 
   const submit = async () => {
-    if (!me) { alert("ログインするとご回答いただけます（無料のGoogleログイン）"); return; }
     if (!name.trim() || !phone.trim() || !email.trim()) { alert("オーナー名・電話番号・メールアドレスは必須です"); return; }
     const missing = QUESTIONS.filter((q) => q.req && (!ans[q.id] || (Array.isArray(ans[q.id]) && (ans[q.id] as string[]).length === 0)));
     if (missing.length) { alert(`未回答の必須項目があります: ${missing[0].label}`); return; }
     if (sending) return;
     setSending(true);
     const { error } = await createClient().from("kome_hearing").insert({
-      user_id: me.id, name: name.trim(), phone: phone.trim(), email: email.trim(), answers: ans,
+      user_id: me?.id ?? null, name: name.trim(), phone: phone.trim(), email: email.trim(), answers: ans,
     });
     setSending(false);
     if (error) { alert("送信できませんでした。もう一度お試しください"); return; }
@@ -162,11 +161,6 @@ export default function KomeHearingPage() {
           </section>
         ))}
 
-        {!me && (
-          <p className="rounded-xl bg-white px-4 py-3 text-center text-[12px] text-[#8aa088]" style={{ border: "1px solid #d8e8d0" }}>
-            送信には<Link href="/" className="font-bold underline" style={{ color: G }}>ログイン</Link>が必要です（無料のGoogleログイン）
-          </p>
-        )}
         <button onClick={submit} disabled={sending} className="w-full rounded-xl py-3.5 text-[14.5px] font-extrabold text-white disabled:opacity-40" style={{ background: G }}>
           {sending ? "送信中..." : "🌾 この内容で送信する"}
         </button>
