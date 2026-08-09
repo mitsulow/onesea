@@ -279,7 +279,9 @@ export default function VillagePage() {
               className="rounded-xl px-6 py-2.5 text-[13.5px] font-extrabold"
               style={{ background: "#d4b96a", color: "#1a2432" }}
             >
-              この村に参加したいので村長へ申請
+              この村に参加したい
+              <br />
+              村長へ申請
             </button>
           )}
           {me && !joined && members.some((mm: any) => mm.user_id === me.id && mm.status === "pending") && (
@@ -329,7 +331,7 @@ export default function VillagePage() {
               }}
               className="rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]"
             >
-              立ち上げ村長に連絡する
+              💬 村長にTalKで質問する
             </button>
           )}
         </div>
