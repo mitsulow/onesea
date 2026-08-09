@@ -21,6 +21,7 @@ export default function MoaiListPage() {
   const [cover, setCover] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [feed, setFeed] = useState<any[] | null>(null);
+  const [q, setQ] = useState("");
 
   const load = () => { fetchMoais().then(setMoais); fetchMoaiFeed().then(setFeed); };
   useEffect(() => {
@@ -57,6 +58,20 @@ export default function MoaiListPage() {
       </header>
 
       <div className="px-3 pt-3">
+        {/* サークルを探す */}
+        <div className="relative mb-3">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px]">🔍</span>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="サークルを探す（名前・カテゴリ・キーワード）"
+            className="w-full rounded-full border border-[#4a3a6a] bg-[#1a1530] py-2 pl-9 pr-9 text-[13px] text-white outline-none focus:border-[#9a7ae0]"
+          />
+          {q && (
+            <button onClick={() => setQ("")} aria-label="消す" className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-[12px] font-bold text-[#b8a8e0]">×</button>
+          )}
+        </div>
+
         {/* つくるボタン */}
         {me && !creating && (
           <button
@@ -112,7 +127,11 @@ export default function MoaiListPage() {
           <p className="py-8 text-center text-[12px] text-[#9a8ac0]">まだMOAIがありません。最初のひとつを作ってみましょう</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {moais.map((m) => (
+            {moais.filter((m) => {
+              const k = q.trim().toLowerCase();
+              if (!k) return true;
+              return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k);
+            }).map((m) => (
               <Link key={m.id} href={`/moai/${m.id}`} className="overflow-hidden rounded-2xl no-underline shadow-md" style={{ background: "rgba(255,255,255,.06)", border: "1px solid #4a3a6a" }}>
                 <div className="relative h-20 bg-[#2a2048]">
                   {m.cover_url ? <img src={srcCdn(m.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[22px]">{moaiCat(m.category).emoji}</div>}
