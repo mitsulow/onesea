@@ -77,7 +77,7 @@ export default function MoaiListPage() {
       <IosBackButton />
       <header className="relative flex h-[52px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "#fff" }}>
         <span className="absolute left-3 top-1/2 -translate-y-1/2"><ServiceMenuButton /></span>
-        <div className="text-[10px] tracking-[3px] text-[#a08078]">好きなことで、寄り集まろう。</div>
+        <div className="text-[10px] tracking-[3px] text-[#a08078]">シュミサークル部活道</div>
         <div className="text-[17px] font-extrabold tracking-[6px] text-[#3a2420]">MOAI</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2"><AvatarMenu /></span>
       </header>
