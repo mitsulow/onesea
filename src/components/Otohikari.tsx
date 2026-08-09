@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { OtohikariGlobe, MapMode } from "./OtohikariGlobe";
+import { useEffect, useRef, useState } from "react";
+import type { MapMode } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
 import { Cinzel } from "next/font/google";
 
@@ -37,6 +37,32 @@ export function Otohikari() {
   const [mode, setMode] = useState<MapMode>("all");
   const [modeOpen, setModeOpen] = useState(false);
   const [connected, setConnected] = useState(false);
+  const globeFrame = useRef<HTMLIFrameElement | null>(null);
+  const frameReady = useRef(false);
+  // 地球儀フレームへ最新状態を送る(見た目・機能はそのまま。描画だけ別ドキュメントに隔離)
+  const pushToFrame = () => {
+    try {
+      globeFrame.current?.contentWindow?.postMessage(
+        { __oto: 1, spots, mode, connected },
+        window.location.origin
+      );
+    } catch {}
+  };
+  useEffect(() => {
+    const onReady = (e: MessageEvent) => {
+      if (e.origin === window.location.origin && e.data?.__otoReady === 1) {
+        frameReady.current = true;
+        pushToFrame();
+      }
+    };
+    window.addEventListener("message", onReady);
+    return () => window.removeEventListener("message", onReady);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (frameReady.current) pushToFrame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spots, mode, connected]);
 
   /* ---- マップモード（端末に記憶） ---- */
   useEffect(() => {
@@ -182,7 +208,13 @@ export function Otohikari() {
 
       {/* 地球儀 + オーバーレイ */}
       <div className="relative">
-        <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
+        <iframe
+          ref={globeFrame}
+          src="/mmm/otohikari-frame"
+          title="OTOHIKARI地球儀"
+          scrolling="no"
+          style={{ width: "100%", height: 360, border: 0, display: "block" }}
+        />
 
         {/* 実測時刻 — セクションの一番下・右端 */}
         {live.updated && (
