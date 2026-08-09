@@ -82,7 +82,7 @@ export default function ShopDetailPage() {
 
   const propose = async () => {
     if (!shop || proposing) return;
-    if (!me) { alert("OneSeaにログインすると連絡できます（無料のGoogleログイン）。メニューからログインしてね🙏"); return; }
+    if (!me) { alert("OneSea無料会員になると、座主に連絡が出来ます。メニューからGoogleログイン（無料）してね🙏"); return; }
     const offerShop = myShops?.find((s) => s.id === offerId) ?? null;
     const offer = offerShop ? offerShop.name : offerText.trim();
     if (!offer) return;
@@ -120,7 +120,7 @@ export default function ShopDetailPage() {
 
   const contact = async () => {
     if (!shop || contacting) return;
-    if (!me) { alert("OneSeaにログインすると連絡できます（無料のGoogleログイン）。メニューからログインしてね🙏"); return; }
+    if (!me) { alert("OneSea無料会員になると、座主に連絡が出来ます。メニューからGoogleログイン（無料）してね🙏"); return; }
     setContacting(true);
     const chatId = await getOrCreateChat(me.id, shop.owner_id);
     setContacting(false);
@@ -406,7 +406,7 @@ export default function ShopDetailPage() {
             </button>
           </div>
         ) : (
-          <p className="text-center text-[12px] text-[#a09888]">ログインすると連絡できます</p>
+          <p className="text-center text-[12px] text-[#a09888]">OneSea無料会員になると、座主に連絡が出来ます。</p>
         )}
 
         {/* コメント / シェア / 通報 の3ボタン */}
