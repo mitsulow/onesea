@@ -570,6 +570,16 @@ export function ActivitySection({ me }: { me: User | null }) {
   const [wChoose, setWChoose] = useState(false); // 投稿の2択(①イベント作成 ②村の報告)
   const [evDetail, setEvDetail] = useState<any | null>(null); // イベントカードを開いた詳細
   const [evEditId, setEvEditId] = useState<string | null>(null); // 変更中のイベントid(nullなら新規作成)
+  const evFromTecho = useRef(false); // 手帳の「詳細」から来た(閉じたら手帳へ戻す)
+  const closeEvDetail = () => {
+    setEvDetail(null);
+    if (evFromTecho.current) {
+      evFromTecho.current = false;
+      // 手帳(元のページ)へ戻る。履歴が無ければURLのクエリだけ掃除
+      if (window.history.length > 1) window.history.back();
+      else window.history.replaceState(null, "", "/sekai");
+    }
+  };
   const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所オーバーレイ
   const [wPlace, setWPlace] = useState<{ name: string | null; lat: number | null; lng: number | null; url: string; image: string | null } | null>(null);
   const [wPlacePaste, setWPlacePaste] = useState("");
@@ -658,6 +668,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     try {
       const evId = new URLSearchParams(window.location.search).get("event");
       if (!evId) return;
+      evFromTecho.current = true;
       const supabase = createClient();
       supabase
         .from("village_posts")
@@ -1544,15 +1555,29 @@ export function ActivitySection({ me }: { me: User | null }) {
                 </div>
               ) : (
                 <>
-                  <input
-                    value={wPlacePaste}
-                    onChange={(e) => {
-                      setWPlacePaste(e.target.value);
-                      if (/https?:\/\//.test(e.target.value)) resolvePlace(e.target.value);
-                    }}
-                    placeholder="https://maps.app.goo.gl/… または https://share.google/…"
-                    className="w-full rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[12.5px] outline-none focus:border-[#4a8a5c]"
-                  />
+                  <div className="flex gap-1.5">
+                    <input
+                      value={wPlacePaste}
+                      onChange={(e) => {
+                        setWPlacePaste(e.target.value);
+                        if (/https?:\/\//.test(e.target.value)) resolvePlace(e.target.value);
+                      }}
+                      onPaste={(e) => {
+                        const t = e.clipboardData.getData("text");
+                        if (/https?:\/\//.test(t)) setTimeout(() => resolvePlace(t), 50);
+                      }}
+                      placeholder="https://maps.app.goo.gl/… または https://share.google/…"
+                      className="min-w-0 flex-1 rounded-xl border border-[#e2eae0] bg-white px-3 py-2 text-[12.5px] outline-none focus:border-[#4a8a5c]"
+                    />
+                    <button
+                      onClick={() => resolvePlace(wPlacePaste)}
+                      disabled={!/https?:\/\//.test(wPlacePaste) || wPlaceBusy}
+                      className="flex-shrink-0 rounded-xl px-3 py-2 text-[12px] font-extrabold text-white disabled:opacity-40"
+                      style={{ background: "#4a8a5c" }}
+                    >
+                      {wPlaceBusy ? "…" : "読み取る"}
+                    </button>
+                  </div>
                   {wPlaceBusy && <p className="mt-1 text-[11px] text-[#8a9a8a]">場所を読み取り中…</p>}
                   {wPlaceMsg && <p className="mt-1 text-[11px] font-bold text-[#c05030]">{wPlaceMsg}</p>}
                 </>
@@ -1577,7 +1602,7 @@ export function ActivitySection({ me }: { me: User | null }) {
 
       {/* 📅 イベント詳細（カードをタップで立ち上がる） */}
       {evDetail && (
-        <div className="fixed inset-0 z-[92] flex items-center justify-center bg-black/55 px-4" onClick={() => setEvDetail(null)}>
+        <div className="fixed inset-0 z-[92] flex items-center justify-center bg-black/55 px-4" onClick={closeEvDetail}>
           <div
             className="max-h-[86vh] w-full max-w-[420px] overflow-y-auto rounded-2xl bg-white"
             onClick={(e) => e.stopPropagation()}
@@ -1592,7 +1617,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                 <div className="flex h-full w-full items-center justify-center text-[26px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>🏡</div>
               )}
               <button
-                onClick={() => setEvDetail(null)}
+                onClick={closeEvDetail}
                 aria-label="とじる"
                 className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-[15px] font-bold text-white"
               >
@@ -1638,7 +1663,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               <p className="mt-2.5 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#3a4438]">
                 {String(evDetail.body ?? "")}
               </p>
-              {evDetail.photo_url && (
+              {evDetail.photo_url && evDetail.villages?.cover_url && (
                 <img src={srcCdn(evDetail.photo_url)} alt="" className="mt-2 max-h-72 w-full rounded-xl object-cover" />
               )}
               {(evDetail.place_name || evDetail.place_lat != null) && (
