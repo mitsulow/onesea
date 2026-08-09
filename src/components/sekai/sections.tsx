@@ -2973,10 +2973,10 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
               <div className="mx-auto mb-1.5 h-1 w-10 rounded-full bg-[#e0d8c0]" />
             </div>
             <div className="mb-0.5 text-[14px] font-extrabold text-[#5a4a20]">🌾 田んぼを申請する</div>
-            <p className="mb-3 text-[11px] text-[#a09060]">事務局が内容を確認して、田んぼのページを作ります</p>
+            <p className="mb-3 text-[11px] text-[#a09060]">事務局が内容を確認して、メール返信いたします</p>
 
             <div className="mb-1 text-[11px] font-bold text-[#8a7020]">お名前（必須）</div>
-            <input value={apName} onChange={(e) => setApName(e.target.value)} placeholder="例: 佐藤みつろう" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
+            <input value={apName} onChange={(e) => setApName(e.target.value)} placeholder="例: 山田太郎" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
 
             <div className="mb-1 text-[11px] font-bold text-[#8a7020]">携帯番号（必須）</div>
             <input value={apPhone} onChange={(e) => setApPhone(e.target.value)} type="tel" placeholder="例: 090-1234-5678" className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2.5 text-[13.5px] outline-none focus:border-[#a08a30]" />
@@ -3002,7 +3002,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
 
             <div className="mb-1 text-[11px] font-bold text-[#8a7020]">農家さんですか？</div>
             <select value={apFarmer} onChange={(e) => setApFarmer(e.target.value)} className="mb-3 w-full rounded-xl border border-[#e8e2cc] bg-white px-2 py-2.5 text-[13px] outline-none">
-              {["農家", "兼業", "自分の家の米だけ作っている"].map((o) => <option key={o}>{o}</option>)}
+              {["農家", "農家ではないがお米を作っている", "お米は作っていないが田んぼだけ貸したい"].map((o) => <option key={o}>{o}</option>)}
             </select>
 
             <div className="flex gap-2">
