@@ -45,6 +45,10 @@ export function notifText(n: NotificationRow): string {
       return `サークルへの入部が承認されました🎉`;
     case "moai_rejected":
       return `サークルへの入部は今回は見送りになりました`;
+    case "village_approved":
+      return `拠点への入村が承認されました🎉`;
+    case "village_rejected":
+      return `拠点への入村は今回は見送りになりました`;
     default:
       return `${who}さんからお知らせがあります`;
   }

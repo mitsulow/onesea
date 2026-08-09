@@ -405,6 +405,48 @@ export default function VillagePage() {
         )}
       </header>
 
+      {/* 入村申請(村長・事務局のみ・MOAIと同じ大きな承認UI) */}
+      {(amLeader || amOffice) && members.some((m: any) => m.status === "pending") && (
+        <div className="mt-4 rounded-xl bg-white p-3" style={{ border: "1px solid #cfe0cf" }}>
+          <div className="mb-1.5 text-[12.5px] font-extrabold" style={{ color: GREEN }}>入村申請 {members.filter((m: any) => m.status === "pending").length}件</div>
+          {members.filter((m: any) => m.status === "pending").map((m: any) => {
+            const pp = m.profiles;
+            return (
+              <div key={m.user_id} className="flex items-center gap-2.5 border-b border-[#eef2ec] py-2 last:border-b-0">
+                {pp?.avatar_url ? <img src={srcCdn(pp.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-9 w-9 rounded-full object-cover" /> : <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#dcecdF]" style={{ background: "#dcece0" }}>🌱</span>}
+                <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold text-[#3a4a34]">{pp?.display_name ?? "むらびと"}</span>
+                <button
+                  onClick={async () => {
+                    await approveVillageMember(villageId, m.user_id);
+                    try {
+                      const supabase = createClient();
+                      await supabase.rpc("village_notify", { p_village: villageId, p_user: m.user_id, p_approve: true });
+                      const { data: p2 } = await supabase.from("profiles").select("display_name").eq("id", m.user_id).maybeSingle();
+                      const chatId = await getOrCreateChat(me!.id, m.user_id);
+                      if (chatId) await sendMessage(chatId, me!.id, `「${village.name}」への参加が承認されました！ようこそ🎉 グループTalKでみんなと話せます → https://onesea.vercel.app/talk/g/village/${villageId}`);
+                      await supabase.from("group_messages").insert({ scope_type: "village", scope_id: villageId, sender_id: me!.id, body: `🎉 ${p2?.display_name ?? "新しい村人"}さんが「${village.name}」に加わりました！` });
+                    } catch {}
+                    load();
+                  }}
+                  className="rounded-lg px-4 py-2 text-[12.5px] font-extrabold text-white"
+                  style={{ background: "#2a8a4a" }}
+                >承認</button>
+                <button
+                  onClick={async () => {
+                    if (!confirm("この申請を却下しますか？")) return;
+                    try { await createClient().rpc("village_notify", { p_village: villageId, p_user: m.user_id, p_approve: false }); } catch {}
+                    await rejectVillageMember(villageId, m.user_id);
+                    load();
+                  }}
+                  className="rounded-lg border px-3 py-2 text-[12.5px] font-bold text-[#8a8070]"
+                  style={{ borderColor: "#d0d8cc" }}
+                >却下</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 拠点の修正フォーム */}
       {editing && (
         <div className="mt-4 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
