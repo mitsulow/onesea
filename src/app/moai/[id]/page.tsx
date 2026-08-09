@@ -171,7 +171,12 @@ export default function MoaiDetailPage() {
     if (!me || !chatBody.trim()) return;
     const t = chatBody.trim();
     setChatBody("");
-    await sendGroupMessage("moai", moaiId, me.id, t);
+    const { error } = await sendGroupMessage("moai", moaiId, me.id, t);
+    if (error) {
+      setChatBody(t);
+      alert("送信できませんでした。通信環境を確認してもう一度どうぞ");
+      return;
+    }
     fetchGroupMessages("moai", moaiId).then((r) => setChat(r.slice(-30)));
   };
 
