@@ -21,6 +21,7 @@ function priceLabel(s: Shop): string {
 export default function ZaPage() {
   const [shops, setShops] = useState<Shop[] | null>(null);
   const [category, setCategory] = useState<string | null>(null);
+  const [q, setQ] = useState(""); // キーワード検索
   const [market, setMarket] = useState<Market>("ichi");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [me, setMe] = useState<import("@supabase/supabase-js").User | null>(null);
@@ -45,6 +46,17 @@ export default function ZaPage() {
     setShops(null);
     fetchShops(category).then(setShops);
   }, [category]);
+
+  // キーワード一致(商品名・説明・カテゴリ名。空なら全通し)
+  const matchQ = (s: Shop) => {
+    const k = q.trim().toLowerCase();
+    if (!k) return true;
+    return (
+      (s.name ?? "").toLowerCase().includes(k) ||
+      (s.description ?? "").toLowerCase().includes(k) ||
+      (categoryOf(s.category).label ?? "").toLowerCase().includes(k)
+    );
+  };
 
   return (
     <main className="overflow-x-clip pb-20">
@@ -124,6 +136,20 @@ export default function ZaPage() {
           <HanaIchimonme me={me} />
         ) : (
         <>
+        {/* キーワード検索 */}
+        <div className="relative mb-2">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[14px]">🔍</span>
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="商品名・キーワードで探す（例: 味噌、Tシャツ、鍼灸）"
+            className="w-full rounded-full border border-[#ede5d8] bg-white py-2 pl-9 pr-9 text-[13px] outline-none focus:border-[#c94d3a]"
+          />
+          {q && (
+            <button onClick={() => setQ("")} aria-label="消す" className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-[#f0ece2] text-[12px] font-bold text-[#8a8070]">×</button>
+          )}
+        </div>
+
         {/* カテゴリチップ */}
         <div className="hide-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4 pb-2">
           <button
@@ -182,7 +208,7 @@ export default function ZaPage() {
           <div className="flex justify-center py-10">
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#c94d3a] border-t-transparent" />
           </div>
-        ) : shops.filter((s) => s.market === market).length === 0 ? (
+        ) : shops.filter((s) => s.market === market && matchQ(s)).length === 0 ? (
           <div
             className="rounded-2xl border-2 border-dashed px-6 py-10 text-center"
             style={{ borderColor: "#c94d3a40", background: "linear-gradient(135deg,#fdf6e9,#f5e8d5)" }}
@@ -196,7 +222,7 @@ export default function ZaPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {/* フリマは スマホ2列 → タブレット3列 → PC4列（Mercari等のPC版と同じ流儀） */}
-            {shops.filter((s) => s.market === market).map((shop) => {
+            {shops.filter((s) => s.market === market && matchQ(s)).map((shop) => {
               const cat = categoryOf(shop.category);
               return (
                 <Link key={shop.id} href={`/za/${shop.id}`} className="block no-underline">
