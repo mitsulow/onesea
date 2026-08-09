@@ -120,7 +120,7 @@ export default function MoaiDetailPage() {
     if (!me) { alert("ログインすると参加できます（無料のGoogleログイン）"); return; }
     if (myStatus === "rejected") return;
     if (joined) {
-      if (!confirm("このMOAIから抜けますか？")) return;
+      if (!confirm("このMoAIから抜けますか？")) return;
       await leaveMoai(moaiId, me.id);
     } else {
       await joinMoai(moaiId, me.id, moai?.join_policy);
@@ -199,7 +199,7 @@ export default function MoaiDetailPage() {
             id: evId, sh: d.getHours(), sm: d.getMinutes(),
             eh: sameDay ? de!.getHours() : Math.min(23, d.getHours() + 2),
             em: sameDay ? de!.getMinutes() : d.getMinutes(),
-            text: `🗿${moai?.name ?? "MOAI"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`,
+            text: `🗿${moai?.name ?? "MoAI"}: ${String(p.body ?? "").split("\n")[0].slice(0, 30)}`,
             color: "purple",
             place: (p.place_lat != null || p.place_name) ? { name: p.place_name ?? null, lat: p.place_lat ?? null, lng: p.place_lng ?? null, url: p.place_url ?? null } : undefined,
           });
@@ -219,7 +219,7 @@ export default function MoaiDetailPage() {
       <IosBackButton />
       {/* カバー画像ブロック（写真だけ・文字は乗せない） */}
       <div className="relative h-[150px]" style={{ background: moai.cover_url ? `url(${moai.cover_url}) center/cover` : "linear-gradient(160deg,#e8564a,#c0392b)" }}>
-        <div className="absolute left-3 top-3"><Link href="/moai" className="rounded-full bg-black/35 px-2.5 py-1 text-[12px] font-bold text-white no-underline">◀ MOAI</Link></div>
+        <div className="absolute left-3 top-3"><Link href="/moai" className="rounded-full bg-black/35 px-2.5 py-1 text-[12px] font-bold text-white no-underline">◀ MoAI</Link></div>
         <div className="absolute right-3 top-3"><AvatarMenu /></div>
         {isLeader && (
           <label className="absolute bottom-2 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg">
@@ -275,13 +275,13 @@ export default function MoaiDetailPage() {
             className="rounded-xl px-6 py-2.5 text-[13px] font-extrabold disabled:opacity-50"
             style={joined ? { border: "1px solid #c0392b", color: "#c0392b", background: "transparent" } : myStatus === "rejected" ? { background: "#b0a8a4", color: "#fff" } : { background: "#c0392b", color: "#fff" }}
           >
-            {joined ? "✓ 参加中（タップで退会）" : myStatus === "rejected" ? "入部は見送りになりました" : myStatus === "pending" ? "申請中（承認待ち・タップで取消）" : moai.join_policy === "approval" ? "入部を申請する（承認制）" : "入部希望（このMOAIに参加）"}
+            {joined ? "✓ 参加中（タップで退会）" : myStatus === "rejected" ? "入部は見送りになりました" : myStatus === "pending" ? "申請中（承認待ち・タップで取消）" : moai.join_policy === "approval" ? "入部を申請する（承認制）" : "入部希望（このMoAIに参加）"}
           </button>
           {canManage && (
             <button onClick={() => { setEName(moai.name); setECat(moai.category ?? "music"); setEDesc(moai.description ?? ""); setEKw((moai as any).keywords ?? ""); setEPolicy(((moai as any).join_policy === "approval") ? "approval" : "open"); setEPref(moai.prefecture ?? "東京都"); setECity(moai.city ?? ""); setEditing(true); }} className="rounded-xl border border-[#e0a89f] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">✎ 編集</button>
           )}
           {canManage && (
-            <button onClick={async () => { if (!confirm("このMOAIを削除しますか？（投稿もすべて消えます）")) return; await deleteMoai(moaiId); router.push("/moai"); }} className="rounded-xl border border-[#a05a6a] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">🗑</button>
+            <button onClick={async () => { if (!confirm("このMoAIを削除しますか？（投稿もすべて消えます）")) return; await deleteMoai(moaiId); router.push("/moai"); }} className="rounded-xl border border-[#a05a6a] px-3 py-2.5 text-[12px] font-bold text-[#c0392b]">🗑</button>
           )}
         </div>
       </header>
@@ -529,7 +529,7 @@ export default function MoaiDetailPage() {
         <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/50" onClick={() => setEditing(false)}>
           <div className="w-full max-w-[480px] rounded-t-2xl p-4" style={{ background: "#fff", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }} onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#e0d0cc]" />
-            <div className="mb-2 text-[13.5px] font-extrabold text-[#3a2420]">MOAIを編集</div>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#3a2420]">MoAIを編集</div>
             <input value={eName} onChange={(e) => setEName(e.target.value)} className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13.5px] text-[#3a2420] outline-none" />
             <select value={eCat} onChange={(e) => setECat(e.target.value)} className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
               {MOAI_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}

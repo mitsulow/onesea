@@ -651,22 +651,22 @@ export function ServiceDock() {
           />
         </svg>
 
-        {/* 中心: 卵の家（OneSea）— 押すとMOAIへ */}
+        {/* 中心: 卵の家（OneSea）— 押すとMoAIへ */}
         <button
           onClick={() => {
             if (movedRef.current) return;
             router.push("/moai");
           }}
           className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center"
-          aria-label="MOAIへ"
+          aria-label="MoAIへ"
         >
           <img
             src="/icons/icon-atsumaru.webp"
-            alt="MOAI"
+            alt="MoAI"
             className="mx-auto object-contain"
             style={{ height: open ? 46 : 36, width: open ? 46 : 36, transition: "all .35s", filter: "drop-shadow(0 0 14px rgba(201,57,43,.5))" }}
           />
-          <div className="mt-0.5 text-[8px] font-bold tracking-[2px] text-[#c0392b]/90">MOAI</div>
+          <div className="mt-0.5 text-[8px] font-bold tracking-[2px] text-[#c0392b]/90">MoAI</div>
         </button>
 
         {/* 公転する6つのサービス */}

@@ -17,7 +17,7 @@ import { PREFS } from "@/lib/sekai";
 const YOBI = ["日", "月", "火", "水", "木", "金", "土"];
 const G = "#2a7a48"; // 米部の緑
 
-/** 田んぼのページ — 拠点・MOAIサークルと同じ「ページ」構造(FEED/MEMBERS/CHAT) */
+/** 田んぼのページ — 拠点・MoAIサークルと同じ「ページ」構造(FEED/MEMBERS/CHAT) */
 export default function TanboDetailPage() {
   const params = useParams<{ id: string }>();
   const tanboId = params.id;

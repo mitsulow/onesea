@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * MOAI（モアイ）— MMM会員もセカイムラ会員も横断で入れる、趣味でつながるサークル。
+ * MoAI（モアイ）— MMM会員もセカイムラ会員も横断で入れる、趣味でつながるサークル。
  * 拠点(村)づくりと同じ作りやすさ + イベント + 活動FEED。
  */
 export interface Moai {
@@ -97,7 +97,7 @@ export async function fetchMoaiMemberIds(moaiId: string): Promise<Set<string>> {
   return new Set((data ?? []).filter((r: any) => r.status === "approved").map((r: any) => r.user_id as string));
 }
 
-/** 全MOAI横断の活動フィード(新しい順・イベントも含む) */
+/** 全MoAI横断の活動フィード(新しい順・イベントも含む) */
 export async function fetchMoaiFeed(limit = 40) {
   const supabase = createClient();
   const { data } = await supabase
@@ -148,7 +148,7 @@ export async function addMoaiComment(postId: string, userId: string, body: strin
   return supabase.from("moai_post_comments").insert({ post_id: postId, user_id: userId, body: body.trim() });
 }
 
-/** 同名のMOAIが既にあるか(大文字小文字・前後空白を無視) */
+/** 同名のMoAIが既にあるか(大文字小文字・前後空白を無視) */
 export async function moaiNameTaken(name: string): Promise<boolean> {
   const supabase = createClient();
   const { data } = await supabase.rpc("moai_name_taken", { nm: name });

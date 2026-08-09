@@ -489,7 +489,7 @@ export default function CotozutePage() {
     </div>
   );
 
-  /* 部員募集！ MOAIサークル横スクロール */
+  /* 部員募集！ MoAIサークル横スクロール */
   const moaiStrip = moais.length > 0 && (
     <div className="py-2.5">
       <div className="mb-1.5 flex items-baseline justify-between px-0.5">

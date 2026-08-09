@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** 部活はMOAIに統合されました。旧URLはMOAIへ転送。 */
+/** 部活はMoAIに統合されました。旧URLはMoAIへ転送。 */
 export default function ClubsRedirect() {
   redirect("/moai");
 }

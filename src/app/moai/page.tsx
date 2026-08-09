@@ -11,7 +11,7 @@ import { fetchMoais, createMoai, fetchMoaiFeed, moaiNameTaken, MOAI_CATEGORIES, 
 import { PREFS } from "@/lib/sekai";
 import { ServiceMenuButton } from "@/components/ServiceMenu";
 
-/** MOAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
+/** MoAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
 export default function MoaiListPage() {
   const [me, setMe] = useState<User | null>(null);
   const [moais, setMoais] = useState<Moai[] | null>(null);
@@ -78,7 +78,7 @@ export default function MoaiListPage() {
       <header className="relative flex h-[64px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "url(/icons/bg-kawara.webp) center/cover" }}>
         <span className="absolute left-3 top-1/2 -translate-y-1/2"><ServiceMenuButton /></span>
         <div className="text-[10px] font-bold tracking-[3px] text-[#5a3420]" style={{ textShadow: "0 0 6px #fff, 0 0 3px #fff" }}>シュミサークル部活道</div>
-        <div className="text-[17px] font-extrabold tracking-[6px] text-[#3a2420]" style={{ textShadow: "0 0 8px #fff, 0 0 4px #fff" }}>MOAI</div>
+        <div className="text-[17px] font-extrabold tracking-[6px] text-[#3a2420]" style={{ textShadow: "0 0 8px #fff, 0 0 4px #fff" }}>MoAI</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2"><AvatarMenu /></span>
       </header>
 
@@ -100,7 +100,7 @@ export default function MoaiListPage() {
         {/* 作成フォーム */}
         {me && creating && (
           <div className="mb-3 rounded-2xl p-3.5" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
-            <div className="mb-2 text-[13px] font-extrabold text-[#3a2420]">MOAIをつくる</div>
+            <div className="mb-2 text-[13px] font-extrabold text-[#3a2420]">MoAIをつくる</div>
             {/* カバー + アイコン */}
             <div className="relative mb-8 h-24 overflow-hidden rounded-xl bg-[#f6e4e0]">
               {cover ? <img src={srcCdn(cover)} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[11px] text-[#b09088]">背景写真</div>}
@@ -112,8 +112,8 @@ export default function MoaiListPage() {
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => up(e.target.files?.[0] ?? null, setIcon, false)} />
               </label>
             </div>
-            <input value={name} onChange={(e) => { setName(e.target.value); setNameTaken(null); }} onBlur={async () => { if (name.trim()) setNameTaken(await moaiNameTaken(name)); }} placeholder="MOAIの名前（例: 朝ラン部、味噌づくりの会）" className="mb-1 w-full rounded-xl border bg-[#fff] px-3 py-2 text-[13.5px] text-[#3a2420] outline-none" style={{ borderColor: nameTaken ? "#c0392b" : "#f0d8d4" }} />
-            {nameTaken === true && <p className="mb-2 text-[11px] font-bold text-[#c0392b]">⚠️ 同じ名前のMOAIが既にあります。別の名前にしてください</p>}
+            <input value={name} onChange={(e) => { setName(e.target.value); setNameTaken(null); }} onBlur={async () => { if (name.trim()) setNameTaken(await moaiNameTaken(name)); }} placeholder="MoAIの名前（例: 朝ラン部、味噌づくりの会）" className="mb-1 w-full rounded-xl border bg-[#fff] px-3 py-2 text-[13.5px] text-[#3a2420] outline-none" style={{ borderColor: nameTaken ? "#c0392b" : "#f0d8d4" }} />
+            {nameTaken === true && <p className="mb-2 text-[11px] font-bold text-[#c0392b]">⚠️ 同じ名前のMoAIが既にあります。別の名前にしてください</p>}
             {nameTaken === false && name.trim() && <p className="mb-2 text-[11px] font-bold text-[#2a8a4a]">✓ この名前は使えます</p>}
             <select value={cat} onChange={(e) => setCat(e.target.value)} className="mb-2 w-full rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
               {MOAI_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.emoji} {c.label}</option>)}
@@ -148,11 +148,11 @@ export default function MoaiListPage() {
 
         {!me && (
           <p className="mb-3 rounded-xl bg-[#faf4f2] px-4 py-3 text-center text-[12px] text-[#a08078]">
-            <Link href="/" className="font-bold text-[#c0392b] underline">ログイン</Link>すると、MOAIを作ったり参加できます
+            <Link href="/" className="font-bold text-[#c0392b] underline">ログイン</Link>すると、MoAIを作ったり参加できます
           </p>
         )}
 
-        {/* サークル横スクロール（先頭に「MOAIをつくる」カード・セカイムラのイベント作成と同じ流儀） */}
+        {/* サークル横スクロール（先頭に「MoAIをつくる」カード・セカイムラのイベント作成と同じ流儀） */}
         <div className="hide-scrollbar -mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1">
           {me && (
             <button
@@ -161,7 +161,7 @@ export default function MoaiListPage() {
               style={{ borderColor: "#c0392b", background: "rgba(200,60,50,.06)" }}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full text-[18px] font-extrabold text-white" style={{ background: "#c0392b" }}>＋</span>
-              <span className="px-1 text-center text-[10.5px] font-extrabold leading-snug text-[#c0392b]">MOAIを<br />つくる</span>
+              <span className="px-1 text-center text-[10.5px] font-extrabold leading-snug text-[#c0392b]">MoAIを<br />つくる</span>
             </button>
           )}
           {(moais ?? []).filter((m) => {
@@ -192,7 +192,7 @@ export default function MoaiListPage() {
         {/* 全サークル横断の活動フィード */}
         <div className="mt-5">
           <div className="mb-2 flex items-center gap-2 px-1">
-            <span className="text-[13px] font-extrabold tracking-[2px] text-[#c0392b]">みんなのMOAI活動</span>
+            <span className="text-[13px] font-extrabold tracking-[2px] text-[#c0392b]">みんなのMoAI活動</span>
             <span className="h-px flex-1" style={{ background: "#f0d8d4" }} />
           </div>
           {feed === null ? (
@@ -210,7 +210,7 @@ export default function MoaiListPage() {
                       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f3ded9] text-[15px]">{moaiCat(p.moai?.category ?? null).emoji}</span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{p.moai?.name ?? "MOAI"}<span className="text-[11px] font-normal text-[#b09088]">からの投稿</span></div>
+                      <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{p.moai?.name ?? "MoAI"}<span className="text-[11px] font-normal text-[#b09088]">からの投稿</span></div>
                       <div className="num text-[10px] text-[#b09088]">{p.profiles?.display_name ?? "メンバー"} ・ {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}</div>
                     </div>
                     {p.kind === "event" && p.event_at && (

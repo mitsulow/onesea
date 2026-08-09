@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 
-/** 田んぼ=ページ(拠点・MOAIと同じ作り)のデータ層 */
+/** 田んぼ=ページ(拠点・MoAIと同じ作り)のデータ層 */
 export interface TanboPage {
   id: string;
   name: string;
