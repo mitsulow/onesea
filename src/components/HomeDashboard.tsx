@@ -651,8 +651,15 @@ export function ServiceDock() {
           />
         </svg>
 
-        {/* 中心: 卵の家（OneSea） */}
-        <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center">
+        {/* 中心: 卵の家（OneSea）— 押すとMOAIへ */}
+        <button
+          onClick={() => {
+            if (movedRef.current) return;
+            router.push("/moai");
+          }}
+          className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center"
+          aria-label="MOAIへ"
+        >
           <img
             src="/icons/tab-home.png"
             alt="OneSea"
@@ -660,7 +667,7 @@ export function ServiceDock() {
             style={{ height: open ? 46 : 34, width: open ? 36 : 27, transition: "all .35s", filter: "drop-shadow(0 0 14px rgba(212,185,106,.55))" }}
           />
           <div className="mt-0.5 text-[8px] font-bold tracking-[2px] text-[#d4b96a]/80">OneSea</div>
-        </div>
+        </button>
 
         {/* 公転する6つのサービス */}
         {ITEMS.map((m, i) => {
