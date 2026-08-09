@@ -237,7 +237,7 @@ export default function OfficePage() {
                         ) : (
                           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#e5dcc8] text-[9px] text-[#8a8070]">?</span>
                         )}
-                        <span className="font-bold text-[#3070b0] underline">{rp2?.display_name ?? "会員"}</span>
+                        <span className="font-bold text-[#3070b0] underline">{rp2?.display_name ?? (r.reporter ? "会員" : "通りすがり")}</span>
                       </span>
                     );
                     return rp2?.username ? (

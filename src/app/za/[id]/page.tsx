@@ -429,11 +429,10 @@ export default function ShopDetailPage() {
           </button>
           <button
             onClick={async () => {
-              if (!me) { alert("通報にはログインが必要です"); return; }
-              const reason = prompt("この商品を事務局に通報します。理由を教えてください");
+              const reason = prompt("この商品を事務局に通報します。理由を教えてください（白タク・無許可の営業など）");
               if (reason === null) return;
               const supabase = createClient();
-              await supabase.from("post_reports").insert({ kind: "za", target_id: params.id, target_url: `/za/${params.id}`, excerpt: (shop?.name ?? "").slice(0, 120), reporter: me.id, reason: reason || null });
+              await supabase.from("post_reports").insert({ kind: "za", target_id: params.id, target_url: `/za/${params.id}`, excerpt: (shop?.name ?? "").slice(0, 120), reporter: me?.id ?? null, reason: reason || null });
               alert("事務局に通報しました");
             }}
             className="rounded-xl border border-[#e8c4b8] bg-white py-2 text-[11px] font-bold text-[#c05030]"
