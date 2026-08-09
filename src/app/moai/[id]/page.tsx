@@ -37,6 +37,7 @@ export default function MoaiDetailPage() {
   const [evEnd, setEvEnd] = useState("");
   const [saving, setSaving] = useState(false);
   const [editEvId, setEditEvId] = useState<string | null>(null);
+  const [editPostId, setEditPostId] = useState<string | null>(null);
   const [chat, setChat] = useState<any[]>([]);
   const [chatBody, setChatBody] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
@@ -155,11 +156,12 @@ export default function MoaiDetailPage() {
       place_lng: isEvent ? placeNow?.lng ?? null : null,
       place_url: isEvent ? placeNow?.url ?? null : null,
     };
-    if (editEvId) await supabase.from("moai_posts").update(payload).eq("id", editEvId);
+    const editId = editEvId || editPostId;
+    if (editId) await supabase.from("moai_posts").update(payload).eq("id", editId);
     else await supabase.from("moai_posts").insert({ moai_id: moaiId, user_id: me.id, ...payload });
     setSaving(false);
     setSheet(null);
-    setEditEvId(null);
+    setEditEvId(null); setEditPostId(null);
     setBody(""); setPhoto(null); setEvAt(""); setEvEnd(""); setEvPlace(null); setEvPaste(""); setEvPlaceMsg(null);
     load();
   };
@@ -242,17 +244,22 @@ export default function MoaiDetailPage() {
         {/* 部員アイコンをずらっと */}
         {memberProfs.length > 0 && (
           <div className="hide-scrollbar mt-2 flex items-center justify-center gap-1.5 overflow-x-auto px-2 pb-3">
-            {memberProfs.map((pr: any, i: number) => (
-              <span key={i} className="relative flex-shrink-0">
-                {pr?.avatar_url
-                  ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full border border-[#f0d8d4] object-cover" />
-                  : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3ded9] text-[11px]">🗿</span>}
-                {pr.user_id === moai.created_by && (
-                  <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-[1px] text-[8px] font-extrabold text-white shadow" style={{ background: "#c9a94a" }}>OYA</span>
-                )}
-              </span>
-            ))}
-            {members.size > memberProfs.length && <span className="num flex-shrink-0 text-[10px] text-[#b09088]">+{members.size - memberProfs.length}</span>}
+            {memberProfs.map((pr: any, i: number) => {
+              const inner = (
+                <>
+                  {pr?.avatar_url
+                    ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full border border-[#f0d8d4] object-cover" />
+                    : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3ded9] text-[11px]">🗿</span>}
+                  {pr.user_id === moai.created_by && (
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-[1px] text-[8px] font-extrabold text-white shadow" style={{ background: "#c9a94a" }}>OYA</span>
+                  )}
+                </>
+              );
+              return pr.username
+                ? <Link key={i} href={`/u/${pr.username}`} className="relative flex-shrink-0">{inner}</Link>
+                : <span key={i} className="relative flex-shrink-0">{inner}</span>;
+            })}
+            {members.size > memberProfs.length && <span className="num flex-shrink-0 text-[10px] font-bold text-[#b09088]">+{Math.min(99, members.size - memberProfs.length)}{members.size - memberProfs.length > 99 ? "" : ""}</span>}
           </div>
         )}
         <div className="mt-3 flex items-center justify-center gap-2">
@@ -315,8 +322,8 @@ export default function MoaiDetailPage() {
                               setEvAt(`${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}T${pad(d0.getHours())}:${pad(d0.getMinutes())}`);
                               setEvEnd(de ? `${de.getFullYear()}-${pad(de.getMonth() + 1)}-${pad(de.getDate())}T${pad(de.getHours())}:${pad(de.getMinutes())}` : "");
                               setEvPlace(p.place_name || p.place_lat != null ? { name: p.place_name ?? null, lat: p.place_lat ?? null, lng: p.place_lng ?? null, url: p.place_url ?? "", image: null } : null);
-                            }} className="rounded-full border px-2 py-0.5 text-[10px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}>✎</button>
-                            <button onClick={async () => { if (!confirm("このイベントを削除しますか？")) return; await createClient().from("moai_posts").delete().eq("id", p.id); load(); }} className="rounded-full border px-2 py-0.5 text-[10px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}>🗑</button>
+                            }} className="rounded-lg border px-2.5 py-1 text-[13px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}>✎ 編集</button>
+                            <button onClick={async () => { if (!confirm("このイベントを削除しますか？")) return; await createClient().from("moai_posts").delete().eq("id", p.id); load(); }} className="rounded-lg border px-2 py-1 text-[13px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}>🗑</button>
                           </>
                         )}
                         <button onClick={() => joinEvent(p)} className="ml-auto rounded-full px-3 py-1 text-[11px] font-extrabold text-white" style={{ background: "#c0392b" }}>参加する</button>
@@ -384,11 +391,17 @@ export default function MoaiDetailPage() {
                     <div className="truncate text-[13px] font-bold text-[#3a2420]">{p.profiles?.display_name ?? "メンバー"}</div>
                     <div className="num text-[10px] text-[#b09088]">{new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}</div>
                   </div>
-                  {me && (me.id === p.user_id || moai.created_by === me.id) && (
-                    <button
-                      onClick={async () => { if (!confirm("削除しますか？")) return; await createClient().from("moai_posts").delete().eq("id", p.id); load(); }}
-                      className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0ece8] text-[12px] text-[#a08078]"
-                    >×</button>
+                  {me && (me.id === p.user_id || moai.created_by === me.id || amAdmin) && (
+                    <span className="flex flex-shrink-0 items-center gap-1.5">
+                      <button
+                        onClick={() => { setSheet("report"); setEditPostId(p.id); setBody(p.body ?? ""); setPhoto(p.photo_url ?? null); }}
+                        className="rounded-lg border px-2.5 py-1 text-[12px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}
+                      >✎ 編集</button>
+                      <button
+                        onClick={async () => { if (!confirm("削除しますか？")) return; await createClient().from("moai_posts").delete().eq("id", p.id); load(); }}
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f0ece8] text-[13px] text-[#a08078]"
+                      >×</button>
+                    </span>
                   )}
                 </div>
                 <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#4a3630]">{p.body}</p>
@@ -435,10 +448,10 @@ export default function MoaiDetailPage() {
 
       {/* 投稿シート */}
       {sheet && me && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50" onClick={() => { setSheet(null); setEditEvId(null); }}>
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50" onClick={() => { setSheet(null); setEditEvId(null); setEditPostId(null); }}>
           <div className="w-full max-w-[480px] rounded-t-2xl p-4" style={{ background: "#fff", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }} onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#e0d0cc]" />
-            <div className="mb-2 text-[13.5px] font-extrabold text-[#3a2420]">{sheet === "event" ? (editEvId ? "📅 イベントを編集" : "📅 イベントを作る") : "✏️ 活動を投稿"}</div>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#3a2420]">{sheet === "event" ? (editEvId ? "📅 イベントを編集" : "📅 イベントを作る") : (editPostId ? "✏️ 活動を編集" : "✏️ 活動を投稿")}</div>
             {sheet === "event" && (
               <div className="mb-2 space-y-1.5">
                 <div className="flex items-center gap-2"><span className="w-8 text-[11px] font-bold text-[#a08078]">開始</span><input type="datetime-local" value={evAt} onChange={(e) => setEvAt(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[13px] text-[#3a2420] outline-none" /></div>
@@ -468,7 +481,7 @@ export default function MoaiDetailPage() {
             </label>
             <div className="flex gap-2">
               <button onClick={() => setSheet(null)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
-              <button onClick={publish} disabled={!body.trim() || saving || (sheet === "event" && !evAt)} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{saving ? "保存中..." : editEvId ? "変更を保存" : "投稿する"}</button>
+              <button onClick={publish} disabled={!body.trim() || saving || (sheet === "event" && !evAt)} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{saving ? "保存中..." : (editEvId || editPostId) ? "変更を保存" : "投稿する"}</button>
             </div>
           </div>
         </div>
