@@ -54,18 +54,23 @@ export default function ProfileSettingsPage() {
   useEffect(() => {
     if (!draftReady.current) return;
     try {
-      sessionStorage.setItem(
+      localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ displayName, statusLine, bio, prefecture, city, riceWork, lifeWork, skills, wants, sns, birthday, birthTime, gender, birthPref, birthCity })
+        JSON.stringify({ ts: Date.now(), displayName, statusLine, bio, prefecture, city, riceWork, lifeWork, skills, wants, sns, birthday, birthTime, gender, birthPref, birthCity })
       );
     } catch {}
   }, [displayName, statusLine, bio, prefecture, city, riceWork, lifeWork, skills, wants, sns, birthday, birthTime, gender, birthPref, birthCity]);
 
   const restoreDraft = () => {
     try {
-      const raw = sessionStorage.getItem(DRAFT_KEY);
+      const raw = localStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       const d = JSON.parse(raw);
+      // 3日より古い下書きは捨てる(昔の書きかけが突然復活しないように)
+      if (d.ts && Date.now() - d.ts > 3 * 86400000) {
+        localStorage.removeItem(DRAFT_KEY);
+        return;
+      }
       if (d.displayName != null) setDisplayName(d.displayName);
       if (d.statusLine != null) setStatusLine(d.statusLine);
       if (d.bio != null) setBio(d.bio);
@@ -179,7 +184,7 @@ export default function ProfileSettingsPage() {
       return;
     }
     try {
-      sessionStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(DRAFT_KEY);
     } catch {}
     router.push(`/u/${username}`);
   };
