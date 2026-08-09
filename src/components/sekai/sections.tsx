@@ -896,7 +896,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         .from("village_posts")
         .update({
           body: wBody.trim(),
-          photo_url: wPhoto ?? wPlace?.image ?? null,
+          photo_url: wPhoto,
           event_at: eventAt,
           event_end: eventEnd,
           place_name: wPlace?.name ?? null,
@@ -945,7 +945,7 @@ export function ActivitySection({ me }: { me: User | null }) {
         user_id: me.id,
         body: wBody.trim(),
         embed,
-        photo_url: wPhoto ?? (wKind === "event" ? placeNow?.image ?? null : null),
+        photo_url: wPhoto, // 写真なしなら無し(場所画像は地図サムネ事故があるので使わない)
         kind: wKind,
         event_at: eventAt,
         event_end: eventEnd,
