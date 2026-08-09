@@ -2809,8 +2809,21 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
                 className="mb-2 w-full rounded-xl border border-[#e8e2cc] bg-white px-3 py-2 text-[13px] font-bold text-[#8a7020] outline-none"
               >
                 <option value="">全国の田んぼ（{tanbo.length}）</option>
-                {[...new Set(tanbo.map((t) => t.prefecture).filter(Boolean))].map((pf) => (
-                  <option key={pf} value={pf}>{pf}（{tanbo.filter((t) => t.prefecture === pf).length}）</option>
+                {([
+                  ["北海道・東北", ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"]],
+                  ["関東", ["茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県"]],
+                  ["中部", ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県"]],
+                  ["関西", ["三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"]],
+                  ["中国", ["鳥取県", "島根県", "岡山県", "広島県", "山口県"]],
+                  ["四国", ["徳島県", "香川県", "愛媛県", "高知県"]],
+                  ["九州・沖縄", ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"]],
+                ] as const).map(([region, prefs]) => (
+                  <optgroup key={region} label={region}>
+                    {prefs.map((pf) => {
+                      const n = tanbo.filter((t) => t.prefecture === pf).length;
+                      return <option key={pf} value={pf} disabled={n === 0}>{pf}（{n}）</option>;
+                    })}
+                  </optgroup>
                 ))}
               </select>
               {/* 楽市楽座の出品カードと同じ2列グリッド */}
