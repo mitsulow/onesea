@@ -2720,7 +2720,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
       {tab === "list" && (
         <>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-      <div ref={mapHost} className="mb-1 h-[240px] w-full overflow-hidden rounded-xl border border-[#e8e2cc]" data-noswipe />
+      <div ref={mapHost} className="relative z-0 mb-1 h-[240px] w-full overflow-hidden rounded-xl border border-[#e8e2cc]" style={{ isolation: "isolate" }} data-noswipe />
       <p className="mb-2 text-center text-[10px] text-[#a0aca0]">🌾を押すとその田んぼのページへ（位置は県の代表点）</p>
       {(adding && me) ? (
           <div className="mb-3 rounded-xl border border-[#c8b86a88] bg-[#fbf9f0] p-3">
