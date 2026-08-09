@@ -2790,11 +2790,7 @@ export function KomeSection({ me, myPref }: { me: User | null; myPref: string })
           >
             🌾 田んぼを使って欲しい
           </button>
-          {amOffice && (
-            <Link href="/office/kome" className="mb-3 block w-full rounded-xl border-2 border-dashed py-2.5 text-center text-[12.5px] font-extrabold no-underline" style={{ borderColor: "#c8b86a55", color: "#a09060" }}>
-              🗂 申請の確認と田んぼ登録は事務局ページで →
-            </Link>
-          )}
+
           </>
         )}
           {tanbo === null ? (
