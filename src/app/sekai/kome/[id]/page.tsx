@@ -282,6 +282,17 @@ export default function TanboDetailPage() {
 
         {/* ===== FEED ===== */}
         {tab === "feed" && (<>
+        {/* ①申請+②ヒアリング由来の田んぼ情報(本登録時に事務局が取り込み) */}
+        {tanbo.detail && Object.keys(tanbo.detail).length > 0 && (
+          <details className="mb-3 rounded-xl bg-white p-3" style={{ border: "1px solid #d8e8d0" }}>
+            <summary className="cursor-pointer text-[12.5px] font-extrabold" style={{ color: G }}>🌾 この田んぼについて（タップで開く）</summary>
+            <div className="mt-2 space-y-1 text-[12px] leading-relaxed text-[#3a4a34]">
+              {Object.entries(tanbo.detail).map(([k, v]) => (
+                <div key={k}><span className="text-[#8aa088]">{k}:</span> <b>{v}</b></div>
+              ))}
+            </div>
+          </details>
+        )}
         {events.length > 0 && (
           <div className="mb-3">
             <div className="mb-1 px-1 text-[12px] font-extrabold" style={{ color: G }}>📅 近々のイベント（田植え・草取り・稲刈り）</div>

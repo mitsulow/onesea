@@ -12,6 +12,7 @@ export interface TanboPage {
   cover_url: string | null;
   icon_url: string | null;
   year: number | null;
+  detail?: Record<string, string> | null;
   user_id: string;
   created_at: string;
 }
@@ -20,7 +21,7 @@ export async function fetchTanboPage(id: string): Promise<TanboPage | null> {
   const supabase = createClient();
   const { data } = await supabase
     .from("tanbo")
-    .select("id, name, prefecture, note, photo_url, cover_url, icon_url, year, user_id, created_at")
+    .select("id, name, prefecture, note, photo_url, cover_url, icon_url, year, user_id, created_at, detail")
     .eq("id", id)
     .maybeSingle();
   return (data as TanboPage) ?? null;

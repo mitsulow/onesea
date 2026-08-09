@@ -128,6 +128,18 @@ export default function OfficeKomePage() {
     if (!rName.trim()) { alert("田んぼの名前を入れてください"); return; }
     if (!confirm(`「${rName.trim()}」を米部に本登録しますか？（申請者が田守になります）`)) return;
     setBusy(true);
+    // ①申請+②ヒアリングの内容を田んぼページの「この田んぼについて」に載せる(連絡先・ふりがなは除外、住所はMAP掲載①の時だけ)
+    const detail: Record<string, string> = {};
+    if (w.app) { detail["お米作りをしている人"] = w.app.farmer_who; detail["農家区分"] = w.app.farmer_type; }
+    const hAns2 = (w.hearing?.answers ?? {}) as Record<string, any>;
+    const mapStyle = String(hAns2["map_style"] ?? hAns2["MAP掲載方法"] ?? "");
+    const showAddr = mapStyle.startsWith("①");
+    for (const [k, v] of Object.entries(hAns2)) {
+      const label = LEGACY_LABELS[k] ?? k;
+      if (label === "ふりがな" || label === "オーナー名のふりがな") continue;
+      if (!showAddr && (label.includes("所在地") || label.includes("地図") || label.includes("GoogleマップのURL"))) continue;
+      detail[label] = Array.isArray(v) ? (v as string[]).join("・") : String(v);
+    }
     const { data: newId, error } = await createClient().rpc("office_register_tanbo2", {
       p_app: w.app?.id ?? null,
       p_hearing: w.hearing?.id ?? null,
@@ -135,6 +147,7 @@ export default function OfficeKomePage() {
       p_pref: rPref,
       p_note: rNote.trim(),
       p_photo: rPhoto ?? "",
+      p_detail: detail,
     });
     setBusy(false);
     if (error || !newId) { alert("登録できませんでした: " + (error?.message ?? "")); return; }
