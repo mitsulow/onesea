@@ -2,7 +2,7 @@
 
 import { moonOracleIdxOf } from "@/lib/almanac";
 import { TechoBackupCard } from "@/components/TechoBackupCard";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
@@ -45,6 +45,44 @@ export default function ProfileSettingsPage() {
   const [birthCity, setBirthCity] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const draftReady = useRef(false); // プロフィール読込完了後にだけ下書きを書く
+
+  /* ── 下書き自動保存 ──
+     引っ張り更新・横スワイプでの離脱・誤リロードなど、どんな理由でページが
+     消えても、戻ってきたら入力途中の内容がそのまま復元される。保存成功で消す。 */
+  const DRAFT_KEY = "onesea-profile-draft";
+  useEffect(() => {
+    if (!draftReady.current) return;
+    try {
+      sessionStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ displayName, statusLine, bio, prefecture, city, riceWork, lifeWork, skills, wants, sns, birthday, birthTime, gender, birthPref, birthCity })
+      );
+    } catch {}
+  }, [displayName, statusLine, bio, prefecture, city, riceWork, lifeWork, skills, wants, sns, birthday, birthTime, gender, birthPref, birthCity]);
+
+  const restoreDraft = () => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.displayName != null) setDisplayName(d.displayName);
+      if (d.statusLine != null) setStatusLine(d.statusLine);
+      if (d.bio != null) setBio(d.bio);
+      if (d.prefecture != null) setPrefecture(d.prefecture);
+      if (d.city != null) setCity(d.city);
+      if (d.riceWork != null) setRiceWork(d.riceWork);
+      if (d.lifeWork != null) setLifeWork(d.lifeWork);
+      if (d.skills != null) setSkills(d.skills);
+      if (d.wants != null) setWants(d.wants);
+      if (d.sns != null) setSns(d.sns);
+      if (d.birthday != null) setBirthday(d.birthday);
+      if (d.birthTime != null) setBirthTime(d.birthTime);
+      if (d.gender != null) setGender(d.gender);
+      if (d.birthPref != null) setBirthPref(d.birthPref);
+      if (d.birthCity != null) setBirthCity(d.birthCity);
+    } catch {}
+  };
 
   useEffect(() => {
     const supabase = createClient();
@@ -83,6 +121,11 @@ export default function ProfileSettingsPage() {
       if (priv?.birth_pref) setBirthPref(priv.birth_pref as string);
       if (priv?.birth_city) setBirthCity(priv.birth_city as string);
       if (priv?.birth_date && !data?.birthday) setBirthday(priv.birth_date as string);
+      // 読込が終わってから、残っている下書きを上書き復元(入力途中の方が新しい)
+      restoreDraft();
+      setTimeout(() => {
+        draftReady.current = true;
+      }, 0);
       if (priv?.birth_time) {
         const t = String(priv.birth_time).slice(0, 5);
         if (t !== "15:00") setBirthTime(t); // 既定の15:00は「未入力」として空欄扱い
@@ -135,6 +178,9 @@ export default function ProfileSettingsPage() {
       setMessage(`保存できませんでした: ${error.message}`);
       return;
     }
+    try {
+      sessionStorage.removeItem(DRAFT_KEY);
+    } catch {}
     router.push(`/u/${username}`);
   };
 
