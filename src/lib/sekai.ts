@@ -234,6 +234,7 @@ export interface Village {
   village_members: Array<{ count: number }>;
   cover_url?: string | null;
   icon_url?: string | null; // 拠点(=ページ)のアイコン
+  leaders?: string[] | null; // 村長(最大3人・登録順で自動継承)
 }
 
 export interface Club {
@@ -248,11 +249,11 @@ export interface Club {
 }
 
 export const POLICY_LABEL: Record<Village["policy"], string> = {
-  open: "誰でも参加OK",
+  open: "申請・承認制", // 旧「誰でも参加OK」は廃止(承認制に統合)
   approval: "申請・承認制",
   invite: "招待制",
-  paused: "一時募集停止",
-  full: "満員",
+  paused: "現在は追加募集は行なっていません",
+  full: "現在は追加募集は行なっていません",
 };
 
 /* ============ ラウンジ ============ */
@@ -333,7 +334,7 @@ export async function detectPrefecture(): Promise<string | null> {
 
 /* ============ 拠点（村） ============ */
 const VILLAGE_SELECT =
-  "id, name, prefecture, city, description, policy, is_official, created_by, cover_url, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
+  "id, name, prefecture, city, description, policy, is_official, created_by, leaders, cover_url, icon_url, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
 
 export async function fetchVillages(pref?: string | null): Promise<Village[]> {
   const supabase = createClient();
@@ -361,10 +362,11 @@ export async function fetchActivityFeed(limit = 10, offset = 0) {
 export async function updateVillage(
   userId: string,
   id: string,
-  v: { name: string; prefecture: string; city: string | null; description: string | null; policy: Village["policy"]; cover_url?: string | null }
+  v: { name: string; prefecture: string; city: string | null; description: string | null; policy: Village["policy"]; cover_url?: string | null; leaders?: string[] }
 ) {
+  void userId; // 権限はRLS側(created_by または leaders)で判定
   const supabase = createClient();
-  return supabase.from("villages").update(v).eq("id", id).eq("created_by", userId);
+  return supabase.from("villages").update(v).eq("id", id);
 }
 
 /* ---- 活動報告へのコメント ---- */

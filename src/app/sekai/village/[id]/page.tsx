@@ -68,6 +68,7 @@ export default function VillagePage() {
   const [ePolicy, setEPolicy] = useState<Village["policy"]>("open");
   const [eSaving, setESaving] = useState(false);
   const [eCover, setECover] = useState<string | null>(null);
+  const [eLeaders, setELeaders] = useState<string[]>([]);
   const [eCoverUp, setECoverUp] = useState(false);
   const eIsJapan = (PREFS as readonly string[]).includes(ePref);
 
@@ -77,8 +78,9 @@ export default function VillagePage() {
     setEPref(village.prefecture ?? "東京都");
     setECity(village.city ?? "");
     setEDesc(village.description ?? "");
-    setEPolicy(village.policy ?? "open");
+    setEPolicy(village.policy === "open" || !village.policy ? "approval" : village.policy);
     setECover(village.cover_url ?? null);
+    setELeaders(((village.leaders ?? [village.created_by]) as string[]).slice(0, 3));
     setEditing(true);
   };
 
@@ -93,6 +95,7 @@ export default function VillagePage() {
       description: eDesc.trim() || null,
       policy: ePolicy,
       cover_url: eCover,
+      leaders: [...new Set(eLeaders.filter(Boolean))].slice(0, 3),
     });
     setESaving(false);
     setEditing(false);
@@ -177,6 +180,10 @@ export default function VillagePage() {
     );
   }
 
+  const amLeader = !!me && !!village && (village.created_by === me.id || ((village.leaders ?? []) as string[]).includes(me.id));
+  const leaderProfiles = (((village?.leaders ?? []) as string[])
+    .map((lid) => (members as any[]).find((m) => m.user_id === lid)?.profiles)
+    .filter(Boolean)) as any[];
   const steward = village.profiles;
 
   return (
@@ -186,7 +193,7 @@ export default function VillagePage() {
         className="relative px-4 pb-5 pt-4 text-center"
         style={{
           background: village.cover_url
-            ? `linear-gradient(165deg, rgba(10,22,14,.72) 0%, rgba(14,32,20,.78) 60%, rgba(20,44,30,.85) 100%), url(${village.cover_url}) center/cover`
+            ? `linear-gradient(165deg, rgba(10,22,14,.34) 0%, rgba(14,32,20,.42) 60%, rgba(20,44,30,.55) 100%), url(${village.cover_url}) center/cover`
             : "linear-gradient(165deg,#0e2014 0%,#163522 55%,#1e4530 100%)",
         }}
       >
@@ -210,7 +217,7 @@ export default function VillagePage() {
         </div>
         {/* 拠点(=ページ)のアイコン。村長はタップして変更できる */}
         <div className="mt-3 flex justify-center">
-          <label className={me && village.created_by === me.id ? "relative cursor-pointer" : "relative"}>
+          <label className={amLeader ? "relative cursor-pointer" : "relative"}>
             {village.icon_url ? (
               <img
                 src={srcCdn(village.icon_url)}
@@ -222,7 +229,7 @@ export default function VillagePage() {
                 🏡
               </span>
             )}
-            {me && village.created_by === me.id && (
+            {amLeader && (
               <>
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[13px] shadow">
                   📷
@@ -238,7 +245,7 @@ export default function VillagePage() {
                     const url = await uploadImage("post-images", me.id, f, 512, 0.8);
                     if (url) {
                       const supabase = createClient();
-                      await supabase.from("villages").update({ icon_url: url }).eq("id", villageId).eq("created_by", me.id);
+                      await supabase.from("villages").update({ icon_url: url }).eq("id", villageId);
                       load();
                     }
                   }}
@@ -249,15 +256,15 @@ export default function VillagePage() {
         </div>
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{village.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
-          {village.prefecture} ・ 村人 {members.length}人 ・ 村長 {steward?.display_name ?? "—"}
+          {village.prefecture} ・ 村人 {members.length}人 ・ 村長 {leaderProfiles.length ? leaderProfiles.map((lp) => lp.display_name ?? "—").join("・") : steward?.display_name ?? "—"}
         </div>
         {village.description && (
           <p className="mx-auto mt-2 max-w-[340px] text-[12px] leading-relaxed text-[#c8dcc8]">{village.description}</p>
         )}
-        <VillageSns village={village} isLeader={!!me && village.created_by === me.id} onSaved={load} villageId={villageId} />
+        <VillageSns village={village} isLeader={amLeader} onSaved={load} villageId={villageId} />
         {/* 背景の変更: 参加中の村人なら誰でも(アイコンの📷と同じ作法・右下の境目) */}
         {joined && me && (
-          <label className="absolute bottom-2 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg">
+          <label className="absolute right-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg" style={{ bottom: -18 }}>
             📷
             <input
               type="file"
@@ -277,10 +284,10 @@ export default function VillagePage() {
           </label>
         )}
         <div className="mt-3 flex justify-center gap-2">
-          {village.recruiting === false && !joined && (
+          {(village.recruiting === false || village.policy === "paused" || village.policy === "full") && !joined && (
             <span className="rounded-xl border border-white/20 px-4 py-2.5 text-[12px] font-bold text-[#a8b8a8]">現在は募集を締め切っています</span>
           )}
-          {village.recruiting !== false && me && !joined && !members.some((mm: any) => mm.user_id === me.id) && (
+          {village.recruiting !== false && village.policy !== "paused" && village.policy !== "full" && me && !joined && !members.some((mm: any) => mm.user_id === me.id) && (
             <button
               onClick={async () => {
                 await joinVillage(me.id, villageId);
@@ -320,7 +327,7 @@ export default function VillagePage() {
             </button>
           )}
           {joined && <span className="rounded-xl border border-[#4a9a6a] px-4 py-2.5 text-[12.5px] font-bold text-[#a8d8b8]">✓ あなたの村</span>}
-          {me && village.created_by === me.id && (
+          {amLeader && (
             <button
               onClick={async () => {
                 const supabase = createClient();
@@ -332,7 +339,7 @@ export default function VillagePage() {
               {village.recruiting === false ? "募集を再開する" : "募集を締め切る"}
             </button>
           )}
-          {me && village.created_by === me.id && (
+          {amLeader && (
             <button
               onClick={openEdit}
               className="rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]"
@@ -354,7 +361,7 @@ export default function VillagePage() {
         </div>
 
         {/* 公式拠点の申請（立ち上げ村長だけに見える） */}
-        {me && village.created_by === me.id && !village.is_official && (
+        {amLeader && !village.is_official && (
           <button
             onClick={async () => {
               const settings = await fetchSettings();
@@ -455,14 +462,39 @@ export default function VillagePage() {
               </button>
             )}
           </div>
+          {/* 村長1〜3: 承認済みの村人から選ぶ(名前で選択) */}
+          <div className="mb-2">
+            <div className="mb-1 text-[11px] font-extrabold text-[#8a9a8a]">村長（最大3人・村人から選ぶ）</div>
+            {[0, 1, 2].map((li) => (
+              <select
+                key={li}
+                value={eLeaders[li] ?? ""}
+                onChange={(e) => {
+                  const next = [...eLeaders];
+                  next[li] = e.target.value;
+                  setELeaders(next);
+                }}
+                className="mb-1.5 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
+              >
+                <option value="">村長{li + 1}人目（なし）</option>
+                {(members as any[])
+                  .filter((m) => m.status === "approved")
+                  .map((m) => (
+                    <option key={m.user_id} value={m.user_id}>
+                      {m.profiles?.display_name ?? "むらびと"}
+                    </option>
+                  ))}
+              </select>
+            ))}
+          </div>
           <select
             value={ePolicy}
             onChange={(e) => setEPolicy(e.target.value as Village["policy"])}
             className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
           >
-            <option value="open">誰でも参加OK</option>
             <option value="approval">申請・承認制</option>
             <option value="invite">招待制</option>
+            <option value="paused">現在は追加募集は行なっていません</option>
           </select>
           <div className="flex gap-2">
             <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a0aca0]">
@@ -490,7 +522,7 @@ export default function VillagePage() {
             {members.map((m: any, i) => {
               const p = m.profiles;
               const pending = m.status === "pending";
-              const isLeader = me && village.created_by === me.id;
+              const isLeader = amLeader;
               const inner = (
                 <span className="relative inline-block">
                   {p?.avatar_url ? (
