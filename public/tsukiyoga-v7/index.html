@@ -7500,7 +7500,7 @@
 </div>
 <!-- 左上☰ドロワー(統一ルール: ロゴ+キャッチ → ツキヨガトップ → 下タブのみ) -->
 <div id="tyBurgerOv" style="display:none;position:fixed;inset:0;z-index:902;background:rgba(0,0,0,.35);"></div>
-<div id="tyBurgerMenu" style="display:none;position:fixed;left:0;top:0;z-index:903;height:100%;width:270px;overflow-y:auto;background:#fff;box-shadow:0 10px 36px rgba(0,0,0,.25);">
+<div id="tyBurgerMenu" style="display:none;position:fixed;left:0;top:0;z-index:903;height:100%;width:270px;overflow-y:auto;background:#fff;box-shadow:0 10px 36px rgba(0,0,0,.25);font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;">
   <div style="padding:20px 20px 8px;">
     <div style="font-size:10px;letter-spacing:2px;color:#a08ad0;">月はいまどこに</div>
     <div style="display:flex;align-items:center;gap:8px;font-size:19px;font-weight:800;color:#3a1a6a;">
@@ -7510,13 +7510,15 @@
   <a href="/tsukiyoga-v7/index.html" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #f0ecf6;font-size:14px;font-weight:700;color:#3a1a6a;background:#f4effc;text-decoration:none;">
     <img src="/icons/cel-moon.png" style="width:22px;height:22px;object-fit:contain;"> ツキヨガ トップ
   </a>
-  <a href="/my" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid #f0ecf6;font-size:14px;color:#1c1e21;text-decoration:none;">
-    <img src="/icons/icon-meishi.webp" style="width:22px;height:22px;object-fit:contain;"> マイページ
-  </a>
+  <button class="ty-burger-tab" data-view="calendar" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 20px;border:none;border-bottom:1px solid #f0ecf6;background:none;font-size:14px;color:#1c1e21;text-align:left;cursor:pointer;font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;"><span style="width:22px;text-align:center;font-size:17px;color:#3a1a6a;">✦</span> 暦</button>
+  <button class="ty-burger-tab" data-view="moonnav" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 20px;border:none;border-bottom:1px solid #f0ecf6;background:none;font-size:14px;color:#1c1e21;text-align:left;cursor:pointer;font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;"><span style="width:22px;text-align:center;font-size:17px;color:#3a1a6a;">⊙</span> 月ナビ</button>
+  <button class="ty-burger-tab" data-view="uranai" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 20px;border:none;border-bottom:1px solid #f0ecf6;background:none;font-size:14px;color:#1c1e21;text-align:left;cursor:pointer;font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;"><img src="/icons/icon-uranai.webp" style="width:22px;height:22px;object-fit:contain;"> 占い</button>
+  <button class="ty-burger-tab" data-view="hanasakari" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 20px;border:none;border-bottom:1px solid #f0ecf6;background:none;font-size:14px;color:#1c1e21;text-align:left;cursor:pointer;font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;"><img src="/icons/icon-camera.webp" style="width:22px;height:22px;object-fit:contain;"> 写真</button>
+  <button class="ty-burger-tab" data-view="mypage" style="display:flex;align-items:center;gap:12px;width:100%;padding:12px 20px;border:none;border-bottom:1px solid #f0ecf6;background:none;font-size:14px;color:#1c1e21;text-align:left;cursor:pointer;font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;"><img src="/icons/icon-myflower.webp" style="width:22px;height:22px;object-fit:contain;"> マイ</button>
 </div>
 <!-- 全サービスメニュー（OneSeaのAvatarMenuと同じ縦リスト） -->
 <div id="oneseaSvcOverlay" style="display:none;position:fixed;inset:0;z-index:900;background:rgba(0,0,0,.35);"></div>
-<div id="oneseaSvcMenu" style="display:none;position:fixed;right:10px;top:48px;z-index:901;width:224px;max-height:80vh;overflow-y:auto;background:#fff;border:1px solid #ede5d8;border-radius:12px;box-shadow:0 10px 36px rgba(0,0,0,.25);">
+<div id="oneseaSvcMenu" style="display:none;position:fixed;right:10px;top:48px;z-index:901;width:224px;max-height:80vh;overflow-y:auto;background:#fff;border:1px solid #ede5d8;border-radius:12px;box-shadow:0 10px 36px rgba(0,0,0,.25);font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP',system-ui,sans-serif;font-weight:500;">
   <a href="/notifications" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><span style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:16px;">🔔</span> お知らせ</a>
   <a href="/mmm" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/cel-sun.png" style="width:20px;height:20px;object-fit:contain;"> MasterMindMembers</a>
   <a href="/sekai" style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #f2ece0;font-size:13.5px;color:#3a3428;text-decoration:none;"><img src="/icons/cel-earth.png" style="width:20px;height:20px;object-fit:contain;"> セカイムラ</a>
@@ -17158,6 +17160,14 @@ if ('serviceWorker' in navigator) {
       var close = function(){ bm.style.display = 'none'; bo.style.display = 'none'; };
       bb.addEventListener('click', function(){ bm.style.display = 'block'; bo.style.display = 'block'; });
       bo.addEventListener('click', close);
+      bm.querySelectorAll('.ty-burger-tab').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var v = btn.getAttribute('data-view');
+          var target = document.querySelector('.tab-bar .tab-btn[data-view="' + v + '"]');
+          if (target) target.click();
+          close();
+        });
+      });
     }
   })();
   var menu = document.getElementById('oneseaSvcMenu');
