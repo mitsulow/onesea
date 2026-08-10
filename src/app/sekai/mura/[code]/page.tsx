@@ -9,6 +9,7 @@ import { srcCdn, uploadImage } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
 import { SeedSection } from "@/components/sekai/sections";
 import { fetchGroupMessages, type GroupMessageRow } from "@/lib/line";
+import { useSnackbar } from "@/components/Snackbar";
 
 const GREEN = "#4a9a5a";
 const ALL_PREFS = [...PREFS, "海外"] as string[];
@@ -27,6 +28,7 @@ export default function SekaiMuraPrefPage() {
   const pref = ALL_PREFS[idx - 1] ?? "";
   const disp = pref.replace(/[都府県]$/, "");
 
+  const { show: snack, node: snackNode } = useSnackbar();
   const [me, setMe] = useState<User | null>(null);
   const [amOffice, setAmOffice] = useState(false);
   const [murabito, setMurabito] = useState(false);
@@ -84,10 +86,11 @@ export default function SekaiMuraPrefPage() {
       pref_room_id: room.id,
     });
     if (error) {
-      alert("投稿できませんでした。「この県に参加する」を押してからどうぞ");
+      snack("投稿できませんでした。「この県に参加する」を押してからどうぞ", false);
       setFSending(false);
       return;
     }
+    snack("投稿しました ✓");
     setFBody("");
     setFPhoto(null);
     setFSending(false);
@@ -186,6 +189,7 @@ export default function SekaiMuraPrefPage() {
       const { error: e2 } = await supabase.from("pref_room_members").upsert({ room_id: room.id, user_id: me.id });
       if (e2) throw e2;
       setJoinedCounty(true);
+      snack(`セカイムラ${disp}に参加しました ✓`);
       // 参加している県を数える: 1県目ならそのままメイン、2県目以降ならメインを選んでもらう
       const { data: mems } = await supabase
         .from("pref_room_members")
@@ -202,7 +206,7 @@ export default function SekaiMuraPrefPage() {
       }
       loadRoom();
     } catch {
-      alert("参加できませんでした。もう一度お試しください");
+      snack("参加できませんでした。もう一度お試しください", false);
     }
     setCountyBusy(false);
   };
@@ -232,14 +236,14 @@ export default function SekaiMuraPrefPage() {
       const { data: prof } = await supabase.from("profiles").select("prefecture").eq("id", me.id).maybeSingle();
       if (prof?.prefecture === pref && rest.length) {
         await supabase.from("profiles").update({ prefecture: rest[0] }).eq("id", me.id);
-        alert(`セカイムラ${disp}を退会しました。メインはセカイムラ${rest[0].replace(/[都府県]$/, "")}になりました`);
+        snack(`セカイムラ${disp}を退会しました。メインはセカイムラ${rest[0].replace(/[都府県]$/, "")}になりました ✓`);
       } else {
-        alert(`セカイムラ${disp}を退会しました`);
+        snack(`セカイムラ${disp}を退会しました ✓`);
       }
       setJoinedCounty(false);
       loadRoom();
     } catch {
-      alert("退会できませんでした。もう一度お試しください");
+      snack("退会できませんでした。もう一度お試しください", false);
     }
     setCountyBusy(false);
   };
@@ -249,7 +253,8 @@ export default function SekaiMuraPrefPage() {
     setMainBusy(true);
     const { error } = await createClient().from("profiles").update({ prefecture: mainSel }).eq("id", me.id);
     setMainBusy(false);
-    if (error) { alert("保存できませんでした。もう一度お試しください"); return; }
+    if (error) { snack("保存できませんでした。もう一度お試しください", false); return; }
+    snack(`メインをセカイムラ${mainSel.replace(/[都府県]$/, "")}にしました ✓`);
     setMainPick(null);
   };
 
@@ -260,11 +265,14 @@ export default function SekaiMuraPrefPage() {
     setUpBusy(kind);
     try {
       const url = await uploadImage("post-images", me.id, f, kind === "cover" ? 1600 : 512, 0.75);
-      if (url) {
-        await createClient().from("pref_rooms").update(kind === "cover" ? { cover_url: url } : { icon_url: url }).eq("id", room.id);
-        loadRoom();
-      }
-    } catch {}
+      if (!url) throw new Error("upload");
+      const { error } = await createClient().from("pref_rooms").update(kind === "cover" ? { cover_url: url } : { icon_url: url }).eq("id", room.id);
+      if (error) throw error;
+      await loadRoom();
+      snack(kind === "cover" ? "背景写真を変更しました ✓" : "アイコンを変更しました ✓");
+    } catch {
+      snack("写真を変更できませんでした。HEICの写真は スクリーンショットにしてもう一度どうぞ", false);
+    }
     setUpBusy(null);
   };
 
@@ -359,7 +367,7 @@ export default function SekaiMuraPrefPage() {
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[13px] shadow">
                   {upBusy === "icon" ? "⏳" : "📷"}
                 </span>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => { changeImage("icon", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("icon", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
               </>
             )}
           </label>
@@ -410,7 +418,7 @@ export default function SekaiMuraPrefPage() {
         {canEdit && (
           <label className="absolute right-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg" style={{ bottom: -18 }}>
             {upBusy === "cover" ? "⏳" : "📷"}
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => { changeImage("cover", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("cover", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
           </label>
         )}
       </header>
@@ -582,7 +590,7 @@ export default function SekaiMuraPrefPage() {
               <div className="mt-1.5 flex items-center gap-2">
                 <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[15px]" style={{ border: "1px solid #dce8d8" }}>
                   {fUp ? "⏳" : "📷"}
-                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={async (e) => {
                     const f = e.target.files?.[0];
                     if (!f || !me || fUp) return;
                     setFUp(true);
@@ -663,6 +671,14 @@ export default function SekaiMuraPrefPage() {
         </div>
       )}
 
+      {/* 写真変更中のバックドロップ */}
+      {upBusy && (
+        <div className="fixed inset-0 z-[130] flex flex-col items-center justify-center bg-black/60">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+          <p className="mt-3 text-[13px] font-bold text-white">{upBusy === "cover" ? "背景写真を変更中..." : "アイコンを変更中..."}</p>
+        </div>
+      )}
+
       {/* 県の引っ越しモーダル */}
       {changing && (
         <div className="fixed inset-0 z-[115] flex items-center justify-center bg-black/55 px-6" onClick={() => setChanging(false)}>
@@ -681,6 +697,7 @@ export default function SekaiMuraPrefPage() {
           </div>
         </div>
       )}
+      {snackNode}
     </main>
   );
 }
