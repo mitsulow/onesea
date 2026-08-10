@@ -95,7 +95,7 @@ export default function ChatPage() {
     setInCall(true);
     // まだ誰もいなければ「発信」— 相手にはどのページに居ても着信ポップアップが垂れてくる
     if (callActive === 0) {
-      await sendMessage(chatId, me.id, "📞 ビデオ通話をはじめました — TALKを開いて、上の「参加する」からどうぞ");
+      await sendMessage(chatId, me.id, "📞 電話をかけました — TALKを開いて、上の「参加する」からどうぞ");
       try {
         if (partner?.id) {
           const supabase = createClient();
@@ -218,9 +218,9 @@ export default function ChatPage() {
             onClick={startCall}
             className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-[17px]"
             style={{ background: "rgba(212,185,106,.18)", border: "1px solid rgba(212,185,106,.5)" }}
-            aria-label="ビデオ通話"
+            aria-label="電話"
           >
-            <img src="/icons/icon-video.webp" alt="" style={{ width: 24, height: 24 }} />
+            <span className="text-[20px]">📞</span>
           </button>
         )}
       </header>
@@ -232,7 +232,7 @@ export default function ChatPage() {
           className="flex items-center justify-center gap-2 py-2.5 text-[13px] font-extrabold text-white"
           style={{ background: "linear-gradient(120deg,#2a9a5a,#1e7a46)" }}
         >
-          📞 ビデオ通話中です — タップして参加する
+          📞 通話中です — タップして参加する
         </button>
       )}
 

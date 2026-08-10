@@ -67,6 +67,29 @@ export default function UserPage() {
   const [qrOpen, setQrOpen] = useState(false); // 📇 名刺交換QR
   const [qrData, setQrData] = useState<string | null>(null);
   const [scanOpen, setScanOpen] = useState(false); // 相手のQRをアプリ内で読み取る
+  const [exchangedWith, setExchangedWith] = useState<{ username: string; name: string } | null>(null); // 交換相手の名刺表示
+
+  // QRを見せている間、名刺交換の通知を見張る → 読んでくれた相手の名刺をこちらにも出す
+  useEffect(() => {
+    if (!qrOpen || !me) return;
+    const since = new Date(Date.now() - 5000).toISOString();
+    const t = setInterval(async () => {
+      const { data } = await createClient()
+        .from("notifications")
+        .select("id, kind, created_at, profiles!notifications_actor_id_fkey(username, display_name)")
+        .eq("user_id", me.id)
+        .eq("kind", "meishi")
+        .gt("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const n = (data ?? [])[0] as any;
+      if (n?.profiles?.username) {
+        setQrOpen(false);
+        setExchangedWith({ username: n.profiles.username, name: n.profiles.display_name ?? "むらびと" });
+      }
+    }, 2500);
+    return () => clearInterval(t);
+  }, [qrOpen, me]);
   const openQr = async () => {
     if (!me) return;
     try {
@@ -972,6 +995,15 @@ export default function UserPage() {
             else alert("OneSeaの名刺交換QRではないようです");
           }}
         />
+      )}
+      {/* 📇 名刺交換成立: 相手の名刺をこちらにも表示 */}
+      {exchangedWith && (
+        <>
+          <div className="fixed left-1/2 top-4 z-[135] -translate-x-1/2 rounded-full px-4 py-2 text-[12.5px] font-extrabold text-white shadow-lg" style={{ background: "#2a8a4a", whiteSpace: "nowrap" }}>
+            📇 {exchangedWith.name}さんと名刺交換しました！
+          </div>
+          <MeishiModal username={exchangedWith.username} onClose={() => setExchangedWith(null)} />
+        </>
       )}
       {/* 📇 名刺交換QRモーダル */}
       {qrOpen && qrData && (

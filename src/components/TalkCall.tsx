@@ -5,7 +5,7 @@ import type { User, RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * TALKの1対1ビデオ通話。ラウンジ喫茶と同じWebRTC(P2P)+Supabase Realtimeで、
+ * TALKの1対1通話。まず電話(音声のみ)でつながり、「ビデオ通話にする」で映像を追加できる。ラウンジ喫茶と同じWebRTC(P2P)+Supabase Realtimeで、
  * サーバー費用ゼロ。チャンネルは talkcall:{chatId}（チャット当事者だけが知るID）。
  * 呼び出しは「📞メッセージ」を送る方式 — 相手には未読/プッシュで届き、
  * TALKを開くと「通話中 — 参加する」バナーから合流できる。
@@ -67,9 +67,11 @@ export function TalkCall({
   const [phase, setPhase] = useState<"joining" | "waiting" | "in">("joining");
   const [err, setErr] = useState<string | null>(null);
   const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
-  const [audioOnly, setAudioOnly] = useState(false);
+  const [camOn, setCamOn] = useState(false);
+  const [audioOnly, setAudioOnly] = useState(true); // 📞 まず電話(音声のみ)で始まる
   const [remote, setRemote] = useState<MediaStream | null>(null);
+  const [rv, setRv] = useState(0); // 相手の映像が後から増えた時に再描画するためのカウンタ
+  void rv;
 
   const localRef = useRef<HTMLVideoElement>(null);
   const localStream = useRef<MediaStream | null>(null);
@@ -101,7 +103,12 @@ export function TalkCall({
         if (e.candidate) send({ from: me.id, to: pid, kind: "ice", cand: e.candidate.toJSON() });
       };
       pc.ontrack = (e) => {
-        if (e.streams[0]) setRemote(e.streams[0]);
+        if (e.streams[0]) {
+          setRemote(e.streams[0]);
+          setRv((v) => v + 1); // ビデオ昇格で相手の映像トラックが増えた時も画面を更新
+          e.streams[0].onaddtrack = () => setRv((v) => v + 1);
+          e.streams[0].onremovetrack = () => setRv((v) => v + 1);
+        }
       };
       pc.onconnectionstatechange = () => {
         const s = pc.connectionState;
@@ -180,22 +187,13 @@ export function TalkCall({
     (async () => {
       let stream: MediaStream | null = null;
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: { ideal: 640 }, facingMode: "user" },
-          audio: { echoCancellation: true, noiseSuppression: true },
-        });
-        setAudioOnly(false);
+        // 📞 電話: まずマイクだけ。ビデオは「ビデオ通話にする」を押した時に追加
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
       } catch {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          setAudioOnly(true);
-          setCamOn(false);
-        } catch {
-          if (!disposed) {
-            setErr("カメラ・マイクを使えませんでした。ブラウザの許可設定を確認してください。");
-          }
-          return;
+        if (!disposed) {
+          setErr("マイクを使えませんでした。ブラウザの許可設定を確認してください。");
         }
+        return;
       }
       if (disposed) {
         stream?.getTracks().forEach((t) => t.stop());
@@ -270,6 +268,32 @@ export function TalkCall({
     return () => clearInterval(t);
   }, [me.id, makeOffer, closePc]);
 
+  /* 📹 ビデオ通話にする: カメラを許可して映像トラックを追加 → 再ネゴシエーション。
+     相手も同じボタンを押してカメラを許可したら、お互いの顔が映る */
+  const enableVideo = async () => {
+    if (!audioOnly) return;
+    try {
+      const vs = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, facingMode: "user" } });
+      const track = vs.getVideoTracks()[0];
+      if (!track) throw new Error("no cam");
+      localStream.current?.addTrack(track);
+      if (localRef.current) localRef.current.srcObject = localStream.current;
+      setAudioOnly(false);
+      setCamOn(true);
+      const pc = pcRef.current;
+      if (pc && peerId.current) {
+        pc.addTrack(track, localStream.current!);
+        try {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          send({ from: me.id, to: peerId.current, kind: "offer", sdp: pc.localDescription! });
+        } catch {}
+      }
+    } catch {
+      alert("カメラを許可できませんでした。ブラウザの設定を確認してください");
+    }
+  };
+
   const toggleMic = () => {
     const on = !micOn;
     setMicOn(on);
@@ -298,7 +322,7 @@ export function TalkCall({
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <div className="text-[42px]">📞</div>
             <div className="text-[15px] font-extrabold text-[#e8ecf4]">
-              {err ?? (phase === "waiting" ? `${partnerName}さんを呼んでいます…` : "つないでいます…")}
+              {err ?? (phase === "waiting" ? `${partnerName}さんを呼んでいます…` : remote ? `${partnerName}さんと通話中` : "つないでいます…")}
             </div>
             {phase === "waiting" && !err && (
               <p className="px-8 text-[11.5px] leading-relaxed text-[#8b93a8]">
@@ -312,7 +336,8 @@ export function TalkCall({
         {remote && remote.getVideoTracks().length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#141a24]">
             <div className="text-[42px]">🎙</div>
-            <div className="text-[13px] font-bold text-[#c8d2e0]">{partnerName}さん（声のみ）</div>
+            <div className="text-[13px] font-bold text-[#c8d2e0]">{partnerName}さんと通話中（電話）</div>
+            <p className="px-8 text-center text-[10.5px] leading-relaxed text-[#7b8398]">お互いが「ビデオ通話にする」を押すと、顔が映ります</p>
           </div>
         )}
         {/* 自分（右下の小窓） */}
@@ -334,6 +359,15 @@ export function TalkCall({
         >
           {micOn ? "🎙" : "🔇"}
         </button>
+        {audioOnly && (
+          <button
+            onClick={enableVideo}
+            className="rounded-full px-4 py-3.5 text-[12.5px] font-extrabold text-white"
+            style={{ background: "#2a6ab0" }}
+          >
+            📹 ビデオ通話にする
+          </button>
+        )}
         {!audioOnly && (
           <button
             onClick={toggleCam}
