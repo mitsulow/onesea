@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Shop, ShopComment, categoryOf, fetchShop, deleteShop, fetchShopComments, addShopComment, deleteShopComment, fetchShopsByOwner } from "@/lib/za";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { PayOverlay } from "@/components/PayOverlay";
+import { uploadImagePair } from "@/lib/images";
 import { srcCdn } from "@/lib/images";
 
 /** 楽座の詳細 — 「連絡を取る」で出品者と LINE が始まる */
@@ -30,6 +31,37 @@ export default function ShopDetailPage() {
   const [proposing, setProposing] = useState(false);
   const [offers, setOffers] = useState<any[]>([]); // みんなのブツブツ交換提案（公開）
   const [buyOpen, setBuyOpen] = useState(false); // 購入オーバーレイ(BASE等をOneSeaの前面に重ねる)
+  /* ✎修正(出品者+事務局): 了承ダイアログ→軽微な変更のみ */
+  const [editConsent, setEditConsent] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [eName, setEName] = useState("");
+  const [eDesc, setEDesc] = useState("");
+  const [eImgs, setEImgs] = useState<Array<{ full: string; thumb: string }>>([]);
+  const [eUp, setEUp] = useState(false);
+  const [eSaving, setESaving] = useState(false);
+
+  const startEdit = () => {
+    if (!shop) return;
+    setEName(shop.name ?? "");
+    setEDesc(shop.description ?? "");
+    setEImgs((shop.image_urls ?? []).map((f: string, i: number) => ({ full: f, thumb: shop.thumb_urls?.[i] ?? f })));
+    setEditConsent(false);
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    if (!shop || !me || !eName.trim() || eSaving) return;
+    setESaving(true);
+    const { createClient } = await import("@/lib/supabase/client");
+    const { error } = await createClient()
+      .from("shops")
+      .update({ name: eName.trim(), description: eDesc.trim() || null, image_urls: eImgs.map((x) => x.full), thumb_urls: eImgs.map((x) => x.thumb) })
+      .eq("id", shop.id);
+    setESaving(false);
+    if (error) { alert("保存できませんでした。もう一度お試しください"); return; }
+    setEditing(false);
+    fetchShop(params.id).then((s2) => setShop(s2));
+  };
   const [outOffers, setOutOffers] = useState<any[]>([]); // この品を差し出して提案中の交換(相手の品への入口)
 
   useEffect(() => {
@@ -316,25 +348,42 @@ export default function ShopDetailPage() {
         )}
 
         {!isMine && amOffice && (
-          <button
-            onClick={async () => {
-              if (!shop || !confirm("【事務局権限】この出品を削除しますか？（法令違反等）")) return;
-              const { createClient } = await import("@/lib/supabase/client");
-              await createClient().from("shops").delete().eq("id", shop.id);
-              router.replace("/za");
-            }}
-            className="mb-2 w-full rounded-xl border border-[#c05030] bg-white py-3 text-[13.5px] font-bold text-[#c05030]"
-          >
-            事務局権限でこの出品を削除する
-          </button>
+          <div className="mb-2 space-y-2">
+            <button
+              onClick={() => setEditConsent(true)}
+              className="w-full rounded-xl border border-[#c8a860] bg-white py-3 text-[13.5px] font-bold text-[#a08030]"
+            >
+              ✎ 事務局権限でこの出品を修正する
+            </button>
+            <button
+              onClick={async () => {
+                if (!shop || !confirm("【事務局権限】この出品を削除しますか？（法令違反等）")) return;
+                const { createClient } = await import("@/lib/supabase/client");
+                await createClient().from("shops").delete().eq("id", shop.id);
+                router.replace("/za");
+              }}
+              className="w-full rounded-xl border border-[#c05030] bg-white py-3 text-[13.5px] font-bold text-[#c05030]"
+            >
+              🗑 事務局権限でこの出品を削除する
+            </button>
+          </div>
         )}
         {isMine ? (
-          <button
-            onClick={remove}
-            className="w-full rounded-xl border border-[#e0d6c6] bg-white py-3 text-[13.5px] font-bold text-[#a09888]"
-          >
-            この楽座を取り下げる
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={() => setEditConsent(true)}
+              className="w-full rounded-xl border-2 py-3 text-[14px] font-extrabold"
+              style={{ borderColor: "#c94d3a", color: "#c94d3a", background: "#fdf6f4" }}
+            >
+              ✎ この出品を修正する
+            </button>
+            <button
+              onClick={remove}
+              className="w-full rounded-xl border border-[#e0d6c6] bg-white py-3 text-[13.5px] font-bold text-[#a09888]"
+            >
+              🗑 この出品を削除する（取り下げ）
+            </button>
+          </div>
         ) : me ? (
           <div className="space-y-2">
             {/* 有料出品: 物々交換OKでも「購入」は必ず選べる(どちらも表示) */}
@@ -664,6 +713,87 @@ export default function ShopDetailPage() {
             if (chatId) router.push(`/talk/${chatId}`);
           } : undefined}
         />
+      )}
+      {/* 修正前の了承ダイアログ */}
+      {editConsent && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-6">
+          <div className="w-full max-w-[340px] rounded-2xl bg-white p-5 text-center">
+            <div className="text-[30px]">⚠️</div>
+            <p className="mt-2 text-left text-[12.5px] font-bold leading-relaxed text-[#5a5448]">
+              「値段、サービス内容、サービス時間、数量」などの変更は購入予定者とのトラブルの元になるので出来ません。
+              軽微な文章の変更や、写真の変更だけにして下さい。
+            </p>
+            <button
+              onClick={startEdit}
+              className="mt-4 w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
+              style={{ background: "#c94d3a" }}
+            >
+              了承する（修正へすすむ）
+            </button>
+            <button onClick={() => setEditConsent(false)} className="mt-1.5 w-full py-2 text-[12px] font-bold text-[#a09888]">やめておく</button>
+          </div>
+        </div>
+      )}
+
+      {/* 編集モーダル(タイトル・説明・写真だけ) */}
+      {editing && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-4">
+          <div className="max-h-[85dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl bg-white p-4">
+            <div className="mb-2 text-[14px] font-extrabold" style={{ color: "#c94d3a" }}>✎ 出品を修正する</div>
+            <label className="mb-1 block text-[11px] font-bold text-[#8a7a5a]">タイトル</label>
+            <input
+              value={eName}
+              onChange={(e) => setEName(e.target.value)}
+              className="mb-2 w-full rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 text-[14px] outline-none"
+            />
+            <label className="mb-1 block text-[11px] font-bold text-[#8a7a5a]">説明文</label>
+            <textarea
+              value={eDesc}
+              onChange={(e) => setEDesc(e.target.value)}
+              rows={5}
+              className="mb-2 w-full resize-y rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none"
+            />
+            <label className="mb-1 block text-[11px] font-bold text-[#8a7a5a]">写真（4枚まで）</label>
+            <div className="mb-2 flex flex-wrap gap-2">
+              {eImgs.map((pair, i) => (
+                <span key={i} className="relative inline-block">
+                  <img src={pair.thumb} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                  <button
+                    onClick={() => setEImgs(eImgs.filter((_, j) => j !== i))}
+                    className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#c05030] text-[11px] font-bold text-white"
+                  >×</button>
+                </span>
+              ))}
+              {eImgs.length < 4 && (
+                <label className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-[#e0d6c6] text-[18px] text-[#c0b8a8]">
+                  {eUp ? "⏳" : "＋"}
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple className="hidden" onChange={async (e) => {
+                    const files = e.target.files;
+                    if (!files || !me || eUp) return;
+                    setEUp(true);
+                    for (const f of Array.from(files).slice(0, 4 - eImgs.length)) {
+                      const pair = await uploadImagePair("post-images", me.id, f);
+                      if (pair) setEImgs((prev) => [...prev, pair]);
+                    }
+                    setEUp(false);
+                    e.target.value = "";
+                  }} />
+                </label>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2.5 text-[12.5px] font-bold text-[#a09888]">キャンセル</button>
+              <button
+                onClick={saveEdit}
+                disabled={!eName.trim() || eSaving || eUp}
+                className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#c94d3a" }}
+              >
+                {eSaving ? "保存中..." : "保存する"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
