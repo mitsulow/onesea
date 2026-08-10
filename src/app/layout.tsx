@@ -17,12 +17,12 @@ export const metadata: Metadata = {
     description: "太陽と月と潮のリズムで生きる、無料の手帳アプリ。",
     url: "https://onesea.vercel.app",
     siteName: "OneSea",
-    images: ["/icon-512-v3.png"],
+    images: ["/icon-512-v4.png"],
     type: "website",
   },
   icons: {
-    icon: "/icon-192-v3.png",
-    apple: "/icon-192-v3.png",
+    icon: "/icon-192-v4.png",
+    apple: "/icon-192-v4.png",
   },
   manifest: "/manifest.json",
   // ホーム画面から起動したとき、Safariのアドレスバーを出さず全画面にする
