@@ -8,6 +8,7 @@ import { MorningOpening } from "@/components/MorningOpening";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { CotozuteTeaser } from "@/components/CotozuteTeaser";
 import { ThreeCol } from "@/components/SideRails";
+import Link from "next/link";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import TopTone from "@/components/TopTone";
 import {
@@ -109,6 +110,7 @@ export default function MmmPage() {
           </div>
           <div className="text-[8px] leading-tight tracking-[2px] text-[#5a8a6a]">夢とヒラメキの保管庫</div>
         </div>
+        <MmmMenuButton />
         <span className="absolute right-3 top-1/2 -translate-y-1/2">
           <AvatarMenu ring="#7de0a0" />
         </span>
@@ -126,5 +128,68 @@ export default function MmmPage() {
 
       </ThreeCol>
     </main>
+  );
+}
+
+
+/** MMMの左上☰ — 統一ルール: キャッチ → MMMトップ → 下タブのみ */
+function MmmMenuButton() {
+  const [open, setOpen] = useState(false);
+  const MENU = [
+    { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM トップ" },
+    { href: "/mmm/kouryu", icon: "/icons/icon-keijiban.webp", label: "交流" },
+    { href: "/mmm/neura", icon: "/icons/icon-neura-red.webp", label: "ニューラ5" },
+    { href: "/schumann1/index.html", icon: "/icons/icon-schumann2.webp", label: "シューマン共振", ext: true },
+    { href: "/mmm/ddp-app", icon: "/icons/icon-rashinban.webp", label: "夢叶えナビ" },
+    { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
+  ];
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="メニュー"
+        className="absolute left-3 top-1/2 -translate-y-1/2 text-[22px] leading-none"
+        style={{ color: "#7de0a0" }}
+      >
+        ☰
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[85] bg-black/35" onClick={() => setOpen(false)} />
+          <div className="fixed left-0 top-0 z-[86] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
+            <div className="px-5 pb-2 pt-5">
+              <div className="text-[10px] tracking-[2px] text-[#7ab890]">夢とヒラメキの保管庫</div>
+              <div className="text-[19px] font-extrabold" style={{ color: "#1e6a40" }}>MasterMindMembers</div>
+            </div>
+            {MENU.map((m) =>
+              m.ext ? (
+                <a
+                  key={m.href}
+                  href={m.href}
+                  className="flex items-center gap-3 border-b border-[#eef4ef] px-5 py-3 text-[14px] font-medium text-[#1c1e21] no-underline"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
+                  {m.label}
+                </a>
+              ) : (
+                <Link
+                  key={m.href}
+                  href={m.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-3 border-b border-[#eef4ef] px-5 py-3 text-[14px] no-underline ${
+                    m.href === "/mmm" ? "bg-[#e8f6ec] font-bold text-[#1e6a40]" : "font-medium text-[#1c1e21]"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={m.icon} alt="" className="h-[22px] w-[22px] object-contain" />
+                  {m.label}
+                </Link>
+              )
+            )}
+          </div>
+        </>
+      )}
+    </>
   );
 }
