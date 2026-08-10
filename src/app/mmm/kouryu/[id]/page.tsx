@@ -12,6 +12,9 @@ const GOLD = "#d4b96a";
 
 /** 県別交流チャット — TalKのグループ「◯◯県交流」と完全同期(同じテーブル) */
 export default function KouryuRoomPage() {
+  const [isWara, setIsWara] = useState(false);
+  const [waraChecked, setWaraChecked] = useState(false);
+
   const params = useParams<{ id: string }>();
   const roomId = params.id;
   const [me, setMe] = useState<User | null>(null);
@@ -22,11 +25,28 @@ export default function KouryuRoomPage() {
   const [reads, setReads] = useState<Array<{ user_id: string; last_read_at: string }>>([]);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [photoSending, setPhotoSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const joinedRef = useRef(false);
 
   // キーボード追従
   const [kb, setKb] = useState(0);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const uid = session?.user?.id;
+      if (!uid) { setIsWara(false); setWaraChecked(true); return; }
+      const [{ data: prof }, { data: adm }] = await Promise.all([
+        supabase.from("profiles").select("warawa_until").eq("id", uid).maybeSingle(),
+        supabase.from("talk_admins").select("user_id").eq("user_id", uid).maybeSingle(),
+      ]);
+      const { isWarawaUntil } = await import("@/lib/warawa");
+      setIsWara(!!adm || isWarawaUntil(prof?.warawa_until as string | null));
+      setWaraChecked(true);
+    });
+  }, []);
+
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
@@ -70,6 +90,27 @@ export default function KouryuRoomPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
 
+  /* 写真送信(TalKと同じ: 圧縮→R2直行→転送料ゼロ) */
+  const sendPhoto = async (f: File) => {
+    if (!me || photoSending) return;
+    setPhotoSending(true);
+    try {
+      const { compressImage } = await import("@/lib/images");
+      const blob = await compressImage(f, 1280, 0.55);
+      const fd = new FormData();
+      fd.append("file", blob);
+      fd.append("folder", "talk");
+      const r = await fetch("/api/upload", { method: "POST", body: fd });
+      const d = await r.json();
+      if (!r.ok || !d.url) throw new Error(d.error ?? "upload");
+      await sendGroupMessage("pref", roomId, me.id, "📷 写真", d.url);
+      await load();
+    } catch {
+      alert("写真を送れませんでした。通信環境を確認してもう一度どうぞ");
+    }
+    setPhotoSending(false);
+  };
+
   const submit = async () => {
     if (!me || !body.trim() || sending) return;
     setSending(true);
@@ -85,7 +126,19 @@ export default function KouryuRoomPage() {
   };
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col" style={{ background: "#0e1e2e", paddingBottom: kb > 0 ? kb + 64 : 120 }}>
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col lg:max-w-3xl" style={{ background: "#0e1e2e", paddingBottom: kb > 0 ? kb + 64 : 120 }}>
+      
+      {waraChecked && !isWara && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 px-6">
+          <div className="w-full max-w-[360px] rounded-2xl bg-white p-6 text-center">
+            <div className="text-[36px]">🗾</div>
+            <h2 className="mt-2 text-[16px] font-extrabold text-[#1c3448]">県別の交流は、わらわ〜会員のひろばです</h2>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-[#5a6a74]">同じ県の仲間との交流チャットは、有料のわらわ〜会員だけが使えます。わらわ〜会員になってご参加ください。</p>
+            <a href="https://warawer.com" className="mt-4 block rounded-xl py-3 text-[13.5px] font-extrabold text-white no-underline" style={{ background: "#d4b96a", color: "#1c2432" }}>わらわ〜会員について →</a>
+            <Link href="/mmm" className="mt-2 block py-2 text-[12px] font-bold text-[#8a9aa8] no-underline">MMMトップへ戻る</Link>
+          </div>
+        </div>
+      )}
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 flex items-center gap-3 px-4 pb-3 pt-3.5" style={{ background: "linear-gradient(160deg,#0e1e2e,#17384e)" }}>
         <Link href="/mmm/kouryu" className="text-[15px] font-bold no-underline" style={{ color: GOLD }}>◀</Link>
@@ -128,10 +181,21 @@ export default function KouryuRoomPage() {
         <div ref={bottomRef} />
       </div>
 
+      {photoSending && (
+        <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center bg-black/60">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+          <p className="mt-3 text-[13px] font-bold text-white">写真を送信中...</p>
+        </div>
+      )}
+
       {/* 入力欄(下固定・キーボード追従) */}
-      <div className="fixed left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-3 pb-3" style={{ bottom: kb > 0 ? kb : 56 }}>
+      <div className="fixed left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-3 pb-3 lg:max-w-3xl" style={{ bottom: kb > 0 ? kb : 56 }}>
         {me ? (
           <div className="flex items-end gap-2 rounded-2xl p-2" style={{ background: "#17384e", border: "1px solid #2a4a63" }}>
+            <label className="flex h-10 w-10 flex-shrink-0 cursor-pointer items-center justify-center rounded-full text-[18px]" style={{ background: "#1e3a52" }}>
+              📷
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) sendPhoto(f); e.currentTarget.value = ""; }} />
+            </label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
