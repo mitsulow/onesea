@@ -29,7 +29,11 @@ export function OtohikariGlobe({
   connectedRef.current = connected;
   const hostRef = useRef<HTMLDivElement>(null);
   const spotsRef = useRef(spots);
-  spotsRef.current = spots;
+  const spotsDirtyRef = useRef(true); // 変わった時だけ光柱を組み直す(毎フレームのstringify比較をやめた)
+  if (spotsRef.current !== spots) {
+    spotsRef.current = spots;
+    spotsDirtyRef.current = true;
+  }
 
   useEffect(() => {
     const host = hostRef.current;
@@ -110,10 +114,19 @@ export function OtohikariGlobe({
       roughGroup.add(new THREE.Mesh(g, landMat));
     }
     const cMat = new THREE.LineBasicMaterial({ color: 0x2aa88c, transparent: true, opacity: 0.55 });
-    for (const line of COASTLINES) {
-      roughGroup.add(
-        new THREE.Line(new THREE.BufferGeometry().setFromPoints(line.map((p) => ll2v(p[0], p[1], 1.003))), cMat)
-      );
+    {
+      // Safari対策: 線を1本ずつ別オブジェクトにするとドローコールが増えて重い。
+      // 全ての折れ線を「線分ペアの1バッファ」にまとめ、描画命令を1回にする。
+      const cPos: number[] = [];
+      for (const line of COASTLINES) {
+        const pts = line.map((p) => ll2v(p[0], p[1], 1.003));
+        for (let i = 0; i < pts.length - 1; i++) {
+          cPos.push(pts[i].x, pts[i].y, pts[i].z, pts[i + 1].x, pts[i + 1].y, pts[i + 1].z);
+        }
+      }
+      const cG = new THREE.BufferGeometry();
+      cG.setAttribute("position", new THREE.Float32BufferAttribute(cPos, 3));
+      roughGroup.add(new THREE.LineSegments(cG, cMat));
     }
     earth.add(roughGroup);
 
@@ -130,6 +143,11 @@ export function OtohikariGlobe({
         const detail = new THREE.Group();
         const dMat = new THREE.LineBasicMaterial({ color: 0x35e0b8, transparent: true, opacity: 0.9 });
         const features = land.type === "FeatureCollection" ? land.features : [land];
+        // Safariの重さの主犯対策: リング(約1,400本)ごとにLineLoopを作ると
+        // 毎フレーム約1,400回の描画命令になりWebKitで激重。
+        // 全リングを「線分ペアの1バッファ」に統合し、命令1回で全海岸線を描く。
+        // ※リングの閉じ線分(終点→始点)も明示的に入れるので、島どうしが誤って繋がることはない。
+        const segPos: number[] = [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         features.forEach((f: any) => {
           const geom = f.geometry;
@@ -138,9 +156,16 @@ export function OtohikariGlobe({
           rings.forEach((ring) => {
             if (ring.length < 3) return;
             const pts = ring.map((c) => ll2v(c[1], c[0], 1.004));
-            detail.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), dMat));
+            for (let i = 0; i < pts.length; i++) {
+              const a = pts[i];
+              const b = pts[(i + 1) % pts.length];
+              segPos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+            }
           });
         });
+        const segG = new THREE.BufferGeometry();
+        segG.setAttribute("position", new THREE.Float32BufferAttribute(segPos, 3));
+        detail.add(new THREE.LineSegments(segG, dMat));
         if (disposed) return;
         earth.add(detail);
         earth.remove(roughGroup);
@@ -490,7 +515,6 @@ export function OtohikariGlobe({
       return t;
     })();
 
-    let builtKey = "";
     const rebuildPillars = (list: Array<[number, number, number] | null>) => {
       pillarGroup.clear();
       const count = Math.min(list.length, 60);
@@ -671,10 +695,9 @@ export function OtohikariGlobe({
       gridMat.color.lerp(connectedRef.current ? GRID_CYAN : GRID_PURPLE, 0.04);
       const targetOp = connectedRef.current ? 0.3 + 0.1 * Math.sin(t * 2.2) : 0.15;
       gridMat.opacity += (targetOp - gridMat.opacity) * 0.06;
-      // 光柱: presence の場所が変わったら組み直し、脈動させる
-      const spotsKey = JSON.stringify(spotsRef.current);
-      if (spotsKey !== builtKey) {
-        builtKey = spotsKey;
+      // 光柱: presence が更新された時だけ組み直す(毎フレームの文字列化はSafariの主スレッドを削るのでやめた)
+      if (spotsDirtyRef.current) {
+        spotsDirtyRef.current = false;
         rebuildPillars(spotsRef.current);
       }
       pillarGroup.children.forEach((c, i) => {
