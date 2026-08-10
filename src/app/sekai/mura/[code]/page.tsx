@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
+import { SeedSection } from "@/components/sekai/sections";
 
 const GREEN = "#4a9a5a";
 const ALL_PREFS = [...PREFS, "海外"] as string[];
@@ -37,6 +38,7 @@ export default function SekaiMuraPrefPage() {
   const [mainPick, setMainPick] = useState<string[] | null>(null);
   const [mainSel, setMainSel] = useState("");
   const [mainBusy, setMainBusy] = useState(false);
+  const [seedOpen, setSeedOpen] = useState(false); // ＋拠点の申請(県ページ内でそのまま申請できる)
   /* 県のFEED(こんなことをしました報告) */
   const [fposts, setFposts] = useState<any[]>([]);
   const [fBody, setFBody] = useState("");
@@ -410,13 +412,13 @@ export default function SekaiMuraPrefPage() {
           <div className="text-[12px] font-extrabold text-[#2a4a34]">
             <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> セカイムラ{disp}の拠点（{villages.length}）
           </div>
-          <Link
-            href={`/sekai/villages?pref=${encodeURIComponent(pref)}#seed-sec`}
-            className="rounded-full px-2.5 py-1 text-[10.5px] font-extrabold text-white no-underline"
-            style={{ background: GREEN }}
+          <button
+            onClick={() => setSeedOpen((v) => !v)}
+            className="rounded-full px-2.5 py-1 text-[10.5px] font-extrabold text-white"
+            style={{ background: seedOpen ? "#8a9a84" : GREEN }}
           >
-            ＋ 拠点の申請
-          </Link>
+            {seedOpen ? "▲ とじる" : "＋ 拠点の申請"}
+          </button>
         </div>
         {villages.length === 0 ? (
           <p className="rounded-xl bg-white px-3 py-3 text-[11.5px] leading-relaxed text-[#8a9a84]">
@@ -440,6 +442,13 @@ export default function SekaiMuraPrefPage() {
           </div>
         )}
       </section>
+
+      {/* ＋拠点の申請 — 県ページの中でそのまま申請(3人集め) */}
+      {seedOpen && (
+        <section className="px-3 pt-3">
+          <SeedSection me={me} presetPref={pref} />
+        </section>
+      )}
 
       {/* 📣 セカイムラ◯◯のFEED — こんなことをしました報告(セカイムラトップとCotoZuteにも流れる) */}
       <section className="px-3 pt-3">

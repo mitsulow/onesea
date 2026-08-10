@@ -1469,7 +1469,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             </div>
             <div className="px-2 py-1.5">
               <div className="truncate text-[11.5px] font-extrabold" style={{ color: GREEN }}>
-                村を作る人募集{sd.prefecture ? `（${sd.prefecture}）` : ""}
+                拠点を立ち上げる人募集{sd.prefecture ? `（${sd.prefecture}）` : ""}
               </div>
               <div className="truncate text-[10px] text-[#a0aca0]">{sd.name} ▼</div>
             </div>
@@ -3697,7 +3697,7 @@ export function MapLoader() {
 }
 
 /* ═══ 🌱 村の種 — 3人集まったら事務局へ拠点申請できる予備軍 ═══ */
-export function SeedSection({ me }: { me: User | null }) {
+export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: string }) {
   const [isOffice, setIsOffice] = useState(false);
   useEffect(() => {
     if (!me) return;
@@ -3715,25 +3715,24 @@ export function SeedSection({ me }: { me: User | null }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // セカイムラ◯◯県ページの「＋拠点の申請」から来たら、県をプレフィルしてフォームを開く
+  // 県ページに埋め込まれた時は、県をプレフィルしてフォームを開いておく(スクロールはしない)
   useEffect(() => {
-    try {
-      const q = new URLSearchParams(window.location.search).get("pref");
-      if (q) {
-        setPref(q);
-        setOpen(true);
-        setTimeout(() => document.getElementById("seed-sec")?.scrollIntoView({ behavior: "smooth", block: "start" }), 500);
-      }
-    } catch {}
-  }, []);
+    if (presetPref) {
+      setPref(presetPref);
+      setOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetPref]);
 
   const load = async () => {
     const supabase = createClient();
-    const { data } = await supabase
+    let q = supabase
       .from("village_seeds")
       .select("id, name, prefecture, city, cover_url, status, created_by, village_seed_members(user_id)")
       .order("created_at", { ascending: false })
       .limit(30);
+    if (presetPref) q = q.eq("prefecture", presetPref); // 県ページ内ではその県の種だけ
+    const { data } = await q;
     setSeeds(data ?? []);
   };
   useEffect(() => { load(); }, []);
@@ -3784,7 +3783,7 @@ export function SeedSection({ me }: { me: User | null }) {
   return (
     <div className="mx-2 mb-2 rounded-2xl border border-[#d8e4d0] bg-[#f6faf4] p-3">
       <div className="mb-1 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-        <img src="/icons/icon-sprout.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> 村を作る
+        <img src="/icons/icon-sprout.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -2.5 }} /> 拠点を立ち上げる
       </div>
       <p className="mb-2 text-[10.5px] leading-relaxed text-[#7a8a74]">
         3人以上で申請し、事務局に認められた場合、他のメンバーを募集できます。
@@ -3848,14 +3847,14 @@ export function SeedSection({ me }: { me: User | null }) {
       {msg && <p className="mb-1 text-[10.5px] font-bold text-[#c05030]">{msg}</p>}
 
       <button onClick={() => setOpen((v) => !v)} className="w-full rounded-xl border-2 border-dashed border-[#a8cca0] bg-white py-2 text-[11.5px] font-extrabold" style={{ color: GREEN }}>
-        {open ? "▾ とじる" : "一緒に拠点を立ち上げる人を募集する（拠点立ち上げ人3人が揃うと事務局に村作りの申請が出来ます）"}
+        {open ? "▾ とじる" : "一緒に拠点を立ち上げる人を募集する（拠点立ち上げ人3人が揃うと事務局に拠点立ち上げの申請が出来ます）"}
       </button>
       {open && (
         <div className="mt-2 rounded-xl bg-white p-2.5">
           <div className="mb-1 text-[11px] font-extrabold text-[#5a6a54]">① 拠点名を決める</div>
           <p className="mb-1.5 text-[9.5px] leading-relaxed text-[#8a9a84]">
             畑や田んぼにはあまり興味が無く、都会で集まりたい人は「トカイムラ○○」をお使いください。
-            畑や田んぼなど自給自足に興味がある村を作る際は「セカイムラ○○」をお使いください。
+            畑や田んぼなど自給自足に興味がある拠点を立ち上げる際は「セカイムラ○○」をお使いください。
             既に使われているセカイムラ○○県がある場合は使えませんので、セカイムラ○○市やトカイムラ○○市となります。
           </p>
           <input
