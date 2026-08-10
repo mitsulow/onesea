@@ -2221,6 +2221,19 @@ export function LoungeSection({
 }
 
 /* ═══ 拠点（村）— 上: 写真ストリップ(会員数順) / 県セレクト / 写真つき一覧 / ＋村を作りたい ═══ */
+const SEKAI_REGIONS: Record<string, string[]> = {
+  "全て": [],
+  "北海道・東北": ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"],
+  "関東": ["茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県"],
+  "甲信越・北陸": ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県"],
+  "東海": ["岐阜県", "静岡県", "愛知県", "三重県"],
+  "関西": ["滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"],
+  "中国": ["鳥取県", "島根県", "岡山県", "広島県", "山口県"],
+  "四国": ["徳島県", "香川県", "愛媛県", "高知県"],
+  "九州沖縄": ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"],
+  "海外": ["海外"],
+};
+
 export function VillagesSection({
   me,
   myPref,
@@ -2236,14 +2249,16 @@ export function VillagesSection({
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
   const [pref, setPref] = useState(""); // "" = 全世界の拠点
   const [vMems, setVMems] = useState<Record<string, any[]>>({}); // 拠点ごとの村人(承認済み・アイコン用)
-  const [recents, setRecents] = useState<any[]>([]); // 最新更新順の県ページ6件
+  const [recents, setRecents] = useState<any[]>([]); // 最新更新順の県ページ(48県ぶん)
+  const [region, setRegion] = useState("全て"); // 地方で絞る
+  const [showAllPrefs, setShowAllPrefs] = useState(false); // もっとみる
 
   const load = useCallback(async () => {
     const list = await fetchVillages(null);
     setVillages(list);
     if (me) setMineIds(await myVillageIds(me.id));
     // 最新の更新があった県ページ6件(チャット・FEED・参加の新しい順)
-    createClient().rpc("sekai_pref_recent", { p_limit: 6 }).then(({ data }) => setRecents((data as any[]) ?? []));
+    createClient().rpc("sekai_pref_recent", { p_limit: 48 }).then(({ data }) => setRecents((data as any[]) ?? []));
     // カードに並べる村人アイコン(オーナーが先頭)
     if (list.length) {
       const { data: ms } = await createClient()
@@ -2274,99 +2289,71 @@ export function VillagesSection({
 
   return (
     <section className="card">
-      <SectionTitle>
-        <img src="/icons/icon-base.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3 }} />{" "}
-        {pref || "全世界"}の拠点{villages ? `（${shown.length}）` : ""}
-      </SectionTitle>
 
-      {/* ② 県セレクト — 選ぶと「セカイムラ◯◯県」の県ページが立ち上がる */}
+      {/* 地方セレクト — 選ぶと下に県ページが最新更新順で並ぶ */}
       <select
-        value={pref}
-        onChange={(e) => {
-          const v = e.target.value;
-          setPref("");
-          if (v) router.push(`/sekai/mura/${([...PREFS, "海外"] as string[]).indexOf(v) + 1}`);
-        }}
+        value={region}
+        onChange={(e) => { setRegion(e.target.value); setShowAllPrefs(false); }}
         className="mb-2.5 w-full rounded-xl border-2 border-[#c8dccb] bg-white px-3 py-2.5 text-[13.5px] font-bold outline-none"
         style={{ color: GREEN }}
       >
-        <option value="">🌏 全世界の拠点（会員数が多い順）— 県をえらぶと県ページへ</option>
-        {([...PREFS, "海外"] as string[]).map((pf) => (
-          <option key={pf} value={pf}>
-            セカイムラ{pf.replace(/[都府県]$/, "")}（{(villages ?? []).filter((v) => (pf === "海外" ? !(PREFS as readonly string[]).includes(v.prefecture ?? "") : v.prefecture === pf)).length}）
-          </option>
+        {Object.keys(SEKAI_REGIONS).map((r) => (
+          <option key={r} value={r}>{r === "全て" ? "🌏 全て（最新の更新順）" : r}</option>
         ))}
       </select>
 
-      {/* 最新の更新があった県ページ6件 */}
-      {recents.length > 0 && (
-        <div className="mb-2.5 grid grid-cols-3 gap-2">
-          {recents.map((r: any) => {
-            const code = ([...PREFS, "海外"] as string[]).indexOf(r.prefecture) + 1;
-            const d2 = String(r.prefecture).replace(/[都府県]$/, "");
-            const h = Math.round(((code - 1) * 137.5) % 360);
-            return (
-              <Link key={r.room_id} href={`/sekai/mura/${code}`} className="overflow-hidden rounded-xl no-underline shadow-sm">
-                <div
-                  className="flex h-[74px] flex-col items-center justify-center gap-0.5 px-1 text-center"
-                  style={{
-                    background: r.cover_url
-                      ? `linear-gradient(165deg, rgba(10,22,14,.4), rgba(20,44,30,.55)), url(${srcCdn(r.cover_url)}) center/cover`
-                      : `linear-gradient(165deg, hsl(${h},46%,34%), hsl(${h},56%,16%))`,
-                  }}
-                >
-                  {r.icon_url
-                    ? <img src={srcCdn(r.icon_url)} alt="" className="h-7 w-7 rounded-full border border-white/60 object-cover" />
-                    : null}
-                  <span className="text-[11px] font-extrabold leading-tight text-white">セカイムラ{d2}</span>
-                  <span className="num text-[9px] text-white/75">{r.members}人</span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+      {/* 県ページ(最新の更新順・地方で絞れる・6件+もっとみる) */}
+      {(() => {
+        const filtered = region === "全て" ? recents : recents.filter((r: any) => (SEKAI_REGIONS[region] ?? []).includes(r.prefecture));
+        const displayed = showAllPrefs ? filtered : filtered.slice(0, 6);
+        if (!filtered.length) return null;
+        return (
+          <div className="mb-2.5">
+            <div className="grid grid-cols-3 gap-2">
+              {displayed.map((r: any) => {
+                const code = ([...PREFS, "海外"] as string[]).indexOf(r.prefecture) + 1;
+                const d2 = String(r.prefecture).replace(/[都府県]$/, "");
+                const h = Math.round(((code - 1) * 137.5) % 360);
+                return (
+                  <Link key={r.room_id} href={`/sekai/mura/${code}`} className="overflow-hidden rounded-xl no-underline shadow-sm">
+                    <div
+                      className="flex h-[74px] flex-col items-center justify-center gap-0.5 px-1 text-center"
+                      style={{
+                        background: r.cover_url
+                          ? `linear-gradient(165deg, rgba(10,22,14,.4), rgba(20,44,30,.55)), url(${srcCdn(r.cover_url)}) center/cover`
+                          : `linear-gradient(165deg, hsl(${h},46%,34%), hsl(${h},56%,16%))`,
+                      }}
+                    >
+                      {r.icon_url
+                        ? <img src={srcCdn(r.icon_url)} alt="" className="h-7 w-7 rounded-full border border-white/60 object-cover" />
+                        : null}
+                      <span className="text-[11px] font-extrabold leading-tight text-white">セカイムラ{d2}</span>
+                      <span className="num text-[9px] text-white/75">{r.members}人</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {filtered.length > 6 && (
+              <button
+                onClick={() => setShowAllPrefs((v) => !v)}
+                className="mt-2 w-full rounded-xl border border-[#c8dccb] bg-white py-2 text-[12px] font-extrabold"
+                style={{ color: GREEN }}
+              >
+                {showAllPrefs ? "▲ たたむ" : `もっとみる（あと${filtered.length - 6}県）▼`}
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
-      {/* ① 写真ストリップ — トップページと同じ。会員数が多い順 */}
-      <div className="hide-scrollbar -mx-3 mb-2.5 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1" data-noswipe>
-        {shown.map((v) => (
-          <Link
-            key={v.id}
-            href={`/sekai/village/${v.id}`}
-            className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border border-[#e2eae0] bg-white no-underline shadow-sm"
-          >
-            <div className="relative h-[86px] bg-[#eaf2ea]">
-              {v.cover_url ? (
-                <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-[22px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
-                  🏡
-                </div>
-              )}
-              {v.is_official && (
-                <span className="absolute left-1.5 top-1.5 rounded-full bg-[#d4b96a] px-1.5 py-0.5 text-[8.5px] font-extrabold text-[#1a2432]">公式</span>
-              )}
-            </div>
-            <div className="px-2 py-1.5">
-              <div className="truncate text-[12px] font-extrabold" style={{ color: GREEN }}>{v.name}</div>
-              <div className="truncate text-[10px] text-[#a0aca0]">
-                {v.prefecture ?? ""} ・ {memberN(v)}人
-              </div>
-            </div>
-          </Link>
-        ))}
-        {/* 一番右: ＋村を作りたい（トップページと同じカード） */}
-        <button
-          onClick={goSeed}
-          className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl border-2 border-dashed border-[#c8dccb] bg-white text-left shadow-sm"
-        >
-          <div className="flex h-[86px] w-full items-center justify-center" style={{ background: "linear-gradient(150deg,#eaf6ec,#d8ecdc)" }}>
-            <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
-          </div>
-          <div className="px-2 py-1.5">
-            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 拠点を立ち上げたい</div>
-            <div className="truncate text-[10px] text-[#a0aca0]">3人集めて申請 ▼</div>
-          </div>
+      {/* セカイムラ拠点 — セクション名タグ + ＋拠点を立ち上げたい */}
+      <div className="mb-2 mt-1 flex items-center justify-between">
+        <span className="rounded-full px-3 py-1 text-[12px] font-extrabold text-white" style={{ background: "#2a7a48" }}>
+          <img src="/icons/icon-base.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> セカイムラ拠点{villages ? `（${shown.length}）` : ""}
+        </span>
+        <button onClick={goSeed} className="rounded-full border-2 border-dashed border-[#c8dccb] bg-white px-2.5 py-1 text-[10.5px] font-extrabold" style={{ color: GREEN }}>
+          ＋ 拠点を立ち上げたい
         </button>
       </div>
 
