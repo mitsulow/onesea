@@ -257,6 +257,9 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <Link href="/#techo" onClick={() => setOpen(false)} className={item + hereCls("/#techo")}>
               {icon("/icons/icon-techo.webp")} 手帳
             </Link>
+            <Link href="/meikan" onClick={() => setOpen(false)} className={item + hereCls("/meikan")}>
+              <span className="flex h-[20px] w-[20px] flex-shrink-0 items-center justify-center text-[15px]">🔍</span> 人物検索（わらわ〜名鑑）
+            </Link>
             <Link href="/my" onClick={() => setOpen(false)} className={item + hereCls("/my")}>
               {icon("/icons/icon-meishi.webp")} マイページ
               {waraMissing > 0 && (
