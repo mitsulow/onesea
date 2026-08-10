@@ -483,17 +483,32 @@ export function HomeDashboard() {
                         {p.text}
                       </span>
                       {delIdx === i && p.src && (
-                        <span
-                          role="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            deletePlan(viewKey, p);
-                          }}
-                          className="ml-auto flex h-6 w-6 flex-shrink-0 items-center justify-center self-center rounded-full text-[13px] font-bold text-white"
-                          style={{ background: "#c05030" }}
-                        >
-                          ×
+                        <span className="ml-auto flex flex-shrink-0 items-center gap-1.5 self-center">
+                          <span
+                            role="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              // その日の手帳を開く(日付シート側で✎編集できる)
+                              window.dispatchEvent(new CustomEvent("onesea:openDay", { detail: { key: viewKey } }));
+                            }}
+                            className="flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold text-white"
+                            style={{ background: "#3070b0" }}
+                          >
+                            ✎
+                          </span>
+                          <span
+                            role="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              deletePlan(viewKey, p);
+                            }}
+                            className="flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-bold text-white"
+                            style={{ background: "#c05030" }}
+                          >
+                            ×
+                          </span>
                         </span>
                       )}
                     </div>

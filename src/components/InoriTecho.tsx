@@ -1185,21 +1185,35 @@ function BottomSheet({
                                 </span>
                               )}
                               {delEvId === ev.id && (
-                                <span
-                                  role="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (!confirm("本当に削除しますか？")) {
+                                <span className="float-right ml-2 flex items-center gap-1.5">
+                                  <span
+                                    role="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       setDelEvId(null);
-                                      return;
-                                    }
-                                    onSaveEv(dk, dayEvs.filter((x) => x.id !== ev.id));
-                                    setDelEvId(null);
-                                  }}
-                                  className="float-right ml-2 flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-bold text-white"
-                                  style={{ background: "#c05030" }}
-                                >
-                                  ×
+                                      setEvEdit(ev);
+                                    }}
+                                    className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                                    style={{ background: "#3070b0" }}
+                                  >
+                                    ✎
+                                  </span>
+                                  <span
+                                    role="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!confirm("本当に削除しますか？")) {
+                                        setDelEvId(null);
+                                        return;
+                                      }
+                                      onSaveEv(dk, dayEvs.filter((x) => x.id !== ev.id));
+                                      setDelEvId(null);
+                                    }}
+                                    className="flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-bold text-white"
+                                    style={{ background: "#c05030" }}
+                                  >
+                                    ×
+                                  </span>
                                 </span>
                               )}
                             </button>
