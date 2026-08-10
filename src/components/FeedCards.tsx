@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import type { MuraPost } from "@/lib/feed";
 import type { Shop } from "@/lib/za";
 import { srcCdn } from "@/lib/images";
+import { PREFS } from "@/lib/sekai";
 import { createClient } from "@/lib/supabase/client";
 
 /* eslint-disable @next/next/no-img-element */
@@ -27,6 +28,9 @@ function relTime(iso: string): string {
 }
 
 /** セカイムラ発のたより（FB型・名前欄が拠点名になる） */
+const ALL48 = [...PREFS, "海外"] as string[];
+const prefCode = (pf: string) => ALL48.indexOf(pf) + 1;
+
 export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: () => void }) {
   const [meId, setMeId] = useState<string | null>(null);
   const [amOffice, setAmOffice] = useState(false);
@@ -51,20 +55,30 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
   if (gone) return null;
   const router = useRouter();
   const v = mura.villages;
+  const pr = (mura as { pref_rooms?: { id: string; prefecture: string; icon_url?: string | null } | null }).pref_rooms ?? null;
+  const prDisp = pr ? String(pr.prefecture).replace(/[都府県]$/, "") : "";
+  const goPage = () => {
+    if (v) router.push(`/sekai/village/${v.id}`);
+    else if (pr) router.push(`/sekai/mura/${prefCode(pr.prefecture)}`);
+  };
   const [expanded, setExpanded] = useState(false);
   const needsFold = mura.body.length > 42 || mura.body.includes("\n");
   return (
     <div className="py-2.5">
       {/* ヘッダー: 拠点名（県）が太字の名前になる */}
       <div className="flex items-center gap-2.5">
-        <button onClick={() => v && router.push(`/sekai/village/${v.id}`)} className="flex-shrink-0">
-          {/* 個人ではなく拠点(=ページ)のアイコンで発信 — 過去の投稿もセカイムラ◯◯の顔になる */}
-          {v?.icon_url ? (
+        <button onClick={goPage} className="flex-shrink-0">
+          {/* 個人ではなく拠点(または県)のアイコンで発信 — 過去の投稿もセカイムラ◯◯の顔になる */}
+          {v?.icon_url || pr?.icon_url ? (
             <img
-              src={srcCdn(v.icon_url)}
+              src={srcCdn((v?.icon_url ?? pr?.icon_url) as string)}
               alt=""
               className="h-[40px] w-[40px] rounded-full border border-[#dce8dc] object-cover"
             />
+          ) : pr ? (
+            <span className="flex h-[40px] w-[40px] items-center justify-center rounded-full font-extrabold text-white" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)", fontSize: prDisp.length >= 3 ? 10 : 13 }}>
+              {prDisp}
+            </span>
           ) : (
             <span className="flex h-[40px] w-[40px] items-center justify-center rounded-full text-[16px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
               🏡
@@ -73,13 +87,13 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
         </button>
         <div className="min-w-0 flex-1">
           <button
-            onClick={() => v && router.push(`/sekai/village/${v.id}`)}
+            onClick={goPage}
             className="block max-w-full truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21]"
           >
-            {v ? v.name : "セカイムラ"}<span className="text-[12px] font-normal text-[#7a9a80]">からの投稿</span> <SekaiBadge size={14} />
+            {v ? v.name : pr ? `セカイムラ${prDisp}` : "セカイムラ"}<span className="text-[12px] font-normal text-[#7a9a80]">{v ? "（拠点からの投稿）" : "からの投稿"}</span> <SekaiBadge size={14} />
           </button>
           <div className="text-[11.5px] leading-tight text-[#8a8d91]">
-            {v?.prefecture ? `@${v.prefecture} ・ ` : ""}
+            {(v?.prefecture ?? pr?.prefecture) ? `@${v?.prefecture ?? pr?.prefecture} ・ ` : ""}
             {relTime(mura.created_at)}
             {mura.profiles?.display_name && <span className="ml-1.5">{mura.profiles.display_name}</span>}
           </div>

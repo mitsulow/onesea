@@ -1246,18 +1246,29 @@ export function ActivitySection({ me }: { me: User | null }) {
                 </button>
               )}
               <div className="p-3">
-                {/* ヘッダー: 誰（どの拠点）が投稿したか → 本文 → 写真 の順 */}
+                {/* ヘッダー: 誰（どの拠点・どの県）が投稿したか → 本文 → 写真 の順 */}
                 <Link
-                  href={`/sekai/village/${p.villages?.id}`}
+                  href={p.villages?.id
+                    ? `/sekai/village/${p.villages.id}`
+                    : p.pref_rooms
+                      ? `/sekai/mura/${([...PREFS, "海外"] as string[]).indexOf(p.pref_rooms.prefecture) + 1}`
+                      : "/sekai"}
                   className="flex items-center gap-2.5 no-underline"
                 >
-                  {/* 拠点(=ページ)のアイコン。個人ではなく村の顔で発信する */}
-                  {p.villages?.icon_url ? (
+                  {/* 拠点(または県)のアイコン。個人ではなく村の顔で発信する */}
+                  {(p.villages?.icon_url || p.pref_rooms?.icon_url) ? (
                     <img
-                      src={srcCdn(p.villages.icon_url)}
+                      src={srcCdn(p.villages?.icon_url ?? p.pref_rooms?.icon_url)}
                       alt=""
                       className="h-11 w-11 flex-shrink-0 rounded-full border border-[#dce8dc] object-cover"
                     />
+                  ) : p.pref_rooms ? (
+                    <span
+                      className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full font-extrabold text-white"
+                      style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)", fontSize: String(p.pref_rooms.prefecture).replace(/[都府県]$/, "").length >= 3 ? 11 : 14 }}
+                    >
+                      {String(p.pref_rooms.prefecture).replace(/[都府県]$/, "")}
+                    </span>
                   ) : (
                     <span
                       className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-[20px]"
@@ -1268,12 +1279,12 @@ export function ActivitySection({ me }: { me: User | null }) {
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="min-w-0 truncate text-[14.5px] font-extrabold" style={{ color: GREEN }}>
-                      {p.villages?.name ?? "セカイムラ"}
-                      <span className="text-[12px] font-bold text-[#7a9a80]">からの投稿</span>
+                      {p.villages?.name ?? (p.pref_rooms ? `セカイムラ${String(p.pref_rooms.prefecture).replace(/[都府県]$/, "")}` : "セカイムラ")}
+                      <span className="text-[12px] font-bold text-[#7a9a80]">{p.villages ? "（拠点からの投稿）" : "からの投稿"}</span>
                       <span className="ml-1"><SekaiBadge size={14} /></span>
                     </div>
                     <div className="num text-[10.5px] text-[#b0bcb0]">
-                      {p.villages?.prefecture ? `@${p.villages.prefecture} ・ ` : ""}
+                      {(p.villages?.prefecture ?? p.pref_rooms?.prefecture) ? `@${p.villages?.prefecture ?? p.pref_rooms?.prefecture} ・ ` : ""}
                       {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                       {p.profiles?.display_name ? ` ・ ${p.profiles.display_name}` : ""}
                     </div>
@@ -2225,11 +2236,14 @@ export function VillagesSection({
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
   const [pref, setPref] = useState(""); // "" = 全世界の拠点
   const [vMems, setVMems] = useState<Record<string, any[]>>({}); // 拠点ごとの村人(承認済み・アイコン用)
+  const [recents, setRecents] = useState<any[]>([]); // 最新更新順の県ページ6件
 
   const load = useCallback(async () => {
     const list = await fetchVillages(null);
     setVillages(list);
     if (me) setMineIds(await myVillageIds(me.id));
+    // 最新の更新があった県ページ6件(チャット・FEED・参加の新しい順)
+    createClient().rpc("sekai_pref_recent", { p_limit: 6 }).then(({ data }) => setRecents((data as any[]) ?? []));
     // カードに並べる村人アイコン(オーナーが先頭)
     if (list.length) {
       const { data: ms } = await createClient()
@@ -2264,6 +2278,54 @@ export function VillagesSection({
         <img src="/icons/icon-base.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3 }} />{" "}
         {pref || "全世界"}の拠点{villages ? `（${shown.length}）` : ""}
       </SectionTitle>
+
+      {/* ② 県セレクト — 選ぶと「セカイムラ◯◯県」の県ページが立ち上がる */}
+      <select
+        value={pref}
+        onChange={(e) => {
+          const v = e.target.value;
+          setPref("");
+          if (v) router.push(`/sekai/mura/${([...PREFS, "海外"] as string[]).indexOf(v) + 1}`);
+        }}
+        className="mb-2.5 w-full rounded-xl border-2 border-[#c8dccb] bg-white px-3 py-2.5 text-[13.5px] font-bold outline-none"
+        style={{ color: GREEN }}
+      >
+        <option value="">🌏 全世界の拠点（会員数が多い順）— 県をえらぶと県ページへ</option>
+        {([...PREFS, "海外"] as string[]).map((pf) => (
+          <option key={pf} value={pf}>
+            セカイムラ{pf.replace(/[都府県]$/, "")}（{(villages ?? []).filter((v) => (pf === "海外" ? !(PREFS as readonly string[]).includes(v.prefecture ?? "") : v.prefecture === pf)).length}）
+          </option>
+        ))}
+      </select>
+
+      {/* 最新の更新があった県ページ6件 */}
+      {recents.length > 0 && (
+        <div className="mb-2.5 grid grid-cols-3 gap-2">
+          {recents.map((r: any) => {
+            const code = ([...PREFS, "海外"] as string[]).indexOf(r.prefecture) + 1;
+            const d2 = String(r.prefecture).replace(/[都府県]$/, "");
+            const h = Math.round(((code - 1) * 137.5) % 360);
+            return (
+              <Link key={r.room_id} href={`/sekai/mura/${code}`} className="overflow-hidden rounded-xl no-underline shadow-sm">
+                <div
+                  className="flex h-[74px] flex-col items-center justify-center gap-0.5 px-1 text-center"
+                  style={{
+                    background: r.cover_url
+                      ? `linear-gradient(165deg, rgba(10,22,14,.4), rgba(20,44,30,.55)), url(${srcCdn(r.cover_url)}) center/cover`
+                      : `linear-gradient(165deg, hsl(${h},46%,34%), hsl(${h},56%,16%))`,
+                  }}
+                >
+                  {r.icon_url
+                    ? <img src={srcCdn(r.icon_url)} alt="" className="h-7 w-7 rounded-full border border-white/60 object-cover" />
+                    : null}
+                  <span className="text-[11px] font-extrabold leading-tight text-white">セカイムラ{d2}</span>
+                  <span className="num text-[9px] text-white/75">{r.members}人</span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {/* ① 写真ストリップ — トップページと同じ。会員数が多い順 */}
       <div className="hide-scrollbar -mx-3 mb-2.5 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1" data-noswipe>
@@ -2307,25 +2369,6 @@ export function VillagesSection({
           </div>
         </button>
       </div>
-
-      {/* ② 県セレクト — 選ぶと「セカイムラ◯◯県」の県ページが立ち上がる */}
-      <select
-        value={pref}
-        onChange={(e) => {
-          const v = e.target.value;
-          setPref("");
-          if (v) router.push(`/sekai/mura/${([...PREFS, "海外"] as string[]).indexOf(v) + 1}`);
-        }}
-        className="mb-2.5 w-full rounded-xl border-2 border-[#c8dccb] bg-white px-3 py-2.5 text-[13.5px] font-bold outline-none"
-        style={{ color: GREEN }}
-      >
-        <option value="">🌏 全世界の拠点（会員数が多い順）— 県をえらぶと県ページへ</option>
-        {([...PREFS, "海外"] as string[]).map((pf) => (
-          <option key={pf} value={pf}>
-            セカイムラ{pf.replace(/[都府県]$/, "")}（{(villages ?? []).filter((v) => (pf === "海外" ? !(PREFS as readonly string[]).includes(v.prefecture ?? "") : v.prefecture === pf)).length}）
-          </option>
-        ))}
-      </select>
 
       {/* ③ 拠点カード — 楽市楽座の商品表示と同じ2列グリッド(右上に県名・大きい写真・村人アイコン・参加ボタン) */}
       {villages === null ? (
@@ -2397,7 +2440,7 @@ export function VillagesSection({
                       className="block rounded-lg py-1.5 text-center text-[11px] font-extrabold no-underline"
                       style={{ background: "#d4b96a", color: "#1a2432" }}
                     >
-                      拠点に参加する
+                      この拠点に参加したい
                     </Link>
                   ) : (
                     <div className="rounded-lg border border-[#e0e6dc] py-1.5 text-center text-[10px] font-bold text-[#a0aca0]">募集停止中</div>

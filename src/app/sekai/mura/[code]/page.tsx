@@ -37,6 +37,42 @@ export default function SekaiMuraPrefPage() {
   const [mainPick, setMainPick] = useState<string[] | null>(null);
   const [mainSel, setMainSel] = useState("");
   const [mainBusy, setMainBusy] = useState(false);
+  /* 県のFEED(こんなことをしました報告) */
+  const [fposts, setFposts] = useState<any[]>([]);
+  const [fBody, setFBody] = useState("");
+  const [fPhoto, setFPhoto] = useState<string | null>(null);
+  const [fUp, setFUp] = useState(false);
+  const [fSending, setFSending] = useState(false);
+
+  const loadFeed = useCallback(async (rid: string) => {
+    const { data } = await createClient()
+      .from("village_posts")
+      .select("id, body, photo_url, created_at, user_id, profiles!village_posts_user_id_fkey(username, display_name, avatar_url)")
+      .eq("pref_room_id", rid)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    setFposts(data ?? []);
+  }, []);
+
+  const submitFeed = async () => {
+    if (!me || !room || !fBody.trim() || fSending) return;
+    setFSending(true);
+    const { error } = await createClient().from("village_posts").insert({
+      user_id: me.id,
+      body: fBody.trim(),
+      photo_url: fPhoto,
+      pref_room_id: room.id,
+    });
+    if (error) {
+      alert("投稿できませんでした。「この県に参加する」を押してからどうぞ");
+      setFSending(false);
+      return;
+    }
+    setFBody("");
+    setFPhoto(null);
+    setFSending(false);
+    loadFeed(room.id);
+  };
   const [villages, setVillages] = useState<any[]>([]);
   const [upBusy, setUpBusy] = useState<"cover" | "icon" | null>(null);
   /* 県の村長(3人まで) */
@@ -73,8 +109,9 @@ export default function SekaiMuraPrefPage() {
       } else {
         setVillagers([]);
       }
+      loadFeed(data.id);
     }
-  }, [pref]);
+  }, [pref, loadFeed]);
 
   useEffect(() => {
     if (!pref) return;
@@ -402,6 +439,82 @@ export default function SekaiMuraPrefPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* 📣 セカイムラ◯◯のFEED — こんなことをしました報告(セカイムラトップとCotoZuteにも流れる) */}
+      <section className="px-3 pt-3">
+        <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
+          <div className="mb-1.5 text-[12px] font-extrabold text-[#2a4a34]">📣 セカイムラ{disp}のFEED</div>
+
+          {joinedCounty === true && me && (
+            <div className="mb-3 rounded-xl border border-[#dce8d8] bg-[#f7fbf8] p-2">
+              <textarea
+                value={fBody}
+                onChange={(e) => setFBody(e.target.value)}
+                rows={2}
+                placeholder={`セカイムラ${disp}のみんなに「こんなことをしました」を報告...`}
+                className="w-full resize-none rounded-lg border border-[#e2eae0] bg-white px-2.5 py-2 text-[13px] outline-none focus:border-[#4a8a5c]"
+              />
+              {fPhoto && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <img src={srcCdn(fPhoto)} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                  <button onClick={() => setFPhoto(null)} className="text-[11px] font-bold text-[#8a8070] underline">写真を外す</button>
+                </div>
+              )}
+              <div className="mt-1.5 flex items-center gap-2">
+                <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[15px]" style={{ border: "1px solid #dce8d8" }}>
+                  {fUp ? "⏳" : "📷"}
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me || fUp) return;
+                    setFUp(true);
+                    try { setFPhoto(await uploadImage("post-images", me.id, f, 1600, 0.75)); } catch {}
+                    setFUp(false);
+                    e.currentTarget.value = "";
+                  }} />
+                </label>
+                <button
+                  onClick={submitFeed}
+                  disabled={!fBody.trim() || fSending || fUp}
+                  className="ml-auto rounded-full px-4 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-40"
+                  style={{ background: GREEN }}
+                >
+                  {fSending ? "投稿中..." : "投稿する"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {fposts.length === 0 ? (
+            <p className="py-1 text-[11.5px] text-[#a0b09a]">まだ報告がありません。{joinedCounty === true ? "最初のひとことをどうぞ" : "参加すると投稿できます"}</p>
+          ) : (
+            fposts.map((p: any) => (
+              <div key={p.id} className="border-b border-[#eef2ec] py-2 last:border-b-0">
+                <div className="flex items-center gap-2">
+                  {p.profiles?.avatar_url
+                    ? <img src={srcCdn(p.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
+                    : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#dcead8] text-[11px]">🌾</span>}
+                  <span className="text-[12px] font-bold text-[#3a4a34]">{p.profiles?.display_name ?? "むらびと"}</span>
+                  <span className="num ml-auto text-[10px] text-[#c0c8c0]">
+                    {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
+                  </span>
+                  {me && (me.id === p.user_id || amOffice) && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm("この投稿を削除しますか？")) return;
+                        await createClient().from("village_posts").delete().eq("id", p.id);
+                        if (room) loadFeed(room.id);
+                      }}
+                      className="ml-1 text-[9px] font-bold text-[#c05030] underline"
+                    >削除</button>
+                  )}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">{p.body}</p>
+                {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-1.5 max-h-72 rounded-lg object-cover" />}
+              </div>
+            ))
+          )}
+        </div>
       </section>
 
       {/* メインのセカイムラ選択(2県目以降に参加した時だけ) */}

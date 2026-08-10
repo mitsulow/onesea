@@ -20,6 +20,8 @@ export interface MuraPost {
   created_at: string;
   user_id: string;
   villages: { id: string; name: string; prefecture: string | null; icon_url?: string | null } | null;
+  /** 県ページ(セカイムラ◯◯)からの投稿の場合に入る */
+  pref_rooms?: { id: string; prefecture: string; icon_url?: string | null } | null;
   profiles: { username: string | null; display_name: string | null; avatar_url: string | null; member_no?: number | null; warawa_until?: string | null } | null;
 }
 
@@ -47,7 +49,7 @@ export function feedKey(it: FeedItem): string {
 const POST_SELECT =
   "id, user_id, body, image_urls, thumb_urls, embed, created_at, profiles!posts_user_id_fkey(username, display_name, avatar_url, member_no, warawa_until), likes(count), comments(count)";
 const MURA_SELECT =
-  "id, body, photo_url, kind, event_at, embed, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)";
+  "id, body, photo_url, kind, event_at, embed, created_at, user_id, villages!village_posts_village_id_fkey(id, name, prefecture, icon_url), pref_rooms!village_posts_pref_room_id_fkey(id, prefecture, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)";
 const SHOP_SELECT =
   "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
 
