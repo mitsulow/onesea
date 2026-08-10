@@ -313,6 +313,11 @@ export default function ShopDetailPage() {
               🔰 これが初挑戦 — 初心者応援！
             </div>
           )}
+          {shop.trial_ver && (
+            <div className="ml-1 mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-extrabold text-white" style={{ background: "#c94d3a" }}>
+              【お試し版】あり
+            </div>
+          )}
           </div>
           <div className="mt-1 flex items-center gap-2.5">
             <span className="text-xl font-extrabold" style={{ color: "#c94d3a" }}>

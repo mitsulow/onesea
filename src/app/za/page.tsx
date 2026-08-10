@@ -257,6 +257,14 @@ export default function ZaPage() {
                         </div>
                       )}
 
+                      {shop.trial_ver && (
+                        <div
+                          className="absolute right-1.5 rounded-sm px-1.5 py-0.5 text-[9.5px] font-extrabold text-white"
+                          style={{ background: "#c94d3a", top: shop.first_try ? 46 : 6 }}
+                        >
+                          【お試し版】
+                        </div>
+                      )}
                       {shop.first_try && (
                         <div className="absolute right-1.5 top-1.5 flex flex-col items-center">
                           <span className="text-[20px]" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,.3))" }}>🔰</span>
