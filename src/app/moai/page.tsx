@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
@@ -60,8 +61,10 @@ export default function MoaiListPage() {
     load();
   }, []);
 
+  const gate = useWarawaGate("/lp/onesea");
   const submit = async () => {
     if (!me || !name.trim() || busy) return;
+    if (!(await gate.check("MoAIの作成"))) return;
     if (!city) { alert("主な活動場所（市町村）を選んでください"); return; }
     if (await moaiNameTaken(name)) { setNameTaken(true); return; }
     setBusy(true);

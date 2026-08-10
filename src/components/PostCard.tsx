@@ -10,6 +10,7 @@ import { CotozutePost, toggleLike, deletePost, warawer } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
 import { MeishiModal } from "./MeishiModal";
 import { srcCdn } from "@/lib/images";
+import { useWarawaGate } from "@/lib/warawaGate";
 import { isWarawaUntil } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
 
@@ -68,8 +69,10 @@ export function PostCard({
 
   const needsFold = !hd && !!bodyText && (bodyText.length > 42 || bodyText.includes("\n"));
 
+  const gate = useWarawaGate("/lp/onesea");
   const onLike = async () => {
-    if (!me) return;
+    if (!me) { await gate.check("いいね"); return; }
+    if (!(await gate.check("いいね"))) return;
     setIsLiked(!isLiked);
     setLikeCount((c) => c + (isLiked ? -1 : 1));
     await toggleLike(post.id, me.id, isLiked);
@@ -251,6 +254,7 @@ export function PostCard({
         {me && me.id !== post.user_id && following !== null && (
           <button
             onClick={async () => {
+              if (!(await gate.check("フォロー"))) return;
               await toggleFollow(me.id, post.user_id, following);
               setFollowing(!following);
             }}
@@ -267,6 +271,7 @@ export function PostCard({
             aria-label="削除依頼"
           >⚑</button>
         )}
+        {gate.node}
         {reportOpen && (
           <ReportDialog kind="cotozute" targetId={post.id} targetUrl={`/post/${post.id}`} excerpt={post.body ?? ""} meId={me?.id ?? null} onClose={() => setReportOpen(false)} />
         )}

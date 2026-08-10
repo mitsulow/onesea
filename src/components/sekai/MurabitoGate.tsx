@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { PREFS } from "@/lib/sekai";
+import { fetchIsWarawa } from "@/lib/warawa";
+import { UpgradeDialog } from "@/components/UpgradeGate";
 
 const ALL_PREFS = [...PREFS, "海外"] as string[];
 
@@ -13,6 +15,7 @@ export function MurabitoGate() {
   const [busy, setBusy] = useState(false);
   const [uid, setUid] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [lpOpen, setLpOpen] = useState(false); // わらわ〜未満の人にはLP導線
 
   useEffect(() => {
     const supabase = createClient();
@@ -31,6 +34,12 @@ export function MurabitoGate() {
     if (!uid || !pref || busy) return;
     setBusy(true);
     const supabase = createClient();
+    // 権限シート: セカイムラ参加はわらわ〜会員(事務局は除く)
+    const [wara, { data: adm }] = await Promise.all([
+      fetchIsWarawa(uid),
+      supabase.from("talk_admins").select("user_id").eq("user_id", uid).maybeSingle(),
+    ]);
+    if (!wara && !adm) { setBusy(false); setLpOpen(true); return; }
     const { error } = await supabase.from("profiles").update({ murabito: true, prefecture: pref }).eq("id", uid);
     if (error) { alert("うまく登録できませんでした。もう一度お試しください"); setBusy(false); return; }
     // 自分の県のセカイムラ全体チャットに自動参加 → TalKのグループ欄にも現れる
@@ -46,6 +55,7 @@ export function MurabitoGate() {
   };
 
   if (!show) return null;
+  if (lpOpen) return <UpgradeDialog open onClose={() => setLpOpen(false)} feature="セカイムラへの参加" lp="/lp/sekai" />;
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-6">
       <div className="w-full max-w-[360px] rounded-2xl bg-white p-6 text-center">
@@ -66,7 +76,7 @@ export function MurabitoGate() {
             <h2 className="mt-2 text-[17px] font-extrabold text-[#1e4530]">セカイムラに入りますか？</h2>
             <p className="mt-2 text-[12.5px] leading-relaxed text-[#5a6a54]">
               村人になると、あなたの県の「セカイムラ◯◯」に振り分けられて、県のみんなの全体チャットに参加できます。
-              マイページには🌾ムラビトバッジが付きます（無料）。
+              マイページには🌾ムラビトバッジが付きます（わらわ〜会員の機能です）。
             </p>
             <select
               value={pref}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { UpgradeDialog } from "@/components/UpgradeGate";
+import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
 import { SeedSection } from "@/components/sekai/sections";
@@ -70,6 +71,7 @@ export default function SekaiMuraPrefPage() {
 
   const submitFeed = async () => {
     if (!me || !room || !fBody.trim() || fSending) return;
+    if (!(await wGate.check("県ページへの投稿"))) return;
     if (fEv && !fEvDate) { snack("イベントの日付を入れてください", false); return; }
     setFSending(true);
     const row: any = {
@@ -187,8 +189,10 @@ export default function SekaiMuraPrefPage() {
   }, [me, room]);
 
   /* 県別セカイムラは拒否なし: 押せば誰でもその県の村人になる */
+  const wGate = useWarawaGate("/lp/sekai");
   const joinCounty = async () => {
     if (!me || !room || countyBusy) return;
+    if (!(await wGate.check("セカイムラへの参加"))) return;
     setCountyBusy(true);
     try {
       const supabase = createClient();
@@ -746,6 +750,7 @@ export default function SekaiMuraPrefPage() {
         </div>
       )}
       <UpgradeDialog open={showJoinLp} onClose={() => setShowJoinLp(false)} feature="セカイムラへの参加" lp="/lp/sekai" />
+      {wGate.node}
       {snackNode}
     </main>
   );

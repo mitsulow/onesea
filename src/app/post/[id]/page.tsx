@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useWarawaGate } from "@/lib/warawaGate";
 import {
   CotozutePost,
   CotozuteComment,
@@ -24,6 +25,7 @@ export default function PostDetailPage() {
   const postId = params.id;
   const [post, setPost] = useState<CotozutePost | null | undefined>(undefined);
   const [comments, setComments] = useState<CotozuteComment[]>([]);
+  const gate = useWarawaGate("/lp/onesea");
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [me, setMe] = useState<User | null>(null);
   const [body, setBody] = useState("");
@@ -52,6 +54,7 @@ export default function PostDetailPage() {
     if (!me || !body.trim() || sending) return;
     setSending(true);
     await ensureProfile(me);
+    if (!(await gate.check("コメント"))) return;
     await addComment(postId, me.id, body.trim());
     setBody("");
     setSending(false);
@@ -143,6 +146,7 @@ export default function PostDetailPage() {
           {/* コメント */}
           <div className="mt-3">
             <div className="sec mb-2"><img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> コメント</div>
+            {gate.node}
             {comments.length === 0 ? (
               <p className="pb-2 text-[12.5px] text-[#b8b0a0]">まだコメントはありません</p>
             ) : (

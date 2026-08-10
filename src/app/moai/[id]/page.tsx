@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
@@ -119,8 +120,10 @@ export default function MoaiDetailPage() {
     load();
   }, [load]);
 
+  const gate = useWarawaGate("/lp/onesea");
   const toggleJoin = async () => {
-    if (!me) { alert("ログインすると参加できます（無料のGoogleログイン）"); return; }
+    if (!me) { await gate.check("MoAIへの参加"); return; }
+    if (!joined && !(await gate.check("MoAIへの参加"))) return;
     if (myStatus === "rejected") return;
     if (joined) {
       if (moai?.created_by === me.id) { alert("創設者OYAはこのMoAIから退会できません（サークルを閉じる場合は削除を使ってください）"); return; }
@@ -143,6 +146,7 @@ export default function MoaiDetailPage() {
   };
 
   const publish = async () => {
+    if (!(await gate.check("MoAIへの投稿"))) return;
     if (!me || !body.trim() || saving) return;
     setSaving(true);
     const supabase = createClient();
@@ -418,6 +422,7 @@ export default function MoaiDetailPage() {
                         onClick={async () => {
                           const b = (cDraft[p.id] ?? "").trim();
                           if (!b || !me) return;
+                          if (!(await gate.check("コメント"))) return;
                           await addMoaiComment(p.id, me.id, b);
                           setCDraft((d) => ({ ...d, [p.id]: "" }));
                           fetchMoaiComments(posts.map((x) => x.id)).then(setComments);
@@ -592,6 +597,7 @@ export default function MoaiDetailPage() {
         </div>
       )}
       {place && <PlaceOverlay place={place} onClose={() => setPlace(null)} />}
+      {gate.node}
     </main>
   );
 }

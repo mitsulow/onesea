@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { UpgradeDialog } from "@/components/UpgradeGate";
+import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
 import { fetchGroupMessages, sendGroupMessage, markGroupRead, fetchGroupReads, type GroupMessageRow } from "@/lib/line";
@@ -95,8 +96,10 @@ export default function SekaiMuraChatPage() {
   }, [messages.length]);
 
   /* その場で村人になる */
+  const wGate = useWarawaGate("/lp/sekai");
   const becomeMurabito = async () => {
     if (!me || joining) return;
+    if (!(await wGate.check("セカイムラへの参加"))) return;
     setJoining(true);
     const supabase = createClient();
     const { error } = await supabase.from("profiles").update({ murabito: true }).eq("id", me.id);
@@ -157,7 +160,7 @@ export default function SekaiMuraChatPage() {
           <div className="w-full max-w-[360px] rounded-2xl bg-white p-6 text-center">
             <div className="text-[36px]">🏡</div>
             <h2 className="mt-2 text-[16px] font-extrabold text-[#1e4530]">ここはセカイムラ{disp}のチャット</h2>
-            <p className="mt-2 text-[12.5px] leading-relaxed text-[#5a6a54]">県のみんなの全体チャットは、セカイムラの村人だけが参加できます。村人になるとマイページに🌾ムラビトバッジが付きます（無料）。</p>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-[#5a6a54]">県のみんなの全体チャットは、セカイムラの村人だけが参加できます。村人になるとマイページに🌾ムラビトバッジが付きます（わらわ〜会員の機能です）。</p>
             <button onClick={becomeMurabito} disabled={joining} className="mt-4 w-full rounded-xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40" style={{ background: GREEN }}>
               {joining ? "登録中..." : "🌾 村人になる"}
             </button>
@@ -237,6 +240,7 @@ export default function SekaiMuraChatPage() {
         )}
       </div>
       <UpgradeDialog open={showJoinLp} onClose={() => setShowJoinLp(false)} feature="セカイムラのチャット" lp="/lp/sekai" />
+      {wGate.node}
     </main>
   );
 }

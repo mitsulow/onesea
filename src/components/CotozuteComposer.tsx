@@ -5,6 +5,7 @@ import { ConsentDialog } from "@/components/ConsentDialog";
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { useWarawaGate } from "@/lib/warawaGate";
 import { ensureProfile } from "@/lib/cotozute";
 import { EmbedCard, OGPEmbed } from "./EmbedCard";
 import { SnsIcon } from "./SnsIcon";
@@ -134,8 +135,10 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
     if (error) setMessage(`ログインエラー: ${error.message}`);
   };
 
+  const gate = useWarawaGate("/lp/onesea");
   const submit = async () => {
     if (!user || (!body.trim() && !embed && images.length === 0) || sending) return;
+    if (!(await gate.check("言の葉の投稿"))) return;
     // 初投稿だけ: 利用ポリシーの同意を取る
     if (!(await hasConsent(user.id, "cotozute"))) {
       setConsentDlg(true);
@@ -185,7 +188,8 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
         >
           ログインして投稿する
         </button>
-        {message && <p className="mt-2 text-[11px] text-[#c05030]">{message}</p>}
+        {gate.node}
+      {message && <p className="mt-2 text-[11px] text-[#c05030]">{message}</p>}
       </div>
     );
   }

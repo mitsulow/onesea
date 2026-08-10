@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThreeCol } from "@/components/SideRails";
+import { useWarawaGate } from "@/lib/warawaGate";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
@@ -3558,8 +3559,10 @@ export function TasuketeSection({ me, myPref, router }: { me: User | null; myPre
     load();
   }, [load]);
 
+  const tGate = useWarawaGate("/lp/sekai");
   const save = async () => {
     if (!me || !title.trim() || saving) return;
+    if (!(await tGate.check("助けて投稿"))) return;
     setSaving(true);
     await addTasukete(me.id, { title: title.trim(), body: body.trim(), prefecture: tPref, reward });
     setSaving(false);
@@ -3571,6 +3574,7 @@ export function TasuketeSection({ me, myPref, router }: { me: User | null; myPre
 
   return (
     <section id="tasukete" className="card" style={{ scrollMarginTop: 56 }}>
+      {tGate.node}
       <div className="mb-2.5 flex items-baseline justify-between">
         <span className="text-[13px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
           🤝 助けて掲示板
@@ -3605,6 +3609,7 @@ export function TasuketeSection({ me, myPref, router }: { me: User | null; myPre
                     onClick={async () => {
                       const chatId = await getOrCreateChat(me.id, t.user_id);
                       if (chatId) {
+                        if (!(await tGate.check("助けますボタン"))) return;
                         await sendMessage(chatId, me.id, `「${t.title}」— 助けます 🤝`);
                         router.push(`/talk/${chatId}`);
                       }
