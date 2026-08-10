@@ -714,7 +714,8 @@ export function ActivitySection({ me }: { me: User | null }) {
         "id, body, photo_url, kind, event_at, event_end, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
       )
       .eq("kind", "event")
-      .gte("event_at", new Date().toISOString())
+      // 「今日のイベント」は開始時刻を過ぎても当日中は表示する(全国イベント作成直後に消える問題の修正)
+      .gte("event_at", (() => { const t = new Date(); t.setHours(0, 0, 0, 0); return t.toISOString(); })())
       .order("event_at", { ascending: true })
       .limit(12);
     const list = evs ?? [];
@@ -3745,17 +3746,15 @@ export function SeedSection({ me }: { me: User | null }) {
             畑や田んぼなど自給自足に興味がある村を作る際は「セカイムラ○○」をお使いください。
             既に使われているセカイムラ○○県がある場合は使えませんので、セカイムラ○○市やトカイムラ○○市となります。
           </p>
-          <div className="flex gap-1.5">
-            <input
-              value={name}
-              onChange={(e) => { setName(e.target.value); setChecked(null); }}
-              placeholder="例: トカイムラ那覇 / セカイムラ京都"
-              className="min-w-0 flex-1 rounded-lg border border-[#d8e4d0] px-2.5 py-2 text-[12px] outline-none focus:border-[#4a9a5a]"
-            />
-            <button onClick={checkName} disabled={!name.trim() || checking} className="flex-shrink-0 rounded-lg px-2.5 py-2 text-[10.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#4a9a5a" }}>
-              {checking ? "確認中" : "使われている拠点名かをチェックします"}
-            </button>
-          </div>
+          <input
+            value={name}
+            onChange={(e) => { setName(e.target.value); setChecked(null); }}
+            placeholder="例: トカイムラ那覇 / セカイムラ京都"
+            className="w-full rounded-lg border border-[#d8e4d0] px-2.5 py-2 text-[12px] outline-none focus:border-[#4a9a5a]"
+          />
+          <button onClick={checkName} disabled={!name.trim() || checking} className="mt-1.5 w-full rounded-lg px-2.5 py-2 text-[11px] font-extrabold text-white disabled:opacity-40" style={{ background: "#4a9a5a" }}>
+            {checking ? "確認中" : "使われている拠点名かをチェックします"}
+          </button>
           {checked === false && <p className="mt-1 text-[10px] font-bold text-[#c05030]">この名前はすでに使われています（永久欠番）。市町村名などで変えてみてください</p>}
           {checked === true && (
             <>
