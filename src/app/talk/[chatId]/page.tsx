@@ -216,11 +216,14 @@ export default function ChatPage() {
         {me && (
           <button
             onClick={startCall}
-            className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-[17px]"
-            style={{ background: "rgba(212,185,106,.18)", border: "1px solid rgba(212,185,106,.5)" }}
+            className="ml-auto flex h-9 w-9 items-center justify-center rounded-full"
+            style={{ background: "#2ab84a", boxShadow: "0 1px 6px rgba(42,184,74,.5)" }}
             aria-label="電話"
           >
-            <span className="text-[20px]">📞</span>
+            {/* 緑丸+白い受話器(LINEの通話ボタンと同じ視認性。絵文字は端末により黒くて見えない) */}
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="#ffffff" aria-hidden>
+              <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.85 21 3 13.15 3 3.5a1 1 0 0 1 1-1H7.5a1 1 0 0 1 1 1c0 1.24.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z" />
+            </svg>
           </button>
         )}
       </header>
