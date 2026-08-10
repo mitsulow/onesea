@@ -2317,7 +2317,7 @@ export function VillagesSection({
         <option value="">🌏 全世界の拠点（会員数が多い順）</option>
         {[...new Set((villages ?? []).map((v) => v.prefecture).filter(Boolean))].sort().map((pf) => (
           <option key={pf as string} value={pf as string}>
-            {pf}（{(villages ?? []).filter((v) => v.prefecture === pf).length}）
+            セカイムラ{String(pf).replace(/[都府県]$/, "")}（{(villages ?? []).filter((v) => v.prefecture === pf).length}）
           </option>
         ))}
       </select>
