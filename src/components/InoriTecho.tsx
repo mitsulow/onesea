@@ -1083,15 +1083,31 @@ function BottomSheet({
                       {/* 各時間の＋は廃止（上の「予定を追加」で足りる）。
                           空欄の長押し/タップ書き込みはそのまま残す。 */}
                       {isEd ? (
-                        <textarea
-                          ref={inputRef}
-                          value={hNote}
-                          onChange={(e) => onSave(dk, String(h), e.target.value)}
-                          onBlur={() => setEditH(null)}
-                          placeholder={"予定...（改行で2件目もOK）"}
-                          rows={Math.max(2, hNote.split("\n").length)}
-                          className="w-full resize-none bg-transparent px-2 py-1 text-xs leading-relaxed text-[#333] outline-none"
-                        />
+                        <div className="flex w-full items-start gap-1">
+                          <textarea
+                            ref={inputRef}
+                            value={hNote}
+                            onChange={(e) => onSave(dk, String(h), e.target.value)}
+                            onBlur={() => setEditH(null)}
+                            placeholder={"予定...（改行で2件目もOK）"}
+                            rows={Math.max(2, hNote.split("\n").length)}
+                            className="min-w-0 flex-1 resize-none bg-transparent px-2 py-1 text-xs leading-relaxed text-[#333] outline-none"
+                          />
+                          {/* さらっと書きの真横にフォーム入口(23時でも指の隣)。書きかけは引き継ぐ */}
+                          <button
+                            data-ev
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const draft = hNote.trim();
+                              if (draft) onSave(dk, String(h), "");
+                              setEditH(null);
+                              setEvEdit({ id: "", sh: h, sm: 0, eh: Math.min(23, h + 1), em: 0, text: draft, color: "green" });
+                            }}
+                            className="mr-1 mt-1 flex-shrink-0 rounded-full border px-2 py-1 text-[10px] font-extrabold"
+                            style={{ borderColor: "#c94d3a", color: "#c94d3a", background: "#fff" }}
+                          >📋 フォーム</button>
+                        </div>
                       ) : (
                         <div className="w-full py-1 pl-2 pr-8" style={{ paddingLeft: passers.length ? 2 + passers.length * 6 + 6 : 8 }}>
                           {starters.map((ev) => (
