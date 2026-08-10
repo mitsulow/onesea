@@ -35,6 +35,7 @@ export default function SekaiMuraPrefPage() {
   const [room, setRoom] = useState<any | null>(null);
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [villagers, setVillagers] = useState<any[]>([]);
+  const [newcomers, setNewcomers] = useState<any[]>([]); // 14日以内に参加した新しい村民(村長のフォロー用)
   const [joinedCounty, setJoinedCounty] = useState<boolean | null>(null); // この県に参加中か
   const [countyBusy, setCountyBusy] = useState(false);
   /* 2県目以降に参加した時だけ「メインはどっち？」を聞く(メインはマイページのバッジに出る) */
@@ -124,13 +125,22 @@ export default function SekaiMuraPrefPage() {
       const { count } = await supabase.from("pref_room_members").select("user_id", { count: "exact", head: true }).eq("room_id", data.id);
       setMemberCount(count ?? null);
       // この県に参加している村人(参加順)
-      const { data: pm } = await supabase.from("pref_room_members").select("user_id").eq("room_id", data.id).limit(60);
+      const { data: pm } = await supabase.from("pref_room_members").select("user_id, joined_at").eq("room_id", data.id).limit(60);
       const ids = (pm ?? []).map((r: any) => r.user_id);
       if (ids.length) {
         const { data: profs } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids);
         setVillagers(profs ?? []);
+        // 14日以内に参加した人 = 新しい村民(参加が新しい順)
+        const since = Date.now() - 14 * 86400000;
+        const fresh = (pm ?? [])
+          .filter((r: any) => r.joined_at && new Date(r.joined_at).getTime() >= since)
+          .sort((a: any, b: any) => String(b.joined_at).localeCompare(String(a.joined_at)))
+          .map((r: any) => ({ ...r, prof: (profs ?? []).find((x: any) => x.id === r.user_id) }))
+          .filter((r: any) => r.prof);
+        setNewcomers(fresh);
       } else {
         setVillagers([]);
+        setNewcomers([]);
       }
       loadFeed(data.id);
     }
@@ -501,6 +511,31 @@ export default function SekaiMuraPrefPage() {
           </div>
         </div>
       </section>
+
+      {/* 🌱 新しい村民(14日間だけ表示 — 村長がフォローする用) */}
+      {newcomers.length > 0 && (
+        <section className="px-3 pt-3">
+          <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #e8dcb8", background: "#fdfaf0" }}>
+            <div className="mb-1.5 text-[12px] font-extrabold text-[#8a6a20]">🌱 新しい村民（14日以内）</div>
+            <div className="flex flex-wrap gap-1.5">
+              {newcomers.map((n: any) => {
+                const days = Math.floor((Date.now() - new Date(n.joined_at).getTime()) / 86400000);
+                const chip = (
+                  <span className="flex items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5" style={{ border: "1px solid #e8dcb8" }}>
+                    {n.prof.avatar_url
+                      ? <img src={srcCdn(n.prof.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
+                      : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f0e8d0] text-[11px]">🌱</span>}
+                    <span className="max-w-[100px] truncate text-[11.5px] font-extrabold text-[#5a4a20]">{n.prof.display_name ?? "むらびと"}</span>
+                    <span className="num text-[9px] text-[#b0a070]">{days === 0 ? "今日" : `${days}日前`}</span>
+                  </span>
+                );
+                return <span key={n.user_id}>{n.prof.username ? <Link href={`/u/${n.prof.username}`} className="no-underline">{chip}</Link> : chip}</span>;
+              })}
+            </div>
+            <p className="mt-1.5 text-[9.5px] text-[#b0a070]">村長さんへ: 新しい村民さんに、村のことをフォローしてあげてください</p>
+          </div>
+        </section>
+      )}
 
       {/* 🌾 セカイムラ◯◯の村人 */}
       <section className="px-3 pt-3">
