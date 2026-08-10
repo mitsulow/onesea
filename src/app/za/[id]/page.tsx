@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Shop, ShopComment, categoryOf, fetchShop, deleteShop, fetchShopComments, addShopComment, deleteShopComment, fetchShopsByOwner } from "@/lib/za";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { PayOverlay } from "@/components/PayOverlay";
+import { ZaLegendButton } from "@/components/ZaLegend";
 import { uploadImagePair } from "@/lib/images";
 import { srcCdn } from "@/lib/images";
 
@@ -318,6 +319,7 @@ export default function ShopDetailPage() {
               【お試し版】あり
             </div>
           )}
+          <ZaLegendButton className="ml-1 mt-1 inline-flex rounded-full border border-[#e0d6c6] bg-white px-2 py-1 text-[10px] font-bold text-[#a09888]" />
           </div>
           <div className="mt-1 flex items-center gap-2.5">
             <span className="text-xl font-extrabold" style={{ color: "#c94d3a" }}>

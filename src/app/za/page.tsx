@@ -10,6 +10,7 @@ import { Shop, Market, ZA_CATEGORIES, categoryOf, fetchShops } from "@/lib/za";
 import { ZaFeatured } from "@/components/ZaFeatured";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
 import { srcCdn } from "@/lib/images";
+import { ZaLegendButton } from "@/components/ZaLegend";
 
 function priceLabel(s: Shop): string {
   if (s.market === "ichi") return s.accepts_barter && !s.is_trial ? "ブツブツ交換" : "0円";
@@ -202,6 +203,7 @@ export default function ZaPage() {
             <div className="flex-shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-extrabold" style={{ color: "#c94d3a" }}>出品する →</div>
           </div>
         </Link>
+        <ZaLegendButton />
 
         {/* 一覧（楽市/楽座でフィルタ） */}
         {shops === null ? (
