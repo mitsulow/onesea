@@ -838,9 +838,9 @@ export default function ShopDetailPage() {
       {acceptOffer && (
         <div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/55 px-6" onClick={() => setAcceptOffer(null)}>
           <div className="w-full max-w-[330px] rounded-2xl bg-white p-5 text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="text-[30px]">🤝</div>
+            <div className="text-[30px]">⚠️</div>
             <h2 className="mt-1 text-[15px] font-extrabold leading-relaxed text-[#3a3428]">
-              {acceptOffer.profiles?.display_name ?? "この人"}さん本人と、<br />TalKで物々交換が終了しましたか？
+              本当に{acceptOffer.profiles?.display_name ?? "この人"}さん本人と、<br />TALKで物々交換が完了しましたか？
             </h2>
             {(() => {
               const slots = shop.barter_slots ?? 1;
@@ -857,7 +857,7 @@ export default function ShopDetailPage() {
               className="mt-4 w-full rounded-xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40"
               style={{ background: "#2a8a4a" }}
             >
-              {accepting ? "決定中..." : "✅ 本人と交換が完了した"}
+              {accepting ? "決定中..." : "はい、本人と物々交換が完了した"}
             </button>
             <button onClick={() => setAcceptOffer(null)} className="mt-1.5 w-full py-2 text-[12px] font-bold text-[#a09888]">まだ（やめておく）</button>
           </div>
