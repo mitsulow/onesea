@@ -3892,7 +3892,7 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
       {msg && <p className="mb-1 text-[10.5px] font-bold text-[#c05030]">{msg}</p>}
 
       <button onClick={() => setOpen((v) => !v)} className="w-full rounded-xl border-2 border-dashed border-[#a8cca0] bg-white py-2 text-[11.5px] font-extrabold" style={{ color: GREEN }}>
-        {open ? "▾ とじる" : "一緒に拠点を立ち上げる人を募集する（拠点立ち上げ人3人が揃うと事務局に拠点立ち上げの申請が出来ます）"}
+        {open ? "▾ とじる" : "拠点を立ち上げる"}
       </button>
       {open && (
         <div className="mt-2 rounded-xl bg-white p-2.5">
