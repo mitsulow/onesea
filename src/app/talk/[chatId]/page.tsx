@@ -281,14 +281,13 @@ export default function ChatPage() {
                         href={pt.startsWith("https://onesea.vercel.app") ? pt.replace("https://onesea.vercel.app", "") : pt}
                         target={pt.startsWith("https://onesea.vercel.app") ? undefined : "_blank"}
                         rel="noopener noreferrer"
-                        className="font-extrabold underline"
+                        className="break-all font-extrabold underline"
                         style={{ color: "#0a6ab0" }}
                       >
-                        こちらです →
+                        {pt}
                       </a>
                     ) : (
-                      // 「こちらです → URL」の形は文言が重複するので、直前の「こちらです →」テキストは削る
-                      <span key={i}>{pt.replace(/こちらです\s*→\s*$/, "")}</span>
+                      <span key={i}>{pt}</span>
                     )
                   );
                 })()}

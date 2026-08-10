@@ -97,7 +97,20 @@ export default function BroadcastPage() {
                 </div>
                 <div className="flex items-end gap-1.5">
                   <div className="whitespace-pre-wrap break-words rounded-2xl rounded-bl-md border border-[#d4b96a]/40 bg-[#fffbef] px-3.5 py-2 text-[14px] leading-relaxed text-[#3a3428]">
-                    {m.body}
+                    {String(m.body ?? "").split(/(https?:\/\/[^\s]+)/g).map((pt, i) =>
+                      /^https?:\/\//.test(pt) ? (
+                        <a
+                          key={i}
+                          href={pt.startsWith("https://onesea.vercel.app") ? pt.replace("https://onesea.vercel.app", "") : pt}
+                          target={pt.startsWith("https://onesea.vercel.app") ? undefined : "_blank"}
+                          rel="noopener noreferrer"
+                          className="break-all font-extrabold underline"
+                          style={{ color: "#0a6ab0" }}
+                        >{pt}</a>
+                      ) : (
+                        <span key={i}>{pt}</span>
+                      )
+                    )}
                   </div>
                   <span className="flex-shrink-0 text-[9px] text-[#a89e8c]">{date}</span>
                   {admin && (

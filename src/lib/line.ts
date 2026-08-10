@@ -200,6 +200,23 @@ export async function isTalkAdmin(myId: string): Promise<boolean> {
   return !!data;
 }
 
+/** 自分が受け取るお知らせのセグメント一覧(事務局の宛先分け) */
+async function myAudiences(myId?: string | null): Promise<string[]> {
+  const auds = ["all"];
+  if (!myId) return auds;
+  const supabase = createClient();
+  const [{ data: prof }, { count: shopN }] = await Promise.all([
+    supabase.from("profiles").select("warawa_until, murabito, birthday").eq("id", myId).maybeSingle(),
+    supabase.from("shops").select("id", { count: "exact", head: true }).eq("owner_id", myId),
+  ]);
+  const isWara = !!prof?.warawa_until && new Date(prof.warawa_until as string) > new Date();
+  auds.push(isWara ? "warawa" : "free");
+  if (prof?.murabito) auds.push("sekai");
+  if ((shopN ?? 0) > 0) auds.push("za");
+  if (prof?.birthday) auds.push("tsukiyoga");
+  return auds;
+}
+
 /** お知らせの最新1件と未読数（一覧のピン留め行に使う） */
 export async function fetchBroadcastSummary(myId: string): Promise<BroadcastSummary> {
   const supabase = createClient();
@@ -214,13 +231,12 @@ export async function fetchBroadcastSummary(myId: string): Promise<BroadcastSumm
   ]);
   let unread = 0;
   if (last && last.sender_id !== myId) {
-    const { data: prof } = await supabase.from("profiles").select("warawa_until").eq("id", myId).maybeSingle();
-    const isWara = !!prof?.warawa_until && new Date(prof.warawa_until as string) > new Date();
+    const auds = await myAudiences(myId);
     let q = supabase
       .from("broadcast_messages")
       .select("id", { count: "exact", head: true })
-      .neq("sender_id", myId);
-    if (!isWara) q = q.eq("audience", "all");
+      .neq("sender_id", myId)
+      .in("audience", auds);
     if (read?.last_read_at) q = q.gt("created_at", read.last_read_at);
     const { count } = await q;
     unread = count ?? 0;
@@ -230,23 +246,18 @@ export async function fetchBroadcastSummary(myId: string): Promise<BroadcastSumm
 
 export async function fetchBroadcasts(myId?: string): Promise<BroadcastRow[]> {
   const supabase = createClient();
-  let isWara = false;
-  if (myId) {
-    const { data: prof } = await supabase.from("profiles").select("warawa_until").eq("id", myId).maybeSingle();
-    isWara = !!prof?.warawa_until && new Date(prof.warawa_until as string) > new Date();
-  }
-  let q = supabase
+  const auds = await myAudiences(myId);
+  const { data } = await supabase
     .from("broadcast_messages")
     .select("id, sender_id, body, audience, created_at, profiles!broadcast_messages_sender_id_fkey(username, display_name, avatar_url)")
+    .in("audience", auds)
     .order("created_at", { ascending: true })
     .limit(200);
-  if (!isWara) q = q.eq("audience", "all");
-  const { data } = await q;
   return (data as unknown as BroadcastRow[]) ?? [];
 }
 
 /** 事務局だけが送れる。全会員へのWeb Pushも発火する */
-export async function sendBroadcast(myId: string, body: string, audience: "all" | "warawa" = "all") {
+export async function sendBroadcast(myId: string, body: string, audience: string = "all") {
   const supabase = createClient();
   const { error } = await supabase.from("broadcast_messages").insert({ sender_id: myId, body, audience });
   if (!error && audience === "all") {

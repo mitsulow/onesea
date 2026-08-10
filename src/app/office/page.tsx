@@ -20,7 +20,8 @@ export default function OfficePage() {
   const [me, setMe] = useState<User | null>(null);
   const [ok, setOk] = useState<boolean | null>(null);
   const [body, setBody] = useState("");
-  const [audience, setAudience] = useState<"all" | "warawa">("all");
+  const [audience, setAudience] = useState("all");
+  const AUD_LABEL: Record<string, string> = { all: "全体", warawa: "わらわ〜会員", sekai: "セカイムラのバッジがある人", za: "楽市楽座に出品中の人", tsukiyoga: "ツキヨガ会員", free: "OneSea無料会員" };
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState("");
   const [seeds, setSeeds] = useState<any[]>([]);
@@ -110,12 +111,12 @@ export default function OfficePage() {
 
         <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
           <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">■ 会員へ一斉送信</div>
-          <div className="mb-2 flex gap-2">
-            {([["all", "全員（無料会員も含む）"], ["warawa", "わらわ〜会員だけ"]] as const).map(([v, label]) => (
+          <div className="mb-2 grid grid-cols-2 gap-2">
+            {([["all", "🌏 全体へのメッセージ"], ["warawa", "🏅 わらわ〜会員"], ["sekai", "🌾 セカイムラのバッジがある人"], ["za", "🏮 楽市楽座に出品中の人"], ["tsukiyoga", "🌙 ツキヨガ会員"], ["free", "🆓 OneSea無料会員"]] as const).map(([v, label]) => (
               <button
                 key={v}
                 onClick={() => setAudience(v)}
-                className="flex-1 rounded-xl border px-2 py-2 text-[11.5px] font-bold"
+                className="rounded-xl border px-2 py-2 text-[11px] font-bold"
                 style={
                   audience === v
                     ? { background: "#1a2432", color: "#f0e6c8", borderColor: "#1a2432" }
@@ -137,13 +138,13 @@ export default function OfficePage() {
             disabled={!body.trim() || sending}
             onClick={async () => {
               if (!me || !body.trim()) return;
-              if (!confirm(`${audience === "all" ? "全員" : "わらわ〜会員だけ"}に送信します。よろしいですか？`)) return;
+              if (!confirm(`「${AUD_LABEL[audience] ?? audience}」に送信します。よろしいですか？`)) return;
               setSending(true);
               const { error } = await sendBroadcast(me.id, body.trim(), audience);
               setSending(false);
               if (error) { alert(`送信できませんでした: ${error.message}`); return; }
               setBody("");
-              setSent(`送信しました（宛先: ${audience === "all" ? "全員" : "わらわ〜会員"}）`);
+              setSent(`送信しました（宛先: ${AUD_LABEL[audience] ?? audience}）`);
               setTimeout(() => setSent(""), 4000);
             }}
             className="mt-2 w-full rounded-xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40"
