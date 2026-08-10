@@ -66,6 +66,10 @@ export default function SekaiMuraPrefPage() {
   const [fPhoto, setFPhoto] = useState<string | null>(null);
   const [fUp, setFUp] = useState(false);
   const [fSending, setFSending] = useState(false);
+  const [fEv, setFEv] = useState(false); // 📅 イベントとして投稿
+  const [fEvDate, setFEvDate] = useState("");
+  const [fEvSh, setFEvSh] = useState(10);
+  const [fEvEh, setFEvEh] = useState(12);
 
   const loadFeed = useCallback(async (rid: string) => {
     const { data } = await createClient()
@@ -79,21 +83,31 @@ export default function SekaiMuraPrefPage() {
 
   const submitFeed = async () => {
     if (!me || !room || !fBody.trim() || fSending) return;
+    if (fEv && !fEvDate) { snack("イベントの日付を入れてください", false); return; }
     setFSending(true);
-    const { error } = await createClient().from("village_posts").insert({
+    const row: any = {
       user_id: me.id,
       body: fBody.trim(),
       photo_url: fPhoto,
       pref_room_id: room.id,
-    });
+    };
+    if (fEv && fEvDate) {
+      const [y, mo, da] = fEvDate.split("-").map(Number);
+      row.kind = "event";
+      row.event_at = new Date(y, mo - 1, da, fEvSh, 0).toISOString();
+      row.event_end = new Date(y, mo - 1, da, Math.max(fEvSh, fEvEh), 0).toISOString();
+    }
+    const { error } = await createClient().from("village_posts").insert(row);
     if (error) {
       snack("投稿できませんでした。「この県に参加する」を押してからどうぞ", false);
       setFSending(false);
       return;
     }
-    snack("投稿しました ✓");
+    snack(fEv ? "イベントを作成しました ✓ セカイムラトップにも並びます" : "投稿しました ✓");
     setFBody("");
     setFPhoto(null);
+    setFEv(false);
+    setFEvDate("");
     setFSending(false);
     loadFeed(room.id);
   };
@@ -622,7 +636,26 @@ export default function SekaiMuraPrefPage() {
                   <button onClick={() => setFPhoto(null)} className="text-[11px] font-bold text-[#8a8070] underline">写真を外す</button>
                 </div>
               )}
+              {fEv && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <input type="date" value={fEvDate} onChange={(e) => setFEvDate(e.target.value)} className="rounded-lg border border-[#e2eae0] bg-white px-2 py-1.5 text-[12px] outline-none" />
+                  <select value={fEvSh} onChange={(e) => setFEvSh(Number(e.target.value))} className="rounded-lg border border-[#e2eae0] bg-white px-1.5 py-1.5 text-[12px] outline-none">
+                    {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{h}時</option>)}
+                  </select>
+                  〜
+                  <select value={fEvEh} onChange={(e) => setFEvEh(Number(e.target.value))} className="rounded-lg border border-[#e2eae0] bg-white px-1.5 py-1.5 text-[12px] outline-none">
+                    {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{h}時</option>)}
+                  </select>
+                </div>
+              )}
               <div className="mt-1.5 flex items-center gap-2">
+                <button
+                  onClick={() => setFEv((v) => !v)}
+                  className="rounded-full px-2.5 py-1.5 text-[11px] font-extrabold"
+                  style={fEv ? { background: "#c94d3a", color: "#fff" } : { border: "1px solid #dce8d8", color: "#8a9a84", background: "#fff" }}
+                >
+                  📅 イベント{fEv ? "にする ✓" : "として投稿"}
+                </button>
                 <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[15px]" style={{ border: "1px solid #dce8d8" }}>
                   {fUp ? "⏳" : "📷"}
                   <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={async (e) => {

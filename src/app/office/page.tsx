@@ -30,10 +30,21 @@ export default function OfficePage() {
   const load = async (uid: string) => {
     const supabase = createClient();
     const [sd, rp] = await Promise.all([
-      supabase.from("village_seeds").select("id, name, prefecture, city, status, created_at, village_seed_members(user_id)").eq("status", "open").order("created_at", { ascending: true }),
+      supabase.from("village_seeds").select("id, name, prefecture, city, status, cover_url, created_by, created_at, village_seed_members(user_id)").in("status", ["open", "applied"]).order("created_at", { ascending: true }),
       supabase.from("post_reports").select("*, profiles!post_reports_reporter_fkey(display_name)").order("created_at", { ascending: false }).limit(100),
     ]);
-    setSeeds(sd.data ?? []);
+    {
+      // 申請済みを先頭に + メンバーの名前を付ける(内容チェック用)
+      let list = (sd.data ?? []) as any[];
+      const mids = Array.from(new Set(list.flatMap((x: any) => (x.village_seed_members ?? []).map((m: any) => m.user_id))));
+      if (mids.length) {
+        const { data: mp } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", mids);
+        const byId = new Map((mp ?? []).map((x: any) => [x.id, x]));
+        list = list.map((x: any) => ({ ...x, mems: (x.village_seed_members ?? []).map((m: any) => byId.get(m.user_id)).filter(Boolean) }));
+      }
+      list.sort((a: any, b: any) => (a.status === "applied" ? -1 : 0) - (b.status === "applied" ? -1 : 0));
+      setSeeds(list);
+    }
     let reps: any[] = [];
     if (rp.error) {
       const { data } = await supabase.from("post_reports").select("*").order("created_at", { ascending: false }).limit(100);
@@ -176,11 +187,25 @@ export default function OfficePage() {
               const ready = n >= 3;
               return (
                 <div key={sd.id} className="flex items-center gap-2 border-b border-[#f0ece0] py-2.5 last:border-b-0">
+                  {sd.cover_url && <img src={sd.cover_url} alt="" className="h-12 w-16 flex-shrink-0 rounded-lg object-cover" />}
                   <div className="min-w-0 flex-1">
-                    <div className="text-[13.5px] font-bold text-[#3a3428]">{sd.name}</div>
+                    <div className="text-[13.5px] font-bold text-[#3a3428]">
+                      {sd.name}
+                      {sd.status === "applied" && <span className="ml-1.5 rounded-full bg-[#e05040] px-2 py-0.5 text-[9.5px] font-extrabold text-white">📨 申請あり・審査待ち</span>}
+                    </div>
                     <div className="text-[11px] text-[#a09888]">
                       {sd.prefecture}{sd.city ? ` ${sd.city}` : ""} ・ メンバー {n}人{ready ? "" : "（あと" + (3 - n) + "人で認定可）"}
                     </div>
+                    {(sd.mems ?? []).length > 0 && (
+                      <div className="mt-0.5 flex flex-wrap gap-1">
+                        {(sd.mems ?? []).map((mp2: any) => (
+                          <a key={mp2.id} href={mp2.username ? `/u/${mp2.username}` : "#"} className="flex items-center gap-1 rounded-full bg-[#f6f2e8] px-1.5 py-0.5 text-[10px] font-bold text-[#5a5040] no-underline">
+                            {mp2.avatar_url ? <img src={mp2.avatar_url} alt="" referrerPolicy="no-referrer" className="h-4 w-4 rounded-full object-cover" /> : "👤"}
+                            {mp2.display_name ?? "むらびと"}
+                          </a>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <button
                     disabled={!ready}

@@ -714,7 +714,7 @@ export function ActivitySection({ me }: { me: User | null }) {
     const { data: evs } = await supabase
       .from("village_posts")
       .select(
-        "id, body, photo_url, kind, event_at, event_end, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+        "id, body, photo_url, kind, event_at, event_end, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), pref_rooms!village_posts_pref_room_id_fkey(id, prefecture, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
       )
       .eq("kind", "event")
       // 「今日のイベント」は開始時刻を過ぎても当日中は表示する(全国イベント作成直後に消える問題の修正)
@@ -753,7 +753,7 @@ export function ActivitySection({ me }: { me: User | null }) {
       supabase
         .from("village_posts")
         .select(
-          "id, body, photo_url, kind, event_at, event_end, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
+          "id, body, photo_url, kind, event_at, event_end, created_at, user_id, place_name, place_lat, place_lng, place_url, villages!village_posts_village_id_fkey(id, name, prefecture, cover_url, icon_url), pref_rooms!village_posts_pref_room_id_fkey(id, prefecture, icon_url), profiles!village_posts_user_id_fkey(username, display_name, avatar_url)"
         )
         .eq("id", evId)
         .maybeSingle()
@@ -933,8 +933,27 @@ export function ActivitySection({ me }: { me: User | null }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me, villages]);
 
+  /* 所属している県(セカイムラ◯◯) — 投稿先として選べる */
+  const [myCounties, setMyCounties] = useState<Array<{ id: string; prefecture: string }>>([]);
+  useEffect(() => {
+    if (!me) return;
+    createClient()
+      .from("pref_room_members")
+      .select("room_id, pref_rooms!inner(id, prefecture, kind)")
+      .eq("user_id", me.id)
+      .eq("pref_rooms.kind", "sekai")
+      .then(({ data }) => {
+        const list = ((data ?? []) as any[]).map((r) => ({ id: r.room_id as string, prefecture: r.pref_rooms?.prefecture as string })).filter((x) => x.prefecture);
+        setMyCounties(list);
+        // 拠点に入っていない人は、県をデフォルトの投稿先に
+        if (list[0]) setWVillage((prev) => (prev ? prev : `pref:${list[0].id}`));
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me]);
+
   const publish = async () => {
     const nationwide = wVillage === "__all__" && amOffice; // 事務局の全国イベント
+    const prefRoomId = wVillage.startsWith("pref:") ? wVillage.slice(5) : null; // 所属県への投稿
     if (!me || (!wVillage && !nationwide) || !wBody.trim() || wSaving) return;
     // 場所リンクが貼られたのに未取り込みなら、保存前にここで取り込む(押すのが早くても場所が落ちない)
     let placeNow = wPlace;
@@ -998,7 +1017,8 @@ export function ActivitySection({ me }: { me: User | null }) {
     const { data: inserted } = await supabase
       .from("village_posts")
       .insert({
-        village_id: nationwide ? null : wVillage,
+        village_id: nationwide || prefRoomId ? null : wVillage,
+        pref_room_id: prefRoomId,
         user_id: me.id,
         body: wBody.trim(),
         embed,
@@ -1024,7 +1044,11 @@ export function ActivitySection({ me }: { me: User | null }) {
         place_lat: placeNow?.lat ?? null,
         place_lng: placeNow?.lng ?? null,
         place_url: placeNow?.url ?? null,
-        villages: nationwide ? null : { name: myVills.find((v) => v.id === wVillage)?.name },
+        villages: nationwide
+          ? null
+          : prefRoomId
+            ? { name: `セカイムラ${(myCounties.find((c) => c.id === prefRoomId)?.prefecture ?? "").replace(/[都府県]$/, "")}` }
+            : { name: myVills.find((v) => v.id === wVillage)?.name },
       });
     }
     setWSaving(false);
@@ -1108,14 +1132,14 @@ export function ActivitySection({ me }: { me: User | null }) {
                         className="flex h-full w-full items-center justify-center text-[13px] font-extrabold text-white"
                         style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}
                       >
-                        <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {p.villages?.name ?? "🌏 セカイムラ全国"}
+                        <img src="/icons/icon-base.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> {p.villages?.name ?? (p.pref_rooms ? `セカイムラ${String(p.pref_rooms.prefecture).replace(/[都府県]$/, "")}` : "🌏 セカイムラ全国")}
                       </div>
                     )}
                     <span
                       className="absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[9px] font-extrabold text-white"
                       style={{ background: "#4a9a5a" }}
                     >
-                      {p.villages?.name ?? "🌏 全国"}
+                      {p.villages?.name ?? (p.pref_rooms ? `セカイムラ${String(p.pref_rooms.prefecture).replace(/[都府県]$/, "")}` : "🌏 全国")}
                     </span>
                   </div>
                   <div className="flex gap-2.5 px-2.5 pt-2">
@@ -1280,7 +1304,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                   <div className="min-w-0 flex-1">
                     <div className="min-w-0 truncate text-[14.5px] font-extrabold" style={{ color: GREEN }}>
                       {p.villages?.name ?? (p.pref_rooms ? `セカイムラ${String(p.pref_rooms.prefecture).replace(/[都府県]$/, "")}` : "セカイムラ")}
-                      <span className="text-[12px] font-bold text-[#7a9a80]">{p.villages ? "（拠点からの投稿）" : "からの投稿"}</span>
+                      <span className="text-[12px] font-bold text-[#7a9a80]">{p.villages ? "（拠点からの投稿）" : p.pref_rooms ? "（県からの投稿）" : "からの投稿"}</span>
                       <span className="ml-1"><SekaiBadge size={14} /></span>
                     </div>
                     <div className="num text-[10.5px] text-[#b0bcb0]">
@@ -1507,17 +1531,28 @@ export function ActivitySection({ me }: { me: User | null }) {
             <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
               ✏️ 村の報告
             </div>
-            {myVills.length > 1 && (
+            {(myVills.length + myCounties.length > 1) && (
               <select
                 value={wVillage}
                 onChange={(e) => setWVillage(e.target.value)}
                 className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
               >
-                {myVills.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}（{v.prefecture}）
-                  </option>
-                ))}
+                {myCounties.length > 0 && (
+                  <optgroup label="あなたの所属県">
+                    {myCounties.map((c) => (
+                      <option key={c.id} value={`pref:${c.id}`}>🏡 セカイムラ{c.prefecture.replace(/[都府県]$/, "")}（県ページ）</option>
+                    ))}
+                  </optgroup>
+                )}
+                {myVills.length > 0 && (
+                  <optgroup label="あなたの所属拠点">
+                    {myVills.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}（{v.prefecture}）
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             )}
             <textarea
@@ -1624,18 +1659,29 @@ export function ActivitySection({ me }: { me: User | null }) {
             <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
               📅 {evEditId ? "イベントを変更" : "イベントを作成"}
             </div>
-            {(myVills.length > 1 || amOffice) && (
+            {(myVills.length + myCounties.length > 1 || amOffice || myCounties.length > 0) && (
               <select
                 value={wVillage}
                 onChange={(e) => setWVillage(e.target.value)}
                 className="mb-2 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
               >
                 {amOffice && <option value="__all__">🌏 全国のみんなへ（事務局イベント）</option>}
-                {myVills.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}（{v.prefecture}）
-                  </option>
-                ))}
+                {myCounties.length > 0 && (
+                  <optgroup label="あなたの所属県">
+                    {myCounties.map((c) => (
+                      <option key={c.id} value={`pref:${c.id}`}>🏡 セカイムラ{c.prefecture.replace(/[都府県]$/, "")}（県ページ）</option>
+                    ))}
+                  </optgroup>
+                )}
+                {myVills.length > 0 && (
+                  <optgroup label="あなたの所属拠点">
+                    {myVills.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}（{v.prefecture}）
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             )}
             <div className="mb-2 flex items-center gap-2">
@@ -1776,7 +1822,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             <div className="p-4">
               <Link href={`/sekai/village/${evDetail.villages?.id}`} className="no-underline" onClick={() => setEvDetail(null)}>
                 <span className="text-[16px] font-extrabold" style={{ color: GREEN }}>
-                  {evDetail.villages?.name ?? "🌏 セカイムラ事務局（全国のみんなへ）"}
+                  {evDetail.villages?.name ?? (evDetail.pref_rooms ? `セカイムラ${String(evDetail.pref_rooms.prefecture).replace(/[都府県]$/, "")}` : "🌏 セカイムラ事務局（全国のみんなへ）")}
                 </span>
                 <span className="ml-1 text-[12px] font-bold text-[#9ab3a0]">
                   {evDetail.villages?.prefecture ? `@${evDetail.villages.prefecture}` : ""}
@@ -3763,7 +3809,19 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
 
   const applyOffice = async (seedId: string) => {
     const supabase = createClient();
-    await supabase.from("village_seeds").update({ status: "applied" }).eq("id", seedId);
+    const { error } = await supabase.from("village_seeds").update({ status: "applied" }).eq("id", seedId);
+    if (error) { setMsg("申請できませんでした。もう一度お試しください"); return; }
+    // 事務局のTalKにも届ける(事務局ページの審査リストにも並ぶ)
+    try {
+      const sd = seeds.find((x: any) => x.id === seedId);
+      const settings = await fetchSettings();
+      if (me && settings.admin_user_id && sd) {
+        const { getOrCreateChat, sendMessage } = await import("@/lib/line");
+        const chatId = await getOrCreateChat(me.id, settings.admin_user_id);
+        if (chatId) await sendMessage(chatId, me.id, `【拠点申請】「${sd.name}」（${sd.prefecture ?? ""}）が3人そろい、拠点申請されました。事務局ページで内容を確認して認定してください → https://onesea.vercel.app/office`);
+      }
+    } catch {}
+    alert("事務局に申請を届けました！審査が終わると拠点一覧に並びます");
     load();
   };
 

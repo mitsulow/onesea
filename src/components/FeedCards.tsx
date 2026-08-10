@@ -90,7 +90,7 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
             onClick={goPage}
             className="block max-w-full truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21]"
           >
-            {v ? v.name : pr ? `セカイムラ${prDisp}` : "セカイムラ"}<span className="text-[12px] font-normal text-[#7a9a80]">{v ? "（拠点からの投稿）" : "からの投稿"}</span> <SekaiBadge size={14} />
+            {v ? v.name : pr ? `セカイムラ${prDisp}` : "セカイムラ"}<span className="text-[12px] font-normal text-[#7a9a80]">{v ? "（拠点からの投稿）" : pr ? "（県からの投稿）" : "からの投稿"}</span> <SekaiBadge size={14} />
           </button>
           <div className="text-[11.5px] leading-tight text-[#8a8d91]">
             {(v?.prefecture ?? pr?.prefecture) ? `@${v?.prefecture ?? pr?.prefecture} ・ ` : ""}
