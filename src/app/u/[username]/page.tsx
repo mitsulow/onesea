@@ -15,6 +15,7 @@ import { Shop, fetchShopsByOwner, categoryOf, Reco, fetchRecos, addReco, deleteR
 import { SnsIcon } from "@/components/SnsIcon";
 import { CameraIcon } from "@/components/CameraIcon";
 import { PostCard } from "@/components/PostCard";
+import { MeishiModal } from "@/components/MeishiModal";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { srcCdn } from "@/lib/images";
 import { isWarawaUntil } from "@/lib/warawa";
@@ -61,6 +62,9 @@ export default function UserPage() {
   const [editingBio, setEditingBio] = useState(false);
   const [bioDraft, setBioDraft] = useState("");
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
+  const [showMeishi, setShowMeishi] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const meishiShown = useRef(false);
   const [cropping, setCropping] = useState<{ kind: "cover" | "avatar"; file: File } | null>(null);
   const [shops, setShops] = useState<Shop[]>([]);
   const [recos, setRecos] = useState<Reco[]>([]);
@@ -139,7 +143,7 @@ export default function UserPage() {
     const supabase = createClient();
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
-      setMe(u);
+      setMe(u); setAuthReady(true);
       if (u) setLikedSet(await fetchMyLikes(u.id));
     });
     loadProfile();
@@ -148,6 +152,15 @@ export default function UserPage() {
   }, [username]);
 
   // 写真を選んだら、まず位置調整・ズーム切り抜きへ
+  /* 他人のマイページは、必ず最初に名刺を1度見せる(Facebookの名刺交換的な儀式) */
+  useEffect(() => {
+    if (!profile || meishiShown.current || !authReady) return;
+    if (me?.id === profile.id) return;
+    meishiShown.current = true;
+    setShowMeishi(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, me, authReady]);
+
   const changeImage = (kind: "cover" | "avatar", file: File | null) => {
     if (!me || !file || busy) return;
     setCropping({ kind, file });
@@ -240,6 +253,9 @@ export default function UserPage() {
 
   return (
     <main className="pb-20">
+      {showMeishi && profile.username && (
+        <MeishiModal username={profile.username} onClose={() => setShowMeishi(false)} />
+      )}
       {cropping && (
         <PhotoCropper
           file={cropping.file}
@@ -529,20 +545,18 @@ export default function UserPage() {
           </div>
         )}
 
-        {/* アクション */}
+        {/* アクション: 連絡は左上の小さいピル(FBページ風・主役は本人のコンテンツ) */}
         {me && !isMe && (
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={async () => {
-                const chatId = await getOrCreateChat(me.id, profile.id);
-                if (chatId) router.push(`/talk/${chatId}`);
-              }}
-              className="flex-1 rounded-xl py-3 text-[14px] font-extrabold text-white"
-              style={{ background: "#c94d3a" }}
-            >
-              <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 連絡を取る
-            </button>
-          </div>
+          <button
+            onClick={async () => {
+              const chatId = await getOrCreateChat(me.id, profile.id);
+              if (chatId) router.push(`/talk/${chatId}`);
+            }}
+            className="mt-2 inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[11.5px] font-extrabold"
+            style={{ borderColor: "#c94d3a", color: "#c94d3a", background: "#fff" }}
+          >
+            <img src="/icons/icon-talk-green.webp" alt="" style={{ width: 14, height: 14 }} /> 連絡を取る
+          </button>
         )}
 
         {isMe && (
@@ -587,6 +601,10 @@ export default function UserPage() {
             )}
           </div>
         )}
+        <details className="mt-3">
+          <summary className="cursor-pointer rounded-xl border border-[#e0d6c6] bg-white px-3 py-2.5 text-[13px] font-extrabold text-[#5a5448]">
+            この人はどんな人？{profile.skills?.length ? ` ・ スキル${profile.skills.length}` : ""}{profile.wants_to_do?.length ? ` ・ やってみたい${profile.wants_to_do.length}` : ""}
+          </summary>
         {profile.skills && profile.skills.length > 0 && (
           <div className="mt-3 rounded-2xl p-3" style={{ background: "linear-gradient(135deg,#fdf8ec,#f8efd8)", border: "1.5px solid #e0cfa0" }}>
             {/* 枚数を主役に: 「7 Skill Card」— 出来ることの多さがひと目で伝わる */}
@@ -610,7 +628,32 @@ export default function UserPage() {
             <CardDeck items={profile.wants_to_do} startColor={3} />
           </div>
         )}
+        </details>
       </div>
+
+      {/* 言の葉 */}
+      <div className="pt-5">
+        <div className="card">
+          <div className="sec mb-2">全ての投稿</div>
+          {posts === null ? (
+            <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>
+          ) : posts.length === 0 ? (
+            <p className="py-1.5 text-[13px] text-[#b8b0a0]">まだ言の葉がありません</p>
+          ) : (
+            posts.map((p) => (
+              <PostCard
+                key={p.id}
+                post={p}
+                me={me}
+                liked={likedSet.has(p.id)}
+                onDeleted={() => fetchPosts(username).then(setPosts)}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      <MyCotozuteSection userId={profile.id} ownerName={profile.display_name ?? "この人"} />
 
       {shops.length > 0 && (
         <div className="pt-5">
@@ -777,15 +820,15 @@ export default function UserPage() {
                 好きな農家さんのお米など、みんなに紹介したいものを並べられます
               </p>
             ) : (
-              <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              <div className="grid grid-cols-2 gap-3">
                 {recos.map((r) => (
-                  <div key={r.id} className="relative w-[136px] flex-shrink-0 overflow-hidden rounded-xl border border-[#e0c890] bg-[#fffaf0] shadow-sm">
+                  <div key={r.id} className="relative overflow-hidden rounded-xl border border-[#e0c890] bg-[#fffaf0] shadow-sm">
                     <div className="flex items-center gap-1 px-2 py-1 text-[9.5px] font-extrabold text-white" style={{ background: "linear-gradient(120deg,#d4a940,#b8862a)" }}>
                       <img src="/icons/icon-star.webp" alt="" style={{ width: 11, height: 11 }} />
                       <span>おススメ</span>
                     </div>
                     {(r as any).image_url && (
-                      <img src={(r as any).image_url} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-[64px] w-full object-cover" />
+                      <img src={(r as any).image_url} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-28 w-full object-cover" />
                     )}
                     <div className="px-2 py-2">
                       <div className="min-w-0">
@@ -827,29 +870,6 @@ export default function UserPage() {
       {/* おススメのパワースポット（神社・聖地。セカイムラ地図の⛩タブに集計される） */}
       <MyRecoMap userId={profile.id} isMe={isMe} ownerName={profile.display_name ?? "この人"} mode="power" />
 
-      {/* 言の葉 */}
-      <div className="pt-5">
-        <div className="card">
-          <div className="sec mb-2">全ての投稿</div>
-          {posts === null ? (
-            <p className="py-1.5 text-[13px] text-[#b8b0a0]">読み込み中...</p>
-          ) : posts.length === 0 ? (
-            <p className="py-1.5 text-[13px] text-[#b8b0a0]">まだ言の葉がありません</p>
-          ) : (
-            posts.map((p) => (
-              <PostCard
-                key={p.id}
-                post={p}
-                me={me}
-                liked={likedSet.has(p.id)}
-                onDeleted={() => fetchPosts(username).then(setPosts)}
-              />
-            ))
-          )}
-        </div>
-      </div>
-
-      <MyCotozuteSection userId={profile.id} ownerName={profile.display_name ?? "この人"} />
 
       {/* 今日のDDPの積み重ね（タイムライン） */}
       {dailyDdps.length > 0 && (
