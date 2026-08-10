@@ -59,7 +59,7 @@ export async function fetchMixedFeed(cursor: string | null, limit = 20): Promise
 
   let qP = supabase.from("posts").select(POST_SELECT).order("created_at", { ascending: false }).limit(limit);
   let qM = supabase.from("village_posts").select(MURA_SELECT).order("created_at", { ascending: false }).limit(limit);
-  let qMo = supabase.from("moai_posts").select("id, body, photo_url, kind, created_at, user_id, moai!moai_posts_moai_id_fkey(id, name, icon_url, category), profiles!moai_posts_user_id_fkey(username, display_name, avatar_url)").eq("kind", "normal").order("created_at", { ascending: false }).limit(limit);
+  let qMo = supabase.from("moai_posts").select("id, body, photo_url, kind, created_at, user_id, moai!moai_posts_moai_id_fkey(id, name, icon_url, category, prefecture), profiles!moai_posts_user_id_fkey(username, display_name, avatar_url)").eq("kind", "normal").order("created_at", { ascending: false }).limit(limit);
   if (cursor) {
     qP = qP.lt("created_at", cursor);
     qM = qM.lt("created_at", cursor);

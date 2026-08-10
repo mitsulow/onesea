@@ -251,7 +251,7 @@ export function MoaiFeedCard({ post }: { post: import("@/lib/feed").MoaiFeedPost
         </button>
         <div className="min-w-0 flex-1">
           <button onClick={() => v && router.push(`/moai/${v.id}`)} className="block max-w-full truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21]">
-            {v ? v.name : "MoAI"}<span className="text-[12px] font-normal text-[#a08078]">からの投稿</span>
+            {v ? v.name : "MoAI"}{(post.moai as any)?.prefecture ? `（${(post.moai as any).prefecture}）` : ""}<span className="text-[12px] font-normal text-[#a08078]">からの投稿</span>
           </button>
           <div className="text-[11.5px] leading-tight text-[#8a8d91]">{relTime(post.created_at)}{post.profiles?.display_name ? ` ・ ${post.profiles.display_name}` : ""}</div>
         </div>

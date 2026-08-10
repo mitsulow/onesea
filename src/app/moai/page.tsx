@@ -14,9 +14,13 @@ import { ServiceMenuButton } from "@/components/ServiceMenu";
 import { ThreeCol } from "@/components/SideRails";
 
 /** MoAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
+const moaiPrefTag = (m: any) => { const pf = (m?.prefecture ?? "") as string; return pf ? `（${pf === "オンライン" ? "オンライン" : pf}）` : ""; };
+
 export default function MoaiListPage() {
   const [me, setMe] = useState<User | null>(null);
   const [moais, setMoais] = useState<Moai[] | null>(null);
+  const [feedAll, setFeedAll] = useState(false); // FEEDのもっとみる
+  const [moaiAll, setMoaiAll] = useState(false); // サークル一覧のもっとみる
   const [selPref, setSelPref] = useState(""); // "" = 全県のサークル
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
@@ -140,7 +144,7 @@ export default function MoaiListPage() {
             <div className="mb-1 text-[11px] font-bold text-[#a08078]">主な活動場所（必須）</div>
             <div className="mb-2 flex gap-2">
               <select value={pref} onChange={(e) => setPref(e.target.value)} className="rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
-                <option>オンライン</option>{PREFS.map((p) => <option key={p}>{p}</option>)}<option>海外</option>
+                <option value="オンライン">オンライン（全国）</option>{PREFS.map((p) => <option key={p}>{p}</option>)}<option>海外</option>
               </select>
               {pref !== "オンライン" && pref !== "海外" && (
                 <select value={city} onChange={(e) => setCity(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#f0d8d4] bg-[#fff] px-2 py-2 text-[13px] text-[#3a2420] outline-none">
@@ -165,24 +169,17 @@ export default function MoaiListPage() {
           </p>
         )}
 
-        {/* ◯◯県のサークルを探す — サークルは県別が取り組みやすい */}
-        <div className="mb-3 rounded-2xl p-3.5" style={{ background: "linear-gradient(150deg,#c0392b,#8e2820)" }}>
-          <div className="text-[15px] font-extrabold tracking-[1px] text-white">
-            🗿 {selPref ? `${selPref.replace(/[都府県]$/, "")}のサークルを探す` : "◯◯県のサークルを探す"}
-          </div>
-          <p className="mt-0.5 text-[10.5px] text-white/75">サークル・部活は同じ県どうしが取り組みやすい。あなたの県をえらんでみて</p>
-          <select
-            value={selPref}
-            onChange={(e) => setSelPref(e.target.value)}
-            className="mt-2 w-full rounded-xl border-0 bg-white px-3 py-2.5 text-[13.5px] font-extrabold outline-none"
-            style={{ color: "#c0392b" }}
-          >
-            <option value="">🌏 全県のサークル</option>
-            <option value="オンライン">💻 オンライン</option>
-            {PREFS.map((p) => <option key={p} value={p}>{p.replace(/[都府県]$/, "")}のMoAI</option>)}
-            <option value="海外">海外のMoAI</option>
-          </select>
-        </div>
+        {/* 県プルダウン(サークルは県別が取り組みやすい) */}
+        <select
+          value={selPref}
+          onChange={(e) => setSelPref(e.target.value)}
+          className="mb-3 w-full rounded-xl border-2 border-[#e8c4bc] bg-white px-3 py-2.5 text-[13.5px] font-extrabold outline-none"
+          style={{ color: "#c0392b" }}
+        >
+          <option value="">🌏 全世界（オンライン）</option>
+          {PREFS.map((p) => <option key={p} value={p}>{p.replace(/[都府県]$/, "")}のMoAI</option>)}
+          <option value="海外">海外のMoAI</option>
+        </select>
 
         {/* あなたのMoAI(参加中) */}
         {me && (moais ?? []).some((m) => myStatus[m.id] === "approved") && (
@@ -192,7 +189,7 @@ export default function MoaiListPage() {
               {(moais ?? []).filter((m) => myStatus[m.id] === "approved").map((m) => (
                 <Link key={m.id} href={`/moai/${m.id}`} className="flex flex-shrink-0 items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 no-underline" style={{ borderColor: "#c0392b", background: "rgba(200,60,50,.06)" }}>
                   {m.icon_url ? <img src={srcCdn(m.icon_url)} alt="" className="h-7 w-7 rounded-full object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3ded9] text-[12px]">{moaiCat(m.category).emoji}</span>}
-                  <span className="max-w-[120px] truncate text-[12px] font-bold text-[#c0392b]">{m.name}</span>
+                  <span className="max-w-[150px] truncate text-[12px] font-bold text-[#c0392b]">{m.name}{moaiPrefTag(m)}</span>
                 </Link>
               ))}
             </div>
@@ -200,24 +197,26 @@ export default function MoaiListPage() {
         )}
 
         {/* サークル横スクロール（先頭に「MoAIをつくる」カード・セカイムラのイベント作成と同じ流儀） */}
-        <div className="hide-scrollbar -mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1">
+        <div className="grid grid-cols-2 gap-2.5 pb-1 md:grid-cols-3">
           {me && (
             <button
               onClick={() => setCreating(true)}
-              className="flex w-[110px] flex-shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed py-5"
+              className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed py-5"
               style={{ borderColor: "#c0392b", background: "rgba(200,60,50,.06)" }}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full text-[18px] font-extrabold text-white" style={{ background: "#c0392b" }}>＋</span>
               <span className="px-1 text-center text-[10.5px] font-extrabold leading-snug text-[#c0392b]">MoAIを<br />つくる</span>
             </button>
           )}
-          {(moais ?? []).filter((m) => {
-            if (selPref && ((m as any).prefecture ?? "") !== selPref) return false;
-            const k = q.trim().toLowerCase();
-            if (!k) return true;
-            return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || ((m as any).keywords ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k) || ((m as any).prefecture ?? "").toLowerCase().includes(k) || ((m as any).city ?? "").toLowerCase().includes(k);
-          }).map((m) => (
-            <Link key={m.id} href={`/moai/${m.id}`} className="w-[150px] flex-shrink-0 overflow-hidden rounded-2xl no-underline shadow-md" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
+          {(() => {
+            const all = (moais ?? []).filter((m) => {
+              if (selPref && ((m as any).prefecture ?? "") !== selPref) return false;
+              const k = q.trim().toLowerCase();
+              if (!k) return true;
+              return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || ((m as any).keywords ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k) || ((m as any).prefecture ?? "").toLowerCase().includes(k) || ((m as any).city ?? "").toLowerCase().includes(k);
+            });
+            return (moaiAll ? all : all.slice(0, 6)).map((m) => (
+            <Link key={m.id} href={`/moai/${m.id}`} className="overflow-hidden rounded-2xl no-underline shadow-md" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
               <div className="relative h-20 bg-[#f6e4e0]">
                 {m.cover_url ? <img src={srcCdn(m.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[22px]">{moaiCat(m.category).emoji}</div>}
                 <span className="absolute -bottom-4 left-2 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-[3px] border-[#fff] bg-[#f3ded9] text-[15px]">
@@ -225,7 +224,7 @@ export default function MoaiListPage() {
                 </span>
               </div>
               <div className="px-2.5 pb-2 pt-5">
-                <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{m.name}</div>
+                <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{m.name}<span className="text-[10px] font-bold text-[#b09088]">{moaiPrefTag(m)}</span></div>
                 {myStatus[m.id] === "approved"
                   ? <div className="mt-1 inline-block rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold" style={{ borderColor: "#c0392b", color: "#c0392b" }}>✓ 参加中</div>
                   : myStatus[m.id] === "pending"
@@ -236,8 +235,17 @@ export default function MoaiListPage() {
                 </div>
               </div>
             </Link>
-          ))}
+            ));
+          })()}
         </div>
+        {(() => {
+          const total = (moais ?? []).filter((m) => !selPref || ((m as any).prefecture ?? "") === selPref).length;
+          return total > 6 && (
+            <button onClick={() => setMoaiAll((v) => !v)} className="mt-2 w-full rounded-xl border border-[#f0d8d4] bg-white py-2 text-[12px] font-extrabold" style={{ color: "#c0392b" }}>
+              {moaiAll ? "▲ たたむ" : `もっとみる（あと${total - 6}件）▼`}
+            </button>
+          );
+        })()}
 
         {/* 全サークル横断の活動フィード */}
         <div className="mt-5">
@@ -251,7 +259,7 @@ export default function MoaiListPage() {
             <p className="py-4 text-center text-[12px] text-[#b09088]">まだ投稿がありません</p>
           ) : (
             <div className="space-y-2.5">
-              {feed.map((p: any) => (
+              {(feedAll ? feed : feed.slice(0, 10)).map((p: any) => (
                 <button key={p.id} onClick={() => setPostModal(p)} className="block w-full rounded-xl p-3 text-left" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
                   <div className="flex items-center gap-2.5">
                     {p.moai?.icon_url ? (
@@ -260,7 +268,7 @@ export default function MoaiListPage() {
                       <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f3ded9] text-[15px]">{moaiCat(p.moai?.category ?? null).emoji}</span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{p.moai?.name ?? "MoAI"}<span className="text-[11px] font-normal text-[#b09088]">からの投稿</span></div>
+                      <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{p.moai?.name ?? "MoAI"}<span className="text-[11px] font-normal text-[#b09088]">{moaiPrefTag(p.moai)}からの投稿</span></div>
                       <div className="num text-[10px] text-[#b09088]">{p.profiles?.display_name ?? "メンバー"} ・ {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}</div>
                     </div>
                     {p.kind === "event" && p.event_at && (
@@ -271,6 +279,11 @@ export default function MoaiListPage() {
                   {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-72 w-full rounded-xl object-cover" />}
                 </button>
               ))}
+              {feed.length > 10 && (
+                <button onClick={() => setFeedAll((v) => !v)} className="w-full rounded-xl border border-[#f0d8d4] bg-white py-2 text-[12px] font-extrabold" style={{ color: "#c0392b" }}>
+                  {feedAll ? "▲ たたむ" : `もっとみる（あと${feed.length - 10}件）▼`}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -286,7 +299,7 @@ export default function MoaiListPage() {
                 <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f3ded9] text-[16px]">{moaiCat(postModal.moai?.category ?? null).emoji}</span>
               )}
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-extrabold text-[#3a2420]">{postModal.moai?.name ?? "MoAI"}</div>
+                <div className="truncate text-[14px] font-extrabold text-[#3a2420]">{postModal.moai?.name ?? "MoAI"}<span className="text-[11px] font-bold text-[#b09088]">{moaiPrefTag(postModal.moai)}</span></div>
                 <div className="num text-[10.5px] text-[#b09088]">{postModal.profiles?.display_name ?? "メンバー"} ・ {new Date(postModal.created_at).getMonth() + 1}/{new Date(postModal.created_at).getDate()}</div>
               </div>
               <button onClick={() => setPostModal(null)} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ece8] text-[14px] text-[#a08078]">×</button>
