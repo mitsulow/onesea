@@ -2,8 +2,34 @@
 
 import { createClient } from "@/lib/supabase/client";
 
+/** iPhoneのHEIC/HEIFをブラウザで扱えるJPEGに変換（必要な時だけライブラリを読み込む） */
+async function convertHeic(file: Blob): Promise<Blob> {
+  const heic2any = (await import("heic2any")).default;
+  const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.9 });
+  return Array.isArray(out) ? out[0] : out;
+}
+
 /** クライアント側で圧縮（パケ死しない画像配信の第一歩） */
-export function compressImage(file: File, maxEdge: number, quality: number): Promise<Blob> {
+export async function compressImage(file: File, maxEdge: number, quality: number): Promise<Blob> {
+  const isHeic = /hei[cf]/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
+  let src: Blob = file;
+  if (isHeic) {
+    src = await convertHeic(file);
+  }
+  try {
+    return await rasterize(src, maxEdge, quality);
+  } catch (e) {
+    // 型がoctet-stream等でHEICと判別できなかった場合の救済: 変換してもう一度
+    if (!isHeic) {
+      try {
+        return await rasterize(await convertHeic(file), maxEdge, quality);
+      } catch {}
+    }
+    throw e;
+  }
+}
+
+function rasterize(file: Blob, maxEdge: number, quality: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
