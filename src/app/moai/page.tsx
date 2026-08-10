@@ -10,6 +10,7 @@ import { IosBackButton } from "@/components/IosBackButton";
 import { fetchMoais, createMoai, fetchMoaiFeed, moaiNameTaken, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
 import { PREFS } from "@/lib/sekai";
 import { ServiceMenuButton } from "@/components/ServiceMenu";
+import { ThreeCol } from "@/components/SideRails";
 
 /** MoAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
 export default function MoaiListPage() {
@@ -25,6 +26,8 @@ export default function MoaiListPage() {
   const [feed, setFeed] = useState<any[] | null>(null);
   const [nameTaken, setNameTaken] = useState<boolean | null>(null);
   const [myIds, setMyIds] = useState<Set<string>>(new Set());
+  const [myStatus, setMyStatus] = useState<Record<string, string>>({});
+  const [postModal, setPostModal] = useState<any | null>(null); // フィードの投稿を中央表示
   const [pref, setPref] = useState("オンライン");
   const [city, setCity] = useState("");
   const [keywords, setKeywords] = useState("");
@@ -47,7 +50,12 @@ export default function MoaiListPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user ?? null;
       setMe(u);
-      if (u) supabase.from("moai_members").select("moai_id").eq("user_id", u.id).then(({ data }) => setMyIds(new Set((data ?? []).map((r: any) => r.moai_id))));
+      if (u) supabase.from("moai_members").select("moai_id, status").eq("user_id", u.id).then(({ data }) => {
+        setMyIds(new Set((data ?? []).filter((r: any) => r.status === "approved").map((r: any) => r.moai_id)));
+        const st: Record<string, string> = {};
+        for (const r of data ?? []) st[r.moai_id] = r.status;
+        setMyStatus(st);
+      });
     });
     load();
   }, []);
@@ -73,10 +81,11 @@ export default function MoaiListPage() {
   };
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md pb-16" style={{ background: "#fbf7f5" }}>
+    <ThreeCol bg="#fbf7f5">
+    <main className="mx-auto min-h-dvh w-full pb-16" style={{ background: "#fbf7f5" }}>
       <IosBackButton />
       <header className="relative flex h-[64px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "url(/icons/bg-kawara.webp) center/cover" }}>
-        <span className="absolute left-3 top-1/2 -translate-y-1/2"><ServiceMenuButton /></span>
+        <span className="absolute left-3 top-1/2 -translate-y-1/2"><ServiceMenuButton textColor="#1a1008" /></span>
         <div className="text-[10px] font-bold tracking-[3px] text-[#5a3420]" style={{ textShadow: "0 0 6px #fff, 0 0 3px #fff" }}>シュミサークル部活道</div>
         <div className="text-[17px] font-extrabold tracking-[6px] text-[#3a2420]" style={{ textShadow: "0 0 8px #fff, 0 0 4px #fff" }}>MoAI</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2"><AvatarMenu /></span>
@@ -152,6 +161,21 @@ export default function MoaiListPage() {
           </p>
         )}
 
+        {/* あなたのMoAI(参加中) */}
+        {me && (moais ?? []).some((m) => myStatus[m.id] === "approved") && (
+          <div className="mb-2">
+            <div className="mb-1 px-0.5 text-[11px] font-extrabold text-[#a08078]">あなたのMoAI</div>
+            <div className="hide-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3">
+              {(moais ?? []).filter((m) => myStatus[m.id] === "approved").map((m) => (
+                <Link key={m.id} href={`/moai/${m.id}`} className="flex flex-shrink-0 items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 no-underline" style={{ borderColor: "#c0392b", background: "rgba(200,60,50,.06)" }}>
+                  {m.icon_url ? <img src={srcCdn(m.icon_url)} alt="" className="h-7 w-7 rounded-full object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3ded9] text-[12px]">{moaiCat(m.category).emoji}</span>}
+                  <span className="max-w-[120px] truncate text-[12px] font-bold text-[#c0392b]">{m.name}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* サークル横スクロール（先頭に「MoAIをつくる」カード・セカイムラのイベント作成と同じ流儀） */}
         <div className="hide-scrollbar -mx-3 flex gap-2.5 overflow-x-auto px-3 pb-1">
           {me && (
@@ -178,8 +202,10 @@ export default function MoaiListPage() {
               </div>
               <div className="px-2.5 pb-2 pt-5">
                 <div className="truncate text-[13px] font-extrabold text-[#3a2420]">{m.name}</div>
-                {myIds.has(m.id)
+                {myStatus[m.id] === "approved"
                   ? <div className="mt-1 inline-block rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold" style={{ borderColor: "#c0392b", color: "#c0392b" }}>✓ 参加中</div>
+                  : myStatus[m.id] === "pending"
+                  ? <div className="mt-1 inline-block rounded-full border px-2 py-0.5 text-[9.5px] font-extrabold" style={{ borderColor: "#c8a860", color: "#a08040" }}>申請中</div>
                   : <div className="mt-1 inline-block rounded-full px-2 py-0.5 text-[9.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>入部希望 →</div>}
                 <div className="mt-0.5 truncate text-[10px] text-[#b09088]">
                   {moaiCat(m.category).label}{m.moai_members?.[0]?.count ? ` ・ ${m.moai_members[0].count}人` : ""}
@@ -202,7 +228,7 @@ export default function MoaiListPage() {
           ) : (
             <div className="space-y-2.5">
               {feed.map((p: any) => (
-                <Link key={p.id} href={`/moai/${p.moai_id}`} className="block rounded-xl p-3 no-underline" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
+                <button key={p.id} onClick={() => setPostModal(p)} className="block w-full rounded-xl p-3 text-left" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
                   <div className="flex items-center gap-2.5">
                     {p.moai?.icon_url ? (
                       <img src={srcCdn(p.moai.icon_url)} alt="" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
@@ -219,12 +245,40 @@ export default function MoaiListPage() {
                   </div>
                   <p className="mt-2 line-clamp-4 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#4a3630]">{p.body}</p>
                   {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-72 w-full rounded-xl object-cover" />}
-                </Link>
+                </button>
               ))}
             </div>
           )}
         </div>
       </div>
+      {/* フィード投稿の中央モーダル */}
+      {postModal && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/55 px-4" onClick={() => setPostModal(null)}>
+          <div className="max-h-[82dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2.5">
+              {postModal.moai?.icon_url ? (
+                <img src={srcCdn(postModal.moai.icon_url)} alt="" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
+              ) : (
+                <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f3ded9] text-[16px]">{moaiCat(postModal.moai?.category ?? null).emoji}</span>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[14px] font-extrabold text-[#3a2420]">{postModal.moai?.name ?? "MoAI"}</div>
+                <div className="num text-[10.5px] text-[#b09088]">{postModal.profiles?.display_name ?? "メンバー"} ・ {new Date(postModal.created_at).getMonth() + 1}/{new Date(postModal.created_at).getDate()}</div>
+              </div>
+              <button onClick={() => setPostModal(null)} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ece8] text-[14px] text-[#a08078]">×</button>
+            </div>
+            {postModal.kind === "event" && postModal.event_at && (
+              <div className="num mt-2 inline-block rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ background: "rgba(200,60,50,.12)", color: "#c0392b" }}>📅 {new Date(postModal.event_at).getMonth() + 1}/{new Date(postModal.event_at).getDate()} のイベント</div>
+            )}
+            <p className="mt-3 whitespace-pre-wrap break-words text-[14px] leading-relaxed text-[#3a2420]">{postModal.body}</p>
+            {postModal.photo_url && <img src={srcCdn(postModal.photo_url)} alt="" className="mt-3 w-full rounded-xl object-cover" />}
+            <Link href={`/moai/${postModal.moai_id}`} className="mt-4 block w-full rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline" style={{ background: "#c0392b" }}>
+              このサークルのページへ →
+            </Link>
+          </div>
+        </div>
+      )}
     </main>
+    </ThreeCol>
   );
 }

@@ -49,6 +49,12 @@ export function notifText(n: NotificationRow): string {
       return `拠点への入村が承認されました🎉`;
     case "village_rejected":
       return `拠点への入村は今回は見送りになりました`;
+    case "moai_post":
+      return `参加中のサークルに新しい活動報告があります`;
+    case "moai_event":
+      return `参加中のサークルに新しいイベントが立ちました📅`;
+    case "moai_oya":
+      return `サークルのOYA（部長）に任命されました👑`;
     case "story_like":
       return `${who}さんがあなたのストーリーズに💓しました`;
     default:

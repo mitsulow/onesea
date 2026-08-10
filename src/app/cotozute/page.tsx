@@ -42,6 +42,7 @@ const MENU_ITEMS: Array<{ href: string; icon: string; label: string; ext?: boole
   { href: "/cotozute", icon: "/icons/tab-cotozute5.webp", label: "コトヅテ" },
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
+  { href: "/moai", icon: "/icons/icon-atsumaru.webp", label: "MoAI" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
   { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },

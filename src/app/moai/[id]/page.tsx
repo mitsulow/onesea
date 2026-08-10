@@ -38,6 +38,8 @@ export default function MoaiDetailPage() {
   const [saving, setSaving] = useState(false);
   const [editEvId, setEditEvId] = useState<string | null>(null);
   const [editPostId, setEditPostId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [chat, setChat] = useState<any[]>([]);
   const [chatBody, setChatBody] = useState("");
   const [chatOpen, setChatOpen] = useState(true);
@@ -79,6 +81,7 @@ export default function MoaiDetailPage() {
     fetch("/data-municipalities.json").then((r) => r.json()).then((muni) => setECities((muni[ePref] ?? []).map((x: any) => x[0]))).catch(() => setECities([]));
   }, [ePref, editing]);
   const isOwner = !!me && moai?.created_by === me.id;
+  const isOya = !!me && (moai?.created_by === me.id || ((moai?.leaders ?? []) as string[]).includes(me.id));
   const [myStatus, setMyStatus] = useState<string | null>(null);
   const [pending, setPending] = useState<any[]>([]);
   const [amAdmin, setAmAdmin] = useState(false);
@@ -86,7 +89,7 @@ export default function MoaiDetailPage() {
     if (!me) return;
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmAdmin)).catch(() => {});
   }, [me]);
-  const canManage = isOwner || amAdmin;
+  const canManage = isOya || amAdmin;
 
   const load = useCallback(async () => {
     const [m, mem] = await Promise.all([fetchMoai(moaiId), fetchMoaiMemberIds(moaiId)]);
@@ -120,6 +123,7 @@ export default function MoaiDetailPage() {
     if (!me) { alert("ログインすると参加できます（無料のGoogleログイン）"); return; }
     if (myStatus === "rejected") return;
     if (joined) {
+      if (moai?.created_by === me.id) { alert("創設者OYAはこのMoAIから退会できません（サークルを閉じる場合は削除を使ってください）"); return; }
       if (!confirm("このMoAIから抜けますか？")) return;
       await leaveMoai(moaiId, me.id);
     } else {
@@ -133,7 +137,7 @@ export default function MoaiDetailPage() {
     if (!f || !me) return;
     const url = await uploadImage("post-images", me.id, f, which === "cover" ? 1600 : 512, which === "cover" ? 0.75 : 0.8);
     if (url) {
-      await createClient().from("moai").update({ [which === "cover" ? "cover_url" : "icon_url"]: url }).eq("id", moaiId);
+      await createClient().rpc("moai_set_image", { p_moai: moaiId, p_which: which, p_url: url });
       load();
     }
   };
@@ -256,7 +260,7 @@ export default function MoaiDetailPage() {
                   {pr?.avatar_url
                     ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full border border-[#f0d8d4] object-cover" />
                     : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f3ded9] text-[11px]">🗿</span>}
-                  {pr.user_id === moai.created_by && (
+                  {(pr.user_id === moai.created_by || ((moai.leaders ?? []) as string[]).includes(pr.user_id)) && (
                     <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-[1px] text-[8px] font-extrabold text-white shadow" style={{ background: "#c9a94a" }}>OYA</span>
                   )}
                 </>
@@ -386,7 +390,10 @@ export default function MoaiDetailPage() {
                     </span>
                   )}
                 </div>
-                <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#4a3630]">{p.body}</p>
+                <p className={`mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#4a3630] ${expanded.has(p.id) ? "" : "line-clamp-3"}`}>{p.body}</p>
+                {!expanded.has(p.id) && (p.body.length > 60 || p.body.split("\n").length > 3) && (
+                  <button onClick={() => setExpanded((prev) => new Set(prev).add(p.id))} className="mt-0.5 text-[12px] font-bold text-[#a08078]">…全部みる</button>
+                )}
                 {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-96 w-full rounded-xl object-cover" />}
                 {/* コメント */}
                 <div className="mt-2 border-t border-[#f0d8d4] pt-2">
@@ -436,7 +443,21 @@ export default function MoaiDetailPage() {
                 <div className="flex items-center gap-3 rounded-xl bg-white p-2.5" style={{ border: "1px solid #f0d8d4" }}>
                   {pr?.avatar_url ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" /> : <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f3ded9] text-[15px]">🗿</span>}
                   <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-[#3a2420]">{pr.display_name ?? "メンバー"}</span>
-                  {pr.user_id === moai.created_by && <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "#c9a94a" }}>OYA（部長）</span>}
+                  {pr.user_id === moai.created_by && <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "#c9a94a" }}>OYA・創設</span>}
+                  {pr.user_id !== moai.created_by && ((moai.leaders ?? []) as string[]).includes(pr.user_id) && <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "#c9a94a" }}>OYA</span>}
+                  {isOya && pr.user_id !== moai.created_by && pr.user_id !== me?.id && (
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        const on = !((moai.leaders ?? []) as string[]).includes(pr.user_id);
+                        if (!confirm(on ? `${pr.display_name ?? "この人"}をOYAにしますか？` : `${pr.display_name ?? "この人"}のOYAを外しますか？`)) return;
+                        const { error } = await createClient().rpc("moai_set_oya", { p_moai: moaiId, p_user: pr.user_id, p_on: on });
+                        if (error) alert(error.message);
+                        load();
+                      }}
+                      className="flex-shrink-0 rounded-lg border px-2 py-1 text-[10px] font-bold text-[#a08078]" style={{ borderColor: "#e0d0cc" }}
+                    >{((moai.leaders ?? []) as string[]).includes(pr.user_id) ? "OYAを外す" : "OYAにする"}</button>
+                  )}
                 </div>
               );
               return pr.username ? <Link key={i} href={`/u/${pr.username}`} className="block no-underline">{row}</Link> : <div key={i}>{row}</div>;
@@ -487,8 +508,8 @@ export default function MoaiDetailPage() {
 
       {/* 投稿シート */}
       {sheet && me && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50" onClick={() => { setSheet(null); setEditEvId(null); setEditPostId(null); }}>
-          <div className="w-full max-w-[480px] rounded-t-2xl p-4" style={{ background: "#fff", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }} onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 px-4" onClick={() => { setSheet(null); setEditEvId(null); setEditPostId(null); }}>
+          <div className="max-h-[86dvh] w-full max-w-[440px] overflow-y-auto rounded-2xl p-4" style={{ background: "#fff" }} onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#e0d0cc]" />
             <div className="mb-2 text-[13.5px] font-extrabold text-[#3a2420]">{sheet === "event" ? (editEvId ? "📅 イベントを編集" : "📅 イベントを作る") : (editPostId ? "✏️ 活動を編集" : "✏️ 活動を投稿")}</div>
             {sheet === "event" && (
@@ -514,10 +535,23 @@ export default function MoaiDetailPage() {
               </div>
             )}
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} autoFocus placeholder={sheet === "event" ? "イベントの内容（持ち物・場所など）" : "今日の活動を書こう"} className="mb-2 w-full resize-y rounded-xl border border-[#f0d8d4] bg-[#fff] px-3 py-2.5 text-[13.5px] text-[#3a2420] outline-none focus:border-[#c0392b]" />
-            <label className="mb-2 flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[12px] font-bold text-[#c0392b]">
-              {photo ? "✓ 写真あり" : "📷 写真"}
-              <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f && me) setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55)); }} />
+            <label className="mb-2 flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-[#f0d8d4] bg-[#fff] px-3 py-2 text-[12px] font-bold text-[#c0392b]">
+              {photo ? <img src={srcCdn(photo)} alt="" className="h-12 w-12 rounded-lg object-cover" /> : null}
+              {photo ? "写真を変える" : "📷 写真"}
+              <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f || !me) return;
+                setPhotoUploading(true);
+                try { setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55)); } catch { alert("写真を添付できませんでした"); }
+                setPhotoUploading(false);
+              }} />
             </label>
+            {photoUploading && (
+              <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center bg-black/60">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+                <p className="mt-3 text-[13px] font-bold text-white">写真を添付中...</p>
+              </div>
+            )}
             <div className="flex gap-2">
               <button onClick={() => setSheet(null)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
               <button onClick={publish} disabled={!body.trim() || saving || (sheet === "event" && !evAt)} className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}>{saving ? "保存中..." : (editEvId || editPostId) ? "変更を保存" : "投稿する"}</button>
