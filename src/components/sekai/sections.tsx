@@ -2251,19 +2251,18 @@ export function VillagesSection({
         {pref || "全世界"}の拠点{villages ? `（${shown.length}）` : ""}
       </SectionTitle>
 
-      {/* 都道府県のセカイムラ — 押すと各県のセカイムラトップ(県全体チャット+拠点一覧)へ */}
-      <div className="mb-2.5 flex flex-wrap gap-1.5" data-noswipe>
+      {/* 都道府県のセカイムラ — プルダウンで選ぶと各県のセカイムラトップ(県全体チャット+拠点一覧)へ */}
+      <select
+        defaultValue=""
+        onChange={(e) => { if (e.target.value) router.push(`/sekai/mura/${e.target.value}`); }}
+        className="mb-2.5 w-full rounded-xl border border-[#cfe0cc] bg-white px-3 py-2.5 text-[13px] font-extrabold outline-none"
+        style={{ color: "#2a7a48" }}
+      >
+        <option value="">🏡 セカイムラ◯◯県をえらぶ（県のチャット・拠点一覧へ）</option>
         {([...PREFS, "海外"] as string[]).map((p, i) => (
-          <Link
-            key={p}
-            href={`/sekai/mura/${i + 1}`}
-            className="rounded-full border border-[#cfe0cc] bg-white px-2 py-1 text-[10px] font-extrabold no-underline"
-            style={{ color: "#2a7a48" }}
-          >
-            セカイムラ{p.replace(/[都府県]$/, "")}
-          </Link>
+          <option key={p} value={i + 1}>セカイムラ{p.replace(/[都府県]$/, "")}</option>
         ))}
-      </div>
+      </select>
 
       {/* ① 写真ストリップ — トップページと同じ。会員数が多い順 */}
       <div className="hide-scrollbar -mx-3 mb-2.5 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1" data-noswipe>
@@ -2327,7 +2326,7 @@ export function VillagesSection({
       {villages === null ? (
         <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
       ) : shown.length === 0 ? (
-        <p className="py-2 text-[12px] text-[#a0aca0]">この地域にはまだ拠点がありません。あなたが最初の村長に</p>
+        <p className="py-2 text-[12px] text-[#a0aca0]">この地域にはまだ拠点がありません。あなたが最初の拠点立ち上げ人に</p>
       ) : (
         <div className="space-y-2">
           {shown.map((v) => {
@@ -2358,7 +2357,7 @@ export function VillagesSection({
                   </div>
                   <div className="mt-0.5 truncate text-[11px] text-[#a0aca0]">
                     {v.prefecture ?? ""}
-                    {v.city ? ` ${v.city}` : ""} ・ {memberN(v)}人 ・ 村長 {v.profiles?.display_name ?? "—"}
+                    {v.city ? ` ${v.city}` : ""} ・ {memberN(v)}人 ・ 拠点オーナー {v.profiles?.display_name ?? "—"}
                   </div>
                   {v.description && <div className="mt-0.5 truncate text-[11px] text-[#8a968a]">{v.description}</div>}
                 </div>
@@ -3765,7 +3764,7 @@ export function SeedSection({ me }: { me: User | null }) {
       {msg && <p className="mb-1 text-[10.5px] font-bold text-[#c05030]">{msg}</p>}
 
       <button onClick={() => setOpen((v) => !v)} className="w-full rounded-xl border-2 border-dashed border-[#a8cca0] bg-white py-2 text-[11.5px] font-extrabold" style={{ color: GREEN }}>
-        {open ? "▾ とじる" : "一緒に拠点を立ち上げる村長を募集する（村長3人が揃うと事務局に村作りの申請が出来ます）"}
+        {open ? "▾ とじる" : "一緒に拠点を立ち上げる人を募集する（拠点立ち上げ人3人が揃うと事務局に村作りの申請が出来ます）"}
       </button>
       {open && (
         <div className="mt-2 rounded-xl bg-white p-2.5">

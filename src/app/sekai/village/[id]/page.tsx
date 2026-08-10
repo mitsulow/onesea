@@ -164,13 +164,34 @@ export default function VillagePage() {
     setCmts((m) => ({ ...m, [postId]: list }));
   };
 
+  /* イベントとして投稿(承認済みの村人なら誰でも) */
+  const [isEvent, setIsEvent] = useState(false);
+  const [evDate, setEvDate] = useState("");
+  const [evSh, setEvSh] = useState(10);
+  const [evEh, setEvEh] = useState(12);
+
   const submit = async () => {
     if (!me || !body.trim() || sending) return;
+    if (isEvent && !evDate) { alert("イベントの日付を入れてください"); return; }
     setSending(true);
     const supabase = createClient();
-    await supabase.from("village_posts").insert({ village_id: villageId, user_id: me.id, body: body.trim(), photo_url: photo });
+    const row: any = { village_id: villageId, user_id: me.id, body: body.trim(), photo_url: photo };
+    if (isEvent && evDate) {
+      const [y, mo, da] = evDate.split("-").map(Number);
+      row.kind = "event";
+      row.event_at = new Date(y, mo - 1, da, evSh, 0).toISOString();
+      row.event_end = new Date(y, mo - 1, da, Math.max(evSh, evEh), 0).toISOString();
+    }
+    const { error } = await supabase.from("village_posts").insert(row);
+    if (error) {
+      alert("投稿できませんでした。この村への参加が承認されているかご確認ください");
+      setSending(false);
+      return;
+    }
     setBody("");
     setPhoto(null);
+    setIsEvent(false);
+    setEvDate("");
     setSending(false);
     load();
   };
@@ -269,8 +290,37 @@ export default function VillagePage() {
         </div>
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-[#eaf2e6]">{village.name}</h1>
         <div className="mt-1 text-[11.5px] text-[#a8cca8]">
-          {village.prefecture} ・ 村人 {members.length}人 ・ 村長 {leaderProfiles.length ? leaderProfiles.map((lp) => lp.display_name ?? "—").join("・") : steward?.display_name ?? "—"}
+          {village.prefecture} ・ 村人 {members.length}人 ・ 拠点立ち上げ人 {leaderProfiles.length ? leaderProfiles.map((lp) => lp.display_name ?? "—").join("・") : steward?.display_name ?? "—"}
         </div>
+
+        {/* 👑 拠点オーナー — 一番上に「この人です！」+ すぐ連絡できるボタン */}
+        {steward && (
+          <div className="mx-auto mt-2.5 flex max-w-[340px] items-center gap-2.5 rounded-xl bg-white/95 px-3 py-2 text-left shadow">
+            {steward.avatar_url
+              ? <img src={srcCdn(steward.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
+              : <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#dcece0] text-[15px]">🏡</span>}
+            <div className="min-w-0 flex-1">
+              <div className="text-[9.5px] font-extrabold" style={{ color: "#b8860b" }}>👑 拠点オーナーはこの人です！</div>
+              <div className="truncate text-[13.5px] font-extrabold text-[#2a4a34]">{steward.display_name ?? "むらびと"}</div>
+            </div>
+            {me && village.created_by && me.id !== village.created_by ? (
+              <button
+                onClick={async () => {
+                  const chatId = await getOrCreateChat(me.id, village.created_by);
+                  if (chatId) router.push(`/talk/${chatId}`);
+                }}
+                className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white"
+                style={{ background: "#2a8a4a" }}
+              >
+                💬 連絡する
+              </button>
+            ) : steward.username ? (
+              <Link href={`/u/${steward.username}`} className="flex-shrink-0 rounded-full border border-[#cfe0cc] px-3 py-1.5 text-[11px] font-bold no-underline" style={{ color: "#2a7a48" }}>
+                マイページ
+              </Link>
+            ) : null}
+          </div>
+        )}
         {village.description && (
           <p className="mx-auto mt-2 max-w-[340px] text-[12px] leading-relaxed text-[#c8dcc8]">{village.description}</p>
         )}
@@ -326,7 +376,7 @@ export default function VillagePage() {
             >
               この村に参加したい
               <br />
-              村長へ申請
+              拠点オーナーへ申請
             </button>
           )}
           {me && !joined && members.some((mm: any) => mm.user_id === me.id && mm.status === "pending") && (
@@ -339,7 +389,7 @@ export default function VillagePage() {
               }}
               className="rounded-xl border border-[#c8a860] px-4 py-2.5 text-[12.5px] font-bold text-[#e8d5a0]"
             >
-              申請中（村長の承認待ち）
+              申請中（拠点オーナーの承認待ち）
               <span className="block text-[10px] font-normal text-[#c8b080]">もう一度押すと取り消せます</span>
             </button>
           )}
@@ -364,17 +414,7 @@ export default function VillagePage() {
               ✎ 修正する
             </button>
           )}
-          {me && steward && village.created_by && me.id !== village.created_by && (
-            <button
-              onClick={async () => {
-                const chatId = await getOrCreateChat(me.id, village.created_by);
-                if (chatId) router.push(`/talk/${chatId}`);
-              }}
-              className="rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]"
-            >
-              💬 村長にTalKで質問する
-            </button>
-          )}
+
         </div>
 
         {/* 公式拠点の申請（立ち上げ村長だけに見える） */}
@@ -523,7 +563,7 @@ export default function VillagePage() {
           </div>
           {/* 村長1〜3: 承認済みの村人から選ぶ(名前で選択) */}
           <div className="mb-2">
-            <div className="mb-1 text-[11px] font-extrabold text-[#8a9a8a]">村長（最大3人・村人から選ぶ）</div>
+            <div className="mb-1 text-[11px] font-extrabold text-[#8a9a8a]">拠点立ち上げ人（最大3人・村人から選ぶ）</div>
             {[0, 1, 2].map((li) => (
               <select
                 key={li}
@@ -535,7 +575,7 @@ export default function VillagePage() {
                 }}
                 className="mb-1.5 w-full rounded-xl border border-[#e2eae0] bg-white px-2 py-2 text-[13px] outline-none"
               >
-                <option value="">村長{li + 1}人目（なし）</option>
+                <option value="">立ち上げ人{li + 1}人目（なし）</option>
                 {(members as any[])
                   .filter((m) => m.status === "approved")
                   .map((m) => (
@@ -634,6 +674,66 @@ export default function VillagePage() {
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
             {village.name}の活動
           </div>
+
+          {/* 村人の投稿フォーム — 承認された村人は投稿もイベントも作れる */}
+          {joined && me && (
+            <div className="mb-3 rounded-xl border border-[#dce8d8] bg-[#f7fbf8] p-2.5">
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                rows={2}
+                placeholder={isEvent ? "イベントの内容（タイトル・集合場所など）..." : "村のみんなに活動を報告する..."}
+                className="w-full resize-none rounded-lg border border-[#e2eae0] bg-white px-2.5 py-2 text-[13px] outline-none focus:border-[#4a8a5c]"
+              />
+              {photo && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <img src={srcCdn(photo)} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                  <button onClick={() => setPhoto(null)} className="text-[11px] font-bold text-[#8a8070] underline">写真を外す</button>
+                </div>
+              )}
+              {isEvent && (
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <input type="date" value={evDate} onChange={(e) => setEvDate(e.target.value)} className="rounded-lg border border-[#e2eae0] bg-white px-2 py-1.5 text-[12px] outline-none" />
+                  <select value={evSh} onChange={(e) => setEvSh(Number(e.target.value))} className="rounded-lg border border-[#e2eae0] bg-white px-1.5 py-1.5 text-[12px] outline-none">
+                    {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{h}時</option>)}
+                  </select>
+                  〜
+                  <select value={evEh} onChange={(e) => setEvEh(Number(e.target.value))} className="rounded-lg border border-[#e2eae0] bg-white px-1.5 py-1.5 text-[12px] outline-none">
+                    {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{h}時</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="mt-2 flex items-center gap-2">
+                <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[15px]" style={{ border: "1px solid #dce8d8" }}>
+                  {uploading ? "⏳" : "📷"}
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f || !me || uploading) return;
+                    setUploading(true);
+                    try { setPhoto(await uploadImage("post-images", me.id, f, 1600, 0.75)); } catch {}
+                    setUploading(false);
+                    e.currentTarget.value = "";
+                  }} />
+                </label>
+                <button
+                  onClick={() => setIsEvent((v) => !v)}
+                  className="rounded-full px-2.5 py-1.5 text-[11px] font-extrabold"
+                  style={isEvent ? { background: "#c94d3a", color: "#fff" } : { border: "1px solid #dce8d8", color: "#8a9a84", background: "#fff" }}
+                >
+                  📅 イベント{isEvent ? "にする ✓" : "として投稿"}
+                </button>
+                <button
+                  onClick={submit}
+                  disabled={!body.trim() || sending || uploading}
+                  className="ml-auto rounded-full px-4 py-1.5 text-[12px] font-extrabold text-white disabled:opacity-40"
+                  style={{ background: "#4a8a5c" }}
+                >
+                  {sending ? "投稿中..." : "投稿する"}
+                </button>
+              </div>
+            </div>
+          )}
+
           {posts.length === 0 ? (
             <p className="py-1 text-[12.5px] text-[#a0aca0]">まだ活動の記録がありません。村人日記から投稿すると、ここに並びます</p>
           ) : (

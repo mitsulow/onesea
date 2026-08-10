@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -15,6 +15,7 @@ const ALL_PREFS = [...PREFS, "海外"] as string[];
 /** セカイムラ◯◯県トップ — 県全体チャット(TalK同期) + その県の拠点一覧 + 拠点の申請 */
 export default function SekaiMuraPrefPage() {
   const params = useParams<{ code: string }>();
+  const router = useRouter();
   const idx = parseInt(params.code, 10);
   const pref = ALL_PREFS[idx - 1] ?? "";
   const disp = pref.replace(/[都府県]$/, "");
@@ -35,6 +36,67 @@ export default function SekaiMuraPrefPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const joinedRef = useRef(false);
   const [kb, setKb] = useState(0);
+  /* 県の村長(3人まで) */
+  const [leaders, setLeaders] = useState<any[]>([]);
+  const [leaderBusy, setLeaderBusy] = useState(false);
+  /* セカイムラの県を変える */
+  const [changing, setChanging] = useState(false);
+  const [newPref, setNewPref] = useState("");
+  const [changeBusy, setChangeBusy] = useState(false);
+
+  const loadLeaders = useCallback(async () => {
+    const { data } = await createClient()
+      .from("pref_leaders")
+      .select("user_id, created_at, profiles!pref_leaders_user_id_fkey(username, display_name, avatar_url)")
+      .eq("prefecture", pref)
+      .order("created_at")
+      .limit(3);
+    setLeaders(data ?? []);
+  }, [pref]);
+
+  const joinLeader = async () => {
+    if (!me || leaderBusy) return;
+    setLeaderBusy(true);
+    const { data, error } = await createClient().rpc("pref_leader_join", { p_pref: pref });
+    setLeaderBusy(false);
+    if (error) { alert("登録できませんでした。もう一度お試しください"); return; }
+    if (data === "full") { alert("村長は3人までです。すでに埋まっています"); return; }
+    if (data === "not_murabito") { alert("まず「村人になる」を押してセカイムラに入ってください"); return; }
+    loadLeaders();
+  };
+
+  const leaveLeader = async () => {
+    if (!me || leaderBusy || !confirm(`セカイムラ${disp}の村長をやめますか？`)) return;
+    setLeaderBusy(true);
+    await createClient().from("pref_leaders").delete().eq("prefecture", pref).eq("user_id", me.id);
+    setLeaderBusy(false);
+    loadLeaders();
+  };
+
+  /* 所属県の引っ越し: プロフィールの県を変えて、TalKのセカイムラグループも移す */
+  const changePref = async () => {
+    if (!me || !newPref || changeBusy) return;
+    setChangeBusy(true);
+    try {
+      const supabase = createClient();
+      const { data: prof } = await supabase.from("profiles").select("prefecture").eq("id", me.id).maybeSingle();
+      const oldPref = prof?.prefecture ?? null;
+      const { error } = await supabase.from("profiles").update({ prefecture: newPref }).eq("id", me.id);
+      if (error) throw error;
+      const { data: rooms } = await supabase.from("pref_rooms").select("id, prefecture").eq("kind", "sekai");
+      const oldRoom = (rooms ?? []).find((r: any) => r.prefecture === oldPref);
+      const newRoom = (rooms ?? []).find((r: any) => r.prefecture === newPref);
+      if (oldRoom && oldRoom.prefecture !== newPref) await supabase.from("pref_room_members").delete().eq("room_id", oldRoom.id).eq("user_id", me.id);
+      if (newRoom) await supabase.from("pref_room_members").upsert({ room_id: newRoom.id, user_id: me.id });
+      setChanging(false);
+      const code = ALL_PREFS.indexOf(newPref) + 1;
+      alert(`セカイムラ${newPref.replace(/[都府県]$/, "")}に引っ越しました！`);
+      router.push(`/sekai/mura/${code}`);
+    } catch {
+      alert("変更できませんでした。もう一度お試しください");
+    }
+    setChangeBusy(false);
+  };
 
   useEffect(() => {
     const vv = window.visualViewport;
@@ -63,6 +125,7 @@ export default function SekaiMuraPrefPage() {
       setMemberCount(count ?? null);
       load(data.id);
     });
+    loadLeaders();
     // この県の拠点(会員数が多い順)
     supabase.from("villages").select("id, name, prefecture, cover_url, icon_url, village_members(count)").then(({ data }) => {
       const list = (data ?? []).filter((v: any) =>
@@ -83,7 +146,7 @@ export default function SekaiMuraPrefPage() {
       setMurabito(!!prof?.murabito || !!adm);
       setGateChecked(true);
     });
-  }, [pref, load]);
+  }, [pref, load, loadLeaders]);
 
   // 村人がページを開いたら自動参加 → TalKのグループ欄に「セカイムラ◯◯」が現れる
   useEffect(() => {
@@ -185,6 +248,63 @@ export default function SekaiMuraPrefPage() {
         </div>
         {roomId && <a href={`/talk/g/pref/${roomId}`} className="flex-shrink-0 text-[11px] text-[#a8d4b0] no-underline">TalKで開く →</a>}
       </header>
+
+      {/* 👑 セカイムラ◯◯の村長(3人まで) + 県の引っ越し */}
+      <section className="px-3 pt-3">
+        <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
+          <div className="mb-1.5 flex items-center justify-between">
+            <div className="text-[12px] font-extrabold text-[#2a4a34]">👑 セカイムラ{disp}の村長（3人まで）</div>
+            {me && (
+              <button onClick={() => { setNewPref(""); setChanging(true); }} className="text-[10px] font-bold text-[#8a9a84] underline">
+                セカイムラの県を変える
+              </button>
+            )}
+          </div>
+          {leaders.length === 0 && <p className="text-[11px] text-[#a0b09a]">まだ村長がいません。最初の村長になりませんか？</p>}
+          <div className="flex flex-wrap items-center gap-2">
+            {leaders.map((l: any) => {
+              const p = l.profiles;
+              const chip = (
+                <span className="flex items-center gap-1.5 rounded-full bg-[#f2f8f0] py-1 pl-1 pr-2.5" style={{ border: "1px solid #d8e4d0" }}>
+                  {p?.avatar_url
+                    ? <img src={srcCdn(p.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 rounded-full object-cover" />
+                    : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#dcead8] text-[12px]">👑</span>}
+                  <span className="max-w-[110px] truncate text-[11.5px] font-extrabold text-[#2a4a34]">{p?.display_name ?? "むらびと"}</span>
+                </span>
+              );
+              return <span key={l.user_id}>{p?.username ? <Link href={`/u/${p.username}`} className="no-underline">{chip}</Link> : chip}</span>;
+            })}
+            {me && leaders.some((l: any) => l.user_id === me.id) ? (
+              <button onClick={leaveLeader} disabled={leaderBusy} className="rounded-full border border-[#e0d8c8] px-2.5 py-1.5 text-[10.5px] font-bold text-[#a09888]">
+                村長をやめる
+              </button>
+            ) : me && murabito && leaders.length < 3 ? (
+              <button onClick={joinLeader} disabled={leaderBusy} className="rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white disabled:opacity-40" style={{ background: "#b8860b" }}>
+                {leaderBusy ? "登録中..." : `👑 村長になる（あと${3 - leaders.length}枠）`}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
+      {/* 県の引っ越しモーダル */}
+      {changing && (
+        <div className="fixed inset-0 z-[115] flex items-center justify-center bg-black/55 px-6" onClick={() => setChanging(false)}>
+          <div className="w-full max-w-[340px] rounded-2xl bg-white p-5 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[30px]">🚚</div>
+            <h2 className="mt-1 text-[15px] font-extrabold text-[#1e4530]">セカイムラの県を変える</h2>
+            <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#8a9a84]">所属するセカイムラを引っ越します。TalKの「セカイムラ◯◯」グループも新しい県のものに変わります。</p>
+            <select value={newPref} onChange={(e) => setNewPref(e.target.value)} className="mt-3 w-full rounded-xl border border-[#d8e4d0] bg-white px-3 py-2.5 text-[13px] outline-none">
+              <option value="">引っ越し先をえらぶ</option>
+              {ALL_PREFS.map((p) => <option key={p} value={p}>セカイムラ{p.replace(/[都府県]$/, "")}</option>)}
+            </select>
+            <button onClick={changePref} disabled={!newPref || changeBusy} className="mt-3 w-full rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: GREEN }}>
+              {changeBusy ? "引っ越し中..." : "この県に引っ越す"}
+            </button>
+            <button onClick={() => setChanging(false)} className="mt-1.5 w-full py-1.5 text-[11.5px] font-bold text-[#a09a88]">キャンセル</button>
+          </div>
+        </div>
+      )}
 
       {/* この県の拠点 */}
       <section className="px-3 pt-3">
