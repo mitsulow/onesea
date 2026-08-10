@@ -1,6 +1,7 @@
 "use client";
 
 import { EmbedCard } from "@/components/EmbedCard";
+import { MurabitoGate } from "@/components/sekai/MurabitoGate";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { readTecho, writeTecho } from "@/lib/techoStore";
 import { SekaiBadge } from "@/components/WarawaBadge";
@@ -243,6 +244,8 @@ export function SekaiShell({ children }: { children: React.ReactNode }) {
           <AvatarMenu />
         </span>
       </header>
+      {/* 初回訪問時: セカイムラに入りますか？(村人になる=🌾ムラビトバッジ) */}
+      <MurabitoGate />
       {/* PCは Cotozute と同じ3カラム（全幅・中央フィード・左右レール） */}
       <ThreeCol centerClassName="space-y-2.5 lg:rounded-xl">
         {children}
@@ -2248,6 +2251,20 @@ export function VillagesSection({
         {pref || "全世界"}の拠点{villages ? `（${shown.length}）` : ""}
       </SectionTitle>
 
+      {/* 都道府県のセカイムラ — 押すと各県のセカイムラトップ(県全体チャット+拠点一覧)へ */}
+      <div className="mb-2.5 flex flex-wrap gap-1.5" data-noswipe>
+        {([...PREFS, "海外"] as string[]).map((p, i) => (
+          <Link
+            key={p}
+            href={`/sekai/mura/${i + 1}`}
+            className="rounded-full border border-[#cfe0cc] bg-white px-2 py-1 text-[10px] font-extrabold no-underline"
+            style={{ color: "#2a7a48" }}
+          >
+            セカイムラ{p.replace(/[都府県]$/, "")}
+          </Link>
+        ))}
+      </div>
+
       {/* ① 写真ストリップ — トップページと同じ。会員数が多い順 */}
       <div className="hide-scrollbar -mx-3 mb-2.5 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1" data-noswipe>
         {shown.map((v) => (
@@ -3614,6 +3631,18 @@ export function SeedSection({ me }: { me: User | null }) {
   const [up, setUp] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+
+  // セカイムラ◯◯県ページの「＋拠点の申請」から来たら、県をプレフィルしてフォームを開く
+  useEffect(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("pref");
+      if (q) {
+        setPref(q);
+        setOpen(true);
+        setTimeout(() => document.getElementById("seed-sec")?.scrollIntoView({ behavior: "smooth", block: "start" }), 500);
+      }
+    } catch {}
+  }, []);
 
   const load = async () => {
     const supabase = createClient();

@@ -305,7 +305,7 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
     supabase.from("neura_members").select("team_id, neura_teams(name, prefecture, city)").eq("user_id", myId),
     supabase.from("moai_members").select("moai_id, moai(name)").eq("user_id", myId).eq("status", "approved"),
     supabase.from("tanbo_members").select("tanbo_id, tanbo(name)").eq("user_id", myId),
-    supabase.from("pref_room_members").select("room_id, pref_rooms(prefecture)").eq("user_id", myId),
+    supabase.from("pref_room_members").select("room_id, pref_rooms(prefecture, kind)").eq("user_id", myId),
   ]);
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const groups: Array<{ type: "village" | "club" | "neura" | "moai" | "tanbo" | "pref"; id: string; name: string; emoji: string }> = [
@@ -342,8 +342,10 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
     ...((pr.data ?? []) as any[]).map((r) => ({
       type: "pref" as const,
       id: r.room_id as string,
-      name: `${(r.pref_rooms?.prefecture as string) ?? ""}交流`,
-      emoji: "🗾",
+      name: r.pref_rooms?.kind === "sekai"
+        ? `セカイムラ${String(r.pref_rooms?.prefecture ?? "").replace(/[都府県]$/, "")}`
+        : `${(r.pref_rooms?.prefecture as string) ?? ""}交流`,
+      emoji: r.pref_rooms?.kind === "sekai" ? "🏡" : "🗾",
     })),
   ];
   /* eslint-enable @typescript-eslint/no-explicit-any */

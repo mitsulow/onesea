@@ -111,11 +111,11 @@ export default function GroupChatPage() {
         setMemberCount(count ?? null);
       } else if (type === "pref") {
         const [{ data: pf }, { count }] = await Promise.all([
-          supabase.from("pref_rooms").select("prefecture").eq("id", id).maybeSingle(),
+          supabase.from("pref_rooms").select("prefecture, kind").eq("id", id).maybeSingle(),
           supabase.from("pref_room_members").select("user_id", { count: "exact", head: true }).eq("room_id", id),
         ]);
-        if (pf?.prefecture) setName(`${pf.prefecture}交流`);
-        setEmoji("🗾");
+        if (pf?.prefecture) setName(pf.kind === "sekai" ? `セカイムラ${String(pf.prefecture).replace(/[都府県]$/, "")}` : `${pf.prefecture}交流`);
+        setEmoji(pf?.kind === "sekai" ? "🏡" : "🗾");
         setMemberCount(count ?? null);
       } else if (type === "tanbo") {
         const [{ data: tb }, { count }] = await Promise.all([

@@ -1,6 +1,5 @@
 "use client";
 
-import { MOON_ORACLE_TYPES, moonOracleIdxOf } from "@/lib/almanac";
 import { fetchFollowingProfiles } from "@/lib/follows";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -33,6 +32,7 @@ interface FullProfile {
   status_line: string | null;
   prefecture: string | null;
   city: string | null;
+  murabito?: boolean | null;
   rice_work: string | null;
   life_work: string | null;
   skills: string[] | null;
@@ -93,7 +93,7 @@ export default function UserPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at, birthday, warawa_until, moon_type")
+      .select("id, username, display_name, avatar_url, cover_url, bio, status_line, prefecture, city, rice_work, life_work, skills, wants_to_do, sns, member_no, created_at, birthday, warawa_until, moon_type, murabito")
       .eq("username", username)
       .maybeSingle();
     const prof = (data as FullProfile) ?? null;
@@ -320,31 +320,6 @@ export default function UserPage() {
 
       {/* アバター + 名前 */}
       <div className="relative px-4">
-        {profile.birthday && (
-          <span className="num absolute right-4 top-1.5 text-right text-[11px] font-bold text-[#a09888]">
-            <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
-          </span>
-        )}
-        {/* ツキヨガ月占いのキャラ（誕生日から自動） */}
-        {profile.birthday &&
-          (() => {
-            const oi = profile.moon_type ?? moonOracleIdxOf(profile.birthday);
-            if (oi < 0 || oi > 11) return null;
-            return (
-              <a
-                href="/tsukiyoga-v7/index.html"
-                title="ツキヨガ月占い"
-                className="absolute right-4 top-[27px] flex items-center gap-1.5 rounded-full border border-[#e8dcc4] bg-white/90 py-0.5 pl-1 pr-2.5 text-[11px] font-extrabold text-[#6a5f4e] shadow-sm"
-              >
-                <img
-                  src={`/tsukiyoga-v7/character_icons/char_${String(oi).padStart(2, "0")}.png`}
-                  alt=""
-                  className="h-6 w-6 rounded-full object-cover"
-                />
-                {MOON_ORACLE_TYPES[oi].name}
-              </a>
-            );
-          })()}
         <div className="relative -mt-11 inline-block">
           {profile.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -390,7 +365,14 @@ export default function UserPage() {
               わらわ〜No.{String(profile.member_no).padStart(7, "0")}
             </span>
           )}
-          <SekaiBelongBadge userId={profile.id} />
+          {profile.murabito && (
+            <span
+              className="px-2 py-0.5 text-[9.5px] font-extrabold"
+              style={{ background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }}
+            >
+              🌾 セカイムラ{(profile.prefecture ?? "").replace(/[都府県]$/, "") || "ムラビト"}
+            </span>
+          )}
         </span>
 
         <div className="relative mt-1.5">
@@ -401,6 +383,12 @@ export default function UserPage() {
           {/* @Warawer・わらわ〜No.はわらわ〜会員（認証済み）だけの称号 */}
           {isWara && profile.member_no != null && (
             <div className="text-[12px] text-[#a09888]">@Warawer{String(profile.member_no).padStart(7, "0")}</div>
+          )}
+          {/* 地球冒険日数(以前は右上の絶対配置で、狭い画面でわらわ〜No.と重なっていた) */}
+          {profile.birthday && (
+            <div className="num mt-0.5 text-[11px] font-bold text-[#a09888]">
+              <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(profile.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}回目
+            </div>
           )}
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
           </div>
@@ -952,36 +940,6 @@ export default function UserPage() {
 }
 
 
-/** セカイムラ所属バッジ（マイページ内のみ）: 承認済みの村があれば「◯◯所属」、なければ「セカイムラ無所属」 */
-function SekaiBelongBadge({ userId }: { userId: string }) {
-  const [name, setName] = useState<string | null | undefined>(undefined);
-  useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("village_members")
-      .select("status, villages!village_members_village_id_fkey(name)")
-      .eq("user_id", userId)
-      .eq("status", "approved")
-      .limit(1)
-      .then(({ data }) => {
-        const v = data?.[0] as { villages?: { name?: string } } | undefined;
-        setName(v?.villages?.name ?? null);
-      });
-  }, [userId]);
-  if (name === undefined) return null;
-  return (
-    <span
-      className="px-2 py-0.5 text-[9.5px] font-bold"
-      style={
-        name
-          ? { background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }
-          : { background: "#f0ede6", color: "#a09888", border: "1px solid #e0dcd0" }
-      }
-    >
-      {name ? `${name}所属` : "セカイムラ無所属"}
-    </span>
-  );
-}
 
 
 /** ◯◯さんからのCotozute — 過去の投稿を3件だけ表示。「もっと見る」で+10ずつ（パケ死防止） */

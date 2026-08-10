@@ -35,7 +35,7 @@ export default function KouryuListPage() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.from("pref_rooms").select("id, prefecture, sort").order("sort").then(({ data }) => setRooms(data ?? []));
+    supabase.from("pref_rooms").select("id, prefecture, sort").eq("kind", "kouryu").order("sort").then(({ data }) => setRooms(data ?? []));
     supabase.from("pref_room_members").select("room_id").then(({ data }) => {
       const c: Record<string, number> = {};
       for (const r of data ?? []) c[r.room_id] = (c[r.room_id] ?? 0) + 1;
