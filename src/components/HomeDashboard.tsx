@@ -661,7 +661,7 @@ export function ServiceDock() {
           aria-label="MoAIへ"
         >
           <img
-            src="/icons/icon-atsumaru.webp"
+            src="/icons/icon-moai-tent.webp"
             alt="MoAI"
             className="mx-auto object-contain"
             style={{ height: open ? 46 : 36, width: open ? 46 : 36, transition: "all .35s", filter: "drop-shadow(0 0 14px rgba(201,57,43,.5))" }}

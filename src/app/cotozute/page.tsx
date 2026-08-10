@@ -42,7 +42,7 @@ const MENU_ITEMS: Array<{ href: string; icon: string; label: string; ext?: boole
   { href: "/cotozute", icon: "/icons/tab-cotozute5.webp", label: "コトヅテ" },
   { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
   { href: "/za", icon: "/rakuichi/logo-emblem.webp", label: "楽市楽座" },
-  { href: "/moai", icon: "/icons/icon-atsumaru.webp", label: "MoAI" },
+  { href: "/moai", icon: "/icons/icon-moai-tent.webp", label: "MoAI" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
   { href: "/talk", icon: "/icons/icon-chat.webp", label: "TalK" },
@@ -525,7 +525,7 @@ export default function CotozutePage() {
     <div className="py-2.5">
       <div className="mb-1.5 flex items-baseline justify-between px-0.5">
         <span className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#1c1e21]">
-          <img src="/icons/icon-atsumaru.webp" alt="" className="h-[18px] w-[18px] rounded-full object-cover" /> 部員募集！
+          <img src="/icons/icon-moai-tent.webp" alt="" className="h-[18px] w-[18px] rounded-full object-cover" /> 部員募集！
         </span>
         <Link href="/moai" className="text-[12px] font-bold no-underline" style={{ color: "#c0392b" }}>すべて見る</Link>
       </div>
