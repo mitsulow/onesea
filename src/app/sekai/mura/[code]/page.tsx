@@ -45,23 +45,8 @@ export default function SekaiMuraPrefPage() {
   const [mainSel, setMainSel] = useState("");
   const [mainBusy, setMainBusy] = useState(false);
   const [seedOpen, setSeedOpen] = useState(false); // ＋拠点の申請(県ページ内でそのまま申請できる)
-  /* チャットのインライン展開(飛ばずにこの場で最新10件) */
-  const [chatOpen, setChatOpen] = useState(false);
+  /* チャット: 最初から最新6件を出しておく(押した人が迷子にならない) */
   const [chatMsgs, setChatMsgs] = useState<GroupMessageRow[]>([]);
-  const [chatLoading, setChatLoading] = useState(false);
-
-  const toggleChat = async () => {
-    const next = !chatOpen;
-    setChatOpen(next);
-    if (next && room && !chatLoading) {
-      setChatLoading(true);
-      try {
-        const list = await fetchGroupMessages("pref", room.id);
-        setChatMsgs(list.slice(-10)); // 最新10件だけこの場で見せる
-      } catch {}
-      setChatLoading(false);
-    }
-  };
   /* 県のFEED(こんなことをしました報告) */
   const [fposts, setFposts] = useState<any[]>([]);
   const [fBody, setFBody] = useState("");
@@ -159,6 +144,7 @@ export default function SekaiMuraPrefPage() {
         setNewcomers([]);
       }
       loadFeed(data.id);
+      fetchGroupMessages("pref", data.id).then((list) => setChatMsgs(list.slice(-6))).catch(() => {});
     }
   }, [pref, loadFeed]);
 
@@ -357,145 +343,137 @@ export default function SekaiMuraPrefPage() {
 
   return (
     <main className="mx-auto min-h-dvh max-w-md pb-20 lg:max-w-3xl" style={{ background: "#eef4ee" }}>
-      {/* ヘッダー — 拠点ページと同じ作法(背景画像 or 県ごとの色 + 丸アイコン) */}
-      <header
-        className="relative px-4 pb-6 pt-4 text-center"
-        style={{
-          background: room?.cover_url
-            ? `linear-gradient(165deg, rgba(10,22,14,.36) 0%, rgba(14,32,20,.44) 60%, rgba(20,44,30,.56) 100%), url(${srcCdn(room.cover_url)}) center/cover`
-            : prefGradient(idx),
-        }}
-      >
-        <div className="flex items-center justify-between">
-          <Link href="/sekai/villages" className="text-[13px] font-bold text-white/80 no-underline">◀ 拠点トップ</Link>
-          {me && (
-            <button onClick={() => { setNewPref(""); setChanging(true); }} className="rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-bold text-white/90">
-              🚚 セカイムラの県を変える
-            </button>
+      {/* ヘッダー — Facebookページ型: 小さめの背景 + 左下に重なる丸アイコン */}
+      <header className="relative">
+        <div
+          className="relative h-[124px]"
+          style={{
+            background: room?.cover_url
+              ? `url(${srcCdn(room.cover_url)}) center/cover`
+              : prefGradient(idx),
+          }}
+        >
+          <div className="absolute inset-x-0 top-0 flex items-center justify-between px-3 pt-2.5" style={{ background: "linear-gradient(180deg, rgba(0,0,0,.35), transparent)" }}>
+            <Link href="/sekai/villages" className="text-[12.5px] font-bold text-white no-underline drop-shadow">◀ 拠点トップ</Link>
+            {me && (
+              <button onClick={() => { setNewPref(""); setChanging(true); }} className="rounded-full bg-black/30 px-2.5 py-1 text-[10px] font-bold text-white">
+                🚚 セカイムラの県を変える
+              </button>
+            )}
+          </div>
+          {/* 背景画像の変更(村長・事務局) */}
+          {canEdit && (
+            <label className="absolute bottom-2 right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[14px] shadow-lg">
+              {upBusy === "cover" ? "⏳" : "📷"}
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("cover", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
+            </label>
           )}
         </div>
 
-        {/* 丸アイコン: 自動で県名入り。村長・事務局は写真に変更できる */}
-        <div className="mt-3 flex justify-center">
-          <label className={canEdit ? "relative cursor-pointer" : "relative"}>
-            {room?.icon_url ? (
-              <img src={srcCdn(room.icon_url)} alt="" className="h-[76px] w-[76px] rounded-full border-4 border-white/60 object-cover shadow-lg" />
-            ) : (
-              <span
-                className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-4 border-white/50 font-extrabold text-white shadow-lg"
-                style={{ background: "rgba(255,255,255,.14)", fontSize: disp.length >= 3 ? 17 : 22, letterSpacing: 1 }}
-              >
-                {disp}
-              </span>
-            )}
-            {canEdit && (
-              <>
-                <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[13px] shadow">
-                  {upBusy === "icon" ? "⏳" : "📷"}
+        {/* 白バー: 重なるアイコン + 名前 + 参加まわり */}
+        <div className="bg-white px-3 pb-2.5" style={{ borderBottom: "1px solid #e0e8dc" }}>
+          <div className="flex items-end gap-2.5">
+            <label className={"relative -mt-7 flex-shrink-0" + (canEdit ? " cursor-pointer" : "")}>
+              {room?.icon_url ? (
+                <img src={srcCdn(room.icon_url)} alt="" className="h-[64px] w-[64px] rounded-full border-4 border-white object-cover shadow" />
+              ) : (
+                <span
+                  className="flex h-[64px] w-[64px] items-center justify-center rounded-full border-4 border-white font-extrabold text-white shadow"
+                  style={{ background: prefGradient(idx), fontSize: disp.length >= 3 ? 14 : 18, letterSpacing: 1 }}
+                >
+                  {disp}
                 </span>
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("icon", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
-              </>
+              )}
+              {canEdit && (
+                <>
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] shadow">
+                    {upBusy === "icon" ? "⏳" : "📷"}
+                  </span>
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("icon", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
+                </>
+              )}
+            </label>
+            <div className="min-w-0 flex-1 pb-0.5">
+              <h1 className="truncate text-[17px] font-extrabold leading-tight text-[#1e4530]">セカイムラ{disp}</h1>
+              <div className="text-[10.5px] text-[#8a9a84]">
+                🌾 村人 {memberCount ?? villagers.length}人 ・ 拠点 {villages.length}
+              </div>
+            </div>
+          </div>
+          <div className="mt-1.5">
+            {me && joinedCounty === true && (
+              <button
+                onClick={leaveCounty}
+                disabled={countyBusy}
+                className="rounded-full px-3 py-1.5 text-[11.5px] font-extrabold disabled:opacity-40"
+                style={{ background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }}
+                title="押すと退会できます"
+              >
+                ✓ セカイムラ{disp}に参加中 <span className="text-[9px] font-bold text-[#a0aca0]">（押すと退会）</span>
+              </button>
             )}
-          </label>
+            {me && joinedCounty === false && (
+              <button
+                onClick={joinCounty}
+                disabled={countyBusy}
+                className="rounded-full px-5 py-1.5 text-[12px] font-extrabold disabled:opacity-40"
+                style={{ background: "#d4b96a", color: "#1a2432" }}
+              >
+                {countyBusy ? "参加中..." : "🌾 この県に参加する"}
+              </button>
+            )}
+            {!me && (
+              <button onClick={() => setShowJoinLp(true)} className="rounded-full px-4 py-1.5 text-[11.5px] font-bold text-white" style={{ background: GREEN }}>
+                ログインしてこの県に参加する
+              </button>
+            )}
+          </div>
         </div>
-        <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-white">セカイムラ{disp}</h1>
-        <div className="mt-1 text-[11.5px] text-white/75">
-          🌾 村人 {memberCount ?? villagers.length}人 ・ 拠点 {villages.length}
-        </div>
-
-        {/* 県別セカイムラは拒否なし: 参加中バッジ or 参加ボタン */}
-        {me && joinedCounty === true && (
-          <button
-            onClick={leaveCounty}
-            disabled={countyBusy}
-            className="mx-auto mt-2.5 block rounded-full bg-white/90 px-4 py-1.5 text-[12px] font-extrabold disabled:opacity-40"
-            style={{ color: "#2a7a48" }}
-            title="押すと退会できます"
-          >
-            ✓ セカイムラ{disp}に参加中 <span className="text-[9.5px] font-bold text-[#a0aca0]">（押すと退会）</span>
-          </button>
-        )}
-        {me && joinedCounty === false && (
-          <button
-            onClick={joinCounty}
-            disabled={countyBusy}
-            className="mx-auto mt-2.5 block rounded-full px-6 py-2 text-[13px] font-extrabold disabled:opacity-40"
-            style={{ background: "#d4b96a", color: "#1a2432" }}
-          >
-            {countyBusy ? "参加中..." : "🌾 この県に参加する"}
-          </button>
-        )}
-        {!me && (
-          <button onClick={() => setShowJoinLp(true)} className="mx-auto mt-2.5 block rounded-full bg-white/20 px-5 py-1.5 text-[11.5px] font-bold text-white">
-            ログインしてこの県に参加する
-          </button>
-        )}
-
-        {/* 💬 チャット: 押すと飛ばずに、この場で下に開く */}
-        <button
-          onClick={toggleChat}
-          className="mx-auto mt-3 block w-full max-w-[300px] rounded-xl py-3 text-[14px] font-extrabold text-white shadow"
-          style={{ background: GREEN }}
-        >
-          💬 セカイムラ{disp}のチャット{chatOpen ? "をとじる ▲" : "を開く ▼"}
-        </button>
-
-        {/* 背景画像の変更(村長・事務局) */}
-        {canEdit && (
-          <label className="absolute right-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg" style={{ bottom: -18 }}>
-            {upBusy === "cover" ? "⏳" : "📷"}
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("cover", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
-          </label>
-        )}
       </header>
 
-      {/* 💬 チャットのインライン表示(最新10件・この場で読める) */}
-      {chatOpen && (
-        <section className="px-3 pt-3">
-          <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
-            <div className="mb-1.5 flex items-center justify-between">
-              <div className="text-[12px] font-extrabold text-[#2a4a34]">💬 セカイムラ{disp}のチャット（最新10件）</div>
-              {room && <a href={`/talk/g/pref/${room.id}`} className="flex-shrink-0 text-[10.5px] font-bold text-[#8a9a84] no-underline">グループトークで観る →</a>}
-            </div>
-            {chatLoading ? (
-              <p className="py-4 text-center text-[11.5px] text-[#a0b09a]">読み込み中...</p>
-            ) : chatMsgs.length === 0 ? (
-              <p className="py-4 text-center text-[11.5px] leading-relaxed text-[#a0b09a]">
-                まだ書き込みがありません{me && joinedCounty !== true ? "（参加すると読み書きできます）" : ""}
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {chatMsgs.map((m) => {
-                  const mine = m.sender_id === me?.id;
-                  const d = new Date(m.created_at);
-                  const prof = (m as any).profiles;
-                  return (
-                    <div key={m.id} className={`flex items-start gap-2 ${mine ? "flex-row-reverse" : ""}`}>
-                      {prof?.avatar_url
-                        ? <img src={srcCdn(prof.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
-                        : <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#dcead8] text-[11px]">🏡</span>}
-                      <div className={`max-w-[75%] ${mine ? "text-right" : ""}`}>
-                        <div className={`text-[9.5px] text-[#8a9a84] ${mine ? "pr-1" : "pl-1"}`}>{prof?.display_name ?? "むらびと"} ・ {d.getMonth() + 1}/{d.getDate()} {d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}</div>
-                        <div className={`mt-0.5 inline-block rounded-2xl px-3 py-1.5 text-left text-[12.5px] leading-relaxed ${mine ? "text-white" : "bg-[#f4f8f2] text-[#3a4438]"}`} style={mine ? { background: GREEN } : undefined}>
-                          {(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" className="mb-1 max-w-[160px] rounded-lg" />}
-                          {m.body === "📷 写真" && (m as any).image_url ? "" : m.body}
-                        </div>
+      {/* 💬 チャット: 背景のすぐ下に最新6件を最初から表示 */}
+      <section className="px-3 pt-3">
+        <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
+          <div className="mb-1.5 flex items-center justify-between">
+            <div className="text-[12px] font-extrabold text-[#2a4a34]">💬 セカイムラ{disp}のチャット</div>
+            {room && <a href={`/talk/g/pref/${room.id}`} className="flex-shrink-0 text-[10.5px] font-bold text-[#8a9a84] no-underline">グループトークで観る →</a>}
+          </div>
+          {chatMsgs.length === 0 ? (
+            <p className="py-3 text-center text-[11.5px] leading-relaxed text-[#a0b09a]">
+              まだ書き込みがありません{me && joinedCounty !== true ? "（参加すると読み書きできます）" : ""}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {chatMsgs.map((m) => {
+                const mine = m.sender_id === me?.id;
+                const d = new Date(m.created_at);
+                const prof = (m as any).profiles;
+                return (
+                  <div key={m.id} className={`flex items-start gap-2 ${mine ? "flex-row-reverse" : ""}`}>
+                    {prof?.avatar_url
+                      ? <img src={srcCdn(prof.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
+                      : <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#dcead8] text-[11px]">🏡</span>}
+                    <div className={`max-w-[75%] ${mine ? "text-right" : ""}`}>
+                      <div className={`text-[9.5px] text-[#8a9a84] ${mine ? "pr-1" : "pl-1"}`}>{prof?.display_name ?? "むらびと"} ・ {d.getMonth() + 1}/{d.getDate()} {d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}</div>
+                      <div className={`mt-0.5 inline-block rounded-2xl px-3 py-1.5 text-left text-[12.5px] leading-relaxed ${mine ? "text-white" : "bg-[#f4f8f2] text-[#3a4438]"}`} style={mine ? { background: GREEN } : undefined}>
+                        {(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" className="mb-1 max-w-[160px] rounded-lg" />}
+                        {m.body === "📷 写真" && (m as any).image_url ? "" : m.body}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-            <Link
-              href={`/sekai/mura/${idx}/chat`}
-              className="mt-2.5 block rounded-xl border py-2 text-center text-[12px] font-extrabold no-underline"
-              style={{ borderColor: GREEN, color: GREEN }}
-            >
-              もっと観る（チャットに書き込む）→
-            </Link>
-          </div>
-        </section>
-      )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          <Link
+            href={`/sekai/mura/${idx}/chat`}
+            className="mt-2.5 block rounded-xl py-2.5 text-center text-[13px] font-extrabold text-white no-underline"
+            style={{ background: GREEN }}
+          >
+            💬 セカイムラ{disp}のチャットを開く（書き込む）→
+          </Link>
+        </div>
+      </section>
 
       {/* 👑 セカイムラ◯◯の村長(3人まで) */}
       <section className="px-3 pt-4">
@@ -532,7 +510,7 @@ export default function SekaiMuraPrefPage() {
       {newcomers.length > 0 && (
         <section className="px-3 pt-3">
           <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #e8dcb8", background: "#fdfaf0" }}>
-            <div className="mb-1.5 text-[12px] font-extrabold text-[#8a6a20]">🌱 新しい村人（14日以内）</div>
+            <div className="mb-1.5 text-[12px] font-extrabold text-[#8a6a20]">🔰 新しいムラビト（14日で消えます）</div>
             <div className="flex flex-wrap gap-1.5">
               {newcomers.map((n: any) => {
                 const days = Math.floor((Date.now() - new Date(n.joined_at).getTime()) / 86400000);
@@ -548,7 +526,7 @@ export default function SekaiMuraPrefPage() {
                 return <span key={n.user_id}>{n.prof.username ? <Link href={`/u/${n.prof.username}`} className="no-underline">{chip}</Link> : chip}</span>;
               })}
             </div>
-            <p className="mt-1.5 text-[9.5px] text-[#b0a070]">村長さんへ: 新しい村人さんに、村のことをフォローしてあげてください</p>
+            <p className="mt-1.5 text-[10px] font-bold text-[#8a6a20]">誰も、一人にしない</p>
           </div>
         </section>
       )}

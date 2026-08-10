@@ -32,7 +32,7 @@ export function UpgradeDialog({
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/callback` },
+      options: { redirectTo: `${window.location.origin}/callback`, queryParams: { prompt: "select_account" } },
     });
   };
 

@@ -102,7 +102,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/callback` },
+      options: { redirectTo: `${window.location.origin}/callback`, queryParams: { prompt: "select_account" } },
     });
   };
 

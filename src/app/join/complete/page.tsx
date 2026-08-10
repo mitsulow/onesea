@@ -64,7 +64,7 @@ export default function JoinCompletePage() {
   const login = async () => {
     try { localStorage.setItem("onesea-return", "/join/complete"); } catch {}
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/callback` } });
+    await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/callback`, queryParams: { prompt: "select_account" } } });
   };
 
   const submit = async () => {
