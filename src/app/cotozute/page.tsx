@@ -673,39 +673,26 @@ export default function CotozutePage() {
         <div className="h-px bg-[#e4e6e9]" />
       </header>
 
-      {/* ☰メニュー（左ドロワー） */}
+      {/* ☰メニュー（左ドロワー）— 統一ルール: ロゴ+キャッチ → コトヅテトップのみ(他サービスは載せない) */}
       {drawer && (
         <>
           <div className="fixed inset-0 z-[85] bg-black/35" onClick={() => setDrawer(false)} />
           <div className="fixed left-0 top-0 z-[86] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
-            <div className="px-5 pb-2 pt-5 text-[20px] font-extrabold" style={{ color: TIFFANY }}>
-              CotoZute
+            <div className="px-5 pb-2 pt-5">
+              <div className="text-[10px] tracking-[2px] text-[#9ad2d0]">幸せの波紋を拡げよう</div>
+              <div className="flex items-center gap-2 text-[20px] font-extrabold" style={{ color: TIFFANY }}>
+                <img src="/icons/tab-cotozute5.webp" alt="" className="h-[24px] w-[24px] object-contain" />
+                CotoZute
+              </div>
             </div>
-            {MENU_ITEMS.map((m) => {
-              const isHere = m.href === "/cotozute";
-              const rowCls = `flex items-center gap-3 border-b border-[#f2f3f5] px-5 py-3 text-[14px] no-underline ${
-                isHere ? "bg-[#e5f6fb] font-bold text-[#1B8FB5]" : "font-medium text-[#1c1e21]"
-              }`;
-              return m.ext ? (
-                <a key={m.href} href={m.href} className={rowCls}>
-                  {m.icon.startsWith("/") ? (
-                    <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" />
-                  ) : (
-                    <span className="w-[22px] text-center text-[17px]">{m.icon}</span>
-                  )}
-                  {m.label}
-                </a>
-              ) : (
-                <Link key={m.href} href={m.href} onClick={() => setDrawer(false)} className={rowCls}>
-                  {m.icon.startsWith("/") ? (
-                    <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" />
-                  ) : (
-                    <span className="w-[22px] text-center text-[17px]">{m.icon}</span>
-                  )}
-                  {m.label}
-                </Link>
-              );
-            })}
+            <Link
+              href="/cotozute"
+              onClick={() => setDrawer(false)}
+              className="flex items-center gap-3 border-b border-[#f2f3f5] bg-[#e5f6fb] px-5 py-3 text-[14px] font-bold text-[#1B8FB5] no-underline"
+            >
+              <img src="/icons/tab-cotozute5.webp" alt="" className="h-[22px] w-[22px] object-contain" />
+              コトヅテ トップ
+            </Link>
           </div>
         </>
       )}
