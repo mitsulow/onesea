@@ -47,7 +47,7 @@ export default function MeikanPage() {
       <TopTone color="#fffdf8" />
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-[#fffdf8]/95 backdrop-blur-sm">
         <div className="flex h-[52px] items-center justify-between px-4">
-          <span className="text-[16px] font-extrabold tracking-[2px] text-[#3a3428]">🔍 人物検索<span className="ml-1 text-[11px] font-bold" style={{ color: "#a08030" }}>わらわ〜名鑑</span></span>
+          <span className="text-[16px] font-extrabold tracking-[2px] text-[#3a3428]">🔍 わらわ〜名鑑<span className="ml-1 text-[11px] font-bold" style={{ color: "#a08030" }}>（人物検索）</span></span>
           <AvatarMenu ring="#c94d3a" />
         </div>
       </header>

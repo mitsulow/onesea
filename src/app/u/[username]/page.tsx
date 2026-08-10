@@ -429,9 +429,6 @@ export default function UserPage() {
               >
                 📇 名刺交換（QRを見せる）
               </button>
-              <Link href="/meikan" className="rounded-full border px-3 py-1.5 text-[11.5px] font-bold no-underline" style={{ borderColor: "#d4b96a", color: "#a08030" }}>
-                🔍 わらわ〜名鑑
-              </Link>
             </div>
           )}
           {/* 地球冒険日数(以前は右上の絶対配置で、狭い画面でわらわ〜No.と重なっていた) */}
