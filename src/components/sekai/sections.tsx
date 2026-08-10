@@ -3867,7 +3867,11 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
                 <div className="px-2 py-1.5">
                   <div className="truncate text-[11.5px] font-extrabold" style={{ color: GREEN }}>{sd.name}</div>
                   <div className="text-[9.5px] text-[#a0aca0]">{sd.prefecture ?? ""} ・ {n}人</div>
-                  {sd.status === "applied" ? (
+                  {sd.status === "approved" ? (
+                    <Link href="/sekai/villages" className="mt-1 block w-full rounded py-1 text-center text-[9.5px] font-extrabold text-white no-underline" style={{ background: "#2a8a4a" }}>
+                      ✅ 認定済み！拠点ページができました →
+                    </Link>
+                  ) : sd.status === "applied" ? (
                     isOffice ? (
                       <button
                         onClick={async () => {
@@ -3890,7 +3894,7 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
                   ) : (
                     <div className="mt-1 text-[9.5px] font-bold" style={{ color: GREEN }}>3人そろいました！</div>
                   )}
-                  {me && !mine && sd.status !== "applied" && (
+                  {me && !mine && sd.status !== "applied" && sd.status !== "approved" && (
                     <button onClick={() => joinSeed(sd.id)} className="mt-1 w-full rounded border border-[#4a9a5a] py-1 text-[9.5px] font-extrabold" style={{ color: GREEN }}>
                       一緒に作りたい
                     </button>
