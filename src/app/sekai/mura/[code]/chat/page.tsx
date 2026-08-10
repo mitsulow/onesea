@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { UpgradeDialog } from "@/components/UpgradeGate";
 import { srcCdn } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
 import { fetchGroupMessages, sendGroupMessage, markGroupRead, fetchGroupReads, type GroupMessageRow } from "@/lib/line";
@@ -20,6 +21,7 @@ export default function SekaiMuraChatPage() {
   const disp = pref.replace(/[都府県]$/, "");
 
   const [me, setMe] = useState<User | null>(null);
+  const [showJoinLp, setShowJoinLp] = useState(false); // 通りすがりさん向け: シューマンと同じ導線(LP+ログイン)
   const meRef = useRef<User | null>(null);
   const [murabito, setMurabito] = useState(false);
   const [gateChecked, setGateChecked] = useState(false);
@@ -231,9 +233,10 @@ export default function SekaiMuraChatPage() {
             <button onClick={submit} disabled={!body.trim() || sending} className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-[16px] font-bold text-white disabled:opacity-40" style={{ background: GREEN }}>➤</button>
           </div>
         ) : (
-          <Link href="/" className="block rounded-2xl py-3 text-center text-[13px] font-bold text-white no-underline" style={{ background: GREEN }}>ログインして参加する</Link>
+          <button onClick={() => setShowJoinLp(true)} className="block w-full rounded-2xl py-3 text-center text-[13px] font-bold text-white" style={{ background: GREEN }}>ログインして参加する</button>
         )}
       </div>
+      <UpgradeDialog open={showJoinLp} onClose={() => setShowJoinLp(false)} feature="セカイムラのチャット" lp="/lp/sekai" />
     </main>
   );
 }

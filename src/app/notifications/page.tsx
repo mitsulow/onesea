@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import TopTone from "@/components/TopTone";
-import { NotificationRow, fetchNotifications, markNotifsRead, notifText } from "@/lib/notifications";
+import { NotificationRow, fetchNotifications, markNotifsRead, markNotifRead, notifText } from "@/lib/notifications";
 import { srcCdn } from "@/lib/images";
 
 /* eslint-disable @next/next/no-img-element */
@@ -34,12 +34,26 @@ export default function NotificationsPage() {
       if (!u) { setRows([]); return; }
       const list = await fetchNotifications(u.id);
       setRows(list);
-      // 表示できた時点で既読化（この画面では未読の濃さを保ったまま）
-      markNotifsRead(u.id).then(() => {
-        window.dispatchEvent(new Event("onesea:notifRefresh"));
-      });
+      // 全既読はしない: タップして「見たヤツ」だけ既読にして、ベルの数字から1つずつ消す
     });
   }, []);
+
+  /* 見たお知らせだけ既読に(タップ時) */
+  const readOne = (ids: string[]) => {
+    if (!me || !ids.length) return;
+    setRows((prev) => (prev ?? []).map((r) => (ids.includes(r.id) ? { ...r, read_at: r.read_at ?? new Date().toISOString() } : r)));
+    markNotifRead(me.id, ids).then(() => {
+      window.dispatchEvent(new Event("onesea:notifRefresh"));
+    });
+  };
+
+  const readAll = () => {
+    if (!me) return;
+    setRows((prev) => (prev ?? []).map((r) => ({ ...r, read_at: r.read_at ?? new Date().toISOString() })));
+    markNotifsRead(me.id).then(() => {
+      window.dispatchEvent(new Event("onesea:notifRefresh"));
+    });
+  };
 
   return (
     <main className="pb-24" style={{ background: "#fffdf8", minHeight: "100dvh" }}>
@@ -47,7 +61,14 @@ export default function NotificationsPage() {
       <header className="sticky top-0 z-40 border-b border-[#ede5d8] bg-[#fffdf8]/95 backdrop-blur-sm">
         <div className="flex h-[52px] items-center justify-between px-4">
           <span className="text-[16px] font-extrabold tracking-[2px] text-[#3a3428]">🔔 お知らせ</span>
-          <AvatarMenu ring="#c94d3a" />
+          <span className="flex items-center gap-2">
+            {(rows ?? []).some((r) => !r.read_at) && (
+              <button onClick={readAll} className="rounded-full border border-[#e0d8c8] px-2.5 py-1 text-[10.5px] font-bold text-[#8a8070]">
+                全部既読にする
+              </button>
+            )}
+            <AvatarMenu ring="#c94d3a" />
+          </span>
         </div>
       </header>
 
@@ -65,9 +86,10 @@ export default function NotificationsPage() {
           groupLikes(rows).map((g) => {
             if (g.kind === "likes") {
               // ハートは束ねて1行 — 付けた人のアイコンをずらり（バッジ数には入れない）
+              const likeUnread = g.items.filter((x) => !x.read_at).map((x) => x.id);
               return (
-                <Link key={g.key} href={g.url} className="block no-underline">
-                  <div className="flex items-start gap-2.5 border-b border-[#f0ece0] px-4 py-3">
+                <Link key={g.key} href={g.url} className="block no-underline" onClick={() => readOne(likeUnread)}>
+                  <div className="flex items-start gap-2.5 border-b border-[#f0ece0] px-4 py-3" style={{ opacity: likeUnread.length ? 1 : 0.55 }}>
                     <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#fdeef0] text-[16px]">❤️</span>
                     <div className="min-w-0 flex-1">
                       <div className="text-[13px] font-bold leading-snug text-[#3a3428]">
@@ -119,11 +141,11 @@ export default function NotificationsPage() {
               </div>
             );
             return n.target_url ? (
-              <Link key={n.id} href={n.target_url} className="block no-underline">
+              <Link key={n.id} href={n.target_url} className="block no-underline" onClick={() => readOne([n.id])}>
                 {inner}
               </Link>
             ) : (
-              <div key={n.id}>{inner}</div>
+              <div key={n.id} onClick={() => readOne([n.id])}>{inner}</div>
             );
           })
         )}

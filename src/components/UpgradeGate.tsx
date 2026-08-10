@@ -37,7 +37,8 @@ export function UpgradeDialog({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[120] flex items-center justify-center px-6" onClick={onClose}>
+    /* 背景タップでは閉じない: 読む前に消える事故を防ぐ(閉じるのは「閉じる」ボタンだけ) */
+    <div className="fixed inset-0 z-[120] flex items-center justify-center px-6">
       <div className="absolute inset-0 bg-black/60" />
       <div
         className="relative w-full max-w-[340px] rounded-3xl p-6 text-center"

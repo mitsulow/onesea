@@ -58,6 +58,15 @@ export function SchumannAudioPlayer() {
   const [modeOpen, setModeOpen] = useState(false);
   /* 無料アプリ: 未ログインは15秒プレビューのみ。モードは会員専用 */
   const [showUpgrade, setShowUpgrade] = useState(false);
+  useEffect(() => {
+    // 再マウントやレンダリングでポップアップが勝手に消えないよう、閉じるまでセッションに保持
+    try {
+      if (sessionStorage.getItem("schumann-upsell") === "1") {
+        previewDoneRef.current = true;
+        setShowUpgrade(true);
+      }
+    } catch {}
+  }, []);
   const previewRef = useRef<number | null>(null);
   const [introKind, setIntroKind] = useState<Exclude<ProgramKind, "meditation"> | null>(null);
   const [program, setProgram] = useState<{ kind: ProgramKind; course?: number; mode?: string } | null>(null);
@@ -756,7 +765,7 @@ export function SchumannAudioPlayer() {
         </div>
       )}
 
-      <UpgradeDialog open={showUpgrade} onClose={() => setShowUpgrade(false)} feature="シューマン音のフル再生" lp="/lp/mmm" />
+      <UpgradeDialog open={showUpgrade} onClose={() => { try { sessionStorage.removeItem("schumann-upsell"); } catch {} setShowUpgrade(false); }} feature="シューマン音のフル再生" lp="/lp/mmm" />
       <audio
         ref={audioRef}
         src={src ?? undefined}
@@ -770,6 +779,7 @@ export function SchumannAudioPlayer() {
           // 無料試聴のハードキャップ: 再生位置15秒で必ず止まる（巻き戻しての聴き直しは可・先へは進めない）
           if (!warawa && a.currentTime >= 15 && !a.paused) {
             previewDoneRef.current = true;
+            try { sessionStorage.setItem("schumann-upsell", "1"); } catch {}
             a.pause();
             setShowUpgrade(true);
           }

@@ -83,6 +83,18 @@ export async function fetchNotifUnread(userId: string): Promise<number> {
   return count ?? 0;
 }
 
+/** 個別既読: 見た(タップした)お知らせだけを既読にする */
+export async function markNotifRead(userId: string, ids: string[]): Promise<void> {
+  if (!ids.length) return;
+  const supabase = createClient();
+  await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .in("id", ids)
+    .is("read_at", null);
+}
+
 export async function markNotifsRead(userId: string): Promise<void> {
   const supabase = createClient();
   await supabase

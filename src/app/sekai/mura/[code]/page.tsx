@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { UpgradeDialog } from "@/components/UpgradeGate";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
 import { SeedSection } from "@/components/sekai/sections";
@@ -30,12 +31,13 @@ export default function SekaiMuraPrefPage() {
 
   const { show: snack, node: snackNode } = useSnackbar();
   const [me, setMe] = useState<User | null>(null);
+  const [showJoinLp, setShowJoinLp] = useState(false); // 通りすがりさん向け: シューマンと同じ導線(LP+ログイン)
   const [amOffice, setAmOffice] = useState(false);
   const [murabito, setMurabito] = useState(false);
   const [room, setRoom] = useState<any | null>(null);
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [villagers, setVillagers] = useState<any[]>([]);
-  const [newcomers, setNewcomers] = useState<any[]>([]); // 14日以内に参加した新しい村民(村長のフォロー用)
+  const [newcomers, setNewcomers] = useState<any[]>([]); // 14日以内に参加した新しい村人(村長のフォロー用)
   const [joinedCounty, setJoinedCounty] = useState<boolean | null>(null); // この県に参加中か
   const [countyBusy, setCountyBusy] = useState(false);
   /* 2県目以降に参加した時だけ「メインはどっち？」を聞く(メインはマイページのバッジに出る) */
@@ -144,7 +146,7 @@ export default function SekaiMuraPrefPage() {
       if (ids.length) {
         const { data: profs } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids);
         setVillagers(profs ?? []);
-        // 14日以内に参加した人 = 新しい村民(参加が新しい順)
+        // 14日以内に参加した人 = 新しい村人(参加が新しい順)
         const since = Date.now() - 14 * 86400000;
         const fresh = (pm ?? [])
           .filter((r: any) => r.joined_at && new Date(r.joined_at).getTime() >= since)
@@ -424,9 +426,9 @@ export default function SekaiMuraPrefPage() {
           </button>
         )}
         {!me && (
-          <Link href="/" className="mx-auto mt-2.5 inline-block rounded-full bg-white/20 px-5 py-1.5 text-[11.5px] font-bold text-white no-underline">
+          <button onClick={() => setShowJoinLp(true)} className="mx-auto mt-2.5 block rounded-full bg-white/20 px-5 py-1.5 text-[11.5px] font-bold text-white">
             ログインしてこの県に参加する
-          </Link>
+          </button>
         )}
 
         {/* 💬 チャット: 押すと飛ばずに、この場で下に開く */}
@@ -526,11 +528,11 @@ export default function SekaiMuraPrefPage() {
         </div>
       </section>
 
-      {/* 🌱 新しい村民(14日間だけ表示 — 村長がフォローする用) */}
+      {/* 🌱 新しい村人(14日間だけ表示 — 村長がフォローする用) */}
       {newcomers.length > 0 && (
         <section className="px-3 pt-3">
           <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #e8dcb8", background: "#fdfaf0" }}>
-            <div className="mb-1.5 text-[12px] font-extrabold text-[#8a6a20]">🌱 新しい村民（14日以内）</div>
+            <div className="mb-1.5 text-[12px] font-extrabold text-[#8a6a20]">🌱 新しい村人（14日以内）</div>
             <div className="flex flex-wrap gap-1.5">
               {newcomers.map((n: any) => {
                 const days = Math.floor((Date.now() - new Date(n.joined_at).getTime()) / 86400000);
@@ -546,7 +548,7 @@ export default function SekaiMuraPrefPage() {
                 return <span key={n.user_id}>{n.prof.username ? <Link href={`/u/${n.prof.username}`} className="no-underline">{chip}</Link> : chip}</span>;
               })}
             </div>
-            <p className="mt-1.5 text-[9.5px] text-[#b0a070]">村長さんへ: 新しい村民さんに、村のことをフォローしてあげてください</p>
+            <p className="mt-1.5 text-[9.5px] text-[#b0a070]">村長さんへ: 新しい村人さんに、村のことをフォローしてあげてください</p>
           </div>
         </section>
       )}
@@ -765,6 +767,7 @@ export default function SekaiMuraPrefPage() {
           </div>
         </div>
       )}
+      <UpgradeDialog open={showJoinLp} onClose={() => setShowJoinLp(false)} feature="セカイムラへの参加" lp="/lp/sekai" />
       {snackNode}
     </main>
   );
