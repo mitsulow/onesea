@@ -97,7 +97,35 @@ export default function MoaiListPage() {
   };
 
   return (
-    <ThreeCol bg="#fbf7f5">
+    <ThreeCol
+      bg="#fbf7f5"
+      rightExtra={
+        /* 楽市楽座トップと同じ右レール仕様: あなたにおススメのサークル */
+        <div className="rounded-xl bg-white p-3" style={{ border: "1px solid #f0d8d4" }}>
+          <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: "#c0392b" }}>✨ あなたにおススメのサークル</div>
+          <div className="space-y-1.5">
+            {((moais ?? [])
+              .filter((m) => myStatus[m.id] !== "approved")
+              .sort((a, b) => (b.moai_members?.[0]?.count ?? 0) - (a.moai_members?.[0]?.count ?? 0))
+              .slice(0, 6)).map((m) => (
+              <Link key={m.id} href={`/moai/${m.id}`} className="flex items-center gap-2 rounded-xl px-1.5 py-1.5 no-underline hover:bg-[#faf4f2]">
+                {m.icon_url
+                  ? <img src={srcCdn(m.icon_url)} alt="" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+                  : <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f3ded9] text-[15px]">{moaiCat(m.category).emoji}</span>}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[12.5px] font-extrabold text-[#3a2420]">{m.name}</span>
+                  <span className="block truncate text-[10px] text-[#b09088]">{moaiPrefTag(m).replace(/[（）]/g, "") || "全国"}{m.moai_members?.[0]?.count ? ` ・ ${m.moai_members[0].count}人` : ""}</span>
+                </span>
+                <span className="flex-shrink-0 rounded-full px-2 py-0.5 text-[9.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>見る →</span>
+              </Link>
+            ))}
+            {(moais ?? []).filter((m) => myStatus[m.id] !== "approved").length === 0 && (
+              <p className="py-2 text-[11px] text-[#b09088]">いまはおススメがありません</p>
+            )}
+          </div>
+        </div>
+      }
+    >
     <main className="mx-auto min-h-dvh w-full pb-16" style={{ background: "#fbf7f5" }}>
       <IosBackButton />
       <header className="relative flex h-[64px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "url(/icons/bg-kawara.webp) center/cover" }}>
