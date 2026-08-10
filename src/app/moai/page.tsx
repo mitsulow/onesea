@@ -20,6 +20,10 @@ export default function MoaiListPage() {
   const [me, setMe] = useState<User | null>(null);
   const [moais, setMoais] = useState<Moai[] | null>(null);
   const [feedAll, setFeedAll] = useState(false); // FEEDのもっとみる
+  const [amOffice, setAmOffice] = useState(false); // 事務局は全投稿を編集・削除できる
+  const [editPost, setEditPost] = useState<any | null>(null); // フィード投稿の編集
+  const [editBody, setEditBody] = useState("");
+  const [editBusy, setEditBusy] = useState(false);
   const [moaiAll, setMoaiAll] = useState(false); // サークル一覧のもっとみる
   const [selPref, setSelPref] = useState(""); // "" = 全県のサークル
   const [creating, setCreating] = useState(false);
@@ -51,6 +55,10 @@ export default function MoaiListPage() {
   const [q, setQ] = useState("");
 
   const load = () => { fetchMoais().then(setMoais); fetchMoaiFeed().then(setFeed); };
+  useEffect(() => {
+    if (!me) return;
+    import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+  }, [me]);
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -260,7 +268,24 @@ export default function MoaiListPage() {
           ) : (
             <div className="space-y-2.5">
               {(feedAll ? feed : feed.slice(0, 10)).map((p: any) => (
-                <button key={p.id} onClick={() => setPostModal(p)} className="block w-full rounded-xl p-3 text-left" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
+                <div key={p.id} onClick={() => setPostModal(p)} className="relative block w-full cursor-pointer rounded-xl p-3 text-left" style={{ background: "#ffffff", border: "1px solid #f0d8d4" }}>
+                  {me && (me.id === p.user_id || amOffice) && (
+                    <span className="absolute right-2 top-2 z-10 flex items-center gap-1.5">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditPost(p); setEditBody(p.body ?? ""); }}
+                        className="rounded-full border px-2 py-0.5 text-[10px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f", background: "#fff" }}
+                      >✎</button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!confirm(amOffice && me.id !== p.user_id ? "【事務局権限】この投稿を削除しますか？" : "この投稿を削除しますか？")) return;
+                          await createClient().from("moai_posts").delete().eq("id", p.id);
+                          load();
+                        }}
+                        className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0ece8] text-[12px] font-bold text-[#a08078]"
+                      >×</button>
+                    </span>
+                  )}
                   <div className="flex items-center gap-2.5">
                     {p.moai?.icon_url ? (
                       <img src={srcCdn(p.moai.icon_url)} alt="" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
@@ -277,7 +302,7 @@ export default function MoaiListPage() {
                   </div>
                   <p className="mt-2 line-clamp-4 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#4a3630]">{p.body}</p>
                   {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-2 max-h-72 w-full rounded-xl object-cover" />}
-                </button>
+                </div>
               ))}
               {feed.length > 10 && (
                 <button onClick={() => setFeedAll((v) => !v)} className="w-full rounded-xl border border-[#f0d8d4] bg-white py-2 text-[12px] font-extrabold" style={{ color: "#c0392b" }}>
@@ -288,6 +313,38 @@ export default function MoaiListPage() {
           )}
         </div>
       </div>
+      {/* フィード投稿の編集(本人・事務局) */}
+      {editPost && (
+        <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/55 px-5" onClick={() => setEditPost(null)}>
+          <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: "#c0392b" }}>✎ 投稿を編集{me && editPost.user_id !== me.id ? "（事務局権限）" : ""}</div>
+            <textarea
+              value={editBody}
+              onChange={(e) => setEditBody(e.target.value)}
+              rows={5}
+              className="w-full resize-y rounded-xl border border-[#f0d8d4] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none"
+            />
+            <div className="mt-2 flex gap-2">
+              <button onClick={() => setEditPost(null)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
+              <button
+                onClick={async () => {
+                  if (!editBody.trim() || editBusy) return;
+                  setEditBusy(true);
+                  await createClient().from("moai_posts").update({ body: editBody.trim() }).eq("id", editPost.id);
+                  setEditBusy(false);
+                  setEditPost(null);
+                  load();
+                }}
+                disabled={!editBody.trim() || editBusy}
+                className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}
+              >
+                {editBusy ? "保存中..." : "保存する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* フィード投稿の中央モーダル */}
       {postModal && (
         <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/55 px-4" onClick={() => setPostModal(null)}>
