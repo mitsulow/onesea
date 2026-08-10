@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
 import { SeedSection } from "@/components/sekai/sections";
+import { fetchGroupMessages, type GroupMessageRow } from "@/lib/line";
 
 const GREEN = "#4a9a5a";
 const ALL_PREFS = [...PREFS, "海外"] as string[];
@@ -39,6 +40,23 @@ export default function SekaiMuraPrefPage() {
   const [mainSel, setMainSel] = useState("");
   const [mainBusy, setMainBusy] = useState(false);
   const [seedOpen, setSeedOpen] = useState(false); // ＋拠点の申請(県ページ内でそのまま申請できる)
+  /* チャットのインライン展開(飛ばずにこの場で最新10件) */
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState<GroupMessageRow[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const toggleChat = async () => {
+    const next = !chatOpen;
+    setChatOpen(next);
+    if (next && room && !chatLoading) {
+      setChatLoading(true);
+      try {
+        const list = await fetchGroupMessages("pref", room.id);
+        setChatMsgs(list.slice(-10)); // 最新10件だけこの場で見せる
+      } catch {}
+      setChatLoading(false);
+    }
+  };
   /* 県のFEED(こんなことをしました報告) */
   const [fposts, setFposts] = useState<any[]>([]);
   const [fBody, setFBody] = useState("");
@@ -189,6 +207,43 @@ export default function SekaiMuraPrefPage() {
     setCountyBusy(false);
   };
 
+  /* 参加中ボタンを押すと退会できる。ただし最後の1県は退会不可 */
+  const leaveCounty = async () => {
+    if (!me || !room || countyBusy) return;
+    if (!confirm(`セカイムラ${disp}を退会しますか？`)) return;
+    setCountyBusy(true);
+    try {
+      const supabase = createClient();
+      const { data: mems } = await supabase
+        .from("pref_room_members")
+        .select("room_id, pref_rooms!inner(prefecture, kind)")
+        .eq("user_id", me.id)
+        .eq("pref_rooms.kind", "sekai");
+      const myPrefs = [...new Set(((mems ?? []) as any[]).map((m) => m.pref_rooms?.prefecture).filter(Boolean))] as string[];
+      if (myPrefs.length <= 1) {
+        alert("退会できません。1つ以上の村を選んでください");
+        setCountyBusy(false);
+        return;
+      }
+      const { error } = await supabase.from("pref_room_members").delete().eq("room_id", room.id).eq("user_id", me.id);
+      if (error) throw error;
+      // メインをこの県にしていた場合は、残りの県へ自動で付け替え
+      const rest = myPrefs.filter((p) => p !== pref);
+      const { data: prof } = await supabase.from("profiles").select("prefecture").eq("id", me.id).maybeSingle();
+      if (prof?.prefecture === pref && rest.length) {
+        await supabase.from("profiles").update({ prefecture: rest[0] }).eq("id", me.id);
+        alert(`セカイムラ${disp}を退会しました。メインはセカイムラ${rest[0].replace(/[都府県]$/, "")}になりました`);
+      } else {
+        alert(`セカイムラ${disp}を退会しました`);
+      }
+      setJoinedCounty(false);
+      loadRoom();
+    } catch {
+      alert("退会できませんでした。もう一度お試しください");
+    }
+    setCountyBusy(false);
+  };
+
   const saveMain = async () => {
     if (!me || !mainSel || mainBusy) return;
     setMainBusy(true);
@@ -316,9 +371,15 @@ export default function SekaiMuraPrefPage() {
 
         {/* 県別セカイムラは拒否なし: 参加中バッジ or 参加ボタン */}
         {me && joinedCounty === true && (
-          <div className="mx-auto mt-2.5 inline-block rounded-full bg-white/90 px-4 py-1.5 text-[12px] font-extrabold" style={{ color: "#2a7a48" }}>
-            ✓ セカイムラ{disp}に参加中
-          </div>
+          <button
+            onClick={leaveCounty}
+            disabled={countyBusy}
+            className="mx-auto mt-2.5 block rounded-full bg-white/90 px-4 py-1.5 text-[12px] font-extrabold disabled:opacity-40"
+            style={{ color: "#2a7a48" }}
+            title="押すと退会できます"
+          >
+            ✓ セカイムラ{disp}に参加中 <span className="text-[9.5px] font-bold text-[#a0aca0]">（押すと退会）</span>
+          </button>
         )}
         {me && joinedCounty === false && (
           <button
@@ -336,14 +397,14 @@ export default function SekaiMuraPrefPage() {
           </Link>
         )}
 
-        {/* 💬 チャットページへ(グループTalKと同期) */}
-        <Link
-          href={`/sekai/mura/${idx}/chat`}
-          className="mx-auto mt-3 block max-w-[300px] rounded-xl py-3 text-[14px] font-extrabold text-white no-underline shadow"
+        {/* 💬 チャット: 押すと飛ばずに、この場で下に開く */}
+        <button
+          onClick={toggleChat}
+          className="mx-auto mt-3 block w-full max-w-[300px] rounded-xl py-3 text-[14px] font-extrabold text-white shadow"
           style={{ background: GREEN }}
         >
-          💬 セカイムラ{disp}のチャットを開く
-        </Link>
+          💬 セカイムラ{disp}のチャット{chatOpen ? "をとじる ▲" : "を開く ▼"}
+        </button>
 
         {/* 背景画像の変更(村長・事務局) */}
         {canEdit && (
@@ -353,6 +414,54 @@ export default function SekaiMuraPrefPage() {
           </label>
         )}
       </header>
+
+      {/* 💬 チャットのインライン表示(最新10件・この場で読める) */}
+      {chatOpen && (
+        <section className="px-3 pt-3">
+          <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
+            <div className="mb-1.5 flex items-center justify-between">
+              <div className="text-[12px] font-extrabold text-[#2a4a34]">💬 セカイムラ{disp}のチャット（最新10件）</div>
+              {room && <a href={`/talk/g/pref/${room.id}`} className="flex-shrink-0 text-[10.5px] font-bold text-[#8a9a84] no-underline">グループトークで観る →</a>}
+            </div>
+            {chatLoading ? (
+              <p className="py-4 text-center text-[11.5px] text-[#a0b09a]">読み込み中...</p>
+            ) : chatMsgs.length === 0 ? (
+              <p className="py-4 text-center text-[11.5px] leading-relaxed text-[#a0b09a]">
+                まだ書き込みがありません{me && joinedCounty !== true ? "（参加すると読み書きできます）" : ""}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {chatMsgs.map((m) => {
+                  const mine = m.sender_id === me?.id;
+                  const d = new Date(m.created_at);
+                  const prof = (m as any).profiles;
+                  return (
+                    <div key={m.id} className={`flex items-start gap-2 ${mine ? "flex-row-reverse" : ""}`}>
+                      {prof?.avatar_url
+                        ? <img src={srcCdn(prof.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
+                        : <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#dcead8] text-[11px]">🏡</span>}
+                      <div className={`max-w-[75%] ${mine ? "text-right" : ""}`}>
+                        <div className={`text-[9.5px] text-[#8a9a84] ${mine ? "pr-1" : "pl-1"}`}>{prof?.display_name ?? "むらびと"} ・ {d.getMonth() + 1}/{d.getDate()} {d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}</div>
+                        <div className={`mt-0.5 inline-block rounded-2xl px-3 py-1.5 text-left text-[12.5px] leading-relaxed ${mine ? "text-white" : "bg-[#f4f8f2] text-[#3a4438]"}`} style={mine ? { background: GREEN } : undefined}>
+                          {(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" className="mb-1 max-w-[160px] rounded-lg" />}
+                          {m.body === "📷 写真" && (m as any).image_url ? "" : m.body}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <Link
+              href={`/sekai/mura/${idx}/chat`}
+              className="mt-2.5 block rounded-xl border py-2 text-center text-[12px] font-extrabold no-underline"
+              style={{ borderColor: GREEN, color: GREEN }}
+            >
+              もっと観る（チャットに書き込む）→
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* 👑 セカイムラ◯◯の村長(3人まで) */}
       <section className="px-3 pt-4">
