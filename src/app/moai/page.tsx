@@ -17,6 +17,7 @@ import { ThreeCol } from "@/components/SideRails";
 export default function MoaiListPage() {
   const [me, setMe] = useState<User | null>(null);
   const [moais, setMoais] = useState<Moai[] | null>(null);
+  const [selPref, setSelPref] = useState(""); // "" = 全県のサークル
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [cat, setCat] = useState<string>("music");
@@ -164,6 +165,25 @@ export default function MoaiListPage() {
           </p>
         )}
 
+        {/* ◯◯県のサークルを探す — サークルは県別が取り組みやすい */}
+        <div className="mb-3 rounded-2xl p-3.5" style={{ background: "linear-gradient(150deg,#c0392b,#8e2820)" }}>
+          <div className="text-[15px] font-extrabold tracking-[1px] text-white">
+            🗿 {selPref ? `${selPref.replace(/[都府県]$/, "")}のサークルを探す` : "◯◯県のサークルを探す"}
+          </div>
+          <p className="mt-0.5 text-[10.5px] text-white/75">サークル・部活は同じ県どうしが取り組みやすい。あなたの県をえらんでみて</p>
+          <select
+            value={selPref}
+            onChange={(e) => setSelPref(e.target.value)}
+            className="mt-2 w-full rounded-xl border-0 bg-white px-3 py-2.5 text-[13.5px] font-extrabold outline-none"
+            style={{ color: "#c0392b" }}
+          >
+            <option value="">🌏 全県のサークル</option>
+            <option value="オンライン">💻 オンライン</option>
+            {PREFS.map((p) => <option key={p} value={p}>{p.replace(/[都府県]$/, "")}のMoAI</option>)}
+            <option value="海外">海外のMoAI</option>
+          </select>
+        </div>
+
         {/* あなたのMoAI(参加中) */}
         {me && (moais ?? []).some((m) => myStatus[m.id] === "approved") && (
           <div className="mb-2">
@@ -192,6 +212,7 @@ export default function MoaiListPage() {
             </button>
           )}
           {(moais ?? []).filter((m) => {
+            if (selPref && ((m as any).prefecture ?? "") !== selPref) return false;
             const k = q.trim().toLowerCase();
             if (!k) return true;
             return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || ((m as any).keywords ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k) || ((m as any).prefecture ?? "").toLowerCase().includes(k) || ((m as any).city ?? "").toLowerCase().includes(k);
