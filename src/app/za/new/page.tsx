@@ -22,6 +22,7 @@ export default function NewShopPage() {
   const [market, setMarket] = useState<Market>("ichi");
   const [price, setPrice] = useState("");
   const [payUrl, setPayUrl] = useState(""); // BASE・PayPayなど外部決済のURL(楽座)
+  const [barterSlots, setBarterSlots] = useState(1); // 何人まで物々交換できるか
   const [isTrial, setIsTrial] = useState(true);
   const [barter, setBarter] = useState(false);
   const [handover, setHandover] = useState("both"); // 交換方法(楽市のみ)
@@ -49,6 +50,7 @@ export default function NewShopPage() {
       if (d.handover) setHandover(d.handover);
       if (d.category) setCategory(d.category);
       if (Array.isArray(d.images)) setImages(d.images);
+      if (d.barterSlots) setBarterSlots(d.barterSlots);
     } catch {}
     restoredRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -56,9 +58,9 @@ export default function NewShopPage() {
   useEffect(() => {
     if (!restoredRef.current) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ market, name, description, price, payUrl, isTrial, barter, tip, handover, category, images }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ market, name, description, price, payUrl, barterSlots, isTrial, barter, tip, handover, category, images }));
     } catch {}
-  }, [market, name, description, price, payUrl, isTrial, barter, tip, handover, category, images]);
+  }, [market, name, description, price, payUrl, barterSlots, isTrial, barter, tip, handover, category, images]);
 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -108,6 +110,7 @@ export default function NewShopPage() {
         description: description.trim() || null,
         price_jpy: market === "ichi" ? null : price ? Number(price) : null,
         pay_url: market === "ichi" ? null : payUrl.trim() || null,
+        barter_slots: barterSlots,
         is_trial: market === "ichi" ? isTrial : false,
         accepts_barter: barter,
         handover: market === "ichi" ? handover : null,
@@ -204,16 +207,32 @@ export default function NewShopPage() {
                 </div>
               ))}
               {images.length < 4 && (
-                <label className="flex h-20 w-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-[#d8ccb4] text-[#b0a898]">
-                  {uploading ? <span className="text-2xl">⏳</span> : <CameraIcon size={26} />}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={(e) => onFiles(e.target.files)}
-                  />
-                </label>
+                <>
+                  {/* カメラでその場で撮る */}
+                  <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-dashed border-[#d8ccb4] text-[#b0a898]">
+                    {uploading ? <span className="text-2xl">⏳</span> : <CameraIcon size={22} />}
+                    <span className="text-[9px] font-bold">カメラで撮る</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => onFiles(e.target.files)}
+                    />
+                  </label>
+                  {/* 端末の写真から選ぶ */}
+                  <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-dashed border-[#d8ccb4] text-[#b0a898]">
+                    {uploading ? <span className="text-2xl">⏳</span> : <span className="text-[22px]">🖼</span>}
+                    <span className="text-[9px] font-bold">写真を選ぶ</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => onFiles(e.target.files)}
+                    />
+                  </label>
+                </>
               )}
             </div>
             <p className="mt-1 text-[10px] text-[#b8ae9c]">自動で圧縮されます（長辺1600px・WebP）</p>
@@ -260,9 +279,17 @@ export default function NewShopPage() {
                     <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-sprout.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 0円でゆずる</span>
                   </label>
+                  {!isTrial && (
+                    <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                      <span className="text-[12.5px] font-bold text-[#5a7d4a]">⇄ 何人まで交換できる？</span>
+                      <select value={barterSlots} onChange={(e) => setBarterSlots(Number(e.target.value))} className="ml-auto rounded-lg border border-[#ede5d8] bg-white px-2 py-1.5 text-[13px] outline-none">
+                        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}人</option>)}
+                      </select>
+                    </div>
+                  )}
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
-                    <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換で</span>
+                    <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換</span>
                   </label>
                   {/* ② 交換方法（受け渡しのしかた） */}
                   <div className="mt-1">
@@ -314,6 +341,14 @@ export default function NewShopPage() {
                     <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換もOK</span>
                   </label>
+                  {barter && (
+                    <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                      <span className="text-[12.5px] font-bold text-[#5a7d4a]">⇄ 何人まで交換できる？</span>
+                      <select value={barterSlots} onChange={(e) => setBarterSlots(Number(e.target.value))} className="ml-auto rounded-lg border border-[#ede5d8] bg-white px-2 py-1.5 text-[13px] outline-none">
+                        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}人</option>)}
+                      </select>
+                    </div>
+                  )}
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={tip} onChange={(e) => setTip(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-coin.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 投げ銭もOK</span>

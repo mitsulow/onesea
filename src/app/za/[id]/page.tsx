@@ -31,6 +31,28 @@ export default function ShopDetailPage() {
   const [proposing, setProposing] = useState(false);
   const [offers, setOffers] = useState<any[]>([]); // みんなのブツブツ交換提案（公開）
   const [buyOpen, setBuyOpen] = useState(false); // 購入オーバーレイ(BASE等をOneSeaの前面に重ねる)
+  const [acceptOffer, setAcceptOffer] = useState<any | null>(null); // この人に決める→確認ダイアログ
+  const [accepting, setAccepting] = useState(false);
+
+  const doAccept = async () => {
+    if (!me || !shop || !acceptOffer || accepting) return;
+    setAccepting(true);
+    const o = acceptOffer;
+    const slots = shop.barter_slots ?? 1;
+    const used = offers.filter((x: any) => x.accepted).length;
+    const willFill = used + 1 >= slots;
+    const supabase = createClient();
+    await supabase.from("barter_offers").update({ accepted: true }).eq("id", o.id);
+    if (willFill) await supabase.from("shops").update({ sold: true }).eq("id", shop.id).eq("owner_id", me.id);
+    try {
+      const chatId = await getOrCreateChat(me.id, o.user_id);
+      if (chatId) await sendMessage(chatId, me.id, `【ブツブツ交換 成立】「${shop.name}」⇄「${o.offer}」で決定しました！ありがとうございました🤝`);
+    } catch {}
+    setAccepting(false);
+    setAcceptOffer(null);
+    fetchShop(params.id).then((s2) => setShop(s2));
+    loadOffers();
+  };
   /* ✎修正(出品者+事務局): 了承ダイアログ→軽微な変更のみ */
   const [editConsent, setEditConsent] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -363,8 +385,7 @@ export default function ShopDetailPage() {
             {!shop.sold ? (
               <button
                 onClick={async () => {
-                  if (!confirm("売買完了にしますか？
-（商品はSOLD OUT表示になります）")) return;
+                  if (!confirm("売買完了にしますか？\n（商品はSOLD OUT表示になります）")) return;
                   const { createClient } = await import("@/lib/supabase/client");
                   await createClient().from("shops").update({ sold: true }).eq("id", shop.id).eq("owner_id", me!.id);
                   fetchShop(params.id).then((s2) => setShop(s2));
@@ -476,13 +497,18 @@ export default function ShopDetailPage() {
           <div>
             <div className="mb-1 text-[11px] font-extrabold text-[#5a7d4a]">
               いま来ているブツブツ交換の提案（{offers.length}件）
+              {(() => {
+                const slots = shop.barter_slots ?? 1;
+                const used = offers.filter((x: any) => x.accepted).length;
+                return slots > 1 ? ` ・ ${slots}人まで交換OK（あと${Math.max(0, slots - used)}枠）` : "";
+              })()}
             </div>
             <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
               {offers.map((o: any) => (
                 <div
                   key={o.id}
                   className="relative w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5"
-                  style={offers.some((x: any) => x.accepted) && !o.accepted ? { opacity: 0.55, filter: "grayscale(.6)" } : undefined}
+                  style={shop.sold && !o.accepted ? { opacity: 0.55, filter: "grayscale(.6)" } : undefined}
                 >
                   <div className="flex items-center gap-1.5">
                     {o.profiles?.avatar_url ? (
@@ -506,19 +532,7 @@ export default function ShopDetailPage() {
                   )}
                   {me && shop.owner_id === me.id && !shop.sold && (
                     <button
-                      onClick={async () => {
-                        if (!confirm(`「${o.profiles?.display_name ?? "この人"}さん」とのブツブツ交換に決定しますか？\n（商品はSOLDになります）`)) return;
-                        const supabase = createClient();
-                        await supabase.from("barter_offers").update({ accepted: true }).eq("id", o.id);
-                        await supabase.from("shops").update({ sold: true }).eq("id", shop.id).eq("owner_id", me.id);
-                        // 決定した相手にTalKでお知らせ
-                        try {
-                          const chatId = await getOrCreateChat(me.id, o.user_id);
-                          if (chatId) await sendMessage(chatId, me.id, `【ブツブツ交換 成立】「${shop.name}」⇄「${o.offer}」で決定しました！やり取りの続きはこのTalKで🤝`);
-                        } catch {}
-                        fetchShop(params.id).then((s2) => setShop(s2));
-                        loadOffers();
-                      }}
+                      onClick={() => setAcceptOffer(o)}
                       className="mt-1.5 w-full rounded-lg bg-[#c94d3a] py-1.5 text-[10.5px] font-extrabold text-white"
                     >
                       この人に決めた
@@ -816,6 +830,35 @@ export default function ShopDetailPage() {
                 {eSaving ? "保存中..." : "保存する"}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* この人に決める → 本人と交換が完了したか確認 */}
+      {acceptOffer && (
+        <div className="fixed inset-0 z-[125] flex items-center justify-center bg-black/55 px-6" onClick={() => setAcceptOffer(null)}>
+          <div className="w-full max-w-[330px] rounded-2xl bg-white p-5 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[30px]">🤝</div>
+            <h2 className="mt-1 text-[15px] font-extrabold leading-relaxed text-[#3a3428]">
+              {acceptOffer.profiles?.display_name ?? "この人"}さん本人と、<br />TalKで物々交換が終了しましたか？
+            </h2>
+            {(() => {
+              const slots = shop.barter_slots ?? 1;
+              const used = offers.filter((x: any) => x.accepted).length;
+              return slots > 1 ? (
+                <p className="mt-1.5 text-[11px] text-[#a09888]">{used + 1 >= slots ? "この決定で枠が埋まり、SOLD OUTになります" : `決定後も あと${slots - used - 1}枠のこります`}</p>
+              ) : (
+                <p className="mt-1.5 text-[11px] text-[#a09888]">決定すると商品はSOLD OUTになります</p>
+              );
+            })()}
+            <button
+              onClick={doAccept}
+              disabled={accepting}
+              className="mt-4 w-full rounded-xl py-3 text-[14px] font-extrabold text-white disabled:opacity-40"
+              style={{ background: "#2a8a4a" }}
+            >
+              {accepting ? "決定中..." : "✅ 本人と交換が完了した"}
+            </button>
+            <button onClick={() => setAcceptOffer(null)} className="mt-1.5 w-full py-2 text-[12px] font-bold text-[#a09888]">まだ（やめておく）</button>
           </div>
         </div>
       )}
