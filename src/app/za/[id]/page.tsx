@@ -394,7 +394,7 @@ export default function ShopDetailPage() {
                 className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white"
                 style={{ background: "linear-gradient(120deg,#2a8a4a,#1e6a38)" }}
               >
-                ✅ 売買完了（SOLD OUTにする）
+                ✅ 売買の完了を報告する（Sold Outにする）
               </button>
             ) : (
               <button
