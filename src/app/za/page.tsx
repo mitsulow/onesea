@@ -193,7 +193,7 @@ export default function ZaPage() {
             />
             <div className="min-w-0 flex-1">
               <div className="text-[15px] font-extrabold leading-tight text-white">
-                出品する（楽座を出す）（楽市に出す）
+                楽市、楽座を出す
               </div>
               <div className="text-[10.5px] leading-tight text-white/85">
                 お試し出品（0円）もブツブツ交換もOK
