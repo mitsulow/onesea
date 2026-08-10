@@ -311,7 +311,7 @@ export default function ShopDetailPage() {
         {/* 💳 購入はこちら(出品者の BASE・PayPay 等へ) */}
         {shop.pay_url && !shop.sold && (
           <button
-            onClick={() => setBuyOpen(true)}
+            onClick={() => { window.open(shop.pay_url!, "_blank", "noopener"); setBuyOpen(true); }}
             className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white"
             style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
           >
@@ -390,7 +390,7 @@ export default function ShopDetailPage() {
             {shop.market !== "ichi" && !shop.sold && (
               shop.pay_url ? (
                 <button
-                  onClick={() => setBuyOpen(true)}
+                  onClick={() => { window.open(shop.pay_url!, "_blank", "noopener"); setBuyOpen(true); }}
                   className="w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
                   style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
                 >
