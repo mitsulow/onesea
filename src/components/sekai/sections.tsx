@@ -2224,11 +2224,25 @@ export function VillagesSection({
   const [villages, setVillages] = useState<Village[] | null>(null);
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
   const [pref, setPref] = useState(""); // "" = 全世界の拠点
+  const [vMems, setVMems] = useState<Record<string, any[]>>({}); // 拠点ごとの村人(承認済み・アイコン用)
 
   const load = useCallback(async () => {
     const list = await fetchVillages(null);
     setVillages(list);
     if (me) setMineIds(await myVillageIds(me.id));
+    // カードに並べる村人アイコン(オーナーが先頭)
+    if (list.length) {
+      const { data: ms } = await createClient()
+        .from("village_members")
+        .select("village_id, user_id, created_at, profiles!village_members_user_id_fkey(username, display_name, avatar_url)")
+        .eq("status", "approved")
+        .in("village_id", list.map((v) => v.id))
+        .order("created_at")
+        .limit(500);
+      const map: Record<string, any[]> = {};
+      for (const m of (ms ?? []) as any[]) (map[m.village_id] = map[m.village_id] ?? []).push(m);
+      setVMems(map);
+    }
   }, [me]);
 
   useEffect(() => {
@@ -2250,19 +2264,6 @@ export function VillagesSection({
         <img src="/icons/icon-base.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3 }} />{" "}
         {pref || "全世界"}の拠点{villages ? `（${shown.length}）` : ""}
       </SectionTitle>
-
-      {/* 都道府県のセカイムラ — プルダウンで選ぶと各県のセカイムラトップ(県全体チャット+拠点一覧)へ */}
-      <select
-        defaultValue=""
-        onChange={(e) => { if (e.target.value) router.push(`/sekai/mura/${e.target.value}`); }}
-        className="mb-2.5 w-full rounded-xl border border-[#cfe0cc] bg-white px-3 py-2.5 text-[13px] font-extrabold outline-none"
-        style={{ color: "#2a7a48" }}
-      >
-        <option value="">🏡 セカイムラ◯◯県をえらぶ（県のチャット・拠点一覧へ）</option>
-        {([...PREFS, "海外"] as string[]).map((p, i) => (
-          <option key={p} value={i + 1}>セカイムラ{p.replace(/[都府県]$/, "")}</option>
-        ))}
-      </select>
 
       {/* ① 写真ストリップ — トップページと同じ。会員数が多い順 */}
       <div className="hide-scrollbar -mx-3 mb-2.5 flex gap-2.5 overflow-x-auto px-3 pb-1.5 pt-1" data-noswipe>
@@ -2307,62 +2308,102 @@ export function VillagesSection({
         </button>
       </div>
 
-      {/* ② 県セレクト */}
+      {/* ② 県セレクト — 選ぶと「セカイムラ◯◯県」の県ページが立ち上がる */}
       <select
         value={pref}
-        onChange={(e) => setPref(e.target.value)}
+        onChange={(e) => {
+          const v = e.target.value;
+          setPref("");
+          if (v) router.push(`/sekai/mura/${([...PREFS, "海外"] as string[]).indexOf(v) + 1}`);
+        }}
         className="mb-2.5 w-full rounded-xl border-2 border-[#c8dccb] bg-white px-3 py-2.5 text-[13.5px] font-bold outline-none"
         style={{ color: GREEN }}
       >
-        <option value="">🌏 全世界の拠点（会員数が多い順）</option>
-        {[...new Set((villages ?? []).map((v) => v.prefecture).filter(Boolean))].sort().map((pf) => (
-          <option key={pf as string} value={pf as string}>
-            セカイムラ{String(pf).replace(/[都府県]$/, "")}（{(villages ?? []).filter((v) => v.prefecture === pf).length}）
+        <option value="">🌏 全世界の拠点（会員数が多い順）— 県をえらぶと県ページへ</option>
+        {([...PREFS, "海外"] as string[]).map((pf) => (
+          <option key={pf} value={pf}>
+            セカイムラ{pf.replace(/[都府県]$/, "")}（{(villages ?? []).filter((v) => (pf === "海外" ? !(PREFS as readonly string[]).includes(v.prefecture ?? "") : v.prefecture === pf)).length}）
           </option>
         ))}
       </select>
 
-      {/* ③ 写真つき一覧（縦） */}
+      {/* ③ 拠点カード — 楽市楽座の商品表示と同じ2列グリッド(右上に県名・大きい写真・村人アイコン・参加ボタン) */}
       {villages === null ? (
         <p className="py-2 text-[12px] text-[#a0aca0]">読み込み中...</p>
       ) : shown.length === 0 ? (
         <p className="py-2 text-[12px] text-[#a0aca0]">この地域にはまだ拠点がありません。あなたが最初の拠点立ち上げ人に</p>
       ) : (
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           {shown.map((v) => {
             const joined = mineIds.has(v.id);
+            const mems = [...(vMems[v.id] ?? [])].sort((a, b) => (a.user_id === v.created_by ? -1 : 0) - (b.user_id === v.created_by ? -1 : 0));
+            const recruiting = v.recruiting !== false && v.policy !== "paused" && v.policy !== "full";
             return (
-              <Link
+              <div
                 key={v.id}
-                href={`/sekai/village/${v.id}`}
-                className="flex items-center gap-2.5 overflow-hidden rounded-xl border bg-white p-2 no-underline"
-                style={{ borderColor: v.is_official ? "#d4b96a88" : "#e2eae0" }}
+                className="relative flex h-full flex-col overflow-hidden rounded-md border bg-white shadow-sm"
+                style={{ borderColor: v.is_official ? "#d4b96a88" : "#dbe8d8" }}
               >
-                <div className="relative h-[64px] w-[92px] flex-shrink-0 overflow-hidden rounded-lg bg-[#eaf2ea]">
-                  {v.cover_url ? (
-                    <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                <div className="absolute left-0 right-0 top-0 z-10 h-[3px]" style={{ background: "#4a9a5a" }} />
+                <Link href={`/sekai/village/${v.id}`} className="block no-underline">
+                  <div className="relative aspect-square overflow-hidden bg-[#eaf2ea]">
+                    {v.cover_url ? (
+                      <img src={srcCdn(v.cover_url)} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-[34px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
+                        🏡
+                      </div>
+                    )}
+                    {/* 右上: ◯◯県(楽市楽座のカテゴリの位置) */}
+                    {v.prefecture && (
+                      <span className="absolute right-1.5 top-1.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-extrabold" style={{ color: "#2a7a48" }}>
+                        {v.prefecture}
+                      </span>
+                    )}
+                    {v.is_official && (
+                      <span className="absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-extrabold" style={{ background: "#d4b96a", color: "#1a2432" }}>公式</span>
+                    )}
+                    {joined && (
+                      <span className="absolute bottom-1.5 left-1.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-extrabold text-[#2a8a4a]">✓ 参加中</span>
+                    )}
+                  </div>
+                  <div className="px-2 pt-1.5">
+                    <h3 className="line-clamp-1 text-[12.5px] font-extrabold leading-tight text-[#2a4a34]">{v.name}</h3>
+                  </div>
+                </Link>
+                {/* 拠点オーナーから順に村人アイコン */}
+                <div className="flex flex-wrap items-center gap-1 px-2 pt-1">
+                  {mems.slice(0, 7).map((m: any, mi: number) => {
+                    const p2 = m.profiles;
+                    const isOwner = m.user_id === v.created_by;
+                    return (
+                      <span key={mi} className="relative inline-block" title={(isOwner ? "👑 " : "") + (p2?.display_name ?? "")}>
+                        {p2?.avatar_url ? (
+                          <img src={srcCdn(p2.avatar_url)} alt="" referrerPolicy="no-referrer" className={"h-6 w-6 rounded-full object-cover" + (isOwner ? " ring-2 ring-[#d4b96a]" : "")} />
+                        ) : (
+                          <span className={"flex h-6 w-6 items-center justify-center rounded-full bg-[#dcead8] text-[10px]" + (isOwner ? " ring-2 ring-[#d4b96a]" : "")}>🌾</span>
+                        )}
+                        {isOwner && <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[8px]">👑</span>}
+                      </span>
+                    );
+                  })}
+                  {mems.length > 7 && <span className="text-[9.5px] font-bold text-[#a0aca0]">+{mems.length - 7}</span>}
+                  {mems.length === 0 && <span className="text-[9.5px] text-[#c0ccc0]">村人 {memberN(v)}人</span>}
+                </div>
+                <div className="mt-auto p-2">
+                  {recruiting ? (
+                    <Link
+                      href={`/sekai/village/${v.id}`}
+                      className="block rounded-lg py-1.5 text-center text-[11px] font-extrabold no-underline"
+                      style={{ background: "#d4b96a", color: "#1a2432" }}
+                    >
+                      拠点に参加する
+                    </Link>
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[20px]" style={{ background: "linear-gradient(150deg,#4a9a5a,#1e4530)" }}>
-                      🏡
-                    </div>
+                    <div className="rounded-lg border border-[#e0e6dc] py-1.5 text-center text-[10px] font-bold text-[#a0aca0]">募集停止中</div>
                   )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="truncate text-[14px] font-extrabold text-[#2a4a34]">{v.name}</span>
-                    {v.is_official && (
-                      <span className="flex-shrink-0 rounded-full px-1.5 py-0.5 text-[8.5px] font-extrabold" style={{ background: "#f8f0d8", color: "#a08030", border: "1px solid #d4b96a" }}>公式</span>
-                    )}
-                    {joined && <span className="flex-shrink-0 text-[9px] font-bold text-[#4a9a6a]">✓ 参加中</span>}
-                  </div>
-                  <div className="mt-0.5 truncate text-[11px] text-[#a0aca0]">
-                    {v.prefecture ?? ""}
-                    {v.city ? ` ${v.city}` : ""} ・ {memberN(v)}人 ・ 拠点オーナー {v.profiles?.display_name ?? "—"}
-                  </div>
-                  {v.description && <div className="mt-0.5 truncate text-[11px] text-[#8a968a]">{v.description}</div>}
-                </div>
-                <span className="flex-shrink-0 pr-1 text-[12px] text-[#c0ccc0]">›</span>
-              </Link>
+              </div>
             );
           })}
         </div>

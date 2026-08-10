@@ -234,7 +234,8 @@ export interface Village {
   village_members: Array<{ count: number }>;
   cover_url?: string | null;
   icon_url?: string | null; // 拠点(=ページ)のアイコン
-  leaders?: string[] | null; // 村長(最大3人・登録順で自動継承)
+  leaders?: string[] | null; // 拠点立ち上げ人(最大3人・登録順で自動継承)
+  recruiting?: boolean | null; // 募集中か(falseで締め切り)
 }
 
 export interface Club {
@@ -334,7 +335,7 @@ export async function detectPrefecture(): Promise<string | null> {
 
 /* ============ 拠点（村） ============ */
 const VILLAGE_SELECT =
-  "id, name, prefecture, city, description, policy, is_official, created_by, leaders, cover_url, icon_url, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
+  "id, name, prefecture, city, description, policy, is_official, created_by, leaders, recruiting, cover_url, icon_url, profiles!villages_created_by_fkey(username, display_name, avatar_url), village_members(count)";
 
 export async function fetchVillages(pref?: string | null): Promise<Village[]> {
   const supabase = createClient();
