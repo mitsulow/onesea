@@ -446,7 +446,8 @@ export default function VillagePage() {
       </header>
 
       {/* 入村申請(村長・事務局のみ・MoAIと同じ大きな承認UI) */}
-      {(amLeader || amOffice) && members.some((m: any) => m.status === "pending") && (
+      {/* 入村申請の承認・却下は拠点オーナー(立ち上げ人)だけ。事務局には出さない */}
+      {amLeader && members.some((m: any) => m.status === "pending") && (
         <div className="mt-4 rounded-xl bg-white p-3" style={{ border: "1px solid #cfe0cf" }}>
           <div className="mb-1.5 text-[12.5px] font-extrabold" style={{ color: GREEN }}>入村申請 {members.filter((m: any) => m.status === "pending").length}件</div>
           {members.filter((m: any) => m.status === "pending").map((m: any) => {
