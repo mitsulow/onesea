@@ -187,11 +187,27 @@ export async function todaysVillager() {
   return list[doy % list.length];
 }
 
-/** 三択: "yes"(参加) / "no"(不参加) / null(未定=行を消す) */
-export async function setRsvp(userId: string, dateKey: string, kind: "new" | "full", status: "yes" | "no" | null) {
+/** 三択: "yes"(参加) / "no"(不参加) / null(未定=行を消す)。失敗は握りつぶさず返す */
+export async function setRsvp(userId: string, dateKey: string, kind: "new" | "full", status: "yes" | "no" | null): Promise<{ error: unknown | null }> {
   const supabase = createClient();
-  await supabase.from("moot_rsvps").delete().eq("user_id", userId).eq("moot_date", dateKey);
-  if (status) await supabase.from("moot_rsvps").insert({ user_id: userId, moot_date: dateKey, kind, status });
+  if (!status) {
+    const { error } = await supabase.from("moot_rsvps").delete().eq("user_id", userId).eq("moot_date", dateKey);
+    return { error };
+  }
+  // 先に入れてから古い行を消す(電波が切れても「押したのに消えた」にならない順序)
+  const { error: insErr } = await supabase.from("moot_rsvps").insert({ user_id: userId, moot_date: dateKey, kind, status });
+  if (insErr) {
+    // 既に行がある場合は update に切り替え
+    const { error: updErr } = await supabase.from("moot_rsvps").update({ status, kind }).eq("user_id", userId).eq("moot_date", dateKey);
+    if (updErr) return { error: updErr };
+  } else {
+    // 重複行(同日で別status)があれば古い方を整理
+    const { data } = await supabase.from("moot_rsvps").select("status").eq("user_id", userId).eq("moot_date", dateKey);
+    if ((data ?? []).length > 1) {
+      await supabase.from("moot_rsvps").delete().eq("user_id", userId).eq("moot_date", dateKey).neq("status", status);
+    }
+  }
+  return { error: null };
 }
 
 export async function toggleRsvp(userId: string, dateKey: string, kind: "new" | "full", isRsvped: boolean) {

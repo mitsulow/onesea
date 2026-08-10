@@ -301,7 +301,14 @@ export function MootsSection({
     if (!me || !next) return;
     const cur = joined ? "yes" : declined ? "no" : null;
     const nextSt = cur === want ? null : want;
-    await setRsvp(me.id, next.dateKey, next.kind, nextSt);
+    // 誤タップで参加が外れないよう、取り消しだけは一度確認する
+    if (nextSt === null && !confirm(want === "yes" ? "参加を取り消しますか？" : "不参加を取り消しますか？")) return;
+    const { error } = await setRsvp(me.id, next.dateKey, next.kind, nextSt);
+    if (error) {
+      alert("保存できませんでした。通信環境を確認して、もう一度押してください");
+      await load();
+      return;
+    }
     if (nextSt === "yes") writeMootToTecho(next);
     else removeMootFromTecho(next);
     await load();
