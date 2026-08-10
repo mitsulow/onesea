@@ -406,46 +406,42 @@ export default function VillagePage() {
               {village.recruiting === false ? "募集を再開する" : "募集を締め切る"}
             </button>
           )}
-          {amLeader && (
-            <button
-              onClick={openEdit}
-              className="rounded-xl border border-white/25 px-4 py-2.5 text-[12.5px] font-bold text-[#c8dcc8]"
-            >
-              ✎ 修正する
-            </button>
-          )}
+
 
         </div>
-
-        {/* 公式拠点の申請（立ち上げ村長だけに見える） */}
-        {amLeader && !village.is_official && (
-          <button
-            onClick={async () => {
-              const settings = await fetchSettings();
-              const admin = settings.admin_user_id;
-              if (!admin) {
-                alert("公式拠点の申請窓口は準備中です（事務局の管理者が設定され次第、ここから申請できます）");
-                return;
-              }
-              const chatId = await getOrCreateChat(me.id, admin);
-              if (chatId) {
-                await sendMessage(
-                  chatId,
-                  me.id,
-                  `🏛 公式拠点の申請\n「${village.name}」（${village.prefecture}）をセカイムラ公式拠点として申請します。よろしくお願いします。`
-                );
-                router.push(`/talk/${chatId}`);
-              }
-            }}
-            className="mx-auto mt-3 block rounded-xl border px-5 py-2.5 text-[12.5px] font-extrabold"
-            style={{ borderColor: "#d4b96a88", color: "#e8d5a0", background: "rgba(212,185,106,.1)" }}
-          >
-            🏛 公式拠点を事務局に申請する
-          </button>
-        )}
       </header>
 
       {/* 入村申請(村長・事務局のみ・MoAIと同じ大きな承認UI) */}
+      {/* 拠点の管理(オーナー=修正・削除 / 事務局=削除のみ) */}
+      {(amLeader || amOffice) && (
+        <div className="mt-3 flex gap-2 px-1">
+          {amLeader && (
+            <button
+              type="button"
+              onClick={openEdit}
+              className="flex-1 rounded-xl border-2 py-2.5 text-[13px] font-extrabold"
+              style={{ borderColor: "#4a8a5c", color: "#3a7a4c", background: "#f4f8f0" }}
+            >
+              ✎ 拠点ページを修正する
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={async () => {
+              if (!confirm(`「${village.name}」を削除しますか？\n（投稿・村人・グループTalKもすべて消えます。元に戻せません）`)) return;
+              const { error } = await createClient().rpc("delete_village", { vid: villageId });
+              if (error) { alert("削除できませんでした: " + error.message); return; }
+              alert("拠点を削除しました");
+              router.replace("/sekai/villages");
+            }}
+            className="rounded-xl border px-3 py-2.5 text-[12.5px] font-bold"
+            style={{ borderColor: "#d0a0a0", color: "#c05030", background: "#fff" }}
+          >
+            🗑 削除{amOffice && !amLeader ? "（事務局）" : ""}
+          </button>
+        </div>
+      )}
+
       {/* 入村申請の承認・却下は拠点オーナー(立ち上げ人)だけ。事務局には出さない */}
       {amLeader && members.some((m: any) => m.status === "pending") && (
         <div className="mt-4 rounded-xl bg-white p-3" style={{ border: "1px solid #cfe0cf" }}>
