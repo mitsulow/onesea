@@ -78,6 +78,9 @@ export default function CotozutePage() {
   const [stories, setStoriesList] = useState<Story[]>([]);
   const [moais, setMoais] = useState<any[]>([]);
   const [storyView, setStoryView] = useState<number | null>(null); // 表示中のストーリーindex
+  const [storyDir, setStoryDir] = useState<1 | -1>(1); // スライド方向(1=次へ)
+  const [storyHearts, setStoryHearts] = useState<Record<string, number>>({});
+  const [myHearts, setMyHearts] = useState<Set<string>>(new Set());
   const [storyUploading, setStoryUploading] = useState(false);
   const [storyDraft, setStoryDraft] = useState<{ file: File; url: string } | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false); // 投稿はわらわ〜会員専用
@@ -120,6 +123,33 @@ export default function CotozutePage() {
       .then((d) => setSchumannHz(d?.modes?.F1?.hz ?? null))
       .catch(() => {});
   }, []);
+
+  /* ストーリーズ: 10秒で自動的に次へ(スライド演出はkey+CSSで) */
+  useEffect(() => {
+    if (storyView == null) return;
+    const t = setTimeout(() => {
+      setStoryDir(1);
+      setStoryView((v) => (v != null && v + 1 < stories.length ? v + 1 : null));
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [storyView, stories.length]);
+
+  /* ストーリーズ: 💓数と自分の💓を読込(ビューアを開いた時) */
+  useEffect(() => {
+    if (storyView == null || stories.length === 0) return;
+    const ids = stories.map((st) => st.id);
+    createClient().from("story_likes").select("story_id, user_id").in("story_id", ids).then(({ data }) => {
+      const c: Record<string, number> = {};
+      const mine = new Set<string>();
+      for (const r of data ?? []) {
+        c[r.story_id] = (c[r.story_id] ?? 0) + 1;
+        if (r.user_id === me?.id) mine.add(r.story_id);
+      }
+      setStoryHearts(c);
+      setMyHearts(mine);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storyView == null, stories.length]);
 
   const loadLikers = useCallback(async (list: FeedItem[]) => {
     const ids = list.filter((x) => x.kind === "coto").map((x) => (x.kind === "coto" ? x.post.id : ""));
@@ -441,7 +471,7 @@ export default function CotozutePage() {
             ＋
           </span>
           <div className="px-1 pt-5 text-center text-[10.5px] font-bold leading-snug text-[#1c1e21]">
-            {storyUploading ? "投稿中..." : "消える言伝を作成"}
+            {storyUploading ? "投稿中..." : "ストーリーズを作成"}
           </div>
         </label>
       )}
@@ -1014,7 +1044,8 @@ export default function CotozutePage() {
       {/* ストーリービューア（全画面・タップで次へ） */}
       {storyView != null && stories[storyView] && (
         <div
-          className="fixed inset-0 z-[92] flex items-center justify-center bg-black"
+          data-noswipe
+          className="fixed inset-0 z-[92] flex items-center justify-center overflow-hidden bg-black"
           onClick={() => {
             if (storySwipe.current?.moved) return;
             setStoryView(storyView + 1 < stories.length ? storyView + 1 : null);
@@ -1030,12 +1061,53 @@ export default function CotozutePage() {
             const sw = storySwipe.current;
             if (!sw) return;
             const dx = e.changedTouches[0].clientX - sw.x;
-            if (dx < -40) setStoryView(storyView + 1 < stories.length ? storyView + 1 : null); // 左スワイプ→次
-            else if (dx > 40) setStoryView(storyView > 0 ? storyView - 1 : storyView); // 右スワイプ→前
+            if (dx < -40) { setStoryDir(1); setStoryView(storyView + 1 < stories.length ? storyView + 1 : null); } // 左スワイプ→次
+            else if (dx > 40) { setStoryDir(-1); setStoryView(storyView > 0 ? storyView - 1 : storyView); } // 右スワイプ→前
             setTimeout(() => (storySwipe.current = null), 50);
           }}
         >
-          <img src={srcCdn(stories[storyView].image_url)} alt="" className="max-h-full w-full object-contain" />
+          <style>{`
+            @keyframes storyInR { from { transform: translateX(70%); opacity: .5; } to { transform: none; opacity: 1; } }
+            @keyframes storyInL { from { transform: translateX(-70%); opacity: .5; } to { transform: none; opacity: 1; } }
+            @keyframes storyBar { from { width: 0%; } to { width: 100%; } }
+          `}</style>
+          {/* 上部プログレスバー(10秒) */}
+          <div className="absolute left-2 right-2 top-1.5 z-10 flex gap-1" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+            {stories.map((st, i) => (
+              <div key={st.id} className="h-[3px] flex-1 overflow-hidden rounded-full bg-white/25">
+                {i < storyView && <div className="h-full w-full bg-white/90" />}
+                {i === storyView && <div key={`bar-${storyView}`} className="h-full bg-white/90" style={{ animation: "storyBar 10s linear forwards" }} />}
+              </div>
+            ))}
+          </div>
+          <img
+            key={`story-${storyView}`}
+            src={srcCdn(stories[storyView].image_url)}
+            alt=""
+            className="max-h-full w-full object-contain"
+            style={{ animation: `${storyDir === 1 ? "storyInR" : "storyInL"} .32s cubic-bezier(0.2,0.8,0.3,1)` }}
+          />
+          {/* 💓 リアクション */}
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (!me) { alert("ログインすると💓できます"); return; }
+              const sid = stories[storyView].id;
+              if (myHearts.has(sid)) return;
+              setMyHearts((prev) => new Set(prev).add(sid));
+              setStoryHearts((prev) => ({ ...prev, [sid]: (prev[sid] ?? 0) + 1 }));
+              try { await createClient().rpc("story_heart", { p_story: sid }); } catch {}
+            }}
+            className="absolute bottom-6 right-4 flex flex-col items-center"
+            style={{ marginBottom: "env(safe-area-inset-bottom)" }}
+          >
+            <span className={`text-[34px] transition-transform ${myHearts.has(stories[storyView].id) ? "scale-110" : "opacity-80"}`} style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,.6))" }}>
+              {myHearts.has(stories[storyView].id) ? "💓" : "🤍"}
+            </span>
+            <span className="num text-[11px] font-bold text-white" style={{ textShadow: "0 1px 4px rgba(0,0,0,.8)" }}>
+              {storyHearts[stories[storyView].id] ?? 0}
+            </span>
+          </button>
           <div className="absolute left-3 top-3 flex items-center gap-2" style={{ paddingTop: "env(safe-area-inset-top)" }}>
             <span className="h-9 w-9 overflow-hidden rounded-full" style={{ border: `2px solid ${TIFFANY}` }}>
               {stories[storyView].profiles?.avatar_url ? (
@@ -1055,7 +1127,7 @@ export default function CotozutePage() {
             <button
               onClick={async (e) => {
                 e.stopPropagation();
-                if (!confirm("この消える言伝を削除しますか？")) return;
+                if (!confirm("このストーリーズを削除しますか？")) return;
                 await deleteStory(stories[storyView].id, me.id);
                 setStoryView(null);
                 setStoriesList(await fetchStories());

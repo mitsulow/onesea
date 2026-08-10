@@ -49,6 +49,8 @@ export function notifText(n: NotificationRow): string {
       return `拠点への入村が承認されました🎉`;
     case "village_rejected":
       return `拠点への入村は今回は見送りになりました`;
+    case "story_like":
+      return `${who}さんがあなたのストーリーズに💓しました`;
     default:
       return `${who}さんからお知らせがあります`;
   }
