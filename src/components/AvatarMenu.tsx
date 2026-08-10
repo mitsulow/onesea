@@ -252,7 +252,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
               楽市楽座
             </Link>
             <Link href="/moai" onClick={() => setOpen(false)} className={item + hereCls("/moai")}>
-              {icon("/icons/icon-moai-tent.webp")} MoAI
+              {icon("/icons/tab-home.png")} MoAI
             </Link>
             <Link href="/#techo" onClick={() => setOpen(false)} className={item + hereCls("/#techo")}>
               {icon("/icons/icon-techo.webp")} 手帳

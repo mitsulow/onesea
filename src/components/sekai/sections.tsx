@@ -177,7 +177,7 @@ const SEKAI_MENU = [
   { href: "/sekai/meister", icon: "/icons/icon-course.webp", label: "講座" },
   { href: "/sekai/tasukete", icon: "/icons/icon-tasukete.webp", label: "助けて" },
   { href: "/sekai/map", icon: "/icons/icon-japanmap.webp", label: "地図" },
-  { href: "/moai", icon: "/icons/icon-moai-tent.webp", label: "MoAI（シュミサークル）" },
+  { href: "/moai", icon: "/icons/tab-home.png", label: "MoAI（シュミサークル）" },
 ];
 
 /** 左上の三本線メニュー。floating=ヘッダーが無いページ用(左上に浮かせる) */
