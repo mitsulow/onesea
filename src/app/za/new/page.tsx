@@ -21,6 +21,7 @@ export default function NewShopPage() {
   const [description, setDescription] = useState("");
   const [market, setMarket] = useState<Market>("ichi");
   const [price, setPrice] = useState("");
+  const [payUrl, setPayUrl] = useState(""); // BASE・PayPayなど外部決済のURL(楽座)
   const [isTrial, setIsTrial] = useState(true);
   const [barter, setBarter] = useState(false);
   const [handover, setHandover] = useState("both"); // 交換方法(楽市のみ)
@@ -74,6 +75,7 @@ export default function NewShopPage() {
         name: name.trim(),
         description: description.trim() || null,
         price_jpy: market === "ichi" ? null : price ? Number(price) : null,
+        pay_url: market === "ichi" ? null : payUrl.trim() || null,
         is_trial: market === "ichi" ? isTrial : false,
         accepts_barter: barter,
         handover: market === "ichi" ? handover : null,
@@ -225,6 +227,17 @@ export default function NewShopPage() {
                     <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-sprout.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 0円でゆずる</span>
                   </label>
+                  {/* 有料販売の決済リンク: BASE・PayPay等のURLを貼ると「購入はこちら」ボタンになる */}
+                  <div className="rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                    <div className="text-[11.5px] font-extrabold text-[#8a7a5a]">💳 購入リンク（有料で売る場合）</div>
+                    <input
+                      value={payUrl}
+                      onChange={(e) => setPayUrl(e.target.value)}
+                      placeholder="BASEやPAYPAYなどのURL"
+                      className="mt-1 w-full bg-transparent text-[13px] outline-none"
+                    />
+                    <p className="mt-0.5 text-[9.5px] leading-relaxed text-[#b0a890]">BASE / Shopify / PayPal / Stripe / PayPay など、あなたが使っている決済・ショップのリンクを貼れます。買う人には「購入はこちら」ボタンで表示されます</p>
+                  </div>
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換で</span>

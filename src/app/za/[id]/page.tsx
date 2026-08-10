@@ -28,6 +28,7 @@ export default function ShopDetailPage() {
   const [offerText, setOfferText] = useState("");
   const [proposing, setProposing] = useState(false);
   const [offers, setOffers] = useState<any[]>([]); // みんなのブツブツ交換提案（公開）
+  const [buyDlg, setBuyDlg] = useState(false); // 購入前のご案内(TalK連絡のお願い)
   const [outOffers, setOutOffers] = useState<any[]>([]); // この品を差し出して提案中の交換(相手の品への入口)
 
   useEffect(() => {
@@ -273,6 +274,17 @@ export default function ShopDetailPage() {
             </span>
           </div>
         </div>
+
+        {/* 💳 購入はこちら(出品者の BASE・PayPay 等へ) */}
+        {shop.pay_url && !shop.sold && (
+          <button
+            onClick={() => setBuyDlg(true)}
+            className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white"
+            style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
+          >
+            🛒 購入はこちら
+          </button>
+        )}
 
         {shop.description && (
           <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[#5a5448]">{shop.description}</p>
@@ -614,6 +626,30 @@ export default function ShopDetailPage() {
           )}
         </div>
       </div>
+      {/* 購入前のご案内 → 出品者の決済ページへ */}
+      {buyDlg && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-6" onClick={() => setBuyDlg(false)}>
+          <div className="w-full max-w-[340px] rounded-2xl bg-white p-5 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[32px]">🛒</div>
+            <h2 className="mt-1 text-[15px] font-extrabold text-[#3a3428]">購入ページへ移動します</h2>
+            <p className="mt-2 rounded-xl bg-[#fdf6e4] px-3 py-2.5 text-[12.5px] font-bold leading-relaxed text-[#8a6a20]">
+              ご購入後は、TalKで出品者さんに<br />ひとこと連絡をお願いします🙏
+            </p>
+            <p className="mt-1.5 text-[10.5px] text-[#a09888]">出品者さんのショップ（BASE・PayPayなど）が開きます</p>
+            <a
+              href={shop.pay_url ?? "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setBuyDlg(false)}
+              className="mt-3 block w-full rounded-xl py-3 text-[14px] font-extrabold text-white no-underline"
+              style={{ background: "#c94d3a" }}
+            >
+              購入ページを開く →
+            </a>
+            <button onClick={() => setBuyDlg(false)} className="mt-1.5 w-full py-1.5 text-[11.5px] font-bold text-[#a09888]">やめておく</button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

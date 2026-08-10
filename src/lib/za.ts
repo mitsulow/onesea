@@ -11,6 +11,7 @@ export interface Shop {
   name: string;
   description: string | null;
   price_jpy: number | null;
+  pay_url?: string | null; // BASE・PayPay等の外部購入リンク
   sold?: boolean; // ブツブツ交換成立などで売り切れ
   handover?: string | null; // 交換方法: pickup(取りに来て) / cod(着払い郵送) / both
   is_trial: boolean;
@@ -47,7 +48,7 @@ export function categoryOf(id: string | null) {
 }
 
 const SHOP_SELECT =
-  "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, sold, handover, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
+  "id, owner_id, name, description, price_jpy, pay_url, is_trial, accepts_barter, accepts_tip, category, market, sold, handover, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
 
 export async function fetchShops(category?: string | null): Promise<Shop[]> {
   const supabase = createClient();
