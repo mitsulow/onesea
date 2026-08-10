@@ -107,7 +107,7 @@ const SERVICES: Service[] = [
     inactive: "#a09888",
     tabs: [
       { href: "/za/new", icon: "/icons/icon-listing.webp", label: "出品する", hot: true },
-      { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
+      { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
     ],
   },
   {
