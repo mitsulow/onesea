@@ -222,6 +222,21 @@ export default function LinePage() {
         </Link>
       )}
 
+      {/* 🔍 人物検索（わらわ〜名鑑） */}
+      {me && !q && (
+        <Link
+          href="/meikan"
+          className="flex items-center gap-3 border-b border-[#ede5d8] bg-white px-4 py-2.5 no-underline active:bg-[#faf6ec]"
+        >
+          <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-[18px]" style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)" }}>🔍</span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13.5px] font-bold text-[#3a3428]">人物検索（わらわ〜名鑑）</div>
+            <div className="text-[11px] text-[#a09888]">名前や県でわらわ〜会員を探して、名刺→TalKへ</div>
+          </div>
+          <span className="flex-shrink-0 text-[12px] text-[#c0b8a8]">›</span>
+        </Link>
+      )}
+
       {!ready ? null : !me ? (
         <p className="px-5 py-10 text-center text-sm text-[#8a8070]">
           <Link href="/" className="text-[#c94d3a] underline">

@@ -63,6 +63,17 @@ export default function UserPage() {
   const [bioDraft, setBioDraft] = useState("");
   const [busy, setBusy] = useState<"cover" | "avatar" | null>(null);
   const [showMeishi, setShowMeishi] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false); // 📇 名刺交換QR
+  const [qrData, setQrData] = useState<string | null>(null);
+  const openQr = async () => {
+    if (!me) return;
+    try {
+      const QR = (await import("qrcode")).default;
+      const data = await QR.toDataURL(`https://onesea.vercel.app/meishi/${me.id}`, { width: 480, margin: 1, color: { dark: "#3a3428", light: "#ffffff" } });
+      setQrData(data);
+      setQrOpen(true);
+    } catch { alert("QRを作れませんでした。もう一度お試しください"); }
+  };
   const [authReady, setAuthReady] = useState(false);
   const meishiShown = useRef(false);
   const [cropping, setCropping] = useState<{ kind: "cover" | "avatar"; file: File } | null>(null);
@@ -383,6 +394,20 @@ export default function UserPage() {
           {/* @Warawer・わらわ〜No.はわらわ〜会員（認証済み）だけの称号 */}
           {isWara && profile.member_no != null && (
             <div className="text-[12px] text-[#a09888]">@Warawer{String(profile.member_no).padStart(7, "0")}</div>
+          )}
+          {isMe && (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <button
+                onClick={openQr}
+                className="rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
+                style={{ background: "#c94d3a" }}
+              >
+                📇 名刺交換（QRを見せる）
+              </button>
+              <Link href="/meikan" className="rounded-full border px-3 py-1.5 text-[11.5px] font-bold no-underline" style={{ borderColor: "#d4b96a", color: "#a08030" }}>
+                🔍 わらわ〜名鑑
+              </Link>
+            </div>
           )}
           {/* 地球冒険日数(以前は右上の絶対配置で、狭い画面でわらわ〜No.と重なっていた) */}
           {profile.birthday && (
@@ -932,6 +957,17 @@ export default function UserPage() {
                 {ideasOpen ? "たたむ" : `さらに ${ideas.length - 5}件をみる`}
               </button>
             )}
+          </div>
+        </div>
+      )}
+      {/* 📇 名刺交換QRモーダル */}
+      {qrOpen && qrData && (
+        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 px-6" onClick={() => setQrOpen(false)}>
+          <div className="w-full max-w-[320px] rounded-2xl bg-white p-5 text-center" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[15px] font-extrabold text-[#3a3428]">📇 名刺交換</div>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-[#8a8070]">リアルで会った人に、このQRをスマホのカメラで読み取ってもらってください。相手の画面で「名刺交換する」を押すと、お互いフォロー+TalKでつながります</p>
+            <img src={qrData} alt="名刺交換QR" className="mx-auto mt-3 w-[220px] rounded-xl" style={{ border: "1px solid #ede5d8" }} />
+            <button onClick={() => setQrOpen(false)} className="mt-3 w-full rounded-xl border border-[#e0d8c8] py-2.5 text-[13px] font-bold text-[#6a5f4e]">とじる</button>
           </div>
         </div>
       )}

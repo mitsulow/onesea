@@ -35,6 +35,8 @@ export function notifText(n: NotificationRow): string {
       return `記事にハートが付きました`;
     case "follow":
       return `${who}さんにフォローされました`;
+    case "meishi":
+      return `📇 ${who}さんと名刺交換しました！お互いフォローになり、TalKで話せます`;
     case "quest_call":
       return `あなたのスキルが呼ばれています！「この指とまれ」に旗が立ちました`;
     case "quest_pick":

@@ -359,6 +359,34 @@ export default function ShopDetailPage() {
         )}
         {isMine ? (
           <div className="space-y-2">
+            {/* 売買完了: 外部サイトやTalKで売買を確認できたら座主が押す → SOLD OUT */}
+            {!shop.sold ? (
+              <button
+                onClick={async () => {
+                  if (!confirm("売買完了にしますか？
+（商品はSOLD OUT表示になります）")) return;
+                  const { createClient } = await import("@/lib/supabase/client");
+                  await createClient().from("shops").update({ sold: true }).eq("id", shop.id).eq("owner_id", me!.id);
+                  fetchShop(params.id).then((s2) => setShop(s2));
+                }}
+                className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white"
+                style={{ background: "linear-gradient(120deg,#2a8a4a,#1e6a38)" }}
+              >
+                ✅ 売買完了（SOLD OUTにする）
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  if (!confirm("SOLD OUTを取り消して、募集中に戻しますか？")) return;
+                  const { createClient } = await import("@/lib/supabase/client");
+                  await createClient().from("shops").update({ sold: false }).eq("id", shop.id).eq("owner_id", me!.id);
+                  fetchShop(params.id).then((s2) => setShop(s2));
+                }}
+                className="w-full rounded-xl border border-[#e0d6c6] bg-white py-2.5 text-[12.5px] font-bold text-[#a09888]"
+              >
+                SOLD OUTを取り消す（募集中に戻す）
+              </button>
+            )}
             <button
               onClick={() => setEditConsent(true)}
               className="w-full rounded-xl border-2 py-3 text-[14px] font-extrabold"
@@ -451,7 +479,11 @@ export default function ShopDetailPage() {
             </div>
             <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
               {offers.map((o: any) => (
-                <div key={o.id} className="relative w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5">
+                <div
+                  key={o.id}
+                  className="relative w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5"
+                  style={offers.some((x: any) => x.accepted) && !o.accepted ? { opacity: 0.55, filter: "grayscale(.6)" } : undefined}
+                >
                   <div className="flex items-center gap-1.5">
                     {o.profiles?.avatar_url ? (
                       <img src={o.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-6 w-6 rounded-full object-cover" />
@@ -466,10 +498,10 @@ export default function ShopDetailPage() {
                   )}
                   {o.accepted && (
                     <span
-                      className="pointer-events-none absolute right-1 top-1 flex h-[46px] w-[46px] items-center justify-center rounded-full border-[3px] border-[#d02020] text-[13px] font-extrabold text-[#d02020]"
-                      style={{ transform: "rotate(-14deg)", background: "rgba(255,255,255,.82)" }}
+                      className="pointer-events-none absolute right-1 top-1 flex h-[52px] w-[52px] items-center justify-center rounded-full border-[4px] border-[#d02020] text-[28px] font-extrabold text-[#d02020]"
+                      style={{ transform: "rotate(-14deg)", background: "rgba(255,255,255,.85)", fontFamily: "serif", boxShadow: "0 1px 4px rgba(0,0,0,.25)" }}
                     >
-                      決定
+                      決
                     </span>
                   )}
                   {me && shop.owner_id === me.id && !shop.sold && (
