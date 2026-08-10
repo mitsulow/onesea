@@ -370,7 +370,7 @@ export default function UserPage() {
               className="px-2 py-0.5 text-[9.5px] font-extrabold"
               style={{ background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }}
             >
-              🌾 セカイムラ{(profile.prefecture ?? "").replace(/[都府県]$/, "") || "ムラビト"}
+              🌾 セカイムラ{(profile.prefecture ?? "").replace(/[都府県]$/, "") || "ムラビト"}所属
             </span>
           )}
         </span>

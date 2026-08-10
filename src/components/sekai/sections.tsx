@@ -1474,7 +1474,7 @@ export function ActivitySection({ me }: { me: User | null }) {
             <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
           </div>
           <div className="px-2 py-1.5">
-            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作りたい</div>
+            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 拠点を立ち上げたい</div>
             <div className="truncate text-[10px] text-[#a0aca0]">{seedOpen ? "閉じる ▲" : "3人集めて申請 ▼"}</div>
           </div>
         </button>
@@ -2302,7 +2302,7 @@ export function VillagesSection({
             <img src="/icons/icon-sprout.webp" alt="" style={{ width: 34, height: 34 }} />
           </div>
           <div className="px-2 py-1.5">
-            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 村を作りたい</div>
+            <div className="text-[12px] font-extrabold" style={{ color: GREEN }}>＋ 拠点を立ち上げたい</div>
             <div className="truncate text-[10px] text-[#a0aca0]">3人集めて申請 ▼</div>
           </div>
         </button>

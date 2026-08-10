@@ -33,6 +33,10 @@ export default function SekaiMuraPrefPage() {
   const [villagers, setVillagers] = useState<any[]>([]);
   const [joinedCounty, setJoinedCounty] = useState<boolean | null>(null); // この県に参加中か
   const [countyBusy, setCountyBusy] = useState(false);
+  /* 2県目以降に参加した時だけ「メインはどっち？」を聞く(メインはマイページのバッジに出る) */
+  const [mainPick, setMainPick] = useState<string[] | null>(null);
+  const [mainSel, setMainSel] = useState("");
+  const [mainBusy, setMainBusy] = useState(false);
   const [villages, setVillages] = useState<any[]>([]);
   const [upBusy, setUpBusy] = useState<"cover" | "icon" | null>(null);
   /* 県の村長(3人まで) */
@@ -125,11 +129,34 @@ export default function SekaiMuraPrefPage() {
       const { error: e2 } = await supabase.from("pref_room_members").upsert({ room_id: room.id, user_id: me.id });
       if (e2) throw e2;
       setJoinedCounty(true);
+      // 参加している県を数える: 1県目ならそのままメイン、2県目以降ならメインを選んでもらう
+      const { data: mems } = await supabase
+        .from("pref_room_members")
+        .select("room_id, pref_rooms!inner(prefecture, kind)")
+        .eq("user_id", me.id)
+        .eq("pref_rooms.kind", "sekai");
+      const myPrefs = [...new Set(((mems ?? []) as any[]).map((m) => m.pref_rooms?.prefecture).filter(Boolean))] as string[];
+      if (myPrefs.length <= 1) {
+        await supabase.from("profiles").update({ prefecture: pref }).eq("id", me.id);
+      } else {
+        const { data: prof } = await supabase.from("profiles").select("prefecture").eq("id", me.id).maybeSingle();
+        setMainSel(prof?.prefecture && myPrefs.includes(prof.prefecture) ? prof.prefecture : pref);
+        setMainPick(myPrefs);
+      }
       loadRoom();
     } catch {
       alert("参加できませんでした。もう一度お試しください");
     }
     setCountyBusy(false);
+  };
+
+  const saveMain = async () => {
+    if (!me || !mainSel || mainBusy) return;
+    setMainBusy(true);
+    const { error } = await createClient().from("profiles").update({ prefecture: mainSel }).eq("id", me.id);
+    setMainBusy(false);
+    if (error) { alert("保存できませんでした。もう一度お試しください"); return; }
+    setMainPick(null);
   };
 
   const canEdit = amOffice || (!!me && leaders.some((l: any) => l.user_id === me.id));
@@ -376,6 +403,34 @@ export default function SekaiMuraPrefPage() {
           </div>
         )}
       </section>
+
+      {/* メインのセカイムラ選択(2県目以降に参加した時だけ) */}
+      {mainPick && (
+        <div className="fixed inset-0 z-[116] flex items-center justify-center bg-black/55 px-6">
+          <div className="w-full max-w-[340px] rounded-2xl bg-white p-5 text-center">
+            <div className="text-[30px]">🌾</div>
+            <h2 className="mt-1 text-[15px] font-extrabold text-[#1e4530]">
+              メインは{mainPick.map((p) => p.replace(/[都府県]$/, "")).join("と、")}どちらにしますか？
+            </h2>
+            <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#8a9a84]">メインは1つだけ。マイページのバッジには「セカイムラ◯◯所属」としてメインの県が表示されます。</p>
+            <div className="mt-3 space-y-1.5">
+              {mainPick.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setMainSel(p)}
+                  className="w-full rounded-xl border px-3 py-2.5 text-[13px] font-extrabold"
+                  style={mainSel === p ? { borderColor: GREEN, background: "#eef8f0", color: "#1e4530" } : { borderColor: "#e0e6dc", color: "#8a9a84" }}
+                >
+                  {mainSel === p ? "✓ " : ""}セカイムラ{p.replace(/[都府県]$/, "")}
+                </button>
+              ))}
+            </div>
+            <button onClick={saveMain} disabled={!mainSel || mainBusy} className="mt-3 w-full rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40" style={{ background: GREEN }}>
+              {mainBusy ? "保存中..." : "これをメインにする"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 県の引っ越しモーダル */}
       {changing && (
