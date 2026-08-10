@@ -293,18 +293,17 @@ export default function NewShopPage() {
                     <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-sprout.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 0円でゆずる</span>
                   </label>
-                  {(
-                    <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
-                      <span className="text-[12.5px] font-bold text-[#5a7d4a]">{isTrial ? "🌱 何人にゆずれる？" : "⇄ 何人まで交換できる？"}</span>
-                      <select value={barterSlots} onChange={(e) => setBarterSlots(Number(e.target.value))} className="ml-auto rounded-lg border border-[#ede5d8] bg-white px-2 py-1.5 text-[13px] outline-none">
-                        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}人</option>)}
-                      </select>
-                    </div>
-                  )}
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={barter} onChange={(e) => setBarter(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-barter.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換</span>
                   </label>
+                  {/* 0円ゆずる・ブツブツ交換 共通の数量: ◯人と交換もできるし、◯人に「この人に決める」もできる */}
+                  <div className="flex items-center gap-2 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
+                    <span className="text-[12.5px] font-bold text-[#5a7d4a]">🌱 何人にゆずれる？</span>
+                    <select value={barterSlots} onChange={(e) => setBarterSlots(Number(e.target.value))} className="ml-auto rounded-lg border border-[#ede5d8] bg-white px-2 py-1.5 text-[13px] outline-none">
+                      {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}人</option>)}
+                    </select>
+                  </div>
                   {/* ② 交換方法（受け渡しのしかた） */}
                   <div className="mt-1">
                     <div className="mb-1 text-[12px] font-extrabold text-[#8a7a5a]">② 交換方法を選ぶ</div>
