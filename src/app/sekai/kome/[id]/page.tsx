@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import { useSnackbar } from "@/components/Snackbar";
 import { IosBackButton } from "@/components/IosBackButton";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { fetchTanboPage, joinTanbo, leaveTanbo, fetchTanboMemberIds, fetchTanboMembers, updateTanboPage, deleteTanboPage, fetchTanboComments, addTanboComment, type TanboPage } from "@/lib/tanbo";
@@ -33,6 +34,8 @@ export default function TanboDetailPage() {
   const [place, setPlace] = useState<PlaceInfo | null>(null);
   const [tab, setTab] = useState<"feed" | "members" | "chat">("feed");
   const joined = !!me && members.has(me.id);
+  const { show: snack, node: snackNode } = useSnackbar();
+  const [imgBusy, setImgBusy] = useState<"icon" | "cover" | null>(null);
   const isOwner = !!me && tanbo?.user_id === me.id;
   const [amAdmin, setAmAdmin] = useState(false);
   useEffect(() => {
@@ -118,12 +121,19 @@ export default function TanboDetailPage() {
   };
 
   const changeImage = async (which: "icon" | "cover", f: File | null) => {
-    if (!f || !me) return;
-    const url = await uploadImage("post-images", me.id, f, which === "cover" ? 1600 : 512, which === "cover" ? 0.75 : 0.8);
-    if (url) {
-      await createClient().from("tanbo").update({ [which === "cover" ? "cover_url" : "icon_url"]: url }).eq("id", tanboId);
-      load();
+    if (!f || !me || imgBusy) return;
+    setImgBusy(which);
+    try {
+      const url = await uploadImage("post-images", me.id, f, which === "cover" ? 1600 : 512, which === "cover" ? 0.75 : 0.8);
+      if (!url) throw new Error("upload");
+      const { error } = await createClient().from("tanbo").update({ [which === "cover" ? "cover_url" : "icon_url"]: url }).eq("id", tanboId);
+      if (error) throw error;
+      await load();
+      snack(which === "cover" ? "背景写真を変更しました ✓" : "アイコンを変更しました ✓");
+    } catch {
+      snack("写真を変更できませんでした。もう一度お試しください", false);
     }
+    setImgBusy(null);
   };
 
   const publish = async () => {
@@ -211,7 +221,7 @@ export default function TanboDetailPage() {
         {joined && (
           <label className="absolute bottom-2 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg">
             📷
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("cover", e.target.files?.[0] ?? null)} />
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => changeImage("cover", e.target.files?.[0] ?? null)} />
           </label>
         )}
       </div>
@@ -226,7 +236,7 @@ export default function TanboDetailPage() {
             {joined && (
               <>
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[13px] shadow">📷</span>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("icon", e.target.files?.[0] ?? null)} />
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => changeImage("icon", e.target.files?.[0] ?? null)} />
               </>
             )}
           </label>
@@ -487,7 +497,7 @@ export default function TanboDetailPage() {
             <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={3} autoFocus placeholder={sheet === "event" ? "イベントの内容（田植え・草取り・稲刈り・持ち物など）" : "今日の田んぼの様子（例: 苗がここまで育ちました）"} className="mb-2 w-full resize-y rounded-xl border border-[#d8e8d0] bg-white px-3 py-2.5 text-[13.5px] text-[#2a3a28] outline-none" />
             <label className="mb-2 flex w-fit cursor-pointer items-center gap-1.5 rounded-lg border border-[#d8e8d0] bg-white px-3 py-2 text-[12px] font-bold" style={{ color: G }}>
               {photo ? "✓ 写真あり" : "📷 写真"}
-              <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f && me) setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55)); }} />
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f && me) setPhoto(await uploadImage("post-images", me.id, f, 640, 0.55)); }} />
             </label>
             <div className="flex gap-2">
               <button onClick={() => setSheet(null)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8aa088]">キャンセル</button>
@@ -516,6 +526,13 @@ export default function TanboDetailPage() {
         </div>
       )}
       {place && <PlaceOverlay place={place} onClose={() => setPlace(null)} />}
+      {imgBusy && (
+        <div className="fixed inset-0 z-[130] flex flex-col items-center justify-center bg-black/60">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+          <p className="mt-3 text-[13px] font-bold text-white">{imgBusy === "cover" ? "背景写真を変更中..." : "アイコンを変更中..."}</p>
+        </div>
+      )}
+      {snackNode}
     </main>
   );
 }

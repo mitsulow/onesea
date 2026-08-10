@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,18 @@ import { ServiceMenuButton } from "@/components/ServiceMenu";
 import { ThreeCol } from "@/components/SideRails";
 
 /** MoAI 一覧 — MMM・セカイムラ横断の趣味サークル。誰でも作れて、誰でも入れる。 */
+const MOAI_REGIONS: Array<[string, string[]]> = [
+  ["北海道・東北", ["北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県"]],
+  ["関東", ["茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県"]],
+  ["甲信越・北陸", ["新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県"]],
+  ["東海", ["岐阜県", "静岡県", "愛知県", "三重県"]],
+  ["関西", ["滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県"]],
+  ["中国", ["鳥取県", "島根県", "岡山県", "広島県", "山口県"]],
+  ["四国", ["徳島県", "香川県", "愛媛県", "高知県"]],
+  ["九州沖縄", ["福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"]],
+  ["その他", ["オンライン", "海外"]],
+];
+
 const moaiPrefTag = (m: any) => { const pf = (m?.prefecture ?? "") as string; return pf ? `（${pf === "オンライン" ? "オンライン" : pf}）` : ""; };
 
 export default function MoaiListPage() {
@@ -26,6 +38,8 @@ export default function MoaiListPage() {
   const [editBusy, setEditBusy] = useState(false);
   const [moaiAll, setMoaiAll] = useState(false); // サークル一覧のもっとみる
   const [selPref, setSelPref] = useState(""); // "" = 全県のサークル
+  const [selCat, setSelCat] = useState(""); // "" = 全ジャンル
+  const prefTouched = useRef(false); // 自分で選んだらデフォルト上書きしない
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [cat, setCat] = useState<string>("music");
@@ -58,6 +72,10 @@ export default function MoaiListPage() {
   useEffect(() => {
     if (!me) return;
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
+    // デフォルトは登録した県のMoAI
+    createClient().from("profiles").select("prefecture").eq("id", me.id).maybeSingle().then(({ data }) => {
+      if (!prefTouched.current && data?.prefecture && (PREFS as readonly string[]).includes(data.prefecture)) setSelPref(data.prefecture);
+    });
   }, [me]);
   useEffect(() => {
     const supabase = createClient();
@@ -205,16 +223,39 @@ export default function MoaiListPage() {
           </p>
         )}
 
-        {/* 県プルダウン(サークルは県別が取り組みやすい) */}
+        {/* 県プルダウン(田んぼ式: 地方ごと+件数+0件は選べない) */}
         <select
           value={selPref}
-          onChange={(e) => setSelPref(e.target.value)}
-          className="mb-3 w-full rounded-xl border-2 border-[#e8c4bc] bg-white px-3 py-2.5 text-[13.5px] font-extrabold outline-none"
+          onChange={(e) => { prefTouched.current = true; setSelPref(e.target.value); }}
+          className="mb-2 w-full rounded-xl border-2 border-[#e8c4bc] bg-white px-3 py-2.5 text-[13.5px] font-extrabold outline-none"
           style={{ color: "#c0392b" }}
         >
-          <option value="">🌏 全世界（オンライン）</option>
-          {PREFS.map((p) => <option key={p} value={p}>{p.replace(/[都府県]$/, "")}のMoAI</option>)}
-          <option value="海外">海外のMoAI</option>
+          <option value="">🌏 全世界（オンライン）のMoAI（{(moais ?? []).length}）</option>
+          {MOAI_REGIONS.map(([region, ps]) => (
+            <optgroup key={region} label={region}>
+              {ps.map((pf) => {
+                const n = (moais ?? []).filter((m) => ((m as any).prefecture ?? "") === pf).length;
+                return (
+                  <option key={pf} value={pf} disabled={n === 0}>
+                    {pf.replace(/[都府県]$/, "")}のMoAI（{n}）
+                  </option>
+                );
+              })}
+            </optgroup>
+          ))}
+        </select>
+
+        {/* ジャンルで絞る */}
+        <select
+          value={selCat}
+          onChange={(e) => setSelCat(e.target.value)}
+          className="mb-3 w-full rounded-xl border border-[#e8c4bc] bg-white px-3 py-2.5 text-[13px] font-bold outline-none"
+          style={{ color: "#a05a4a" }}
+        >
+          <option value="">🎯 全てのジャンル</option>
+          {MOAI_CATEGORIES.map((c) => (
+            <option key={c.id} value={c.id}>{c.emoji} {c.label}（{(moais ?? []).filter((m) => (m.category ?? "") === c.id && (!selPref || ((m as any).prefecture ?? "") === selPref)).length}）</option>
+          ))}
         </select>
 
         {/* あなたのMoAI(参加中) */}
@@ -247,6 +288,7 @@ export default function MoaiListPage() {
           {(() => {
             const all = (moais ?? []).filter((m) => {
               if (selPref && ((m as any).prefecture ?? "") !== selPref) return false;
+              if (selCat && (m.category ?? "") !== selCat) return false;
               const k = q.trim().toLowerCase();
               if (!k) return true;
               return (m.name ?? "").toLowerCase().includes(k) || (m.description ?? "").toLowerCase().includes(k) || ((m as any).keywords ?? "").toLowerCase().includes(k) || (moaiCat(m.category).label ?? "").toLowerCase().includes(k) || ((m as any).prefecture ?? "").toLowerCase().includes(k) || ((m as any).city ?? "").toLowerCase().includes(k);
@@ -275,7 +317,7 @@ export default function MoaiListPage() {
           })()}
         </div>
         {(() => {
-          const total = (moais ?? []).filter((m) => !selPref || ((m as any).prefecture ?? "") === selPref).length;
+          const total = (moais ?? []).filter((m) => (!selPref || ((m as any).prefecture ?? "") === selPref) && (!selCat || (m.category ?? "") === selCat)).length;
           return total > 6 && (
             <button onClick={() => setMoaiAll((v) => !v)} className="mt-2 w-full rounded-xl border border-[#f0d8d4] bg-white py-2 text-[12px] font-extrabold" style={{ color: "#c0392b" }}>
               {moaiAll ? "▲ たたむ" : `もっとみる（あと${total - 6}件）▼`}
