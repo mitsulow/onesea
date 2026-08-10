@@ -241,11 +241,11 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <a href="/tsukiyoga-v7/index.html" className={item + hereCls("/tsukiyoga-v7")}>
               {icon("/icons/cel-moon.png")} ツキヨガ
             </a>
+            <Link href="/#techo" onClick={() => setOpen(false)} className={item + hereCls("/#techo")}>
+              {icon("/icons/icon-techo.webp")} 手帳
+            </Link>
             <Link href="/cotozute" onClick={() => setOpen(false)} className={item + hereCls("/cotozute")}>
               {icon("/icons/tab-cotozute5.webp")} コトヅテ
-            </Link>
-            <Link href="/" onClick={() => setOpen(false)} className={item + hereCls("/")}>
-              {icon("/icons/tab-home.png")} OneSea
             </Link>
             <Link href="/za" onClick={() => setOpen(false)} className={item + hereCls("/za")}>
               <img src="/rakuichi/logo-emblem.webp" alt="" className="h-[20px] w-[20px] flex-shrink-0 rounded-full object-cover" />
@@ -254,22 +254,8 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             <Link href="/moai" onClick={() => setOpen(false)} className={item + hereCls("/moai")}>
               {icon("/icons/tab-home.png")} MoAI
             </Link>
-            <Link href="/#techo" onClick={() => setOpen(false)} className={item + hereCls("/#techo")}>
-              {icon("/icons/icon-techo.webp")} 手帳
-            </Link>
             <Link href="/meikan" onClick={() => setOpen(false)} className={item + hereCls("/meikan")}>
               <span className="flex h-[20px] w-[20px] flex-shrink-0 items-center justify-center text-[15px]">🔍</span> 人物検索
-            </Link>
-            <Link href="/my" onClick={() => setOpen(false)} className={item + hereCls("/my")}>
-              {icon("/icons/icon-meishi.webp")} マイページ
-              {waraMissing > 0 && (
-                <span
-                  className="ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
-                  style={{ lineHeight: 1 }}
-                >
-                  {waraMissing}
-                </span>
-              )}
             </Link>
             <Link href="/talk" onClick={() => setOpen(false)} className={item + hereCls("/talk")}>
               {icon("/icons/icon-talk-green.webp")} TalK
@@ -282,11 +268,22 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
                 </span>
               )}
             </Link>
+            <Link href="/my" onClick={() => setOpen(false)} className={item + hereCls("/my")}>
+              {icon("/icons/icon-meishi.webp")} マイページ
+              {waraMissing > 0 && (
+                <span
+                  className="ml-auto flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#e05040] px-1 text-[9.5px] font-bold text-white"
+                  style={{ lineHeight: 1 }}
+                >
+                  {waraMissing}
+                </span>
+              )}
+            </Link>
             <button
               onClick={() => { setOpen(false); setInqOpen(true); setInqDone(false); }}
-              className="flex w-full items-center gap-2.5 border-b border-[#f2ece0] px-4 py-2.5 text-left text-[13.5px] font-medium text-[#3a3428] active:bg-[#faf4ea]"
+              className="flex w-full items-center gap-2.5 border-b border-[#f2ece0] px-4 py-2 text-left text-[11px] font-medium text-[#8a8070] active:bg-[#faf4ea]"
             >
-              <span className="flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center text-[17px]">✉️</span> 事務局への問い合わせ
+              <span className="flex h-[16px] w-[16px] flex-shrink-0 items-center justify-center text-[12px]">✉️</span> 事務局への問い合わせ
             </button>
             {isAdmin && (
               <Link href="/office" onClick={() => setOpen(false)} className={item + hereCls("/office")}>
