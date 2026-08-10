@@ -115,9 +115,19 @@ export default function MeishiExchangePage() {
               {busy ? "交換中..." : "📇 名刺交換する"}
             </button>
           ) : me === null ? (
-            <Link href="/" className="mt-4 block w-full rounded-xl py-3.5 text-center text-[14px] font-extrabold text-white no-underline" style={{ background: "#c94d3a" }}>
-              ログインして名刺交換する
-            </Link>
+            <button
+              onClick={async () => {
+                try { localStorage.setItem("onesea-return", `/meishi/${otherId}`); } catch {}
+                await createClient().auth.signInWithOAuth({
+                  provider: "google",
+                  options: { redirectTo: `${window.location.origin}/callback`, queryParams: { prompt: "select_account" } },
+                });
+              }}
+              className="mt-4 block w-full rounded-xl py-3.5 text-center text-[14px] font-extrabold text-white"
+              style={{ background: "#c94d3a" }}
+            >
+              Googleログインして名刺交換する
+            </button>
           ) : null}
         </div>
       </div>

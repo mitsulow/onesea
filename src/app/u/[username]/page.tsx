@@ -21,6 +21,7 @@ import { isWarawaUntil } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
 import { PremiumSetupCard } from "@/components/PremiumSetupCard";
 import { MyRecoMap } from "@/components/MyRecoMap";
+import { QrScanner } from "@/components/QrScan";
 
 interface FullProfile {
   id: string;
@@ -65,6 +66,7 @@ export default function UserPage() {
   const [showMeishi, setShowMeishi] = useState(false);
   const [qrOpen, setQrOpen] = useState(false); // 📇 名刺交換QR
   const [qrData, setQrData] = useState<string | null>(null);
+  const [scanOpen, setScanOpen] = useState(false); // 相手のQRをアプリ内で読み取る
   const openQr = async () => {
     if (!me) return;
     try {
@@ -960,6 +962,17 @@ export default function UserPage() {
           </div>
         </div>
       )}
+      {scanOpen && (
+        <QrScanner
+          onClose={() => setScanOpen(false)}
+          onFound={(text) => {
+            setScanOpen(false);
+            const m2 = text.match(/\/meishi\/([0-9a-fA-F-]{16,})/);
+            if (m2) router.push(`/meishi/${m2[1]}`);
+            else alert("OneSeaの名刺交換QRではないようです");
+          }}
+        />
+      )}
       {/* 📇 名刺交換QRモーダル */}
       {qrOpen && qrData && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/60 px-6" onClick={() => setQrOpen(false)}>
@@ -967,7 +980,15 @@ export default function UserPage() {
             <div className="text-[15px] font-extrabold text-[#3a3428]">📇 名刺交換</div>
             <p className="mt-1 text-[11.5px] leading-relaxed text-[#8a8070]">リアルで会った人に、このQRをスマホのカメラで読み取ってもらってください。相手の画面で「名刺交換する」を押すと、お互いフォロー+TalKでつながります</p>
             <img src={qrData} alt="名刺交換QR" className="mx-auto mt-3 w-[220px] rounded-xl" style={{ border: "1px solid #ede5d8" }} />
-            <button onClick={() => setQrOpen(false)} className="mt-3 w-full rounded-xl border border-[#e0d8c8] py-2.5 text-[13px] font-bold text-[#6a5f4e]">とじる</button>
+            <button
+              onClick={() => { setQrOpen(false); setScanOpen(true); }}
+              className="mt-3 w-full rounded-xl py-2.5 text-[13.5px] font-extrabold text-white"
+              style={{ background: "#2a8a4a" }}
+            >
+              📷 相手のQRを読み取る（アプリ内カメラ）
+            </button>
+            <p className="mt-1 text-[9.5px] leading-relaxed text-[#b0a890]">カメラアプリで読むとログインしていない画面が開くことがあります。こちらの読み取りが確実です</p>
+            <button onClick={() => setQrOpen(false)} className="mt-2 w-full rounded-xl border border-[#e0d8c8] py-2.5 text-[13px] font-bold text-[#6a5f4e]">とじる</button>
           </div>
         </div>
       )}
