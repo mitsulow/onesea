@@ -124,13 +124,13 @@ const SERVICES: Service[] = [
 
 /** ホームボタンの折りたたみメニュー（全サービス一覧） */
 const MENU: Array<{ href: string; icon: string; label: string; ext?: boolean; talk?: boolean }> = [
+  // 3×3の美しい九宮格。中央(5番目)はMoAIの卵。OneSeaはこのメニューからは出さない
   { href: "/mmm", icon: "/icons/cel-sun.png", label: "MMM" },
   { href: "/sekai", icon: "/icons/cel-earth.png", label: "セカイムラ" },
   { href: "/tsukiyoga-v7/index.html", icon: "/icons/cel-moon.png", label: "ツキヨガ", ext: true },
   { href: "/cotozute", icon: "/icons/tab-cotozute5.webp", label: "コトヅテ" },
-  { href: "/", icon: "/icons/tab-home.png", label: "OneSea" },
-  { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
   { href: "/moai", icon: "/icons/tab-home.png", label: "MoAI" },
+  { href: "/za", icon: "/icons/icon-za-mark.svg", label: "楽市楽座" },
   { href: "/#techo", icon: "/icons/icon-techo.webp", label: "手帳", ext: true },
   { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
   { href: "/talk", icon: "/icons/icon-talk-green.webp", label: "TalK" },
