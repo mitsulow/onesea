@@ -3751,6 +3751,7 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
   }, [me]);
   const [seeds, setSeeds] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
+  const [agreed, setAgreed] = useState(false); // 拠点条件に了承したか(フォームを開く前の関所)
   const [name, setName] = useState("");
   const [checked, setChecked] = useState<null | boolean>(null); // null=未チェック true=使える false=欠番
   const [checking, setChecking] = useState(false);
@@ -3911,7 +3912,31 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
       <button onClick={() => setOpen((v) => !v)} className="w-full rounded-xl border-2 border-dashed border-[#a8cca0] bg-white py-2 text-[11.5px] font-extrabold" style={{ color: GREEN }}>
         {open ? "▾ とじる" : "拠点を立ち上げる"}
       </button>
-      {open && (
+      {open && !agreed && (
+        <div className="mt-2 rounded-xl border-2 border-[#c8a860] bg-[#fdfaf0] p-4">
+          <div className="text-center text-[15px] font-extrabold text-[#8a6a20]">⚠️ 拠点を立ち上げる前に</div>
+          <p className="mt-2 text-[13px] font-extrabold leading-relaxed text-[#5a4a20]">
+            「セカイムラの公式拠点」になるためには、以下の条件を満たしている必要があります。
+          </p>
+          <ol className="mt-2 space-y-2 text-[12.5px] leading-relaxed text-[#5a5448]">
+            <li>① セカイムラの理念（<b>自分の事を自分で出来る人を増やす</b>）を理解していること</li>
+            <li>② 定期的にみんなが集まれる場所であること</li>
+            <li>③ 暮らしを作る活動ができる場所（衣食住、畑や田んぼなどが将来的に出来る環境）であること</li>
+          </ol>
+          <p className="mt-2.5 rounded-xl bg-white px-3 py-2 text-[11.5px] leading-relaxed text-[#8a7a5a]">
+            ※上記を満たしていない場合は「寄り合い所」として新月会・満月会へご参加頂けます。
+          </p>
+          <button
+            onClick={() => setAgreed(true)}
+            className="mt-3 w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
+            style={{ background: "#4a8a5c" }}
+          >
+            拠点条件に了承する
+          </button>
+          <button onClick={() => setOpen(false)} className="mt-1.5 w-full py-2 text-[12px] font-bold text-[#a09a88]">やめておく</button>
+        </div>
+      )}
+      {open && agreed && (
         <div className="mt-2 rounded-xl bg-white p-2.5">
           <div className="mb-1 text-[11px] font-extrabold text-[#5a6a54]">① 拠点名を決める</div>
           <p className="mb-1.5 text-[9.5px] leading-relaxed text-[#8a9a84]">
