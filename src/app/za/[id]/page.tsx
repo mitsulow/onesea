@@ -308,17 +308,6 @@ export default function ShopDetailPage() {
           </div>
         </div>
 
-        {/* 💳 購入はこちら(出品者の BASE・PayPay 等へ) */}
-        {shop.pay_url && !shop.sold && (
-          <button
-            onClick={() => { window.open(shop.pay_url!, "_blank", "noopener"); setBuyOpen(true); }}
-            className="w-full rounded-xl py-3.5 text-[15px] font-extrabold text-white"
-            style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
-          >
-            🛒 購入はこちら
-          </button>
-        )}
-
         {shop.description && (
           <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[#5a5448]">{shop.description}</p>
         )}
@@ -408,7 +397,7 @@ export default function ShopDetailPage() {
                   className="w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
                   style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
                 >
-                  🛒 購入したい（TalKで出品者に連絡）
+                  💬 連絡を取る（TalKで出品者へ）
                 </button>
               )
             )}
