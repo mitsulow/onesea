@@ -569,6 +569,8 @@ function BottomSheet({
   const [sharePick, setSharePick] = useState<null | { planId: string; title: string }>(null); // シェア相手選択
   const [shareChats, setShareChats] = useState<any[]>([]);
   const [shareBusy, setShareBusy] = useState(false);
+  const [shareQuery, setShareQuery] = useState("");
+  const [shareResults, setShareResults] = useState<any[]>([]);
 
   /* 場所リンク(Googleマップ/検索の共有URL)を予定に取り込む */
   const resolveEvPlace = async (raw: string) => {
@@ -589,39 +591,41 @@ function BottomSheet({
   };
 
   /* 予定をシェア: shared_plansに保存してTalKの相手選択へ */
-  const startShare = async () => {
-    if (!evEdit || !evEdit.text.trim()) { alert("予定の内容を入れてから共有してください"); return; }
+  const startShare = async () => { if (evEdit) await startShareFor(evEdit); };
+  const startShareFor = async (evT: TechoEv) => {
+    const evEditLocal = evT;
+    if (!evEditLocal.text.trim()) { alert("予定の内容を入れてから共有してください"); return; }
     const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { alert("シェアにはログインが必要です（無料のGoogleログイン）"); return; }
     const [y, mo, da] = dk.split("-").map(Number);
-    const at = new Date(y, mo - 1, da, evEdit.sh, evEdit.sm);
-    const endAt = new Date(y, mo - 1, da, evEdit.eh, evEdit.em);
+    const at = new Date(y, mo - 1, da, evEditLocal.sh, evEditLocal.sm);
+    const endAt = new Date(y, mo - 1, da, evEditLocal.eh, evEditLocal.em);
     // 既にシェア済みなら再利用
-    let planId = evEdit.plan ?? null;
+    let planId = evEditLocal.plan ?? null;
     if (!planId) {
       const { data, error } = await supabase.from("shared_plans").insert({
         creator: session.user.id,
-        title: evEdit.text.trim(),
-        detail: evEdit.detail?.trim() || null,
+        title: evEditLocal.text.trim(),
+        detail: evEditLocal.detail?.trim() || null,
         at: at.toISOString(),
         end_at: endAt > at ? endAt.toISOString() : null,
-        place_name: evEdit.place?.name ?? null,
-        place_lat: evEdit.place?.lat ?? null,
-        place_lng: evEdit.place?.lng ?? null,
-        place_url: evEdit.place?.url ?? null,
+        place_name: evEditLocal.place?.name ?? null,
+        place_lat: evEditLocal.place?.lat ?? null,
+        place_lng: evEditLocal.place?.lng ?? null,
+        place_url: evEditLocal.place?.url ?? null,
       }).select("id").single();
       if (error || !data) { alert("シェアの準備に失敗しました"); return; }
       planId = data.id;
       // 自分の予定にもplan IDを刻む(詳細ボタン用)
-      const updated = { ...evEdit, plan: planId as string };
-      setEvEdit(updated);
-      onSaveEv(dk, [...dayEvs.filter((x) => x.id !== evEdit.id), { ...updated, id: evEdit.id || `ev-${Date.now()}` }]);
+      const updated = { ...evEditLocal, plan: planId as string };
+      if (evEdit && evEdit.id === evEditLocal.id) setEvEdit(updated);
+      onSaveEv(dk, [...dayEvs.filter((x) => x.id !== evEditLocal.id), { ...updated, id: evEditLocal.id || `ev-${Date.now()}` }]);
     }
     const { fetchChats } = await import("@/lib/line");
     setShareChats(await fetchChats(session.user.id));
-    setSharePick({ planId: planId as string, title: evEdit.text.trim() });
+    setSharePick({ planId: planId as string, title: evEditLocal.text.trim() });
   };
 
   const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所の詳細(Googleマップのオーバーレイ)
@@ -1039,7 +1043,7 @@ function BottomSheet({
                         <div
                           key={ev.id}
                           data-ev
-                          onClick={() => (ev.place ? void openEvPlace(ev) : setEvEdit(ev))}
+                          onClick={() => setEvEdit(ev)}
                           className="absolute bottom-0 top-0 w-[4px] cursor-pointer rounded"
                           style={{ left: 1 + i * 6, background: penColor(ev.color), opacity: 0.55 }}
                         />
@@ -1184,38 +1188,7 @@ function BottomSheet({
                                   )}
                                 </span>
                               )}
-                              {delEvId === ev.id && (
-                                <span className="float-right ml-2 flex items-center gap-1.5">
-                                  <span
-                                    role="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDelEvId(null);
-                                      setEvEdit(ev);
-                                    }}
-                                    className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold text-white"
-                                    style={{ background: "#3070b0" }}
-                                  >
-                                    ✎
-                                  </span>
-                                  <span
-                                    role="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!confirm("本当に削除しますか？")) {
-                                        setDelEvId(null);
-                                        return;
-                                      }
-                                      onSaveEv(dk, dayEvs.filter((x) => x.id !== ev.id));
-                                      setDelEvId(null);
-                                    }}
-                                    className="flex h-5 w-5 items-center justify-center rounded-full text-[12px] font-bold text-white"
-                                    style={{ background: "#c05030" }}
-                                  >
-                                    ×
-                                  </span>
-                                </span>
-                              )}
+                              
                             </button>
                           ))}
                           {hNote && (
@@ -1327,6 +1300,24 @@ function BottomSheet({
 
       {/* 予定の追加・編集（○時○分〜○時○分・色ペン） */}
       {placeView && <PlaceOverlay place={placeView} onClose={() => setPlaceView(null)} />}
+      {delEvId && (() => {
+        const evM = dayEvs.find((x) => x.id === delEvId);
+        if (!evM) return null;
+        return (
+          <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/45 px-8" onClick={() => setDelEvId(null)}>
+            <div className="w-full max-w-[320px] overflow-hidden rounded-2xl bg-white" onClick={(e) => e.stopPropagation()}>
+              <div className="border-b border-[#f0ece4] px-4 py-3 text-center">
+                <div className="truncate text-[13.5px] font-extrabold text-[#3a3428]">{evM.text || "予定"}</div>
+                <div className="num text-[11px] text-[#a09a88]">{evM.sh}:{String(evM.sm).padStart(2, "0")}〜{evM.eh}:{String(evM.em).padStart(2, "0")}</div>
+              </div>
+              <button onClick={() => { setDelEvId(null); void startShareFor(evM); }} className="block w-full border-b border-[#f0ece4] py-3.5 text-center text-[14px] font-extrabold" style={{ color: "#3070b0" }}>📤 この予定をシェア</button>
+              <button onClick={() => { setDelEvId(null); setEvEdit(evM); }} className="block w-full border-b border-[#f0ece4] py-3.5 text-center text-[14px] font-extrabold text-[#3a3428]">✎ この予定を編集</button>
+              <button onClick={() => { if (!confirm("本当に削除しますか？")) return; onSaveEv(dk, dayEvs.filter((x) => x.id !== evM.id)); setDelEvId(null); }} className="block w-full border-b border-[#f0ece4] py-3.5 text-center text-[14px] font-extrabold" style={{ color: "#c05030" }}>× この予定を削除</button>
+              <button onClick={() => setDelEvId(null)} className="block w-full py-3 text-center text-[12.5px] font-bold text-[#a09a88]">キャンセル</button>
+            </div>
+          </div>
+        );
+      })()}
       {sharePick && (
         <div className="fixed inset-0 z-[97] flex items-center justify-center bg-black/50 px-5" onClick={() => setSharePick(null)}>
           <div className="max-h-[70dvh] w-full max-w-[380px] overflow-y-auto rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
@@ -1357,6 +1348,51 @@ function BottomSheet({
                     ? <img src={c.partner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-9 w-9 rounded-full object-cover" />
                     : <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f0e8d8] text-[13px]">📔</span>}
                   <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold text-[#3a3428]">{c.partner?.display_name ?? "むらびと"}</span>
+                  <span className="flex-shrink-0 text-[11px] font-bold text-[#3070b0]">送る →</span>
+                </button>
+              ))}
+            </div>
+            {/* その他の人: 名前でさがしてシェア */}
+            <div className="mt-3 border-t border-[#f0ece4] pt-2.5">
+              <div className="mb-1 text-[11px] font-bold text-[#a09a88]">その他の人をさがす</div>
+              <input
+                value={shareQuery}
+                onChange={async (e) => {
+                  const q = e.target.value;
+                  setShareQuery(q);
+                  if (q.trim().length < 2) { setShareResults([]); return; }
+                  const { createClient } = await import("@/lib/supabase/client");
+                  const { data } = await createClient().from("profiles").select("id, username, display_name, avatar_url").or(`display_name.ilike.%${q.trim()}%,username.ilike.%${q.trim()}%`).limit(8);
+                  setShareResults(data ?? []);
+                }}
+                placeholder="名前で検索..."
+                className="w-full rounded-xl border border-[#e4e0d8] bg-[#fdfcfa] px-3 py-2 text-[12.5px] outline-none"
+              />
+              {shareResults.map((r: any) => (
+                <button
+                  key={r.id}
+                  disabled={shareBusy}
+                  onClick={async () => {
+                    setShareBusy(true);
+                    try {
+                      const { getOrCreateChat, sendMessage } = await import("@/lib/line");
+                      const { createClient } = await import("@/lib/supabase/client");
+                      const { data: { session } } = await createClient().auth.getSession();
+                      if (!session) throw new Error("no session");
+                      const chatId = await getOrCreateChat(session.user.id, r.id);
+                      if (!chatId) throw new Error("no chat");
+                      await sendMessage(chatId, session.user.id, `【新しい予定】『${sharePick.title}』がシェアされました📔\nタップして確認 → https://onesea.vercel.app/plan/${sharePick.planId}`);
+                      alert(`${r.display_name ?? "お相手"}さんにシェアしました！`);
+                      setSharePick(null); setShareQuery(""); setShareResults([]);
+                    } catch { alert("送信できませんでした"); }
+                    setShareBusy(false);
+                  }}
+                  className="mt-1 flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left hover:bg-[#faf7f0]"
+                >
+                  {r.avatar_url
+                    ? <img src={r.avatar_url} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full object-cover" />
+                    : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f0e8d8] text-[12px]">📔</span>}
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#3a3428]">{r.display_name ?? r.username}</span>
                   <span className="flex-shrink-0 text-[11px] font-bold text-[#3070b0]">送る →</span>
                 </button>
               ))}
