@@ -42,7 +42,7 @@ export default function ShopDetailPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from("barter_offers")
-      .select("id, user_id, offer, offer_shop_id, created_at, profiles!barter_offers_user_id_fkey(username, display_name, avatar_url)")
+      .select("id, user_id, offer, offer_shop_id, created_at, profiles!barter_offers_user_profile_fkey(username, display_name, avatar_url)")
       .eq("shop_id", params.id)
       .order("created_at", { ascending: false })
       .limit(50);
@@ -53,7 +53,15 @@ export default function ShopDetailPage() {
       .eq("shop_id", params.id)
       .order("created_at", { ascending: false })
       .limit(50);
-    setOffers(d2 ?? []);
+    // join が使えない環境でも提案者の名前とアイコンを必ず出す
+    let list2 = d2 ?? [];
+    const uids = Array.from(new Set(list2.map((x: any) => x.user_id).filter(Boolean)));
+    if (uids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", uids);
+      const by = new Map((profs ?? []).map((x: any) => [x.id, x]));
+      list2 = list2.map((x: any) => ({ ...x, profiles: by.get(x.user_id) ?? null }));
+    }
+    setOffers(list2);
     // この品を差し出して、よその品に提案しているケース
     const { data: outs } = await supabase
       .from("barter_offers")
