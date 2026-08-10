@@ -23,6 +23,7 @@ export default function NewShopPage() {
   const [price, setPrice] = useState("");
   const [payUrl, setPayUrl] = useState(""); // BASE・PayPayなど外部決済のURL(楽座)
   const [barterSlots, setBarterSlots] = useState(1); // 何人まで物々交換できるか
+  const [firstTry, setFirstTry] = useState(false); // 🔰これが初挑戦(楽市)
   const [isTrial, setIsTrial] = useState(true);
   const [barter, setBarter] = useState(false);
   const [handover, setHandover] = useState("both"); // 交換方法(楽市のみ)
@@ -51,6 +52,7 @@ export default function NewShopPage() {
       if (d.category) setCategory(d.category);
       if (Array.isArray(d.images)) setImages(d.images);
       if (d.barterSlots) setBarterSlots(d.barterSlots);
+      if (typeof d.firstTry === "boolean") setFirstTry(d.firstTry);
     } catch {}
     restoredRef.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -58,9 +60,9 @@ export default function NewShopPage() {
   useEffect(() => {
     if (!restoredRef.current) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ market, name, description, price, payUrl, barterSlots, isTrial, barter, tip, handover, category, images }));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ market, name, description, price, payUrl, barterSlots, firstTry, isTrial, barter, tip, handover, category, images }));
     } catch {}
-  }, [market, name, description, price, payUrl, barterSlots, isTrial, barter, tip, handover, category, images]);
+  }, [market, name, description, price, payUrl, barterSlots, firstTry, isTrial, barter, tip, handover, category, images]);
 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -111,6 +113,7 @@ export default function NewShopPage() {
         price_jpy: market === "ichi" ? null : price ? Number(price) : null,
         pay_url: market === "ichi" ? null : payUrl.trim() || null,
         barter_slots: barterSlots,
+        first_try: market === "ichi" ? firstTry : false,
         is_trial: market === "ichi" ? isTrial : false,
         accepts_barter: barter,
         handover: market === "ichi" ? handover : null,
@@ -275,6 +278,10 @@ export default function NewShopPage() {
             <div className="space-y-2">
               {market === "ichi" ? (
                 <>
+                  <label className="flex items-center gap-2.5 rounded-xl border-2 border-[#c8dccb] bg-[#f4f8f0] px-3 py-2.5">
+                    <input type="checkbox" checked={firstTry} onChange={(e) => setFirstTry(e.target.checked)} className="accent-[#2a8a4a]" />
+                    <span className="text-[13.5px] font-bold text-[#2a6a3a]">🔰 これが初挑戦（はじめて作った・はじめて出す）</span>
+                  </label>
                   <label className="flex items-center gap-2.5 rounded-xl border border-[#ede5d8] bg-white px-3 py-2.5">
                     <input type="checkbox" checked={isTrial} onChange={(e) => setIsTrial(e.target.checked)} className="accent-[#c94d3a]" />
                     <span className="text-[13.5px]"><img src="/icons/icon-sprout.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 0円でゆずる</span>

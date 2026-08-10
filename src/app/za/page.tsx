@@ -257,6 +257,12 @@ export default function ZaPage() {
                         </div>
                       )}
 
+                      {shop.first_try && (
+                        <div className="absolute right-1.5 top-1.5 flex flex-col items-center">
+                          <span className="text-[20px]" style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,.3))" }}>🔰</span>
+                          <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[8.5px] font-extrabold text-[#2a6a3a]">初心者応援！</span>
+                        </div>
+                      )}
                       {shop.profiles?.avatar_url && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img

@@ -308,6 +308,11 @@ export default function ShopDetailPage() {
               {shop.market === "ichi" ? "楽市" : "楽座"}
             </span>
             <h1 className="min-w-0 text-xl font-extrabold leading-snug text-[#3a3428]">{shop.name}</h1>
+          {shop.first_try && (
+            <div className="mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11.5px] font-extrabold" style={{ background: "#eaf6ec", color: "#2a6a3a", border: "1px solid #bcdcc8" }}>
+              🔰 これが初挑戦 — 初心者応援！
+            </div>
+          )}
           </div>
           <div className="mt-1 flex items-center gap-2.5">
             <span className="text-xl font-extrabold" style={{ color: "#c94d3a" }}>
