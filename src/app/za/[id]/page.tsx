@@ -250,10 +250,10 @@ export default function ShopDetailPage() {
         {shop.sold && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
             <span
-              className="border-[6px] border-[#d02020] px-6 py-1 text-[64px] font-extrabold tracking-[6px] text-[#d02020]"
-              style={{ transform: "rotate(-18deg)", textShadow: "0 2px 8px rgba(0,0,0,.3)", background: "rgba(255,255,255,.55)" }}
+              className="border-[6px] border-[#d02020] px-5 py-1 text-[44px] font-extrabold tracking-[4px] text-[#d02020]"
+              style={{ transform: "rotate(-18deg)", textShadow: "0 2px 8px rgba(0,0,0,.3)", background: "rgba(255,255,255,.55)", whiteSpace: "nowrap" }}
             >
-              SOLD
+              SOLD OUT
             </span>
           </div>
         )}
@@ -410,59 +410,6 @@ export default function ShopDetailPage() {
                 <img src="/icons/icon-barter.webp" alt="" style={{ width: 15, height: 15, display: "inline", verticalAlign: -3 }} /> ブツブツ交換を提案する
               </button>
             )}
-            {offers.length > 0 && (
-              <div>
-                <div className="mb-1 text-[11px] font-extrabold text-[#5a7d4a]">
-                  いま来ているブツブツ交換の提案（{offers.length}件）
-                </div>
-                <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                  {offers.map((o: any) => (
-                    <div key={o.id} className="relative w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5">
-                      <div className="flex items-center gap-1.5">
-                        {o.profiles?.avatar_url ? (
-                          <img src={o.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-6 w-6 rounded-full object-cover" />
-                        ) : (
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dce8d4] text-[10px]">?</span>
-                        )}
-                        <span className="truncate text-[10.5px] font-bold text-[#5a7d4a]">{o.profiles?.display_name ?? "むらびと"}</span>
-                      </div>
-                      <div className="mt-1.5 line-clamp-3 text-[12px] font-bold leading-snug text-[#3a3428]">⇄ {o.offer}</div>
-                      {o.offer_shop_id && (
-                        <a href={`/za/${o.offer_shop_id}`} className="mt-1 block text-[10px] font-bold text-[#3070b0] underline">出品を見る →</a>
-                      )}
-                      {o.accepted && (
-                        <span
-                          className="pointer-events-none absolute right-1 top-1 flex h-[46px] w-[46px] items-center justify-center rounded-full border-[3px] border-[#d02020] text-[13px] font-extrabold text-[#d02020]"
-                          style={{ transform: "rotate(-14deg)", background: "rgba(255,255,255,.82)" }}
-                        >
-                          決定
-                        </span>
-                      )}
-                      {me && shop.owner_id === me.id && !shop.sold && (
-                        <button
-                          onClick={async () => {
-                            if (!confirm(`「${o.profiles?.display_name ?? "この人"}さん」とのブツブツ交換に決定しますか？\n（商品はSOLDになります）`)) return;
-                            const supabase = createClient();
-                            await supabase.from("barter_offers").update({ accepted: true }).eq("id", o.id);
-                            await supabase.from("shops").update({ sold: true }).eq("id", shop.id).eq("owner_id", me.id);
-                            // 決定した相手にTalKでお知らせ
-                            try {
-                              const chatId = await getOrCreateChat(me.id, o.user_id);
-                              if (chatId) await sendMessage(chatId, me.id, `【ブツブツ交換 成立】「${shop.name}」⇄「${o.offer}」で決定しました！やり取りの続きはこのTalKで🤝`);
-                            } catch {}
-                            fetchShop(params.id).then((s2) => setShop(s2));
-                            loadOffers();
-                          }}
-                          className="mt-1.5 w-full rounded-lg bg-[#c94d3a] py-1.5 text-[10.5px] font-extrabold text-white"
-                        >
-                          この人に決めた
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
             {outOffers.length > 0 && (
               <div>
                 <div className="mb-1 text-[11px] font-extrabold text-[#5a7d4a]">この品で提案中のブツブツ交換</div>
@@ -495,6 +442,62 @@ export default function ShopDetailPage() {
         ) : (
           <p className="text-center text-[12px] text-[#a09888]">OneSea無料会員になると、座主に連絡が出来ます。</p>
         )}
+
+        {/* ブツブツ交換の提案一覧 — 座主にも必ず見える(「この人に決めた」でSOLD OUT) */}
+        {offers.length > 0 && (
+          <div>
+            <div className="mb-1 text-[11px] font-extrabold text-[#5a7d4a]">
+              いま来ているブツブツ交換の提案（{offers.length}件）
+            </div>
+            <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+              {offers.map((o: any) => (
+                <div key={o.id} className="relative w-[150px] flex-shrink-0 rounded-xl border border-[#d8e4d0] bg-[#f7faf4] p-2.5">
+                  <div className="flex items-center gap-1.5">
+                    {o.profiles?.avatar_url ? (
+                      <img src={o.profiles.avatar_url} alt="" referrerPolicy="no-referrer" className="h-6 w-6 rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#dce8d4] text-[10px]">?</span>
+                    )}
+                    <span className="truncate text-[10.5px] font-bold text-[#5a7d4a]">{o.profiles?.display_name ?? "むらびと"}</span>
+                  </div>
+                  <div className="mt-1.5 line-clamp-3 text-[12px] font-bold leading-snug text-[#3a3428]">⇄ {o.offer}</div>
+                  {o.offer_shop_id && (
+                    <a href={`/za/${o.offer_shop_id}`} className="mt-1 block text-[10px] font-bold text-[#3070b0] underline">出品を見る →</a>
+                  )}
+                  {o.accepted && (
+                    <span
+                      className="pointer-events-none absolute right-1 top-1 flex h-[46px] w-[46px] items-center justify-center rounded-full border-[3px] border-[#d02020] text-[13px] font-extrabold text-[#d02020]"
+                      style={{ transform: "rotate(-14deg)", background: "rgba(255,255,255,.82)" }}
+                    >
+                      決定
+                    </span>
+                  )}
+                  {me && shop.owner_id === me.id && !shop.sold && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm(`「${o.profiles?.display_name ?? "この人"}さん」とのブツブツ交換に決定しますか？\n（商品はSOLDになります）`)) return;
+                        const supabase = createClient();
+                        await supabase.from("barter_offers").update({ accepted: true }).eq("id", o.id);
+                        await supabase.from("shops").update({ sold: true }).eq("id", shop.id).eq("owner_id", me.id);
+                        // 決定した相手にTalKでお知らせ
+                        try {
+                          const chatId = await getOrCreateChat(me.id, o.user_id);
+                          if (chatId) await sendMessage(chatId, me.id, `【ブツブツ交換 成立】「${shop.name}」⇄「${o.offer}」で決定しました！やり取りの続きはこのTalKで🤝`);
+                        } catch {}
+                        fetchShop(params.id).then((s2) => setShop(s2));
+                        loadOffers();
+                      }}
+                      className="mt-1.5 w-full rounded-lg bg-[#c94d3a] py-1.5 text-[10.5px] font-extrabold text-white"
+                    >
+                      この人に決めた
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
 
         {/* コメント / シェア / 通報 の3ボタン */}
         <div className="mt-2 grid grid-cols-3 gap-1.5">

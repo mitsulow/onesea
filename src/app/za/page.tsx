@@ -232,9 +232,17 @@ export default function ZaPage() {
                   >
                     <div className="absolute left-0 right-0 top-0 z-10 h-[3px]" style={{ background: "#c94d3a" }} />
                     <div className="relative aspect-square overflow-hidden bg-[#f2ede4]">
+                      {shop.sold && (
+                        <span
+                          className="pointer-events-none absolute left-1/2 top-1/2 z-10 border-[3px] border-[#d02020] px-2 py-0.5 text-[15px] font-extrabold tracking-[2px] text-[#d02020]"
+                          style={{ transform: "translate(-50%,-50%) rotate(-18deg)", background: "rgba(255,255,255,.6)", whiteSpace: "nowrap" }}
+                        >
+                          SOLD OUT
+                        </span>
+                      )}
                       {(shop.thumb_urls?.[0] ?? shop.image_urls[0]) ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={srcCdn(shop.thumb_urls?.[0] ?? shop.image_urls[0])} alt={shop.name} className="h-full w-full object-cover" />
+                        <img src={srcCdn(shop.thumb_urls?.[0] ?? shop.image_urls[0])} alt={shop.name} className="h-full w-full object-cover" style={shop.sold ? { filter: "grayscale(1)" } : undefined} />
                       ) : (
                         <div
                           className="flex h-full w-full items-center justify-center"
