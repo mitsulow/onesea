@@ -138,6 +138,7 @@ export default function ShopDetailPage() {
   };
 
   const openBarter = async () => {
+    if (shop?.sold) { alert("この商品はSOLD OUTのため、提案できません"); return; }
     setBarterOpen(true);
     if (me && myShops === null) {
       const mine = await fetchShopsByOwner(me.id);
@@ -450,7 +451,7 @@ export default function ShopDetailPage() {
                 </button>
               )
             )}
-            {shop.accepts_barter && (
+            {shop.accepts_barter && !shop.sold && (
               <button
                 onClick={openBarter}
                 className="w-full rounded-xl border-2 py-3 text-[14px] font-extrabold"
