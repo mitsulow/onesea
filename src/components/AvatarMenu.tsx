@@ -31,7 +31,16 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   const [waraMissing, setWaraMissing] = useState(0); // わらわ〜会員の未入力数（0で消える）
   const [isAdmin, setIsAdmin] = useState(false); // 事務局
   const [notifN, setNotifN] = useState(0); // 🔔お知らせ未読
-  const [inqOpen, setInqOpen] = useState(false); // 事務局への問い合わせ
+  const [inqOpen, setInqOpen] = useState(false);
+  // ツキヨガ(静的ページ)のメニューから ?inquiry=1 で飛んできたら、問い合わせをそのまま開く
+  useEffect(() => {
+    try {
+      if (new URLSearchParams(window.location.search).get("inquiry") === "1") {
+        setInqOpen(true);
+        window.history.replaceState(null, "", window.location.pathname);
+      }
+    } catch {}
+  }, []); // 事務局への問い合わせ
   const [inqBody, setInqBody] = useState("");
   const [inqBusy, setInqBusy] = useState(false);
   const [inqDone, setInqDone] = useState(false);
