@@ -337,6 +337,32 @@ export default function ShopDetailPage() {
           </button>
         ) : me ? (
           <div className="space-y-2">
+            {/* 有料出品: 物々交換OKでも「購入」は必ず選べる(どちらも表示) */}
+            {shop.market !== "ichi" && !shop.sold && (
+              shop.pay_url ? (
+                <button
+                  onClick={() => setBuyOpen(true)}
+                  className="w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
+                  style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
+                >
+                  🛒 購入はこちら
+                </button>
+              ) : (
+                <button
+                  onClick={async () => {
+                    const chatId = await getOrCreateChat(me.id, shop.owner_id);
+                    if (chatId) {
+                      await sendMessage(chatId, me.id, `「${shop.name}」を購入したいです🛒 よろしくお願いします`);
+                      router.push(`/talk/${chatId}`);
+                    }
+                  }}
+                  className="w-full rounded-xl py-3 text-[14px] font-extrabold text-white"
+                  style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
+                >
+                  🛒 購入したい（TalKで出品者に連絡）
+                </button>
+              )
+            )}
             {shop.accepts_barter && (
               <button
                 onClick={openBarter}
