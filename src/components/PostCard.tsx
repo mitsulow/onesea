@@ -54,10 +54,14 @@ export function PostCard({
   void flush;
   const router = useRouter();
   const pr = post.profiles;
-  const bodyText = post.embed?.url
-    ? (post.body ?? "").split(post.embed.url).join("").trim()
-    : post.body;
   const [isLiked, setIsLiked] = useState(liked);
+  const [pEditOpen, setPEditOpen] = useState(false);
+  const [pEditBody, setPEditBody] = useState("");
+  const [pBodyNow, setPBodyNow] = useState<string | null>(null);
+  const rawBody = pBodyNow ?? post.body;
+  const bodyText = post.embed?.url
+    ? (rawBody ?? "").split(post.embed.url).join("").trim()
+    : rawBody;
   const [likeCount, setLikeCount] = useState(post.likes?.[0]?.count ?? 0);
   const commentCount = post.comments?.[0]?.count ?? 0;
   const [gone, setGone] = useState(false);
@@ -170,6 +174,13 @@ export function PostCard({
           </div>
         </div>
         {(me?.id === post.user_id || amOffice) && (
+          <button
+            onClick={() => { setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b] active:bg-[#e4e6e9]"
+            aria-label="投稿を編集"
+          >✎</button>
+        )}
+        {(me?.id === post.user_id || amOffice) && (
           <button onClick={onDelete} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px] font-bold text-[#65676b] active:bg-[#e4e6e9]" aria-label="自分の投稿を削除">
             ×
           </button>
@@ -270,6 +281,29 @@ export function PostCard({
             className="flex w-9 items-center justify-center py-1.5 text-[10px] text-[#b0b3b8]"
             aria-label="削除依頼"
           >⚑</button>
+        )}
+        {pEditOpen && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setPEditOpen(false)}>
+            <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+              <div className="mb-2 text-[13.5px] font-extrabold text-[#2a6a4a]">✎ 言の葉を編集{amOffice && me?.id !== post.user_id ? "（事務局権限）" : ""}</div>
+              <textarea value={pEditBody} onChange={(e) => setPEditBody(e.target.value)} rows={5} className="w-full resize-y rounded-xl border border-[#e0e6e0] bg-white px-3 py-2.5 text-[14px] leading-relaxed outline-none" />
+              <div className="mt-2 flex gap-2">
+                <button onClick={() => setPEditOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8a8d91]">キャンセル</button>
+                <button
+                  onClick={async () => {
+                    if (!pEditBody.trim()) return;
+                    const { createClient } = await import("@/lib/supabase/client");
+                    const { error } = await createClient().from("posts").update({ body: pEditBody.trim() }).eq("id", post.id);
+                    if (error) { alert("保存できませんでした: " + error.message); return; }
+                    setPBodyNow(pEditBody.trim());
+                    setPEditOpen(false);
+                  }}
+                  disabled={!pEditBody.trim()}
+                  className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40" style={{ background: "#2a8a4a" }}
+                >保存する</button>
+              </div>
+            </div>
+          </div>
         )}
         {gate.node}
         {reportOpen && (

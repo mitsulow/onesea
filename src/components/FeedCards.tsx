@@ -62,7 +62,10 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
     else if (pr) router.push(`/sekai/mura/${prefCode(pr.prefecture)}`);
   };
   const [expanded, setExpanded] = useState(false);
-  const needsFold = mura.body.length > 42 || mura.body.includes("\n");
+  const [mEditOpen, setMEditOpen] = useState(false);
+  const [mEditBody, setMEditBody] = useState("");
+  const [mBodyNow, setMBodyNow] = useState<string | null>(null);
+  const needsFold = (mBodyNow ?? mura.body).length > 42 || (mBodyNow ?? mura.body).includes("\n");
   return (
     <div className="py-2.5">
       {/* ヘッダー: 拠点名（県）が太字の名前になる */}
@@ -107,13 +110,20 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
             セカイムラ村人投稿
           </span>
           {canDelete && (
-            <button
-              onClick={doDelete}
-              aria-label="削除"
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b]"
-            >
-              ×
-            </button>
+            <>
+              <button
+                onClick={() => { setMEditBody(mBodyNow ?? mura.body ?? ""); setMEditOpen(true); }}
+                aria-label="編集"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[11px] font-bold text-[#65676b]"
+              >✎</button>
+              <button
+                onClick={doDelete}
+                aria-label="削除"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b]"
+              >
+                ×
+              </button>
+            </>
           )}
         </span>
       </div>
@@ -133,7 +143,7 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
           }`}
           onClick={() => !expanded && needsFold && setExpanded(true)}
         >
-          {mura.body}
+          {mBodyNow ?? mura.body}
         </p>
         {needsFold && !expanded && (
           <button onClick={() => setExpanded(true)} className="text-[13.5px] text-[#8a8d91]">
@@ -162,6 +172,29 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
           拠点のページへ
         </button>
       </div>
+      {mEditOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setMEditOpen(false)}>
+          <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a7a48]">✎ 投稿を編集{amOffice && meId !== (mura as { user_id?: string }).user_id ? "（事務局権限）" : ""}</div>
+            <textarea value={mEditBody} onChange={(e) => setMEditBody(e.target.value)} rows={5} className="w-full resize-y rounded-xl border border-[#dce8dc] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none" />
+            <div className="mt-2 flex gap-2">
+              <button onClick={() => setMEditOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8a9a84]">キャンセル</button>
+              <button
+                onClick={async () => {
+                  if (!mEditBody.trim()) return;
+                  const { createClient } = await import("@/lib/supabase/client");
+                  const { error } = await createClient().from("village_posts").update({ body: mEditBody.trim() }).eq("id", mura.id);
+                  if (error) { alert("保存できませんでした: " + error.message); return; }
+                  setMBodyNow(mEditBody.trim());
+                  setMEditOpen(false);
+                }}
+                disabled={!mEditBody.trim()}
+                className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40" style={{ background: "#2a8a4a" }}
+              >保存する</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -236,9 +269,24 @@ function EventJoinButton({ postId }: { postId: string }) {
   );
 }
 
-export function MoaiFeedCard({ post }: { post: import("@/lib/feed").MoaiFeedPost }) {
+export function MoaiFeedCard({ post, onDeleted }: { post: import("@/lib/feed").MoaiFeedPost; onDeleted?: () => void }) {
   const router = useRouter();
   const v = post.moai;
+  const [meId, setMeId] = useState<string | null>(null);
+  const [amOffice, setAmOffice] = useState(false);
+  const [gone, setGone] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editBody, setEditBody] = useState("");
+  const [bodyNow, setBodyNow] = useState<string | null>(null);
+  useEffect(() => {
+    createClient().auth.getSession().then(({ data: { session } }) => {
+      const uid = session?.user?.id ?? null;
+      setMeId(uid);
+      if (uid) import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(uid).then(setAmOffice)).catch(() => {});
+    });
+  }, []);
+  const canManage = !!meId && (meId === (post as { user_id?: string }).user_id || amOffice);
+  if (gone) return null;
   return (
     <div className="py-2.5">
       <div className="flex items-center gap-2.5">
@@ -255,11 +303,53 @@ export function MoaiFeedCard({ post }: { post: import("@/lib/feed").MoaiFeedPost
           </button>
           <div className="text-[11.5px] leading-tight text-[#8a8d91]">{relTime(post.created_at)}{post.profiles?.display_name ? ` ・ ${post.profiles.display_name}` : ""}</div>
         </div>
-        <span className="flex-shrink-0 self-start rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>モアイからの投稿</span>
+        <span className="flex flex-shrink-0 items-center gap-1.5 self-start">
+          <span className="rounded-md px-2 py-1 text-[9.5px] font-extrabold text-white" style={{ background: "#c0392b" }}>モアイからの投稿</span>
+          {canManage && (
+            <>
+              <button
+                onClick={() => { setEditBody(bodyNow ?? post.body ?? ""); setEditOpen(true); }}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[11px] font-bold text-[#65676b]"
+              >✎</button>
+              <button
+                onClick={async () => {
+                  if (!confirm(amOffice && meId !== (post as { user_id?: string }).user_id ? "【事務局権限】この投稿を削除しますか？" : "この投稿を削除しますか？")) return;
+                  const { error } = await createClient().from("moai_posts").delete().eq("id", post.id);
+                  if (error) { alert("削除できませんでした: " + error.message); return; }
+                  setGone(true);
+                  onDeleted?.();
+                }}
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b]"
+              >×</button>
+            </>
+          )}
+        </span>
       </div>
-      <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#1c1e21]">{post.body}</p>
+      <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#1c1e21]">{bodyNow ?? post.body}</p>
       {post.photo_url && (
         <div className="-mx-4 mt-2"><img src={srcCdn(post.photo_url)} alt="" loading="lazy" className="w-full object-cover" style={{ maxHeight: 480 }} /></div>
+      )}
+      {editOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setEditOpen(false)}>
+          <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: "#c0392b" }}>✎ 投稿を編集{amOffice && meId !== (post as { user_id?: string }).user_id ? "（事務局権限）" : ""}</div>
+            <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={5} className="w-full resize-y rounded-xl border border-[#f0d8d4] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none" />
+            <div className="mt-2 flex gap-2">
+              <button onClick={() => setEditOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>
+              <button
+                onClick={async () => {
+                  if (!editBody.trim()) return;
+                  const { error } = await createClient().from("moai_posts").update({ body: editBody.trim() }).eq("id", post.id);
+                  if (error) { alert("保存できませんでした: " + error.message); return; }
+                  setBodyNow(editBody.trim());
+                  setEditOpen(false);
+                }}
+                disabled={!editBody.trim()}
+                className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c0392b" }}
+              >保存する</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
