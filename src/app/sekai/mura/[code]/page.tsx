@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn, uploadImage } from "@/lib/images";
-import { PREFS } from "@/lib/sekai";
+import { PREFS, fetchVillagePostComments, addVillagePostComment, type VillagePostComment } from "@/lib/sekai";
 import { SeedSection } from "@/components/sekai/sections";
 import { fetchGroupMessages, type GroupMessageRow } from "@/lib/line";
 import { useSnackbar } from "@/components/Snackbar";
@@ -59,6 +59,62 @@ export default function SekaiMuraPrefPage() {
   const [fEvSh, setFEvSh] = useState(10);
   const [fEvEh, setFEvEh] = useState(12);
 
+  const [fLikes, setFLikes] = useState<Record<string, number>>({});
+  const [fMyLikes, setFMyLikes] = useState<Set<string>>(new Set());
+  const [fCmts, setFCmts] = useState<Record<string, VillagePostComment[]>>({});
+  const [fCmtOpen, setFCmtOpen] = useState<Set<string>>(new Set());
+  const [fCmtDraft, setFCmtDraft] = useState<Record<string, string>>({});
+  const [fEdit, setFEdit] = useState<any | null>(null); // 投稿の編集
+  const [fEditBody, setFEditBody] = useState("");
+
+  const loadFeedExtras = useCallback(async (ids: string[], uid: string | null) => {
+    if (!ids.length) { setFLikes({}); setFMyLikes(new Set()); setFCmts({}); return; }
+    const supabase = createClient();
+    const [{ data: lk }, cmts] = await Promise.all([
+      supabase.from("village_post_likes").select("post_id, user_id").in("post_id", ids),
+      fetchVillagePostComments(ids),
+    ]);
+    const counts: Record<string, number> = {};
+    const mineSet = new Set<string>();
+    for (const r of (lk ?? []) as any[]) {
+      counts[r.post_id] = (counts[r.post_id] ?? 0) + 1;
+      if (uid && r.user_id === uid) mineSet.add(r.post_id);
+    }
+    setFLikes(counts);
+    setFMyLikes(mineSet);
+    const cm: Record<string, VillagePostComment[]> = {};
+    for (const c of cmts) (cm[c.post_id] = cm[c.post_id] ?? []).push(c);
+    setFCmts(cm);
+  }, []);
+
+  const toggleFLike = async (postId: string) => {
+    if (!me) return;
+    const liked = fMyLikes.has(postId);
+    setFMyLikes((prev) => { const n = new Set(prev); if (liked) n.delete(postId); else n.add(postId); return n; });
+    setFLikes((prev) => ({ ...prev, [postId]: Math.max(0, (prev[postId] ?? 0) + (liked ? -1 : 1)) }));
+    const supabase = createClient();
+    if (liked) await supabase.from("village_post_likes").delete().eq("post_id", postId).eq("user_id", me.id);
+    else await supabase.from("village_post_likes").insert({ post_id: postId, user_id: me.id });
+  };
+
+  const sendFCmt = async (postId: string) => {
+    const text = (fCmtDraft[postId] ?? "").trim();
+    if (!me || !text) return;
+    await addVillagePostComment(postId, me.id, text);
+    setFCmtDraft((d) => ({ ...d, [postId]: "" }));
+    const list = await fetchVillagePostComments([postId]);
+    setFCmts((m) => ({ ...m, [postId]: list }));
+  };
+
+  const saveFEdit = async () => {
+    if (!me || !fEdit || !fEditBody.trim()) return;
+    const { error } = await createClient().from("village_posts").update({ body: fEditBody.trim() }).eq("id", fEdit.id);
+    if (error) { snack("編集を保存できませんでした", false); return; }
+    snack("編集を保存しました ✓");
+    setFEdit(null);
+    if (room) loadFeed(room.id);
+  };
+
   const loadFeed = useCallback(async (rid: string) => {
     const { data } = await createClient()
       .from("village_posts")
@@ -67,7 +123,9 @@ export default function SekaiMuraPrefPage() {
       .order("created_at", { ascending: false })
       .limit(30);
     setFposts(data ?? []);
-  }, []);
+    const { data: { session } } = await createClient().auth.getSession();
+    loadFeedExtras((data ?? []).map((x: any) => x.id), session?.user?.id ?? null);
+  }, [loadFeedExtras]);
 
   const submitFeed = async () => {
     if (!me || !room || !fBody.trim() || fSending) return;
@@ -689,11 +747,91 @@ export default function SekaiMuraPrefPage() {
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">{p.body}</p>
                 {p.photo_url && <img src={srcCdn(p.photo_url)} alt="" loading="lazy" className="mt-1.5 max-h-72 rounded-lg object-cover" />}
+
+                {/* ❤いいね / 💬コメント / ✎編集(本人) */}
+                <div className="mt-1.5 flex items-center gap-3">
+                  <button
+                    onClick={() => toggleFLike(p.id)}
+                    className="flex items-center gap-1 text-[12px] font-bold"
+                    style={{ color: fMyLikes.has(p.id) ? "#e05070" : "#a0b09a" }}
+                  >
+                    {fMyLikes.has(p.id) ? "❤" : "🤍"} {fLikes[p.id] ?? 0}
+                  </button>
+                  <button
+                    onClick={() => setFCmtOpen((prev) => { const n = new Set(prev); if (n.has(p.id)) n.delete(p.id); else n.add(p.id); return n; })}
+                    className="flex items-center gap-1 text-[12px] font-bold text-[#8a9a84]"
+                  >
+                    💬 {(fCmts[p.id] ?? []).length}
+                  </button>
+                  {me && me.id === p.user_id && (
+                    <button
+                      onClick={() => { setFEdit(p); setFEditBody(p.body ?? ""); }}
+                      className="ml-auto rounded-full border border-[#d8e4d0] px-2 py-0.5 text-[10.5px] font-bold text-[#5a7a5c]"
+                    >✎ 編集</button>
+                  )}
+                </div>
+
+                {/* コメント欄 */}
+                {fCmtOpen.has(p.id) && (
+                  <div className="mt-1.5">
+                    {(fCmts[p.id] ?? []).map((c: any) => (
+                      <div key={c.id} className="mb-1 flex items-start gap-1.5">
+                        {c.profiles?.avatar_url
+                          ? <img src={srcCdn(c.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-5 w-5 flex-shrink-0 rounded-full object-cover" />
+                          : <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#eef4ee] text-[9px]">🌾</span>}
+                        <div className="min-w-0 flex-1 rounded-lg bg-[#f4f8f2] px-2 py-1">
+                          <span className="mr-1.5 text-[10px] font-bold text-[#5a7a5c]">{c.profiles?.display_name ?? "むらびと"}</span>
+                          <span className="break-words text-[12px] leading-relaxed text-[#4a4438]">{c.body}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {me && (
+                      <div className="flex items-end gap-1.5">
+                        <input
+                          value={fCmtDraft[p.id] ?? ""}
+                          onChange={(e) => setFCmtDraft((d) => ({ ...d, [p.id]: e.target.value }))}
+                          placeholder="コメントする..."
+                          className="min-w-0 flex-1 rounded-full border border-[#e2eae0] bg-white px-3 py-1.5 text-[12px] outline-none"
+                        />
+                        <button
+                          onClick={() => sendFCmt(p.id)}
+                          disabled={!(fCmtDraft[p.id] ?? "").trim()}
+                          className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11px] font-extrabold text-white disabled:opacity-40"
+                          style={{ background: GREEN }}
+                        >送る</button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}
         </div>
       </section>
+
+      {/* FEED投稿の編集(本人) */}
+      {fEdit && (
+        <div className="fixed inset-0 z-[118] flex items-center justify-center bg-black/55 px-5" onClick={() => setFEdit(null)}>
+          <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a4a34]">✎ 投稿を編集</div>
+            <textarea
+              value={fEditBody}
+              onChange={(e) => setFEditBody(e.target.value)}
+              rows={5}
+              className="w-full resize-y rounded-xl border border-[#dce8d8] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none"
+            />
+            <div className="mt-2 flex gap-2">
+              <button onClick={() => setFEdit(null)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8a9a84]">キャンセル</button>
+              <button
+                onClick={saveFEdit}
+                disabled={!fEditBody.trim()}
+                className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: GREEN }}
+              >保存する</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* メインのセカイムラ選択(2県目以降に参加した時だけ) */}
       {mainPick && (
