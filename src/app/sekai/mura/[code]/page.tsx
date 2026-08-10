@@ -31,6 +31,8 @@ export default function SekaiMuraPrefPage() {
   const [room, setRoom] = useState<any | null>(null);
   const [memberCount, setMemberCount] = useState<number | null>(null);
   const [villagers, setVillagers] = useState<any[]>([]);
+  const [joinedCounty, setJoinedCounty] = useState<boolean | null>(null); // この県に参加中か
+  const [countyBusy, setCountyBusy] = useState(false);
   const [villages, setVillages] = useState<any[]>([]);
   const [upBusy, setUpBusy] = useState<"cover" | "icon" | null>(null);
   /* 県の村長(3人まで) */
@@ -58,6 +60,15 @@ export default function SekaiMuraPrefPage() {
     if (data) {
       const { count } = await supabase.from("pref_room_members").select("user_id", { count: "exact", head: true }).eq("room_id", data.id);
       setMemberCount(count ?? null);
+      // この県に参加している村人(参加順)
+      const { data: pm } = await supabase.from("pref_room_members").select("user_id").eq("room_id", data.id).limit(60);
+      const ids = (pm ?? []).map((r: any) => r.user_id);
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids);
+        setVillagers(profs ?? []);
+      } else {
+        setVillagers([]);
+      }
     }
   }, [pref]);
 
@@ -66,14 +77,6 @@ export default function SekaiMuraPrefPage() {
     const supabase = createClient();
     loadRoom();
     loadLeaders();
-    // この県の村人(🌾ムラビト)
-    supabase
-      .from("profiles")
-      .select("id, username, display_name, avatar_url")
-      .eq("murabito", true)
-      .eq("prefecture", pref)
-      .limit(60)
-      .then(({ data }) => setVillagers(data ?? []));
     // この県の拠点(会員数が多い順)
     supabase.from("villages").select("id, name, prefecture, cover_url, icon_url, village_members(count)").then(({ data }) => {
       const list = (data ?? []).filter((v: any) =>
@@ -94,6 +97,40 @@ export default function SekaiMuraPrefPage() {
       setAmOffice(!!adm);
     });
   }, [pref, loadRoom, loadLeaders]);
+
+  // この県に参加しているか(=セカイムラ◯◯の部屋のメンバーか)
+  useEffect(() => {
+    if (!me || !room) { setJoinedCounty(me ? null : false); return; }
+    createClient()
+      .from("pref_room_members")
+      .select("user_id")
+      .eq("room_id", room.id)
+      .eq("user_id", me.id)
+      .maybeSingle()
+      .then(({ data }) => setJoinedCounty(!!data));
+  }, [me, room]);
+
+  /* 県別セカイムラは拒否なし: 押せば誰でもその県の村人になる */
+  const joinCounty = async () => {
+    if (!me || !room || countyBusy) return;
+    setCountyBusy(true);
+    try {
+      const supabase = createClient();
+      if (!murabito) {
+        // 村人でなければ、まず村人に(県別は誰でも参加できる)
+        const { error } = await supabase.from("profiles").update({ murabito: true }).eq("id", me.id);
+        if (error) throw error;
+        setMurabito(true);
+      }
+      const { error: e2 } = await supabase.from("pref_room_members").upsert({ room_id: room.id, user_id: me.id });
+      if (e2) throw e2;
+      setJoinedCounty(true);
+      loadRoom();
+    } catch {
+      alert("参加できませんでした。もう一度お試しください");
+    }
+    setCountyBusy(false);
+  };
 
   const canEdit = amOffice || (!!me && leaders.some((l: any) => l.user_id === me.id));
 
@@ -208,8 +245,30 @@ export default function SekaiMuraPrefPage() {
         </div>
         <h1 className="mt-2 text-[21px] font-extrabold tracking-[2px] text-white">セカイムラ{disp}</h1>
         <div className="mt-1 text-[11.5px] text-white/75">
-          🌾 村人 {villagers.length}人{memberCount != null ? ` ・ チャット参加 ${memberCount}人` : ""} ・ 拠点 {villages.length}
+          🌾 村人 {memberCount ?? villagers.length}人 ・ 拠点 {villages.length}
         </div>
+
+        {/* 県別セカイムラは拒否なし: 参加中バッジ or 参加ボタン */}
+        {me && joinedCounty === true && (
+          <div className="mx-auto mt-2.5 inline-block rounded-full bg-white/90 px-4 py-1.5 text-[12px] font-extrabold" style={{ color: "#2a7a48" }}>
+            ✓ セカイムラ{disp}に参加中
+          </div>
+        )}
+        {me && joinedCounty === false && (
+          <button
+            onClick={joinCounty}
+            disabled={countyBusy}
+            className="mx-auto mt-2.5 block rounded-full px-6 py-2 text-[13px] font-extrabold disabled:opacity-40"
+            style={{ background: "#d4b96a", color: "#1a2432" }}
+          >
+            {countyBusy ? "参加中..." : "🌾 この県に参加する"}
+          </button>
+        )}
+        {!me && (
+          <Link href="/" className="mx-auto mt-2.5 inline-block rounded-full bg-white/20 px-5 py-1.5 text-[11.5px] font-bold text-white no-underline">
+            ログインしてこの県に参加する
+          </Link>
+        )}
 
         {/* 💬 チャットページへ(グループTalKと同期) */}
         <Link
@@ -265,7 +324,7 @@ export default function SekaiMuraPrefPage() {
         <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
           <div className="mb-1.5 text-[12px] font-extrabold text-[#2a4a34]">🌾 セカイムラ{disp}の村人（{villagers.length}）</div>
           {villagers.length === 0 ? (
-            <p className="text-[11px] text-[#a0b09a]">まだ村人がいません。「村人になる」でこの県のセカイムラに入れます</p>
+            <p className="text-[11px] text-[#a0b09a]">まだ村人がいません。上の「この県に参加する」で最初の村人になれます</p>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {villagers.map((p: any) => {
