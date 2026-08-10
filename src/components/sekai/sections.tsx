@@ -3793,6 +3793,7 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
 
   const plant = async () => {
     if (!me || saving || checked !== true) return;
+    if (!pref.trim()) { setMsg("都道府県を入れてください（認定に必要です）"); return; }
     setSaving(true);
     setMsg(null);
     const supabase = createClient();
