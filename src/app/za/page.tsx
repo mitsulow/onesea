@@ -256,14 +256,7 @@ export default function ZaPage() {
                           {cat.emoji} {cat.label}
                         </div>
                       )}
-                      {shop.is_trial && (
-                        <div
-                          className="absolute right-1.5 top-1.5 rounded-sm px-1.5 py-0.5 text-[9px] font-bold text-white"
-                          style={{ background: "#c94d3a" }}
-                        >
-                          お試し
-                        </div>
-                      )}
+
                       {shop.profiles?.avatar_url && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img

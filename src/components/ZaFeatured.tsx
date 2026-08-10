@@ -104,14 +104,6 @@ export function ZaFeatured({ shops }: { shops: Shop[] }) {
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col justify-between overflow-hidden p-2">
                   <div className="min-w-0">
-                    {shop.is_trial && (
-                      <span
-                        className="mr-1 rounded-sm px-1 py-0.5 text-[9px] font-bold text-white"
-                        style={{ background: "#c94d3a" }}
-                      >
-                        お試し
-                      </span>
-                    )}
                     <h2 className="line-clamp-1 text-sm font-bold leading-tight text-[#3a3428]">
                       {shop.name}
                     </h2>

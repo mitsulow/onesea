@@ -323,7 +323,7 @@ export default function ShopDetailPage() {
               {shop.accepts_barter && <span><img src="/icons/icon-barter.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> ブツブツ交換OK</span>}
               {shop.handover && (
                 <span style={{ color: "#5a7d4a", fontWeight: 700 }}>
-                  {shop.handover === "pickup" ? "🚶 取りに来てくれる人優先" : shop.handover === "cod" ? "📦 着払いでの郵送可" : "🚶📦 取りに来ても着払い郵送もOK"}
+                  {shop.handover === "pickup" ? "🚶 取りに来てくれる人" : shop.handover === "cod" ? "📦 着払いで郵送" : shop.handover === "online" ? "💻 ネット上で交換（サービス）" : "🚶📦 どちらでもOK"}
                 </span>
               )}
               {shop.accepts_tip && <span><img src="/icons/icon-coin.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 投げ銭OK</span>}
