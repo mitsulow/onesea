@@ -86,7 +86,7 @@ export function HomeDashboard() {
   }, [tk]);
 
   /* 予定（手帳から）— 予定が入っている日だけをスワイプで前後に渡り歩ける */
-  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }>>>({});
+  const [dayPlans, setDayPlans] = useState<Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; planId?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }>>>({});
   const [homePlace, setHomePlace] = useState<PlaceInfo | null>(null); // 予定の「地図」ボタンで開くオーバーレイ
   const [delIdx, setDelIdx] = useState<number | null>(null); // 長押しで×が出ている行
   const planPress = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -133,13 +133,14 @@ export function HomeDashboard() {
     const loadPlans = () => {
     try {
       const memos = JSON.parse(readTecho());
-      const byDay: Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }>> = {};
+      const byDay: Record<string, Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; planId?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }>> = {};
       const keys: string[] = [];
       for (const [k, day] of Object.entries(memos) as Array<[string, any]>) { // eslint-disable-line @typescript-eslint/no-explicit-any
-        const list: Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }> = [];
+        const list: Array<{ time: string; text: string; color?: string; place?: PlaceInfo; evPost?: string; planId?: string; src?: { t: "ev"; id: string } | { t: "h"; hour: string; line: string } }> = [];
         for (const ev of day?.ev ?? []) {
           const evPost = typeof ev.id === "string" && ev.id.startsWith("sekai-") ? ev.id.slice(6) : undefined;
-          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color, place: ev.place, evPost, src: { t: "ev", id: ev.id } });
+          const planId = (ev as { plan?: string }).plan ?? (typeof ev.id === "string" && ev.id.startsWith("share-") ? ev.id.slice(6) : undefined);
+          list.push({ time: `${pad(ev.sh)}:${pad(ev.sm)}`, text: ev.text, color: ev.color, place: ev.place, evPost, planId, src: { t: "ev", id: ev.id } } as never);
         }
         for (const [h, v] of Object.entries(day?.h ?? {})) {
           for (const line of String(v).split("\n")) {
@@ -462,14 +463,15 @@ export function HomeDashboard() {
                           地図
                         </span>
                       )}
-                      {p.evPost && (
+                      {(p.evPost || (p as { planId?: string }).planId) && (
                         <span
                           role="button"
                           tabIndex={0}
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
-                            window.location.href = "/sekai?event=" + p.evPost;
+                            const pid = (p as { planId?: string }).planId;
+                            window.location.href = pid ? "/plan/" + pid : "/sekai?event=" + p.evPost;
                           }}
                           className="flex-shrink-0 self-center rounded-full border px-1 text-[8.5px] font-extrabold leading-[1.6]"
                           style={{ borderColor: "#c8a030", color: "#a07820", background: "#fdf6e4" }}

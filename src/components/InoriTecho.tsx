@@ -63,6 +63,10 @@ export interface TechoEv {
   color: string; // ペンID
   /** セカイムラのイベント等: タップでGoogleマップのオーバーレイを開く場所情報 */
   place?: { name?: string | null; lat?: number | null; lng?: number | null; url?: string | null };
+  /** 予定の詳細メモ(シェア時に相手にも見える) */
+  detail?: string;
+  /** シェア済み予定のID(/plan/{id}) */
+  plan?: string;
 }
 
 interface DayMemo {
@@ -560,6 +564,66 @@ function BottomSheet({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [tide, setTide] = useState<TideDay | null>(null);
   const [evEdit, setEvEdit] = useState<TechoEv | null>(null); // 編集中の予定（id空なら新規）
+  const [evPaste, setEvPaste] = useState(""); // 場所リンク貼り付け
+  const [evResolving, setEvResolving] = useState(false);
+  const [sharePick, setSharePick] = useState<null | { planId: string; title: string }>(null); // シェア相手選択
+  const [shareChats, setShareChats] = useState<any[]>([]);
+  const [shareBusy, setShareBusy] = useState(false);
+
+  /* 場所リンク(Googleマップ/検索の共有URL)を予定に取り込む */
+  const resolveEvPlace = async (raw: string) => {
+    const mm = raw.match(/https?:\/\/[^\s]+/);
+    if (!mm || evResolving || !evEdit) return;
+    setEvResolving(true);
+    try {
+      const r = await fetch("/api/reco/resolve?url=" + encodeURIComponent(mm[0]));
+      const d = await r.json();
+      if (r.ok && d.lat != null && d.lng != null) {
+        setEvEdit((prev) => prev ? { ...prev, place: { name: d.name ?? null, lat: d.lat, lng: d.lng, url: mm[0] } } : prev);
+        setEvPaste("");
+      } else {
+        alert("場所を読み取れませんでした。Googleマップの共有→リンクをコピーが確実です");
+      }
+    } catch { alert("通信に失敗しました"); }
+    setEvResolving(false);
+  };
+
+  /* 予定をシェア: shared_plansに保存してTalKの相手選択へ */
+  const startShare = async () => {
+    if (!evEdit || !evEdit.text.trim()) { alert("予定の内容を入れてから共有してください"); return; }
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { alert("シェアにはログインが必要です（無料のGoogleログイン）"); return; }
+    const [y, mo, da] = dk.split("-").map(Number);
+    const at = new Date(y, mo - 1, da, evEdit.sh, evEdit.sm);
+    const endAt = new Date(y, mo - 1, da, evEdit.eh, evEdit.em);
+    // 既にシェア済みなら再利用
+    let planId = evEdit.plan ?? null;
+    if (!planId) {
+      const { data, error } = await supabase.from("shared_plans").insert({
+        creator: session.user.id,
+        title: evEdit.text.trim(),
+        detail: evEdit.detail?.trim() || null,
+        at: at.toISOString(),
+        end_at: endAt > at ? endAt.toISOString() : null,
+        place_name: evEdit.place?.name ?? null,
+        place_lat: evEdit.place?.lat ?? null,
+        place_lng: evEdit.place?.lng ?? null,
+        place_url: evEdit.place?.url ?? null,
+      }).select("id").single();
+      if (error || !data) { alert("シェアの準備に失敗しました"); return; }
+      planId = data.id;
+      // 自分の予定にもplan IDを刻む(詳細ボタン用)
+      const updated = { ...evEdit, plan: planId as string };
+      setEvEdit(updated);
+      onSaveEv(dk, [...dayEvs.filter((x) => x.id !== evEdit.id), { ...updated, id: evEdit.id || `ev-${Date.now()}` }]);
+    }
+    const { fetchChats } = await import("@/lib/line");
+    setShareChats(await fetchChats(session.user.id));
+    setSharePick({ planId: planId as string, title: evEdit.text.trim() });
+  };
+
   const [placeView, setPlaceView] = useState<PlaceInfo | null>(null); // 場所の詳細(Googleマップのオーバーレイ)
   const [delEvId, setDelEvId] = useState<string | null>(null); // 長押しで×が出ている予定
   /** セカイムラ由来の予定はDBの最新の場所で地図を開く(古い保存値の誤座標を自動修正) */
@@ -1088,12 +1152,13 @@ function BottomSheet({
                                       地図
                                     </span>
                                   )}
-                                  {String(ev.id).startsWith("sekai-") && (
+                                  {(String(ev.id).startsWith("sekai-") || ev.plan || String(ev.id).startsWith("share-")) && (
                                     <span
                                       role="button"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        window.location.href = "/sekai?event=" + String(ev.id).slice(6);
+                                        const pid = ev.plan ?? (String(ev.id).startsWith("share-") ? String(ev.id).slice(6) : null);
+                                        window.location.href = pid ? "/plan/" + pid : "/sekai?event=" + String(ev.id).slice(6);
                                       }}
                                       className="rounded-full border px-1 text-[8.5px] font-extrabold leading-[1.5]"
                                       style={{ borderColor: "#c8a030", color: "#a07820", background: "#fdf6e4" }}
@@ -1232,6 +1297,44 @@ function BottomSheet({
 
       {/* 予定の追加・編集（○時○分〜○時○分・色ペン） */}
       {placeView && <PlaceOverlay place={placeView} onClose={() => setPlaceView(null)} />}
+      {sharePick && (
+        <div className="fixed inset-0 z-[97] flex items-center justify-center bg-black/50 px-5" onClick={() => setSharePick(null)}>
+          <div className="max-h-[70dvh] w-full max-w-[380px] overflow-y-auto rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
+            <div className="text-[14px] font-extrabold text-[#3a3428]">だれにシェアする？</div>
+            <p className="mt-0.5 text-[11px] text-[#a09a88]">『{sharePick.title}』の日時・地図・詳細がTalKで届きます</p>
+            <div className="mt-3 space-y-1">
+              {shareChats.length === 0 && <p className="py-4 text-center text-[12px] text-[#a09a88]">まだTalKの相手がいません。先にTalKで挨拶してみてください</p>}
+              {shareChats.map((c: any) => (
+                <button
+                  key={c.id}
+                  disabled={shareBusy}
+                  onClick={async () => {
+                    setShareBusy(true);
+                    try {
+                      const { sendMessage } = await import("@/lib/line");
+                      const { createClient } = await import("@/lib/supabase/client");
+                      const { data: { session } } = await createClient().auth.getSession();
+                      if (!session) throw new Error("no session");
+                      await sendMessage(c.id, session.user.id, `【新しい予定】『${sharePick.title}』がシェアされました📔\nタップして確認 → https://onesea.vercel.app/plan/${sharePick.planId}`);
+                      alert(`${c.partner?.display_name ?? "お相手"}さんにシェアしました！`);
+                      setSharePick(null);
+                    } catch { alert("送信できませんでした"); }
+                    setShareBusy(false);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left hover:bg-[#faf7f0]"
+                >
+                  {c.partner?.avatar_url
+                    ? <img src={c.partner.avatar_url} alt="" referrerPolicy="no-referrer" className="h-9 w-9 rounded-full object-cover" />
+                    : <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f0e8d8] text-[13px]">📔</span>}
+                  <span className="min-w-0 flex-1 truncate text-[13.5px] font-bold text-[#3a3428]">{c.partner?.display_name ?? "むらびと"}</span>
+                  <span className="flex-shrink-0 text-[11px] font-bold text-[#3070b0]">送る →</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setSharePick(null)} className="mt-2 w-full py-2 text-[12px] font-bold text-[#a09a88]">キャンセル</button>
+          </div>
+        </div>
+      )}
       {evEdit && (
         <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/40" onClick={() => setEvEdit(null)}>
           <div
@@ -1308,6 +1411,43 @@ function BottomSheet({
               }
             >
               {evEdit.alarm ? "⏰ アラームON — 予定時刻に通知します" : "⏰ アラームを設定する"}
+            </button>
+
+            {/* 📍 場所: Googleの共有リンクをペタッと貼ると、地図ボタンつきの予定になる */}
+            <div className="mt-2.5">
+              {evEdit.place ? (
+                <div className="flex items-center gap-2 rounded-xl border border-[#d8e0c8] bg-[#f8fbf4] px-3 py-2">
+                  <span className="text-[14px]">📍</span>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] font-bold text-[#4a6a3a]">{evEdit.place.name ?? "場所を取り込みました"}</span>
+                  <button onClick={() => setEvEdit({ ...evEdit, place: undefined })} className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-black/5 text-[12px] text-[#8a8070]">×</button>
+                </div>
+              ) : (
+                <div className="flex gap-1.5">
+                  <input
+                    value={evPaste}
+                    onChange={(e) => { setEvPaste(e.target.value); if (/https?:\/\//.test(e.target.value)) resolveEvPlace(e.target.value); }}
+                    placeholder="📍 Googleマップの共有リンクを貼ると地図つきに"
+                    className="min-w-0 flex-1 rounded-xl border border-[#e4e0d8] bg-[#fdfcfa] px-3 py-2 text-[12px] outline-none"
+                  />
+                  <button onClick={() => resolveEvPlace(evPaste)} disabled={!/https?:\/\//.test(evPaste) || evResolving} className="flex-shrink-0 rounded-xl px-3 py-2 text-[11.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c94d3a" }}>{evResolving ? "…" : "読取"}</button>
+                </div>
+              )}
+            </div>
+            {/* 詳細(シェアした相手にも見える) */}
+            <textarea
+              value={evEdit.detail ?? ""}
+              onChange={(e) => setEvEdit({ ...evEdit, detail: e.target.value })}
+              rows={2}
+              placeholder="詳細メモ（例: 1階ロビー集合。予約は12:45〜）— シェアした相手にも見えます"
+              className="mt-2 w-full resize-y rounded-xl border border-[#e4e0d8] bg-[#fdfcfa] px-3 py-2 text-[12.5px] outline-none"
+            />
+            {/* 📤 予定をシェア */}
+            <button
+              onClick={startShare}
+              className="mt-2 w-full rounded-xl border-2 border-dashed py-2 text-[12.5px] font-extrabold"
+              style={{ borderColor: "#3070b0", color: "#3070b0" }}
+            >
+              📤 この予定を誰かにシェア（相手の手帳にも入れられる）
             </button>
             {/* 色ペン（タグ名は✎で自由に変えられる） */}
             <div className="mt-2.5 flex items-start gap-2.5">
