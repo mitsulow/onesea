@@ -182,8 +182,8 @@ export default function ZaPage() {
         {/* 出品CTA */}
         <Link href="/za/new" className="block no-underline">
           <div
-            className="mb-3 flex items-center gap-2.5 rounded-xl border border-[#c94d3a66] px-3 py-2.5"
-            style={{ background: "linear-gradient(135deg,#f5e8d5 0%,#ffffff 50%,#f5e8d5 100%)" }}
+            className="mb-3 flex items-center gap-2.5 rounded-xl px-3 py-3 shadow-md"
+            style={{ background: "linear-gradient(120deg,#c94d3a,#a03020)" }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -192,14 +192,14 @@ export default function ZaPage() {
               className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
             />
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-bold leading-tight text-[#3a3428]">
-                あなたも楽座を出しましょう
+              <div className="text-[15px] font-extrabold leading-tight text-white">
+                出品する（楽座を出す）（楽市に出す）
               </div>
-              <div className="text-[10px] leading-tight text-[#8a8070]">
+              <div className="text-[10.5px] leading-tight text-white/85">
                 お試し出品（0円）もブツブツ交換もOK
               </div>
             </div>
-            <div className="flex-shrink-0 text-base text-[#c94d3a]">→</div>
+            <div className="flex-shrink-0 rounded-full bg-white px-2.5 py-1 text-[12px] font-extrabold" style={{ color: "#c94d3a" }}>出品する →</div>
           </div>
         </Link>
 

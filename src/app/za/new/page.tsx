@@ -2,7 +2,7 @@
 
 import { hasConsent } from "@/lib/consents";
 import { ConsentDialog } from "@/components/ConsentDialog";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
@@ -27,7 +27,39 @@ export default function NewShopPage() {
   const [handover, setHandover] = useState("both"); // 交換方法(楽市のみ)
   const [tip, setTip] = useState(false);
   const [category, setCategory] = useState<string>("other");
+
   const [images, setImages] = useState<Array<{ full: string; thumb: string }>>([]);
+
+  /* 下書き保持: 入力のたびに保存し、再読込されても復元(出品完了で消す) */
+  const DRAFT_KEY = "onesea-za-draft";
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) { restoredRef.current = true; return; }
+      const d = JSON.parse(raw);
+      if (d.market) setMarket(d.market);
+      if (d.name) setName(d.name);
+      if (d.description) setDescription(d.description);
+      if (d.price) setPrice(d.price);
+      if (d.payUrl) setPayUrl(d.payUrl);
+      if (typeof d.isTrial === "boolean") setIsTrial(d.isTrial);
+      if (typeof d.barter === "boolean") setBarter(d.barter);
+      if (typeof d.tip === "boolean") setTip(d.tip);
+      if (d.handover) setHandover(d.handover);
+      if (d.category) setCategory(d.category);
+      if (Array.isArray(d.images)) setImages(d.images);
+    } catch {}
+    restoredRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!restoredRef.current) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ market, name, description, price, payUrl, isTrial, barter, tip, handover, category, images }));
+    } catch {}
+  }, [market, name, description, price, payUrl, isTrial, barter, tip, handover, category, images]);
+
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -92,7 +124,8 @@ export default function NewShopPage() {
       setMessage(`出品できませんでした: ${error?.message ?? ""}`);
       return;
     }
-    router.replace(`/za/${data.id}`);
+    try { localStorage.removeItem(DRAFT_KEY); } catch {}
+      router.replace(`/za/${data.id}`);
   };
 
   return (

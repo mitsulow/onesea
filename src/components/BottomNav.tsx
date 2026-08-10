@@ -19,6 +19,7 @@ interface Tab {
   icon: string; // 絵文字 or 画像パス（/で始まると画像）
   label: string;
   ext?: boolean; // 静的HTML・クエリ付き等、フルロードで開く
+  hot?: boolean; // 目立たせる(赤ピル)
 }
 
 interface Service {
@@ -105,7 +106,7 @@ const SERVICES: Service[] = [
     active: "#c94d3a",
     inactive: "#a09888",
     tabs: [
-      { href: "/za/new", icon: "/icons/icon-listing.webp", label: "出品する" },
+      { href: "/za/new", icon: "/icons/icon-listing.webp", label: "出品する", hot: true },
       { href: "/my", icon: "/icons/icon-meishi.webp", label: "マイページ" },
     ],
   },
@@ -332,13 +333,24 @@ export function BottomNav() {
                 </span>
               </>
             );
+            const hot = (t as { hot?: boolean }).hot;
+            const cls = hot
+              ? "relative mx-1 my-1 flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1 no-underline shadow"
+              : "relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline";
+            const hotStyle = hot ? { background: "linear-gradient(120deg,#c94d3a,#a03020)" } : undefined;
+            const body = hot ? (
+              <>
+                <span className="relative inline-flex"><TabIcon icon={t.icon} active={active} /></span>
+                <span className="text-[9px] font-extrabold leading-none text-white">{t.label}</span>
+              </>
+            ) : inner;
             return t.ext ? (
-              <a key={t.href} href={realHref} className="relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline">
-                {inner}
+              <a key={t.href} href={realHref} className={cls} style={hotStyle}>
+                {body}
               </a>
             ) : (
-              <Link key={t.href} href={realHref} className="relative flex flex-1 flex-col items-center gap-0.5 py-1 no-underline">
-                {inner}
+              <Link key={t.href} href={realHref} className={cls} style={hotStyle}>
+                {body}
               </Link>
             );
           })}
