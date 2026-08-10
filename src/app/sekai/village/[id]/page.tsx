@@ -28,6 +28,7 @@ import { CameraIcon } from "@/components/CameraIcon";
 import JP_CITIES_JSON from "@/data/jp-cities.json";
 import { linkify, SekaiMenuButton } from "@/components/sekai/sections";
 import { srcCdn } from "@/lib/images";
+import { useSnackbar } from "@/components/Snackbar";
 
 const JP_CITIES = JP_CITIES_JSON as Record<string, string[]>;
 
@@ -47,6 +48,8 @@ export default function VillagePage() {
     if (!me) return;
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
   }, [me]);
+  const { show: snack, node: snackNode } = useSnackbar();
+  const [imgBusy, setImgBusy] = useState<"icon" | "cover" | null>(null);
   const [village, setVillage] = useState<any | null | undefined>(undefined);
   const [members, setMembers] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
@@ -270,18 +273,26 @@ export default function VillagePage() {
                 </span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={async (e) => {
                     const f = e.target.files?.[0];
-                    if (!f || !me) return;
-                    const { uploadImage } = await import("@/lib/images");
-                    const url = await uploadImage("post-images", me.id, f, 512, 0.8);
-                    if (url) {
+                    e.currentTarget.value = "";
+                    if (!f || !me || imgBusy) return;
+                    setImgBusy("icon");
+                    try {
+                      const { uploadImage } = await import("@/lib/images");
+                      const url = await uploadImage("post-images", me.id, f, 512, 0.8);
+                      if (!url) throw new Error("upload");
                       const supabase = createClient();
-                      await supabase.from("villages").update({ icon_url: url }).eq("id", villageId);
-                      load();
+                      const { error } = await supabase.from("villages").update({ icon_url: url }).eq("id", villageId);
+                      if (error) throw error;
+                      await load();
+                      snack("アイコンを変更しました ✓");
+                    } catch {
+                      snack("アイコンを変更できませんでした。もう一度お試しください", false);
                     }
+                    setImgBusy(null);
                   }}
                 />
               </>
@@ -331,17 +342,24 @@ export default function VillagePage() {
             📷
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
               onChange={async (e) => {
                 const f = e.target.files?.[0];
-                if (!f || !me) return;
-                const url = await uploadImage("post-images", me.id, f, 1600, 0.75);
-                if (url) {
-                  const supabase = createClient();
-                  await supabase.rpc("set_village_cover", { vid: villageId, url });
-                  load();
+                e.currentTarget.value = "";
+                if (!f || !me || imgBusy) return;
+                setImgBusy("cover");
+                try {
+                  const url = await uploadImage("post-images", me.id, f, 1600, 0.75);
+                  if (!url) throw new Error("upload");
+                  const { error } = await createClient().rpc("set_village_cover", { vid: villageId, url });
+                  if (error) throw error;
+                  await load();
+                  snack("背景写真を変更しました ✓");
+                } catch {
+                  snack("背景写真を変更できませんでした。もう一度お試しください", false);
                 }
+                setImgBusy(null);
               }}
             />
           </label>
@@ -541,7 +559,7 @@ export default function VillagePage() {
               {eCoverUp ? "⏳" : "🖼"} ヘッダー画像を選ぶ
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
                 onChange={async (e) => {
                   const f = e.target.files?.[0];
@@ -703,7 +721,7 @@ export default function VillagePage() {
               <div className="mt-2 flex items-center gap-2">
                 <label className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[15px]" style={{ border: "1px solid #dce8d8" }}>
                   {uploading ? "⏳" : "📷"}
-                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={async (e) => {
                     const f = e.target.files?.[0];
                     if (!f || !me || uploading) return;
                     setUploading(true);
@@ -837,6 +855,13 @@ export default function VillagePage() {
       {reportPost && (
         <ReportDialog kind="village_post" targetId={reportPost.id} targetUrl={`/sekai/village/${villageId}`} excerpt={reportPost.body} meId={me?.id ?? null} onClose={() => setReportPost(null)} />
       )}
+      {imgBusy && (
+        <div className="fixed inset-0 z-[130] flex flex-col items-center justify-center bg-black/60">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-white/30 border-t-white" />
+          <p className="mt-3 text-[13px] font-bold text-white">{imgBusy === "cover" ? "背景写真を変更中..." : "アイコンを変更中..."}</p>
+        </div>
+      )}
+      {snackNode}
     </main>
   );
 }
