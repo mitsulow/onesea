@@ -15197,13 +15197,60 @@ const COASTLINES = [
     }
   }
 
-  // 旧暦計算
+  // 旧暦計算 — 真の朔(天文計算)ベース。
+  // 以前は平均朔望月(29.5306日)の概算で、月の変わり目に1日ズレることがあった
+  // (例: 2026-08-13 は旧暦7月1日なのに「みそか」と出ていた)。メンバーサイト側と同じ黄経差の式に統一。
+  function tyElong(ms) {
+    const RAD = Math.PI / 180;
+    const jd = ms / 86400000 + 2440587.5;
+    const T = (jd - 2451545) / 36525;
+    const Ms = (357.5291092 + 35999.0502909 * T) * RAD;
+    const Mm = (134.9633964 + 477198.8675055 * T) * RAD;
+    const Dm = (297.8501921 + 445267.1114034 * T) * RAD;
+    const Lm = 218.3164477 + 481267.88123421 * T +
+      6.289 * Math.sin(Mm) - 1.274 * Math.sin(Mm - 2 * Dm) +
+      0.658 * Math.sin(2 * Dm) - 0.214 * Math.sin(2 * Mm) - 0.11 * Math.sin(Dm);
+    const Ls = 280.46646 + 36000.76983 * T + 1.915 * Math.sin(Ms) + 0.02 * Math.sin(2 * Ms);
+    let el = (Lm - Ls) % 360;
+    if (el < 0) el += 360;
+    return el;
+  }
+  const tyNmCache = {};
+  // その日(端末ローカル=JST想定)の24:00から遡って、直前の朔(黄経差360→0の折り返し)の瞬間を返す
+  function tyLastNewMoon(date) {
+    const key = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate();
+    if (tyNmCache[key]) return tyNmCache[key];
+    let t = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime(); // 翌日0:00
+    let prev = tyElong(t);
+    for (let i = 0; i < 24 * 35; i++) {
+      const t2 = t - 3600000;
+      const e2 = tyElong(t2);
+      if (e2 > prev + 180) { // 遡り中に 0°→360° へ折り返した = この1時間の中に朔がある
+        let a = t2, b = t;
+        for (let k = 0; k < 40; k++) {
+          const m = (a + b) / 2;
+          if (tyElong(m) < 180) b = m; else a = m;
+        }
+        const nm = (a + b) / 2;
+        tyNmCache[key] = nm;
+        return nm;
+      }
+      prev = e2;
+      t = t2;
+    }
+    return null;
+  }
   function getLunarDate(date) {
     const dayMs = 86400000;
-    const daysSinceBase = (date.getTime() - BASE_NEW_MOON) / dayMs;
-    const cycleCount = Math.floor(daysSinceBase / SYNODIC_MONTH);
-    const lastNewMoonMs = BASE_NEW_MOON + cycleCount * SYNODIC_MONTH * dayMs;
-    const lastNewMoon = new Date(lastNewMoonMs);
+    const nmMs = tyLastNewMoon(date);
+    let lastNewMoon;
+    if (nmMs != null) {
+      lastNewMoon = new Date(nmMs);
+    } else {
+      // 万一の保険: 旧来の概算
+      const cycleCount = Math.floor((date.getTime() - BASE_NEW_MOON) / dayMs / SYNODIC_MONTH);
+      lastNewMoon = new Date(BASE_NEW_MOON + cycleCount * SYNODIC_MONTH * dayMs);
+    }
     const lnmMidnight = new Date(lastNewMoon.getFullYear(), lastNewMoon.getMonth(), lastNewMoon.getDate()).getTime();
     const targetMidnight = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
     const lunarDay = Math.round((targetMidnight - lnmMidnight) / dayMs) + 1;
