@@ -107,7 +107,8 @@ export function moonOf(dateKey: string): MoonInfo {
   ] as const) {
     if (el0 < target && target <= el1) holy = name;
   }
-  const rd = Math.floor(age) + 1;
+  // 旧暦日は月齢の切り捨てではなく、朔の日を1日とする天文計算(kyurekiOf)に統一
+  const rd = Math.min(30, Math.max(1, kyurekiOf(dateKey).day));
   return { age, emoji, holy, reki: (KANJI[rd] ?? String(rd)) + "日" };
 }
 
@@ -341,20 +342,23 @@ export function kyurekiOf(dateKey: string): { month: number; leap: boolean; day:
   const noon = Date.UTC(y, m - 1, d, 3); // JST正午
   // この日を含む朔望月（朔=新月の瞬間）を探す
   const news = nextMoons(5, noon - 40 * 86400000).filter((x) => x.type === "new");
+  // 旧暦日 = 朔のあった日（JST）を1日目とする。
+  // 比較は「瞬間」ではなく「JSTの日付」で行う — 朔が正午より後に起きる日(例: 2026-09-11 13:14)でも
+  // その日がちゃんと1日になる(以前は瞬間比較だったため1日が消えて晦日→2日と飛んでいた)
+  const dayIdx = (ms: number) => Math.floor((ms + 9 * 3600000) / 86400000);
   let start: number | null = null;
   let next: number | null = null;
   for (const n of news) {
-    if (n.time <= noon) start = n.time;
+    if (dayIdx(n.time) <= dayIdx(noon)) start = n.time;
     else if (start !== null && next === null) next = n.time;
   }
-  const fallbackDay = Math.floor(moonOf(dateKey).age) + 1;
+  // moonOf は reki で kyurekiOf を呼ぶため、ここでは直接月齢を計算して循環を断つ
+  const fallbackDay = Math.floor((elongationAt(noon) / 360) * SYNODIC) + 1;
   if (start === null) return { month: 0, leap: false, day: fallbackDay };
   if (next === null) {
     const more = nextMoons(3, start + 86400000).filter((x) => x.type === "new");
     next = more[0]?.time ?? start + 30 * 86400000;
   }
-  // 旧暦日 = 朔のあった日（JST）を1日目とする
-  const dayIdx = (ms: number) => Math.floor((ms + 9 * 3600000) / 86400000);
   const day = dayIdx(noon) - dayIdx(start) + 1;
   // 月名: この朔望月に含まれる中気（太陽黄経30°の倍数）で決まる
   const t0 = dayIdx(start) * 86400000 - 9 * 3600000;
@@ -376,10 +380,10 @@ const KANJI_DAYS = ["", "一日", "二日", "三日", "四日", "五日", "六�
 /** 「旧暦文月八日（旧7月8日）」形式 */
 export function kyurekiFullLabel(dateKey: string): string {
   const k = kyurekiOf(dateKey);
-  if (!k.month) return `旧暦${k.day}日`;
+  if (!k.month) return `旧暦：${k.day}日`;
   const wafu = WAFU_MONTHS[k.month] ?? `${k.month}月`;
   const kd = KANJI_DAYS[Math.min(30, Math.max(1, k.day))];
-  return `旧暦${k.leap ? "閏" : ""}${wafu}${kd}（旧${k.month}月${k.day}日）`;
+  return `旧暦：${k.leap ? "閏" : ""}${wafu}${kd}（旧${k.month}月${k.day}日）`;
 }
 
 /** ツキヨガの30日「月の呼び名」辞書（旧暦の日 → 呼び名） */
@@ -394,30 +398,19 @@ const MOON_NAMES_30: Record<number, [string, string]> = {
   29: ["つごもり", "晦・月籠"], 30: ["みそか", "晦日"],
 };
 
-/**
- * その日の月の呼び名（ひらがな・漢字）。
- * ツキヨガ本体と全く同じ計算式（BASE_NEW_MOON + 朔望月29.530588853の深夜差分）で
- * 旧暦日を出す — ツキヨガの毎日の表示と1日もズレないことが最優先。
- */
+/** その日の月の呼び名（ひらがな・漢字）— 旧暦日(天文計算)から引く */
 export function moonNameOf(dateKey: string): { yomi: string; kanji: string } {
-  const [y, m, d] = dateKey.split("-").map(Number);
-  const BASE_NEW_MOON = Date.parse("2000-01-06T18:14:00Z");
-  const SYNODIC = 29.530588853;
-  const dayMs = 86400000;
-  const target = new Date(y, m - 1, d);
-  const daysSinceBase = (target.getTime() - BASE_NEW_MOON) / dayMs;
-  const cycleCount = Math.floor(daysSinceBase / SYNODIC);
-  const lastNewMoon = new Date(BASE_NEW_MOON + cycleCount * SYNODIC * dayMs);
-  const lnmMidnight = new Date(lastNewMoon.getFullYear(), lastNewMoon.getMonth(), lastNewMoon.getDate()).getTime();
-  const lunarDay = Math.round((target.getTime() - lnmMidnight) / dayMs) + 1;
+  // 以前は平均朔望月の簡易式だったが、月の変わり目で天文計算と1日ズレた
+  // (例: 旧暦1日の日に「みそか」と出る)。旧暦日と同じ天文計算に統一。
+  const lunarDay = kyurekiOf(dateKey).day;
   const [yomi, kanji] = MOON_NAMES_30[Math.min(30, Math.max(1, lunarDay))] ?? MOON_NAMES_30[1];
   return { yomi, kanji };
 }
 
 export function kyurekiLabel(dateKey: string): string {
   const k = kyurekiOf(dateKey);
-  if (!k.month) return `旧暦${k.day}日`;
-  return `旧暦${k.leap ? "閏" : ""}${k.month}月${k.day}日`;
+  if (!k.month) return `旧暦：${k.day}日`;
+  return `旧暦：${k.leap ? "閏" : ""}${k.month}月${k.day}日`;
 }
 
 /** その日の月の聖点（つきたち・かたみに・くまなし・ありあけ）の瞬間時刻 */
