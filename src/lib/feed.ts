@@ -54,6 +54,17 @@ const SHOP_SELECT =
   "id, owner_id, name, description, price_jpy, is_trial, accepts_barter, accepts_tip, category, market, image_urls, thumb_urls, created_at, profiles!shops_owner_id_fkey(username, display_name, avatar_url), shop_comments(count)";
 
 /** cursor（ISO時刻）より古いものを混ぜて取得（言の葉+むらびとたより。出品は横スクロールへ分離） */
+/** 新着が何件あるかだけを数える(本文は運ばない) — 30秒チェックの転送量を1/500にする */
+export async function countFreshFeed(sinceIso: string): Promise<number> {
+  const supabase = createClient();
+  const [p, m, mo] = await Promise.all([
+    supabase.from("posts").select("id", { count: "exact", head: true }).gt("created_at", sinceIso),
+    supabase.from("village_posts").select("id", { count: "exact", head: true }).gt("created_at", sinceIso).neq("kind", "event"),
+    supabase.from("moai_posts").select("id", { count: "exact", head: true }).gt("created_at", sinceIso).eq("kind", "normal"),
+  ]);
+  return (p.count ?? 0) + (m.count ?? 0) + (mo.count ?? 0);
+}
+
 export async function fetchMixedFeed(cursor: string | null, limit = 20): Promise<FeedItem[]> {
   const supabase = createClient();
 

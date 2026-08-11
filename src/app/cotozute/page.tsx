@@ -71,7 +71,7 @@ export default function CotozutePage() {
   const [likedSet, setLikedSet] = useState<Set<string>>(new Set());
   const [likersMap, setLikersMap] = useState<Record<string, Liker[]>>({});
   const [hasMore, setHasMore] = useState(true);
-  const [fresh, setFresh] = useState<FeedItem[]>([]);
+  const [freshN, setFreshN] = useState(0); // 新着は「件数だけ」数える(本文は追いつき時に取る)
   const [composing, setComposing] = useState(false);
   const [events, setEvents] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [shops, setShops] = useState<Shop[]>([]);
@@ -262,14 +262,14 @@ export default function CotozutePage() {
     return () => io.disconnect();
   }, [loadMore, autoLimit, items !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* 新着チェック */
+  /* 新着チェック — 件数だけ聞く(0.1KB)。以前はフィード20件を丸ごと再取得していて転送量が大きかった */
   useEffect(() => {
     const check = async () => {
       const newest = itemsRef.current[0]?.at;
       if (!newest) return;
-      const latest = await fetchMixedFeed(null, PAGE);
-      const ids = new Set(itemsRef.current.map(feedKey));
-      setFresh(latest.filter((it) => it.at > newest && !ids.has(feedKey(it))));
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      const { countFreshFeed } = await import("@/lib/feed");
+      setFreshN(await countFreshFeed(newest));
     };
     const t = setInterval(check, 30000);
     const onVis = () => {
@@ -284,11 +284,15 @@ export default function CotozutePage() {
     };
   }, []);
 
-  const catchUp = () => {
-    const merged = [...fresh, ...itemsRef.current].slice(0, WINDOW_MAX);
+  const catchUp = async () => {
+    // 追いつく時にはじめて本文を取りに行く
+    const latest = await fetchMixedFeed(null, PAGE);
+    const ids = new Set(itemsRef.current.map(feedKey));
+    const add = latest.filter((it) => !ids.has(feedKey(it)));
+    const merged = [...add, ...itemsRef.current].slice(0, WINDOW_MAX);
     itemsRef.current = merged;
     setItems(merged);
-    setFresh([]);
+    setFreshN(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -296,7 +300,7 @@ export default function CotozutePage() {
     const list = await fetchMixedFeed(null, PAGE);
     itemsRef.current = list;
     setItems(list);
-    setFresh([]);
+    setFreshN(0);
     setHasMore(list.length > 0);
     setComposing(false);
     loadLikers(list);
@@ -698,14 +702,14 @@ export default function CotozutePage() {
       )}
 
       {/* 追いつきピル */}
-      {fresh.length > 0 && (
+      {freshN > 0 && (
         <div className="pointer-events-none fixed left-1/2 z-50 -translate-x-1/2" style={{ top: "calc(env(safe-area-inset-top) + 60px)" }}>
           <button
             onClick={catchUp}
             className="pointer-events-auto rounded-full py-2 pl-3 pr-4 text-[13px] font-extrabold text-white shadow-xl active:scale-95"
             style={{ background: TIFFANY }}
           >
-            ↑ 新しい投稿 +{fresh.length}件
+            ↑ 新しい投稿 +{freshN}件
           </button>
         </div>
       )}

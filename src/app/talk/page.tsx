@@ -1,7 +1,7 @@
 "use client";
 
 import { srcCdn } from "@/lib/images";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -57,16 +57,39 @@ export default function LinePage() {
       alert("通知がブロックされています。端末の設定 > 通知 からOneSeaを許可してください。");
   };
 
-  // 30秒ごとに更新
+  // 30秒ごとに更新 — まず「何か変わったか」を数十バイトのプローブで確認し、変化があった時だけ全体を取り直す
+  const probeSigRef = useRef("");
   useEffect(() => {
     if (!me) return;
-    const t = setInterval(() => {
-      fetchChats(me.id).then(setChats);
-      fetchGroups(me.id).then(setGroups);
-      fetchBroadcastSummary(me.id).then(setBc).catch(() => {});
-    }, 30000);
+    const probe = async () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      try {
+        const supabase = createClient();
+        const [{ data: lastChat }, { count: unreadN }, { data: lastBc }] = await Promise.all([
+          supabase.from("chats").select("last_message_at").or(`a.eq.${me.id},b.eq.${me.id}`).order("last_message_at", { ascending: false, nullsFirst: false }).limit(1),
+          supabase.from("messages").select("id", { count: "exact", head: true }).is("read_at", null).neq("sender_id", me.id),
+          supabase.from("broadcast_messages").select("created_at").order("created_at", { ascending: false }).limit(1),
+        ]);
+        // グループは自分の所属scope idsの最新1件だけ見る
+        const gids = (groups ?? []).map((g) => g.id);
+        let lastGroupAt = "";
+        if (gids.length) {
+          const { data: lg } = await supabase.from("group_messages").select("created_at").in("scope_id", gids).order("created_at", { ascending: false }).limit(1);
+          lastGroupAt = lg?.[0]?.created_at ?? "";
+        }
+        const sig = `${lastChat?.[0]?.last_message_at ?? ""}|${unreadN ?? 0}|${lastBc?.[0]?.created_at ?? ""}|${lastGroupAt}`;
+        if (sig !== probeSigRef.current) {
+          probeSigRef.current = sig;
+          fetchChats(me.id).then(setChats);
+          fetchGroups(me.id).then(setGroups);
+          fetchBroadcastSummary(me.id).then(setBc).catch(() => {});
+        }
+      } catch {}
+    };
+    const t = setInterval(probe, 30000);
     return () => clearInterval(t);
-  }, [me]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [me, groups]);
 
   const dmUnread = (chats ?? []).reduce((s, c) => s + c.unread, 0);
   const groupUnread = (groups ?? []).reduce((s, g) => s + g.unread, 0);
