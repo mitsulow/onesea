@@ -434,6 +434,20 @@ export async function fetchGroups(myId: string): Promise<GroupSummary[]> {
     .sort((a, b) => (b.lastAt ?? "").localeCompare(a.lastAt ?? ""));
 }
 
+/** cursor以降の新着だけを取る — 5秒ポーリングで毎回200件を丸ごと運ばないための省エネ版 */
+export async function fetchGroupMessagesSince(type: string, id: string, sinceIso: string): Promise<GroupMessageRow[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("group_messages")
+    .select("id, sender_id, body, image_url, created_at, profiles!group_messages_sender_id_fkey(username, display_name, avatar_url)")
+    .eq("scope_type", type)
+    .eq("scope_id", id)
+    .gt("created_at", sinceIso)
+    .order("created_at", { ascending: true })
+    .limit(200);
+  return (data as unknown as GroupMessageRow[]) ?? [];
+}
+
 export async function fetchGroupMessages(type: string, id: string): Promise<GroupMessageRow[]> {
   const supabase = createClient();
   const { data } = await supabase

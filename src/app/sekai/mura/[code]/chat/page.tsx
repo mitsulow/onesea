@@ -9,7 +9,7 @@ import { UpgradeDialog } from "@/components/UpgradeGate";
 import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
-import { fetchGroupMessages, sendGroupMessage, markGroupRead, fetchGroupReads, type GroupMessageRow } from "@/lib/line";
+import { fetchGroupMessages, fetchGroupMessagesSince, sendGroupMessage, markGroupRead, fetchGroupReads, type GroupMessageRow } from "@/lib/line";
 
 const GREEN = "#4a9a5a";
 const ALL_PREFS = [...PREFS, "海外"] as string[];
@@ -50,9 +50,29 @@ export default function SekaiMuraChatPage() {
   const load = useCallback(async (rid: string) => {
     const list = await fetchGroupMessages("pref", rid);
     setMessages(list);
+    lastAtRef.current = list.length ? list[list.length - 1].created_at : new Date(0).toISOString();
     if (meRef.current) markGroupRead("pref", rid, meRef.current.id);
     fetchGroupReads("pref", rid).then(setReads);
   }, []);
+
+  const lastAtRef = useRef<string | null>(null);
+  /* 5秒ごとの見張りは「新着だけ」を取る(全件再取得はパケとSupabase転送を食うのでやめた) */
+  const poll = useCallback(async (rid: string) => {
+    const since = lastAtRef.current;
+    if (!since) { load(rid); return; }
+    const news = await fetchGroupMessagesSince("pref", rid, since);
+    if (news.length) {
+      setMessages((prev) => {
+        const seen = new Set(prev.map((m) => m.id));
+        const add = news.filter((m) => !seen.has(m.id));
+        if (!add.length) return prev;
+        lastAtRef.current = add[add.length - 1].created_at;
+        return [...prev, ...add];
+      });
+      if (meRef.current) markGroupRead("pref", rid, meRef.current.id);
+      fetchGroupReads("pref", rid).then(setReads);
+    }
+  }, [load]);
 
   useEffect(() => {
     if (!pref) return;
@@ -87,9 +107,9 @@ export default function SekaiMuraChatPage() {
 
   useEffect(() => {
     if (!roomId) return;
-    const t = setInterval(() => load(roomId), 5000);
+    const t = setInterval(() => poll(roomId), 5000);
     return () => clearInterval(t);
-  }, [roomId, load]);
+  }, [roomId, poll]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

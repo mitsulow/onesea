@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn } from "@/lib/images";
-import { fetchGroupMessages, sendGroupMessage, markGroupRead, fetchGroupReads, type GroupMessageRow } from "@/lib/line";
+import { fetchGroupMessages, fetchGroupMessagesSince, sendGroupMessage, markGroupRead, fetchGroupReads, type GroupMessageRow } from "@/lib/line";
 
 const GOLD = "#d4b96a";
 
@@ -59,9 +59,30 @@ export default function KouryuRoomPage() {
   const load = useCallback(async () => {
     const list = await fetchGroupMessages("pref", roomId);
     setMessages(list);
+    lastAtRef.current = list.length ? list[list.length - 1].created_at : new Date(0).toISOString();
     if (meRef.current) markGroupRead("pref", roomId, meRef.current.id);
     fetchGroupReads("pref", roomId).then(setReads);
   }, [roomId]);
+
+  const lastAtRef = useRef<string | null>(null);
+  /* 5秒ごとの見張りは「新着だけ」を取る(全件再取得はパケとSupabase転送を食うのでやめた) */
+  const poll = useCallback(async () => {
+    const since = lastAtRef.current;
+    if (!since) { load(); return; }
+    const news = await fetchGroupMessagesSince("pref", roomId, since);
+    if (news.length) {
+      setMessages((prev) => {
+        const seen = new Set(prev.map((m) => m.id));
+        const add = news.filter((m) => !seen.has(m.id));
+        if (!add.length) return prev;
+        lastAtRef.current = add[add.length - 1].created_at;
+        return [...prev, ...add];
+      });
+      if (meRef.current) markGroupRead("pref", roomId, meRef.current.id);
+      fetchGroupReads("pref", roomId).then(setReads);
+    }
+  }, [roomId, load]);
+
 
   useEffect(() => {
     const supabase = createClient();
@@ -82,9 +103,9 @@ export default function KouryuRoomPage() {
   }, [roomId, load]);
 
   useEffect(() => {
-    const t = setInterval(load, 5000);
+    const t = setInterval(poll, 5000);
     return () => clearInterval(t);
-  }, [load]);
+  }, [poll]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
