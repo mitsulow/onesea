@@ -79,9 +79,14 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
           setUnread(n);
           setBadge(n);
         });
-        // マイページで変えた写真（profiles.avatar_url）を優先表示
+        // マイページで変えた写真（profiles.avatar_url）を優先表示。
+        // まず端末キャッシュで即描画(遅い回線でGoogleアイコンが先に見える事故防止)→裏で最新化
+        const { cachedAvatar, cacheAvatar } = await import("@/lib/avatarCache");
+        const cached = cachedAvatar(userId);
+        if (cached) setProfileAvatar(cached);
         const { data: prof } = await supabase.from("profiles").select("avatar_url").eq("id", userId).maybeSingle();
         if (prof?.avatar_url) setProfileAvatar(prof.avatar_url);
+        if (prof) cacheAvatar(userId, prof.avatar_url ?? null);
       }
     });
     window.addEventListener("onesea:warawaMissingRefresh", refreshMissing);

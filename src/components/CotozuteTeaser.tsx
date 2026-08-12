@@ -24,11 +24,16 @@ export function CotozuteTeaser() {
       const u = session?.user ?? null;
       setMe(u);
       if (u) {
-        setLikedSet(await fetchMyLikes(u.id));
-        // マイページで変えた写真(profiles.avatar_url)を優先表示
-        supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
-          if (data?.avatar_url) setMyAvatar(data.avatar_url);
+        // まず端末キャッシュで即描画(遅い回線で 葉っぱ→Google→正式 と三段変化する事故防止)→裏で最新化
+        import("@/lib/avatarCache").then(({ cachedAvatar, cacheAvatar }) => {
+          const cached = cachedAvatar(u.id);
+          if (cached) setMyAvatar(cached);
+          supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
+            if (data?.avatar_url) setMyAvatar(data.avatar_url);
+            if (data) cacheAvatar(u.id, data.avatar_url ?? null);
+          });
         });
+        setLikedSet(await fetchMyLikes(u.id));
       }
     });
     fetchPostsPage(0, 5).then(setPosts);
