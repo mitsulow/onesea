@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { MessageRow, fetchMessages, fetchMessagesSince, sendMessage, markRead } from "@/lib/line";
 import type { CotozuteProfile } from "@/lib/cotozute";
 import { TalkCall, peekCall } from "@/components/TalkCall";
+import { parseFriendRequestId, fetchRequest, respondFriendRequest } from "@/lib/friends";
 
 /** LINE — トーク画面（吹き出し・既読つけ・5秒ポーリング） */
 export default function ChatPage() {
@@ -255,6 +256,20 @@ export default function ChatPage() {
           const mine = m.sender_id === me?.id;
           const d = new Date(m.created_at);
           const time = `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+          const frId = parseFriendRequestId(m.body);
+          if (frId && me) {
+            return (
+              <FriendRequestCard
+                key={m.id}
+                reqId={frId}
+                mine={mine}
+                meId={me.id}
+                chatId={String(chatId)}
+                partnerName={partner?.display_name ?? "相手"}
+                onReplied={() => fetchMessages(String(chatId)).then(setMessages)}
+              />
+            );
+          }
           return (
             <div key={m.id} className={`flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"}`}>
               {mine && (
@@ -390,5 +405,86 @@ export default function ChatPage() {
         </div>
       )}
     </main>
+  );
+}
+
+/** ともだち申請カード（TALK内）。受け取った側に「ともだちになる / 今はならない」の2ボタン。
+ *  下のメッセージ欄は定型文入り（自由に書き換えOK）。押すと応答＋返信が送られる */
+function FriendRequestCard({
+  reqId, mine, meId, chatId, partnerName, onReplied,
+}: {
+  reqId: string; mine: boolean; meId: string; chatId: string; partnerName: string; onReplied: () => void;
+}) {
+  const [req, setReq] = useState<{ status: string; to_user: string } | null | undefined>(undefined);
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const OK_DEFAULT = "ありがとうございます。ともだちになりましょう。";
+  const NG_DEFAULT = "今は、ともだちの上限数なのでまたあとで申請してね";
+
+  useEffect(() => {
+    fetchRequest(reqId).then((r) => setReq(r ?? null));
+  }, [reqId]);
+
+  const respond = async (accept: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    const ok = await respondFriendRequest(reqId, accept);
+    if (ok) {
+      const text = msg.trim() || (accept ? OK_DEFAULT : NG_DEFAULT);
+      await sendMessage(chatId, meId, text);
+      setReq((r) => (r ? { ...r, status: accept ? "accepted" : "declined" } : r));
+      onReplied();
+    }
+    setBusy(false);
+  };
+
+  const canRespond = req && req.status === "pending" && req.to_user === meId;
+
+  return (
+    <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+      <div className="w-[86%] max-w-[320px] rounded-2xl border border-[#d4c8a8] bg-[#fdf9ee] p-3.5 shadow-sm">
+        <div className="text-[13px] font-extrabold text-[#8a6a20]">
+          🤝 {mine ? "ともだちの申請を送りました" : "ともだちの申請が届いています"}
+        </div>
+        {req === undefined ? (
+          <p className="mt-1 text-[11px] text-[#b0a890]">読み込み中...</p>
+        ) : req === null ? (
+          <p className="mt-1 text-[11px] text-[#b0a890]">この申請は見つかりませんでした</p>
+        ) : req.status === "accepted" ? (
+          <p className="mt-1 text-[12px] font-bold text-[#2a8a4a]">✅ ともだちになりました</p>
+        ) : req.status === "declined" ? (
+          <p className="mt-1 text-[12px] text-[#a09888]">今回は見送りになりました（また申請できます）</p>
+        ) : canRespond ? (
+          <div className="mt-2">
+            <div className="flex gap-2">
+              <button
+                onClick={() => respond(true)}
+                disabled={busy}
+                className="flex-1 rounded-xl py-2.5 text-[13px] font-extrabold text-white disabled:opacity-40"
+                style={{ background: "#2a8a4a" }}
+              >
+                ともだちになる
+              </button>
+              <button
+                onClick={() => respond(false)}
+                disabled={busy}
+                className="flex-1 rounded-xl border border-[#d0c8b0] bg-white py-2.5 text-[13px] font-bold text-[#8a8070] disabled:opacity-40"
+              >
+                今はならない
+              </button>
+            </div>
+            <textarea
+              value={msg}
+              onChange={(e) => setMsg(e.target.value)}
+              rows={2}
+              placeholder={`返信メッセージ（空のままなら定型文が送られます）\n「${OK_DEFAULT}」/「${NG_DEFAULT}」`}
+              className="mt-2 w-full rounded-xl border border-[#e0d8c4] bg-white p-2.5 text-[12.5px] leading-relaxed outline-none focus:border-[#c9a94a]"
+            />
+          </div>
+        ) : (
+          <p className="mt-1 text-[11.5px] text-[#a09888]">{partnerName}さんの返事を待っています…</p>
+        )}
+      </div>
+    </div>
   );
 }

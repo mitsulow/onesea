@@ -25,6 +25,7 @@ function BlogEditor() {
   const [text, setText] = useState("");
   const [rawHtml, setRawHtml] = useState<string | null>(null); // 引っ越し記事の編集はHTMLのまま
   const [when, setWhen] = useState(""); // 予約日時 (datetime-local)
+  const [visibility, setVisibility] = useState<"public" | "friends" | "private">("public"); // 公開範囲
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
   const [msg, setMsg] = useState("");
@@ -42,9 +43,10 @@ function BlogEditor() {
       if (editSlug) {
         const { data: p } = await supabase.from("blog_posts").select("*").eq("user_id", u.id).eq("slug", editSlug).maybeSingle();
         if (p) {
-          const post = p as BlogPost;
+          const post = p as BlogPost & { visibility?: string };
           setTitle(post.title);
           setGenre(post.genre ?? "");
+          if (post.visibility === "friends" || post.visibility === "private") setVisibility(post.visibility);
           if (post.source === "onesea") setText(htmlToText(post.body_html));
           else setRawHtml(post.body_html); // アメブロ引っ越し記事はHTMLをそのまま保持して編集(壊さない)
           const d = new Date(new Date(post.publish_at).getTime() + 9 * 3600000);
@@ -107,6 +109,7 @@ function BlogEditor() {
       publish_at: pub,
       status: "published",
       source: rawHtml !== null ? "ameba" : "onesea",
+      visibility,
       updated_at: new Date().toISOString(),
     };
     const { error } = editSlug
@@ -164,6 +167,16 @@ function BlogEditor() {
             className="rounded-xl border border-[#dde2d2] bg-white px-3 py-2 text-[12px] outline-none focus:border-[#5a8a3c]"
             title="予約投稿（未来の日時を選ぶとその時刻に自動公開）"
           />
+          <select
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as "public" | "friends" | "private")}
+            className="rounded-xl border border-[#dde2d2] bg-white px-2 py-2 text-[12px] font-bold outline-none focus:border-[#5a8a3c]"
+            title="公開範囲"
+          >
+            <option value="public">🌏 全員に公開</option>
+            <option value="friends">🤝 友だちに公開</option>
+            <option value="private">🔒 自分にだけ公開</option>
+          </select>
         </div>
         {scheduled && (
           <p className="mt-1 text-[11px] font-bold text-[#b07a2a]">⏰ 予約投稿: 公開時刻まではURLを開いても「ブログ記事が無いようです」になります（あなたにだけ見えます）</p>

@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn } from "@/lib/images";
 import { getOrCreateChat } from "@/lib/line";
+import { sendFriendRequest } from "@/lib/friends";
 
 /** 📇 リアルで会った人との名刺交換 — QRを読み取るとこのページが開き、「交換する」でお互いフォロー+TalK開通 */
 export default function MeishiExchangePage() {
@@ -33,11 +34,14 @@ export default function MeishiExchangePage() {
     if (!me || busy) return;
     setBusy(true);
     const { data, error } = await createClient().rpc("meishi_exchange", { p_other: otherId });
-    setBusy(false);
     if (error || data !== "ok") {
+      setBusy(false);
       alert("名刺交換できませんでした。もう一度お試しください");
       return;
     }
+    // 名刺交換したら ともだち申請（相手のTALKに申請カードが届く）
+    try { await sendFriendRequest(me.id, otherId); } catch { /* 申請失敗しても交換自体は成立 */ }
+    setBusy(false);
     setDone(true);
   };
 

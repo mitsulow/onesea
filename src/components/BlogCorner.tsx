@@ -32,7 +32,7 @@ export function BlogCorner({ userId, username, isMe }: { userId: string; usernam
   return (
     <div className="mt-2.5 px-4 py-3.5" style={{ background: "linear-gradient(135deg,#eef4e6,#f6f8f0)", border: "1px solid #d4dec2" }}>
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-bold tracking-[2px] text-[#5a7a3c]">📖 今日の日記</div>
+        <div className="text-[10px] font-bold tracking-[2px] text-[#5a7a3c]">📖 ツレヅレ日記</div>
         {isMe && (
           <span className="flex gap-2">
             <Link href="/blog/new" className="text-[11px] font-extrabold text-[#5a8a3c] underline">書く</Link>

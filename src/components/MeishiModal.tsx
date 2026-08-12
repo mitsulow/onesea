@@ -5,8 +5,9 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { isWarawaUntil, warawaHandle, SIR_USER_ID } from "@/lib/warawa";
+import { isWarawaUntil, SIR_USER_ID } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
+import { sendFriendRequest } from "@/lib/friends";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -38,9 +39,12 @@ interface MeishiProfile {
 export function MeishiModal({ username, onClose }: { username: string; onClose: () => void }) {
   const router = useRouter();
   const [p, setP] = useState<MeishiProfile | null | undefined>(undefined);
+  const [meId, setMeId] = useState<string | null>(null);
+  const [exchanged, setExchanged] = useState<"idle" | "busy" | "done">("idle");
 
   useEffect(() => {
     const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => setMeId(session?.user?.id ?? null));
     supabase
       .from("profiles")
       .select("id, username, display_name, avatar_url, status_line, prefecture, city, rice_work, life_work, skills, member_no, created_at, birthday, warawa_until, murabito")
@@ -48,6 +52,20 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
       .maybeSingle()
       .then(({ data }) => setP((data as MeishiProfile) ?? null));
   }, [username]);
+
+  // オンライン名刺交換(→ともだち申請が相手のTALKに届く)。QRと同じRPCを使う
+  const exchangeOnline = async () => {
+    if (!meId || !p || exchanged !== "idle") return;
+    setExchanged("busy");
+    const supabase = createClient();
+    const { data, error } = await supabase.rpc("meishi_exchange", { p_other: p.id });
+    if (!error && data === "ok") {
+      try { await sendFriendRequest(meId, p.id); } catch { /* noop */ }
+      setExchanged("done");
+    } else {
+      setExchanged("idle");
+    }
+  };
 
   if (typeof document === "undefined") return null;
 
@@ -187,6 +205,18 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                 </div>
               )}
 
+              {/* オンライン名刺交換 → ともだち申請 */}
+              {meId && meId !== p.id && (
+                <button
+                  onClick={exchangeOnline}
+                  disabled={exchanged !== "idle"}
+                  className="w-full rounded-lg py-2 text-[12.5px] font-extrabold text-white disabled:opacity-70"
+                  style={{ marginTop: "14px", background: exchanged === "done" ? "#2a8a4a" : "#8a6a20" }}
+                >
+                  {exchanged === "done" ? "✅ 名刺交換＆ともだち申請を送りました" : exchanged === "busy" ? "交換中..." : "🤝 名刺交換して ともだち申請"}
+                </button>
+              )}
+
               {/* マイページへ */}
               {p.username && (
                 <button
@@ -195,7 +225,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                     router.push(`/u/${p.username}`);
                   }}
                   className="mt-auto w-full rounded-lg border border-[#c94d3a] py-2 text-[12.5px] font-extrabold text-[#c94d3a]"
-                  style={{ marginTop: "14px", background: "rgba(201,77,58,.05)" }}
+                  style={{ marginTop: meId && meId !== p.id ? "8px" : "14px", background: "rgba(201,77,58,.05)" }}
                 >
                   マイページを見る →
                 </button>

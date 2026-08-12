@@ -1,6 +1,5 @@
 "use client";
 
-import { fetchFollowingProfiles } from "@/lib/follows";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -18,6 +17,7 @@ import { MeishiModal } from "@/components/MeishiModal";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { srcCdn } from "@/lib/images";
 import { isWarawaUntil, warawaHandle, SIR_USER_ID } from "@/lib/warawa";
+import { fetchFriends, fetchFollowerProfiles } from "@/lib/friends";
 import { WarawaBadge } from "@/components/WarawaBadge";
 import { PremiumSetupCard } from "@/components/PremiumSetupCard";
 import { BlogCorner } from "@/components/BlogCorner";
@@ -511,10 +511,12 @@ export default function UserPage() {
           </div>
         )}
 
-        {/* 今日の日記(ブログ) */}
+        {/* ツレヅレ日記(ブログ) */}
         <BlogCorner userId={profile.id} username={profile.username ?? null} isMe={isMe} />
 
-        <FollowingRow userId={profile.id} />
+        {/* ともだち(名刺交換→承認で成立) + フォローされている人 */}
+        <FriendsRow userId={profile.id} />
+        <FollowersRow userId={profile.id} />
 
         {/* 自己紹介 */}
         <div className="mt-2">
@@ -1198,15 +1200,12 @@ function CardDeck({ items, startColor = 0 }: { items: string[]; startColor?: num
 
 
 /** フォローしている人 — アイコンがずらっと並ぶ */
-function FollowingRow({ userId }: { userId: string }) {
-  const [people, setPeople] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
-  useEffect(() => {
-    fetchFollowingProfiles(userId).then(setPeople).catch(() => {});
-  }, [userId]);
+/** 人のアイコン横並び行（ともだち/フォロワー共用） */
+function PeopleRow({ title, people }: { title: string; people: Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }> }) {
   if (people.length === 0) return null;
   return (
     <div className="mt-2.5">
-      <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]">フォローしている人（{people.length}）</div>
+      <div className="mb-1 text-[10.5px] font-bold tracking-wider text-[#a09888]">{title}（{people.length}）</div>
       <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1" data-noswipe>
         {people.map((pp) => (
           <Link key={pp.id} href={pp.username ? `/u/${pp.username}` : "#"} className="flex w-[52px] flex-shrink-0 flex-col items-center gap-0.5 no-underline">
@@ -1222,4 +1221,21 @@ function FollowingRow({ userId }: { userId: string }) {
       </div>
     </div>
   );
+}
+
+/** ともだち = 名刺交換して申請が承認された人（旧「フォローしている人」から統一） */
+function FriendsRow({ userId }: { userId: string }) {
+  const [people, setPeople] = useState<Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>>([]);
+  useEffect(() => {
+    fetchFriends(userId).then(setPeople).catch(() => {});
+  }, [userId]);
+  return <PeopleRow title="ともだち" people={people} />;
+}
+
+function FollowersRow({ userId }: { userId: string }) {
+  const [people, setPeople] = useState<Array<{ id: string; username: string | null; display_name: string | null; avatar_url: string | null }>>([]);
+  useEffect(() => {
+    fetchFollowerProfiles(userId).then(setPeople).catch(() => {});
+  }, [userId]);
+  return <PeopleRow title="フォローされている人" people={people} />;
 }

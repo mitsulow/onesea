@@ -11,6 +11,37 @@ import { createClient } from "@/lib/supabase/client";
 import { srcCdn } from "@/lib/images";
 import { blogOwner, blogArchive, blogList, jstDate, BLOG_PAGE_SIZE, BlogListItem } from "@/lib/blog";
 
+function BulkVisibility({ userId }: { userId: string }) {
+  const [vis, setVis] = useState<"public" | "friends" | "private">("public");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState("");
+  const apply = async () => {
+    const label = vis === "public" ? "全員に公開" : vis === "friends" ? "友だちに公開" : "自分にだけ公開";
+    if (!confirm(`ブログの全記事を「${label}」に一括変更しますか？`)) return;
+    setBusy(true);
+    const { error, count } = await createClient()
+      .from("blog_posts")
+      .update({ visibility: vis }, { count: "exact" })
+      .eq("user_id", userId);
+    setBusy(false);
+    setDone(error ? "変更できませんでした" : `${count ?? "全"}記事を「${label}」にしました`);
+  };
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-[#e4e8dc] bg-white px-3 py-2">
+      <span className="text-[11px] font-bold text-[#8a9a78]">ブログ全体の公開範囲:</span>
+      <select value={vis} onChange={(e) => setVis(e.target.value as typeof vis)} className="rounded-lg border border-[#dde2d2] px-2 py-1 text-[11.5px] font-bold outline-none">
+        <option value="public">🌏 全員に公開</option>
+        <option value="friends">🤝 友だちに公開</option>
+        <option value="private">🔒 自分にだけ公開</option>
+      </select>
+      <button onClick={apply} disabled={busy} className="rounded-full bg-[#5a8a3c] px-3 py-1 text-[11px] font-extrabold text-white disabled:opacity-40">
+        一括変更
+      </button>
+      {done && <span className="text-[10.5px] text-[#5a8a3c]">{done}</span>}
+    </div>
+  );
+}
+
 export default function BlogTop({ params }: { params: Promise<{ username: string }> }) {
   const { username } = use(params);
   const router = useRouter();
@@ -86,6 +117,9 @@ export default function BlogTop({ params }: { params: Promise<{ username: string
       </header>
 
       <div className="mx-auto max-w-[760px] px-3">
+        {/* 本人だけ: ブログ全体の公開範囲を一括変更（自分にだけ/友だちに/全員に） */}
+        {isMe && <BulkVisibility userId={owner.id} />}
+
         {/* フィルタ行: ジャンル */}
         {arch && arch.genres.length > 0 && (
           <div className="hide-scrollbar -mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-1">
