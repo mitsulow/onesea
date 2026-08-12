@@ -130,47 +130,65 @@ export function OtohikariGlobe({
     }
     earth.add(roughGroup);
 
-    // 詳細海岸線（Natural Earth 110m）
+    // 詳細海岸線の二段構え: まず50m(約0.6MB)で即精細化 → 裏で最高解像度10m(約3MB)を
+    // 読んで差し替え。初回表示の速さと稜線の細かさ(石垣島どころか竹富・西表の輪郭まで)を両取り。
     let disposed = false;
     (async () => {
       try {
-        const res = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json");
-        if (!res.ok || disposed) return;
-        const topo = await res.json();
         const { feature } = await import("topojson-client");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const land = feature(topo, topo.objects.land) as any;
-        const detail = new THREE.Group();
         const dMat = new THREE.LineBasicMaterial({ color: 0x35e0b8, transparent: true, opacity: 0.9 });
-        const features = land.type === "FeatureCollection" ? land.features : [land];
-        // Safariの重さの主犯対策: リング(約1,400本)ごとにLineLoopを作ると
-        // 毎フレーム約1,400回の描画命令になりWebKitで激重。
+        // Safariの重さの主犯対策: リング(数千本)ごとにLineLoopを作ると
+        // 毎フレーム数千回の描画命令になりWebKitで激重。
         // 全リングを「線分ペアの1バッファ」に統合し、命令1回で全海岸線を描く。
+        // 10m化で頂点は増えるが描画命令は1回のままなので前回の激重は再発しない。
         // ※リングの閉じ線分(終点→始点)も明示的に入れるので、島どうしが誤って繋がることはない。
-        const segPos: number[] = [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        features.forEach((f: any) => {
-          const geom = f.geometry;
-          const rings: Array<Array<[number, number]>> =
-            geom.type === "Polygon" ? geom.coordinates : geom.coordinates.flat();
-          rings.forEach((ring) => {
-            if (ring.length < 3) return;
-            const pts = ring.map((c) => ll2v(c[1], c[0], 1.004));
-            for (let i = 0; i < pts.length; i++) {
-              const a = pts[i];
-              const b = pts[(i + 1) % pts.length];
-              segPos.push(a.x, a.y, a.z, b.x, b.y, b.z);
-            }
+        const buildLand = (topo: any): THREE.LineSegments => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const land = feature(topo, topo.objects.land) as any;
+          const features = land.type === "FeatureCollection" ? land.features : [land];
+          const segPos: number[] = [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          features.forEach((f: any) => {
+            const geom = f.geometry;
+            const rings: Array<Array<[number, number]>> =
+              geom.type === "Polygon" ? geom.coordinates : geom.coordinates.flat();
+            rings.forEach((ring) => {
+              if (ring.length < 3) return;
+              const pts = ring.map((c) => ll2v(c[1], c[0], 1.004));
+              for (let i = 0; i < pts.length; i++) {
+                const a = pts[i];
+                const b = pts[(i + 1) % pts.length];
+                segPos.push(a.x, a.y, a.z, b.x, b.y, b.z);
+              }
+            });
           });
-        });
-        const segG = new THREE.BufferGeometry();
-        segG.setAttribute("position", new THREE.Float32BufferAttribute(segPos, 3));
-        detail.add(new THREE.LineSegments(segG, dMat));
-        if (disposed) return;
-        earth.add(detail);
-        earth.remove(roughGroup);
+          const segG = new THREE.BufferGeometry();
+          segG.setAttribute("position", new THREE.Float32BufferAttribute(segPos, 3));
+          return new THREE.LineSegments(segG, dMat);
+        };
+        let cur: THREE.LineSegments | null = null;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const swapTo = (topo: any) => {
+          if (disposed) return;
+          const seg = buildLand(topo);
+          earth.add(seg);
+          if (cur) {
+            earth.remove(cur);
+            cur.geometry.dispose();
+          } else {
+            earth.remove(roughGroup);
+          }
+          cur = seg;
+        };
+        const r50 = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json");
+        if (!r50.ok || disposed) return;
+        swapTo(await r50.json());
+        const r10 = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-10m.json");
+        if (!r10.ok || disposed) return;
+        swapTo(await r10.json());
       } catch {
-        /* オフライン等 → 簡易海岸線のまま */
+        /* オフライン等 → その時点の海岸線のまま */
       }
     })();
 
