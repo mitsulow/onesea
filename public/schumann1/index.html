@@ -2791,10 +2791,6 @@
           pen = true;
         });
         ctx.stroke();
-        // 最新点
-        const lk = keys[keys.length - 1];
-        ctx.fillStyle = COLORS[mode] || "#e8ecf4";
-        ctx.beginPath(); ctx.arc(X(lk), Y(ser[lk]), 2.6 * u, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
         ctx.font = fs + "px monospace"; ctx.textAlign = "left";
       });
