@@ -571,12 +571,24 @@ export function OtohikariGlobe({
           vertexShader:
             "attribute float aPhase; attribute float aScale;" +
             "uniform float uTime; uniform float uDpr; varying float vA;" +
-            "void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0);" +
-            // ゆっくり息づく明滅(約7秒周期・完全には消えない)。1粒の光量は低めにして
-            // 重なりの枚数=人の密度がそのまま明るさの階調になるようにする
-            "  float breath = 0.52 + 0.48 * sin(uTime * 0.9 + aPhase);" +
-            "  vA = 0.36 * (0.25 + 0.75 * breath);" +
-            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.8 + 0.3 * breath);" +
+            "void main(){" +
+            // 粒がその場でゆっくり漂う(球面の接線方向に微小蛇行) → 光だまりの縁がうねる
+            "  vec3 up = abs(position.y) < 0.95 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);" +
+            "  vec3 t1 = normalize(cross(position, up));" +
+            "  vec3 t2 = normalize(cross(position, t1));" +
+            "  float w1 = sin(uTime * 0.33 + aPhase * 3.1);" +
+            "  float w2 = cos(uTime * 0.26 + aPhase * 1.7);" +
+            "  vec4 mv = modelViewMatrix * vec4(position + (t1 * w1 + t2 * w2) * 0.007, 1.0);" +
+            // 地域ぐるみの膨張収縮: ゆっくり移動する2つの光の波(位置依存)で、近所の粒が
+            // 一緒に膨らみ一緒にしぼむ → 光だまり同士が「繋がったり、ちぎれたり」する
+            "  float regA = sin(uTime * 0.40 + dot(position, vec3(21.0, 34.0, 27.0)));" +
+            "  float regB = sin(uTime * 0.31 + dot(position, vec3(-33.0, 18.0, 41.0)));" +
+            "  float region = clamp(0.5 + 0.28 * regA + 0.28 * regB, 0.0, 1.0);" +
+            // 個々の粒の深い明滅(谷では完全に消える) + 速い微ゆらぎでチラチラ
+            "  float breath = 0.5 + 0.5 * sin(uTime * 0.9 + aPhase);" +
+            "  float flick = 0.72 + 0.28 * sin(uTime * 2.3 + aPhase * 2.0);" +
+            "  vA = 0.42 * region * (0.45 + 0.55 * breath) * flick;" +
+            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.55 + 0.6 * region + 0.25 * breath);" +
             "  gl_Position = projectionMatrix * mv; }",
           fragmentShader:
             "uniform sampler2D uTex; varying float vA;" +
