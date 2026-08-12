@@ -223,40 +223,41 @@ export default function MoaiListPage() {
           </p>
         )}
 
-        {/* 県プルダウン(田んぼ式: 地方ごと+件数+0件は選べない) */}
-        <select
-          value={selPref}
-          onChange={(e) => { prefTouched.current = true; setSelPref(e.target.value); }}
-          className="mb-2 w-full rounded-xl border-2 border-[#e8c4bc] bg-white px-3 py-2.5 text-[13.5px] font-extrabold outline-none"
-          style={{ color: "#c0392b" }}
-        >
-          <option value="">🌏 全世界（オンライン）のMoAI（{(moais ?? []).length}）</option>
-          {MOAI_REGIONS.map(([region, ps]) => (
-            <optgroup key={region} label={region}>
-              {ps.map((pf) => {
-                const n = (moais ?? []).filter((m) => ((m as any).prefecture ?? "") === pf).length;
-                return (
-                  <option key={pf} value={pf} disabled={n === 0}>
-                    {pf.replace(/[都府県]$/, "")}のMoAI（{n}）
-                  </option>
-                );
-              })}
-            </optgroup>
-          ))}
-        </select>
+        {/* 県プルダウン(田んぼ式) + ジャンル絞り込み — 1行に横並び */}
+        <div className="mb-3 flex gap-2">
+          <select
+            value={selPref}
+            onChange={(e) => { prefTouched.current = true; setSelPref(e.target.value); }}
+            className="min-w-0 flex-1 rounded-xl border-2 border-[#e8c4bc] bg-white px-2 py-2.5 text-[13px] font-extrabold outline-none"
+            style={{ color: "#c0392b" }}
+          >
+            <option value="">🌏 全世界のMoAI（{(moais ?? []).length}）</option>
+            {MOAI_REGIONS.map(([region, ps]) => (
+              <optgroup key={region} label={region}>
+                {ps.map((pf) => {
+                  const n = (moais ?? []).filter((m) => ((m as any).prefecture ?? "") === pf).length;
+                  return (
+                    <option key={pf} value={pf} disabled={n === 0}>
+                      {pf.replace(/[都府県]$/, "")}のMoAI（{n}）
+                    </option>
+                  );
+                })}
+              </optgroup>
+            ))}
+          </select>
 
-        {/* ジャンルで絞る */}
-        <select
-          value={selCat}
-          onChange={(e) => setSelCat(e.target.value)}
-          className="mb-3 w-full rounded-xl border border-[#e8c4bc] bg-white px-3 py-2.5 text-[13px] font-bold outline-none"
-          style={{ color: "#a05a4a" }}
-        >
-          <option value="">🎯 全てのジャンル</option>
-          {MOAI_CATEGORIES.map((c) => (
-            <option key={c.id} value={c.id}>{c.emoji} {c.label}（{(moais ?? []).filter((m) => (m.category ?? "") === c.id && (!selPref || ((m as any).prefecture ?? "") === selPref)).length}）</option>
-          ))}
-        </select>
+          <select
+            value={selCat}
+            onChange={(e) => setSelCat(e.target.value)}
+            className="min-w-0 flex-1 rounded-xl border border-[#e8c4bc] bg-white px-2 py-2.5 text-[13px] font-bold outline-none"
+            style={{ color: "#a05a4a" }}
+          >
+            <option value="">🎯 全ジャンル</option>
+            {MOAI_CATEGORIES.map((c) => (
+              <option key={c.id} value={c.id}>{c.emoji} {c.label}（{(moais ?? []).filter((m) => (m.category ?? "") === c.id && (!selPref || ((m as any).prefecture ?? "") === selPref)).length}）</option>
+            ))}
+          </select>
+        </div>
 
         {/* あなたのMoAI(参加中) */}
         {me && (moais ?? []).some((m) => myStatus[m.id] === "approved") && (
