@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { OtohikariGlobe, MapMode } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
 import { Cinzel } from "next/font/google";
@@ -79,6 +79,22 @@ export function Otohikari() {
     };
   }, []);
 
+  /* ---- 負荷テスト: /mmm?testspots=15000 でランダムN点を光らせる ----
+     本番データは触らない・付けた人の画面だけ。25,000人スケールの体感確認用 */
+  const testSpots = useMemo<Spot[] | null>(() => {
+    if (typeof window === "undefined") return null;
+    const n = parseInt(new URLSearchParams(window.location.search).get("testspots") || "", 10);
+    if (!n || n <= 0) return null;
+    const arr: Spot[] = [];
+    for (let i = 0; i < Math.min(n, 50000); i++) {
+      // 全球一様分布(lat は asin で極寄り偏りを補正)
+      const lat = (Math.asin(Math.random() * 2 - 1) * 180) / Math.PI;
+      const lng = Math.random() * 360 - 180;
+      arr.push([lat, lng, 1 + Math.floor(Math.random() * 3)]);
+    }
+    return arr;
+  }, []);
+
   /* ---- 集計スナップショットのポーリング（30秒・エッジキャッシュ） ---- */
   useEffect(() => {
     let stop = false;
@@ -89,7 +105,7 @@ export function Otohikari() {
         if (stop) return;
         setNowCount(typeof d.now === "number" ? d.now : 0);
         if (typeof d.today === "number") setTodayCount(d.today);
-        setSpots(Array.isArray(d.spots) ? (d.spots as Spot[]) : []);
+        setSpots(testSpots ?? (Array.isArray(d.spots) ? (d.spots as Spot[]) : []));
       } catch {}
     };
     load();

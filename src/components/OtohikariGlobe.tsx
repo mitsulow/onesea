@@ -533,8 +533,50 @@ export function OtohikariGlobe({
       return t;
     })();
 
+    // 61点以上(将来の25,000人スケール)は Points 1本=1描画命令で描く。
+    // スプライト2枚/点の方式は綺麗だが数万ドローコールになりSafariが死ぬので60点まで。
+    let cloudMat: THREE.ShaderMaterial | null = null;
     const rebuildPillars = (list: Array<[number, number, number] | null>) => {
       pillarGroup.clear();
+      cloudMat = null;
+      if (list.length > 60) {
+        const pos: number[] = [];
+        const phase: number[] = [];
+        const scl: number[] = [];
+        list.forEach((loc, i) => {
+          if (!loc) return;
+          const v = ll2v(loc[0], loc[1], 1.006);
+          pos.push(v.x, v.y, v.z);
+          phase.push((i * 2.399963) % (Math.PI * 2)); // 黄金角で明滅位相をバラす
+          scl.push(0.085 + Math.min(loc[2] ?? 1, 8) * 0.01);
+        });
+        const g = new THREE.BufferGeometry();
+        g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        g.setAttribute("aPhase", new THREE.Float32BufferAttribute(phase, 1));
+        g.setAttribute("aScale", new THREE.Float32BufferAttribute(scl, 1));
+        cloudMat = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: { value: 0 },
+            uTex: { value: glowTex },
+            uDpr: { value: renderer.getPixelRatio() },
+          },
+          vertexShader:
+            "attribute float aPhase; attribute float aScale; uniform float uTime; uniform float uDpr; varying float vA;" +
+            "void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0);" +
+            "  vA = 0.62 + 0.38 * sin(uTime * 1.1 + aPhase);" + // スプライト版と同じ息づき
+            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z);" +
+            "  gl_Position = projectionMatrix * mv; }",
+          fragmentShader:
+            "uniform sampler2D uTex; varying float vA;" +
+            "void main(){ vec4 c = texture2D(uTex, gl_PointCoord);" +
+            "  gl_FragColor = vec4(vec3(0.62, 0.87, 1.0) * c.rgb, c.a * vA); }",
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        pillarGroup.add(new THREE.Points(g, cloudMat));
+        return;
+      }
       const count = Math.min(list.length, 60);
       for (let i = 0; i < count; i++) {
         const loc = list[i];
@@ -718,7 +760,9 @@ export function OtohikariGlobe({
         spotsDirtyRef.current = false;
         rebuildPillars(spotsRef.current);
       }
+      if (cloudMat) cloudMat.uniforms.uTime.value = t; // Points版の明滅はGPU側(シェーダー)で
       pillarGroup.children.forEach((c, i) => {
+        if ((c as THREE.Points).isPoints) return;
         const m = (c as THREE.Sprite).material as THREE.Material & { opacity: number };
         const base = (c.userData.baseOpacity as number) ?? 0.6;
         // ホタルの明滅（芯とハロで位相をずらして柔らかく息づく）
