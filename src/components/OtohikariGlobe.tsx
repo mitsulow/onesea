@@ -550,7 +550,7 @@ export function OtohikariGlobe({
           const v = ll2v(loc[0], loc[1], 1.006);
           pos.push(v.x, v.y, v.z);
           phase.push((i * 2.399963) % (Math.PI * 2)); // 黄金角で明滅位相をバラす
-          scl.push(0.085 + Math.min(loc[2] ?? 1, 8) * 0.01);
+          scl.push(0.055 + Math.min(loc[2] ?? 1, 8) * 0.007);
         });
         const g = new THREE.BufferGeometry();
         g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
@@ -565,10 +565,12 @@ export function OtohikariGlobe({
           vertexShader:
             "attribute float aPhase; attribute float aScale; uniform float uTime; uniform float uDpr; varying float vA;" +
             "void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0);" +
-            // 波紋型: 小さな明るい点で生まれ→膨らみながら薄れて→また生まれる(場所が目で追える)
-            "  float p = fract(uTime * 0.18 + aPhase * 0.159155);" +
-            "  vA = 0.15 + 0.85 * (1.0 - p);" +
-            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.30 + 1.15 * p);" +
+            // ホタル型: 極小の点で生まれ→ほわわーんと膨らんで柔らかい霞になり→
+            // 近くの光と溶け合い(加算合成)→ふっと消える。約8秒周期・位相バラバラ
+            "  float p = fract(uTime * 0.125 + aPhase * 0.159155);" +
+            "  float grow = smoothstep(0.0, 1.0, p);" +
+            "  vA = smoothstep(0.0, 0.10, p) * (1.0 - smoothstep(0.45, 1.0, p));" +
+            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.06 + 2.1 * grow);" +
             "  gl_Position = projectionMatrix * mv; }",
           fragmentShader:
             "uniform sampler2D uTex; varying float vA;" +
