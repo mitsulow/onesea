@@ -69,13 +69,11 @@
   }
   .hero-dark .mmm-logo .bolt { filter: drop-shadow(0 0 6px rgba(82, 250, 140, 0.6)); }
   .site-title {
-    /* 統一ヘッダー: 黒帯 × 蛍光黄色（雷ネオン）・太字 */
-    font-family: "Michroma", sans-serif;
-    font-weight: 700;
-    -webkit-text-stroke: 0.7px #e8ff00; /* Michromaは400のみなのでストロークで太らせる */
-    font-size: 13px;
-    letter-spacing: 0.24em;
-    text-indent: 0.24em;
+    /* 統一ヘッダー: 黒帯 × 蛍光黄色（雷ネオン）・太字。日本語題字なのでストロークなし */
+    font-weight: 800;
+    font-size: 14.5px;
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
     color: #e8ff00;
     text-shadow: 0 0 10px rgba(232,255,0,.65), 0 0 26px rgba(232,255,0,.3);
     white-space: nowrap;
@@ -100,9 +98,10 @@
   .wrap { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 1rem 1.5rem 0; /* ★フッター黒帯をページ最下端まで密着 */
     display: flex; flex-direction: column; }
   .wrap > * { width: 100%; }
-  /* 表示順: 観測グラフ (source順のまま=0) → 音とシューマン電磁波 → 磁場の回転 → footer */
+  /* 表示順: 観測グラフ → 太陽とイナヅマ → 音で遊ぶ → 過去のデータ → 磁場の回転 → footer */
   #fold-sound { order: 1; }
   #fold-sound .f1-hero, #fold-sound .modes-grid { display: none; }
+  #fold-target { order: 1; } /* 過去のデータは磁場の回転の直前 (order同値はsource順=音で遊ぶの後) */
   #fold-mag { order: 2; }
   footer { order: 3; }
   header { text-align: center; padding: 0.15rem 0 0.4rem; }
@@ -1241,9 +1240,9 @@
   <div class="hero-inner">
 
     <header class="svc-head">
-      <div class="svc-titles" style="display:flex;align-items:center;gap:8px;">
-        <a href="/mmm" aria-label="MMMへ戻る" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#e8d5a0;font-size:15px;text-decoration:none;">◀</a>
-        <div class="site-title">SCHUMANN RESONANCE</div>
+      <a href="/mmm" aria-label="MMMへ戻る" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;height:30px;padding:0 13px;border-radius:15px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#e8d5a0;font-size:12px;font-weight:700;text-decoration:none;">戻る</a>
+      <div class="svc-titles">
+        <div class="site-title">シューマン共振観測所</div>
       </div>
       <div class="svc-avwrap">
         <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー"><span id="svcAvFallback" class="svc-guest">ゲスト</span></button>
@@ -2701,7 +2700,10 @@
         const src = kind === "F" ? S.modes : kind === "A" ? S.amp : S.q;
         const ser = src && src[mode];
         if (!ser) return;
-        let keys = Object.keys(ser).sort();
+        // 元画像の「いま」カーソルより右(未来枠)は前周の残像を誤読した平坦なゴミ。
+        // これが右端に常駐して「グラフが7.8で止まってる」ように見えていた → 今+15分より先は捨てる
+        const nowKey = new Date(Date.now() + 9 * 3600e3 + 15 * 60e3).toISOString().slice(0, 16);
+        let keys = Object.keys(ser).sort().filter(k => k <= nowKey);
         if (!keys.length) return;
         // ローリング3日窓 (一昨日00:00〜) — キーはJST
         const lastDay = keys[keys.length - 1].slice(0, 10);
@@ -3647,7 +3649,7 @@
 <style>
   /* ★下固定タブバー(他サービスのBottomNavと同じ見た目)。卵=一番左 */
   .egg-tab-bar{position:fixed;left:0;right:0;bottom:0;z-index:900;
-    display:flex;align-items:center;justify-content:flex-start;
+    display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
     height:54px;padding-bottom:env(safe-area-inset-bottom, 0px);
     background:linear-gradient(160deg,#0e1e2ef5,#17384ef5);
     border-top:1px solid #274a63;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
@@ -3668,13 +3670,14 @@
   .egg-menu a span{font-size:10.5px;font-weight:800;color:#c8d2e4}
 </style>
 <nav class="egg-tab-bar">
-  <a class="egg-home-btn" href="/" id="eggHomeBtn">
+  <a href="/mmm" style="justify-self:start;display:flex;align-items:center;gap:6px;padding:0 12px;text-decoration:none;color:#e8d5a0;font-size:12.5px;font-weight:800;white-space:nowrap;">
+    <span style="font-size:14px;">◀</span> マスターマインドへ戻る
+  </a>
+  <a class="egg-home-btn" href="/" id="eggHomeBtn" style="justify-self:center;padding:4px 10px;">
     <img src="/icons/tab-home.png" alt="">
     <span>OneSea ▴</span>
   </a>
-  <a href="/mmm" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:#e8d5a0;font-size:13px;font-weight:800;">
-    <span style="font-size:15px;">◀</span> マスターマインドへ戻る
-  </a>
+  <span></span>
 </nav>
 <div class="egg-menu-ov" id="eggMenuOv"></div>
 <div class="egg-menu" id="eggMenu">
