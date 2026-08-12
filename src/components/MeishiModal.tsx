@@ -109,7 +109,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                   {isWarawaUntil(p.warawa_until) && <WarawaBadge size={15} />}
                 </div>
                 {isWarawaUntil(p.warawa_until) && p.member_no != null && (
-                  <div className="truncate text-[11px] text-[#b0a890]">@Warawer{String(p.member_no).padStart(7, "0")}</div>
+                  <div className="truncate text-[11px] text-[#b0a890]">@Warawer{p.member_no}</div>
                 )}
               </div>
 

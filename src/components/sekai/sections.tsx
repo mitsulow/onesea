@@ -1229,11 +1229,8 @@ export function ActivitySection({ me }: { me: User | null }) {
           style={{ borderColor: "#c8dccb" }}
         >
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/icon-pen.webp" alt="" style={{ width: 18, height: 18 }} />
-            </span>
-            <span className="flex-1 text-[13.5px] text-[#9ab3a0]">村からの投稿 <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#eaf4ec] text-[16px]">📷</span>
+            <span className="flex-1 text-[13.5px] text-[#9ab3a0]">村からの投稿<span className="caret-blink" aria-hidden /></span>
             <span
               className="flex-shrink-0 rounded-full px-3 py-1.5 text-[11.5px] font-extrabold text-white"
               style={{ background: GREEN }}

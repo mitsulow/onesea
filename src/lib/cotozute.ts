@@ -11,9 +11,10 @@ export interface CotozuteProfile {
   warawa_until?: string | null;
 }
 
-/** 表示用ハンドル。Googleアカウント名は出さず、わらわ〜番号ベースの @Warawer0000001 を使う */
+/** 表示用ハンドル。Googleアカウント名は出さず、わらわ〜番号ベースの @Warawer3 を使う
+ *  （前ゼロ埋めなし。1万人目なら @Warawer10000 — ユーザー確定 2026-08-12） */
 export function warawer(memberNo: number | null | undefined): string | null {
-  return memberNo != null ? `@Warawer${String(memberNo).padStart(7, "0")}` : null;
+  return memberNo != null ? `@Warawer${memberNo}` : null;
 }
 
 export interface CotozutePost {

@@ -398,7 +398,7 @@ export default function UserPage() {
               className="num px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider text-[#7a5a10]"
               style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
             >
-              わらわ〜No.{String(profile.member_no).padStart(7, "0")}
+              わらわ〜No.{profile.member_no}
             </span>
           )}
           {profile.murabito && (
@@ -418,7 +418,7 @@ export default function UserPage() {
           </h1>
           {/* @Warawer・わらわ〜No.はわらわ〜会員（認証済み）だけの称号 */}
           {isWara && profile.member_no != null && (
-            <div className="text-[12px] text-[#a09888]">@Warawer{String(profile.member_no).padStart(7, "0")}</div>
+            <div className="text-[12px] text-[#a09888]">@Warawer{profile.member_no}</div>
           )}
           {isMe && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -598,7 +598,7 @@ export default function UserPage() {
             href="/settings/profile"
             className="mt-3 block rounded-xl border border-[#e0d6c6] bg-white py-2.5 text-center text-[13px] font-bold text-[#8a7a5a] no-underline"
           >
-            <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> プロフィールを編集
+            プロフィールを編集
           </Link>
         )}
 
@@ -637,7 +637,14 @@ export default function UserPage() {
         )}
         <details className="mt-3">
           <summary className="cursor-pointer rounded-xl border border-[#e0d6c6] bg-white px-3 py-2.5 text-[13px] font-extrabold text-[#5a5448]">
-            この人はどんな人？{profile.skills?.length ? ` ・ スキル${profile.skills.length}` : ""}{profile.wants_to_do?.length ? ` ・ やってみたい${profile.wants_to_do.length}` : ""}
+            この人はどんな人？{(() => {
+              const s = profile.skills?.length ?? 0;
+              const w = profile.wants_to_do?.length ?? 0;
+              if (s && w) return `${s}個のスキルと${w}つのやってみたい事`;
+              if (s) return `${s}個のスキル`;
+              if (w) return `${w}つのやってみたい事`;
+              return "";
+            })()}
           </summary>
         {profile.skills && profile.skills.length > 0 && (
           <div className="mt-3 rounded-2xl p-3" style={{ background: "linear-gradient(135deg,#fdf8ec,#f8efd8)", border: "1.5px solid #e0cfa0" }}>

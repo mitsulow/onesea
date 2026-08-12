@@ -201,7 +201,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
         className="mb-2 w-full rounded-xl border border-[#e8dcc4] px-3.5 py-3 text-left text-[13.5px] text-[#8a8070]"
         style={{ background: "linear-gradient(135deg,#fffaf0 0%,#fdf6e9 100%)" }}
       >
-        <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {todayPrompt()}
+        {todayPrompt()}<span className="caret-blink" aria-hidden />
       </button>
     );
   }

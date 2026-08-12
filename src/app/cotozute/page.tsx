@@ -738,7 +738,10 @@ export default function CotozutePage() {
         {/* 左レール: サービスへの入口ナビ（lgのみ・追従） */}
         <aside className="hidden w-[240px] shrink-0 pt-4 lg:block">
           <div className="sticky top-16 rounded-xl border border-[#e4e6e9] bg-white p-2">
-            {MENU_ITEMS.map((m) =>
+            {MENU_ITEMS.map((mRaw) => {
+              // わらわ〜会員は 卵+OneSea → 大天使ワラエル+WaraWer
+              const m = isWara && mRaw.label === "OneSea" ? { ...mRaw, icon: "/icons/waraeru.png", label: "WaraWer" } : mRaw;
+              return (
               m.ext ? (
                 <a key={m.href} href={m.href} className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-[14px] font-medium text-[#1c1e21] no-underline hover:bg-[#f2f3f5]">
                   {m.icon.startsWith("/") ? <img src={srcCdn(m.icon)} alt="" className="h-[22px] w-[22px] object-contain" /> : <span className="w-[22px] text-center text-[17px]">{m.icon}</span>}
@@ -750,7 +753,8 @@ export default function CotozutePage() {
                   {m.label}
                 </Link>
               )
-            )}
+              );
+            })}
           </div>
         </aside>
 
@@ -767,7 +771,7 @@ export default function CotozutePage() {
             onClick={() => (me && isWara ? setComposing(true) : setShowUpgrade(true))}
             className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14.5px] text-[#65676b]"
           >
-            幸せの波紋を拡げよう <img src="/icons/icon-pen.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
+            幸せの波紋を拡げよう<span className="caret-blink" aria-hidden />
           </button>
         </div>
 

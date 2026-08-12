@@ -90,7 +90,7 @@ export default function MeikanPage() {
                     <span className="truncate text-[14px] font-extrabold text-[#3a3428]">{p.display_name ?? "むらびと"}</span>
                     {p.member_no != null && (
                       <span className="num flex-shrink-0 rounded px-1 py-0.5 text-[8.5px] font-extrabold tracking-wider text-[#7a5a10]" style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)" }}>
-                        No.{String(p.member_no).padStart(7, "0")}
+                        No.{p.member_no}
                       </span>
                     )}
                   </div>

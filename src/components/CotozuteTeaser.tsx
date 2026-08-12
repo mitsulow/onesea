@@ -70,7 +70,7 @@ export function CotozuteTeaser() {
           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#f0ead9] text-[16px]"><img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /></span>
         )}
         <span className="flex-1 rounded-full border border-[#dcdfe4] bg-white px-4 py-2 text-left text-[14px] text-[#8a8d91]">
-          幸せの波紋を拡げよう
+          幸せの波紋を拡げよう<span className="caret-blink" aria-hidden />
         </span>
       </Link>
       {posts === null ? (

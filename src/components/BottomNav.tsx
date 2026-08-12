@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { subscribeUnread } from "@/lib/unreadStore";
+import { useWarawa } from "@/lib/warawaBrand";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -147,6 +148,7 @@ function TabIcon({ icon, active }: { icon: string; active: boolean }) {
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const warawaBrand = useWarawa(); // わらわ〜会員はホームタブが ワラエル+WaraWer になる
   const [kbOpen, setKbOpen] = useState(false);
   const [menu, setMenu] = useState(false);
   const [picked, setPicked] = useState<string | null>(null); // 押した瞬間に囲いを移すための状態
@@ -300,14 +302,15 @@ export function BottomNav() {
           {/* ホーム（サービスのホームへ + 全サービスメニュー）。トップページでは出さない */}
           {!svc.noHome && (
           <button onClick={onHome} className="relative flex flex-1 flex-col items-center gap-0.5 py-1">
+            {/* わらわ〜会員は卵+OneSea→大天使ワラエル+WaraWer */}
             <img
-              src="/icons/tab-home.png"
+              src={warawaBrand ? "/icons/waraeru.png" : "/icons/tab-home.png"}
               alt=""
               className={`object-contain transition-transform duration-150 ${atHome ? "-translate-y-0.5 scale-[1.3]" : ""}`}
-              style={{ width: 17, height: 21 }}
+              style={{ width: warawaBrand ? 21 : 17, height: 21 }}
             />
             <span className={`flex items-center gap-0.5 text-[9px] leading-none ${atHome ? "font-bold" : "font-medium"}`} style={{ color: atHome ? svc.active : svc.inactive }}>
-              OneSea <span className="text-[7px]">{menu ? "▾" : "▴"}</span>
+              {warawaBrand ? "WaraWer" : "OneSea"} <span className="text-[7px]">{menu ? "▾" : "▴"}</span>
             </span>
           </button>
           )}

@@ -3697,6 +3697,17 @@
   </a>
   <span></span>
 </nav>
+<script>
+// わらわ〜会員: 卵+OneSea → 大天使ワラエル+WaraWer（React側と同じ端末キャッシュ onesea-warawa を読む）
+(function () {
+  try {
+    if (localStorage.getItem('onesea-warawa') === '1') {
+      document.querySelectorAll('#eggHomeBtn img, .egg-menu a[href="/"] img').forEach(function (i) { i.src = '/icons/waraeru.png'; });
+      document.querySelectorAll('#eggHomeBtn span, .egg-menu a[href="/"] span').forEach(function (s) { s.textContent = s.textContent.replace('OneSea', 'WaraWer'); });
+    }
+  } catch (e) {}
+})();
+</script>
 <div class="egg-menu-ov" id="eggMenuOv"></div>
 <div class="egg-menu" id="eggMenu">
   <a href="/mmm"><img src="/icons/cel-sun.png" alt=""><span>MMM</span></a>

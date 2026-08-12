@@ -172,3 +172,17 @@ body {
 .hide-scrollbar {
   overscroll-behavior-x: contain;
 }
+
+/* 入力欄プレースホルダーの点滅カーソル（鉛筆アイコンの代替: ここに入力できる合図） */
+.caret-blink {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.15em;
+  background: currentColor;
+  animation: caretBlink 1.1s steps(1) infinite;
+}
+@keyframes caretBlink {
+  50% { opacity: 0; }
+}

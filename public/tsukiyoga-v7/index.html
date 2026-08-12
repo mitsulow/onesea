@@ -17283,6 +17283,22 @@ if ('serviceWorker' in navigator) {
 </script>
 
 <script>
+// ★わらわ〜会員: 卵+OneSea → 大天使ワラエル+WaraWer（React側と同じ端末キャッシュを読む）
+(function () {
+  try {
+    if (localStorage.getItem('onesea-warawa') === '1') {
+      var egg = document.querySelector('.tab-home-egg');
+      if (egg) {
+        var im = egg.querySelector('img');
+        var lb = egg.querySelector('.tab-label');
+        if (im) im.src = '/icons/waraeru.png';
+        if (lb) lb.textContent = 'WaraWer';
+      }
+    }
+  } catch (e) {}
+})();
+</script>
+<script>
 // ★サービス間スワイプ周回ナビ（ツキヨガ版・ページ全体）:
 //   他サービスと同じく画面のどこからでも。ただしページ内の既存横ジェスチャと衝突する
 //   ゾーン(カレンダー格子=月送り/canvas=宙・月ナビ/占いホイール/入力欄/タブバー/メニュー)は除外。
