@@ -2683,13 +2683,20 @@
 
   // ===== 観測グラフ F1〜F4: schumann_series.json からクライアント描画 =====
   // (以前はサーバーでPNGを描いてgitに積んでいた。数値だけ運ぶ方式に変更)
-  let seriesCache = null;
+  let seriesCache = null, seriesCutKey = null;
   async function drawModeGraphs() {
     try {
       if (!seriesCache) {
-        const r = await fetch("/api/sr/schumann_series_3d.json", { cache: "no-store" });
+        const [r, rd] = await Promise.all([
+          fetch("/api/sr/schumann_series_3d.json", { cache: "no-store" }),
+          fetch("/api/sr/schumann_data.json", { cache: "no-store" }),
+        ]);
         if (!r.ok) return;
         seriesCache = await r.json();
+        // 本物の最新観測時刻(data.jsonのtimestamp, UTC)をJSTキーに変換。
+        // seriesの時間軸は実時刻より10〜20分先行し、カーソルより右は前周の残像(~7.8Hzのゴミ)
+        // が読めてしまうため、「時計の今」ではなくこの観測時刻でカットするのが正
+        try { seriesCutKey = new Date(Date.parse((await rd.json()).timestamp) + 9 * 3600e3).toISOString().slice(0, 16); } catch (e) { seriesCutKey = null; }
       }
       const S = seriesCache;
       const COLORS = { F1: "#5ae08a", F2: "#ffd60a", F3: "#c878ff", F4: "#ff96be" };
@@ -2700,10 +2707,9 @@
         const src = kind === "F" ? S.modes : kind === "A" ? S.amp : S.q;
         const ser = src && src[mode];
         if (!ser) return;
-        // 元画像の「いま」カーソルより右(未来枠)は前周の残像を誤読した平坦なゴミ。
-        // これが右端に常駐して「グラフが7.8で止まってる」ように見えていた → 今+15分より先は捨てる
-        const nowKey = new Date(Date.now() + 9 * 3600e3 + 15 * 60e3).toISOString().slice(0, 16);
-        let keys = Object.keys(ser).sort().filter(k => k <= nowKey);
+        // 最新観測時刻より右(未来枠)は前周の残像を誤読した平坦なゴミ → 捨てる
+        const cutKey = seriesCutKey || new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16);
+        let keys = Object.keys(ser).sort().filter(k => k <= cutKey);
         if (!keys.length) return;
         // ローリング3日窓 (一昨日00:00〜) — キーはJST
         const lastDay = keys[keys.length - 1].slice(0, 10);

@@ -82,7 +82,7 @@
 - ツキヨガ静的appの oneseaSvcMenu / tyBurgerMenu / getLunarDate はReact側と**手動同期**が必要
 - Vercel env: RESEND_API_KEY / RESEND_FROM(=OneSea米部 <info@warawer.com>) 設定済み。envはデプロイし直すまで反映されない
 - 通知(notifications)は**タップした分だけ既読**（一覧を開いた瞬間の全既読は却下済み・戻さない）
-- **schumann1（シューマン共振観測所）** = public/schumann1/index.html の静的ページ（旧 mitsulow.github.io/schumann は移設済みでrepo削除済み）。折りたたみの表示順は**CSSの `order`**（DOM順でない）。観測グラフF1〜F4の schumann_series_3d.json には**画像の未来枠（現在カーソルより右）を誤読した平坦ゴミ(~7.8Hz)が常に混じる** → 描画側 drawModeGraphs で「今+15分より先のキーを捨てる」処理が必須（消すと"グラフが7.8で止まってる"見た目が再発）。0Lei側の全幅読み取りは宝の山の自己修復仕様なので直さない。データ収集は GitHub Actions schumann-update（15分毎・0Lei repo）
+- **schumann1（シューマン共振観測所）** = public/schumann1/index.html の静的ページ（旧 mitsulow.github.io/schumann は移設済みでrepo削除済み）。折りたたみの表示順は**CSSの `order`**（DOM順でない）。観測グラフF1〜F4の schumann_series_3d.json には**画像の未来枠（現在カーソルより右）を誤読した平坦ゴミ(~7.8Hz)が常に混じる** → 描画側 drawModeGraphs で「schumann_data.json のtimestamp(=本物の最新観測時刻)より先のキーを捨てる」処理が必須（消すと"グラフが7.8で止まってる"見た目が再発）。seriesの時間軸は実時刻より10〜20分先行するので「時計の今」でのカットでは残像が残る（実際に残った）。0Lei側の全幅読み取りは宝の山の自己修復仕様なので直さない。データ収集は GitHub Actions schumann-update（15分毎・0Lei repo）
 
 ## 6. 未解決の課題と次にやるべきこと
 
