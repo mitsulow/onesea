@@ -7,7 +7,7 @@ import { simulateSpots } from "@/lib/simulateSpots";
 
 /**
  * 特別ページ: もしも、わらわ〜25,000人が同じ日にシューマン音©を聴いたら。
- * 本番データは使わないシミュレーション。金の光=あなた(東京タワーで聴いた想定)。
+ * 本番データは使わないシミュレーション。蛍光赤の光=あなた(東京タワーで聴いた想定)。
  */
 export default function Sim25000() {
   const spots = useMemo(() => simulateSpots(25000), []);
@@ -23,7 +23,7 @@ export default function Sim25000() {
         <p style={{ margin: "10px auto 0", maxWidth: 560, fontSize: 12.5, lineHeight: 1.9, color: "#8d93aa" }}>
           わらわ〜25,000人が、同じ日にシューマン音©を聴いた世界のシミュレーション。
           <br />
-          <span style={{ color: "#ffd88a" }}>金の光</span>があなた（東京タワーで聴いた想定）。
+          <span style={{ color: "#ff8a95" }}>蛍光赤の光</span>があなた（東京タワーで聴いた想定）。
           水色の光だまりは人の重なり — 東京は厚く、田舎の一粒もちゃんと見える。
         </p>
       </header>

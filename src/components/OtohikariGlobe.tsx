@@ -234,22 +234,28 @@ export function OtohikariGlobe({
     fG.setAttribute("aBorn", new THREE.BufferAttribute(fBorn, 1));
     fG.setDrawRange(0, MAX_PTS);
     const ffMat = new THREE.ShaderMaterial({
+      // 雷らしい光: 落ちた瞬間に白い閃光が「多段ストロボ」(本物の再放電のように3回瞬く)、
+      // 十字のスパークが走り、そのあと紫がかった残光が不規則にチラつきながら消える
       vertexShader: `attribute float aSize,aPhase,aInt,aBorn;varying float vPh,vIn,vBorn;uniform float uTime;
       void main(){vPh=aPhase;vIn=aInt;vBorn=aBorn;vec4 mv=modelViewMatrix*vec4(position,1.0);
-      float age=uTime-aBorn;float flash=1.0+1.6*exp(-age*4.0);
+      float age=uTime-aBorn;
+      float flash=1.0+1.5*exp(-age*10.0)+0.9*exp(-abs(age-0.18)*25.0)+0.6*exp(-abs(age-0.42)*25.0);
       gl_PointSize=aSize*(80.0/-mv.z)*flash;gl_Position=projectionMatrix*mv;}`,
       fragmentShader: `uniform float uTime,uLife;varying float vPh,vIn,vBorn;
-      void main(){float d=length(gl_PointCoord-0.5);if(d>0.5)discard;
-      float age=uTime-vBorn;
-      float ain=clamp(age/0.15,0.0,1.0);
+      void main(){vec2 q=gl_PointCoord-0.5;float d=length(q);if(d>0.5)discard;
+      float age=uTime-vBorn;if(age<0.0)discard;
       float aout=clamp(1.0-age/uLife,0.0,1.0);
-      float flash=1.0+2.2*exp(-age*5.0);
-      float pulse=sin(uTime*1.4+vPh)*0.25+0.75;
-      float alpha=smoothstep(0.5,0.05,d);float core=smoothstep(0.22,0.0,d);
-      float b=alpha*pulse*vIn*0.62*ain*aout*flash;
+      float strobe=2.6*exp(-age*16.0)+1.8*exp(-abs(age-0.18)*30.0)+1.2*exp(-abs(age-0.42)*30.0);
+      float jitter=0.7+0.3*sin(uTime*9.0+vPh*7.0)*sin(uTime*13.7+vPh*3.0);
+      float ember=0.30*jitter*aout;
+      float ca=cos(vPh),sa=sin(vPh);vec2 r=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
+      float glow=smoothstep(0.5,0.03,d);
+      float spark=max(pow(max(0.0,1.0-abs(r.x)*4.0),6.0),pow(max(0.0,1.0-abs(r.y)*4.0),6.0))*smoothstep(0.5,0.1,d);
+      float core=smoothstep(0.16,0.0,d);
+      float b=(glow*(ember+strobe*0.55)+spark*strobe*0.9+core*strobe)*vIn;
       if(b<0.004)discard;
-      vec3 col=mix(vec3(1.0,0.82,0.28),vec3(1.0,1.0,0.9),core);
-      gl_FragColor=vec4(col*b,b);}`,
+      vec3 col=mix(vec3(0.62,0.55,1.0),vec3(1.0,1.0,1.0),clamp(strobe,0.0,1.0));
+      gl_FragColor=vec4(col*b,min(b,1.0));}`,
       uniforms: { uTime: { value: 0 }, uLife: { value: STRIKE_LIFE } },
       transparent: true,
       depthWrite: false,
@@ -545,21 +551,21 @@ export function OtohikariGlobe({
     // 61点以上(将来の25,000人スケール)は Points 1本=1描画命令で描く。
     // スプライト2枚/点の方式は綺麗だが数万ドローコールになりSafariが死ぬので60点まで。
     let cloudMat: THREE.ShaderMaterial | null = null;
-    // 自分の光: 今日聴いた場所に金色のホタル(集計の水色とは別建て・ひときわ見つけやすく)
+    // 自分の光: 今日聴いた場所に蛍光赤のホタル(集計の水色とは別建て・ひときわ見つけやすく)
     const addMyLight = () => {
       const my = mySpotRef.current;
       if (!my) return;
       const base = ll2v(my[0], my[1], 1.007);
       const haze = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: glowTex, color: 0xffc86a, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })
+        new THREE.SpriteMaterial({ map: glowTex, color: 0xff5040, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })
       );
       haze.scale.set(0.085, 0.085, 0.085);
       haze.position.copy(base);
       haze.userData.baseOpacity = 0.55;
       pillarGroup.add(haze);
-      // 芯は通常合成(上に重ね塗り) — 東京の白い光だまりの中でも金色が飲まれず見つけられる
+      // 芯は通常合成(上に重ね塗り) — 東京の白い光だまりの中でも蛍光赤が飲まれず見つけられる
       const coreS = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: glowTex, color: 0xffb838, transparent: true, opacity: 0.95, blending: THREE.NormalBlending, depthWrite: false })
+        new THREE.SpriteMaterial({ map: glowTex, color: 0xff2440, transparent: true, opacity: 0.95, blending: THREE.NormalBlending, depthWrite: false })
       );
       coreS.scale.set(0.035, 0.035, 0.035);
       coreS.position.copy(base);
