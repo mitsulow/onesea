@@ -17280,48 +17280,94 @@ if ('serviceWorker' in navigator) {
 // ★サービス間スワイプ周回ナビ（ツキヨガ版・ページ全体）:
 //   他サービスと同じく画面のどこからでも。ただしページ内の既存横ジェスチャと衝突する
 //   ゾーン(カレンダー格子=月送り/canvas=宙・月ナビ/占いホイール/入力欄/タブバー/メニュー)は除外。
-//   左スワイプ→次(楽市楽座) / 右スワイプ→前(セカイムラ)。指に追従して途中まで動く。
+//   左スワイプ→次(楽市楽座) / 右スワイプ→前(セカイムラ)。
+//   指に1:1追従で画面端まで滑り、確定後は行き先が反対側からスライドイン
+//   （方向は sessionStorage 'swipe-nav-dir' — React側 SwipeNav.tsx と共有。両方を同時に直すこと）。
 (function () {
-  var startX = 0, startY = 0, dx = 0, dragging = false, canceled = false;
   var body = document.body;
+  var DIR_KEY = 'swipe-nav-dir';
+
+  // 到着側: スワイプで来ていたら反対側から画面幅スライドイン
+  try {
+    var dir = sessionStorage.getItem(DIR_KEY);
+    if (dir) {
+      sessionStorage.removeItem(DIR_KEY);
+      var vw0 = window.innerWidth;
+      body.style.transition = 'none';
+      body.style.transform = 'translateX(' + (dir === 'next' ? vw0 : -vw0) + 'px)';
+      requestAnimationFrame(function () {
+        body.style.transition = 'transform .28s ease-out';
+        body.style.transform = '';
+        setTimeout(function () { body.style.transition = ''; }, 300);
+      });
+    }
+  } catch (e) {}
+
+  var startX = 0, startY = 0, dx = 0, dragging = false, canceled = false;
+  var lastX = 0, lastT = 0, vx = 0, navigating = false;
   var EXCLUDE = 'canvas, input, textarea, select, .cal-grid, .tab-bar, ' +
     '#oneseaSvcMenu, #oneseaGuestSheet, #oneseaAvatarBtn, ' +
     '.memo-modal, .uranai-detail-modal, .wheel-detail-modal, .today-pane, ' +
     '.uranai-scroll .roulette, .hanasakari-view, .moonnav-view';
+  function resetBody(animate) {
+    body.style.transition = animate ? 'transform .22s ease' : '';
+    body.style.transform = '';
+    dragging = false;
+    if (animate) setTimeout(function () { body.style.transition = ''; }, 240);
+  }
   document.addEventListener('touchstart', function (e) {
-    canceled = false; dragging = false; dx = 0;
+    canceled = false; dragging = false; dx = 0; vx = 0;
     var t = e.target;
-    if (t && t.closest && t.closest(EXCLUDE)) { canceled = true; return; }
+    if (navigating || (t && t.closest && t.closest(EXCLUDE))) { canceled = true; return; }
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    lastX = startX;
+    lastT = performance.now();
   }, { passive: true });
   document.addEventListener('touchmove', function (e) {
     if (canceled) return;
-    if (e.defaultPrevented) { if (dragging) { body.style.transform = ''; } canceled = true; return; }
-    dx = e.touches[0].clientX - startX;
+    if (e.defaultPrevented) { if (dragging) resetBody(true); canceled = true; return; }
+    var x = e.touches[0].clientX;
+    dx = x - startX;
     var dy = e.touches[0].clientY - startY;
+    var now = performance.now();
+    vx = (x - lastX) / Math.max(1, now - lastT); // px/ms（フリック判定用）
+    lastX = x; lastT = now;
     if (!dragging) {
       if (Math.abs(dy) > 44 && Math.abs(dy) > Math.abs(dx)) { canceled = true; return; }
       if (Math.abs(dx) > 36 && Math.abs(dx) > 2.2 * Math.abs(dy)) dragging = true;
       else return;
     }
-    var follow = Math.max(-160, Math.min(160, dx * 0.45));
+    // 指に1:1追従（開始しきい値36px分を差し引いて0から滑らかに）。画面端まで行ける
+    var follow = dx > 0 ? Math.max(0, dx - 36) : Math.min(0, dx + 36);
     body.style.transition = '';
     body.style.transform = 'translateX(' + follow + 'px)';
   }, { passive: true });
   document.addEventListener('touchend', function () {
     if (!dragging) { canceled = false; return; }
     dragging = false;
-    if (Math.abs(dx) > 110) {
-      var next = dx < 0 ? '/za' : '/sekai';
-      body.style.transition = 'transform .18s ease-in';
-      body.style.transform = 'translateX(' + (dx < 0 ? -220 : 220) + 'px)';
-      setTimeout(function () { location.href = next; }, 150);
+    var vw = window.innerWidth;
+    var flick = Math.abs(dx) > 60 && Math.abs(vx) > 0.5 && (vx < 0) === (dx < 0);
+    if (Math.abs(dx) > Math.min(140, vw * 0.3) || flick) {
+      var goNext = dx < 0;
+      var next = goNext ? '/za' : '/sekai';
+      navigating = true;
+      try { sessionStorage.setItem(DIR_KEY, goNext ? 'next' : 'prev'); } catch (e) {}
+      // 画面外まで滑り切ってから遷移
+      body.style.transition = 'transform .2s ease-out';
+      body.style.transform = 'translateX(' + (goNext ? -vw : vw) + 'px)';
+      setTimeout(function () { location.href = next; }, 160);
+      // 遷移が始まらなかった時（オフライン等）は5秒で復帰＝固まり防止
+      setTimeout(function () { if (navigating) { navigating = false; resetBody(true); } }, 5000);
     } else {
-      body.style.transition = 'transform .22s ease';
-      body.style.transform = '';
-      setTimeout(function () { body.style.transition = ''; }, 240);
+      resetBody(true);
     }
+  }, { passive: true });
+  // OSジェスチャ等でタッチが中断された時に transform が残る固まりを防ぐ
+  document.addEventListener('touchcancel', function () {
+    if (dragging) resetBody(true);
+    dragging = false;
+    canceled = true;
   }, { passive: true });
 })();
 </script>
