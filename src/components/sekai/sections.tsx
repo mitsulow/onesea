@@ -460,9 +460,13 @@ export function MootsSection({
   );
 }
 
-/* ═══ 月例会の通し番号（2021年8月の満月会 = 第1回。開催日ベース） ═══ */
+/* ═══ 月例会の通し番号 ═══
+   アンカー方式: **第126回 = 2026-08-12の新月会**（ユーザー確定）。ここから前後に±1ずつ。
+   過去に数回スキップがあり旧「2021年8月=第1回」連番とは合わないため、
+   過去分の実態合わせは後日手修正の予定（とりあえずアルゴリズム通りに振る） */
 const MOOT_NO_YEARS = [2021, 2022, 2023, 2024, 2025, 2026, 2027];
-let MOOT_NO_LIST: Array<{ dateKey: string; kind: "new" | "full"; no: number }> | null = null;
+const MOOT_ANCHOR = { dateKey: "2026-08-12", kind: "new" as const, no: 126 };
+let MOOT_NO_LIST: Array<{ time: number; dateKey: string; kind: "new" | "full"; no: number }> | null = null;
 function mootNoList() {
   if (MOOT_NO_LIST) return MOOT_NO_LIST;
   const raw: Array<{ time: number; kind: "new" | "full" }> = [];
@@ -470,12 +474,11 @@ function mootNoList() {
     for (const ev of moonsOfYear(y)) raw.push({ time: mootTimeOf(ev), kind: ev.type });
   }
   raw.sort((a, b) => a.time - b.time);
-  const firstIdx = raw.findIndex((m) => m.kind === "full" && m.time >= Date.UTC(2021, 7, 1));
-  MOOT_NO_LIST = raw.slice(firstIdx).map((m, i) => ({
-    dateKey: new Date(m.time + 9 * 3600000).toISOString().slice(0, 10),
-    kind: m.kind,
-    no: i + 1,
-  }));
+  const withKeys = raw.map((m) => ({ ...m, dateKey: new Date(m.time + 9 * 3600000).toISOString().slice(0, 10) }));
+  const ai = withKeys.findIndex((m) => m.dateKey === MOOT_ANCHOR.dateKey && m.kind === MOOT_ANCHOR.kind);
+  MOOT_NO_LIST = withKeys
+    .map((m, i) => ({ ...m, no: ai >= 0 ? MOOT_ANCHOR.no + (i - ai) : i + 1 }))
+    .filter((m) => m.no >= 1);
   return MOOT_NO_LIST;
 }
 function mootNoOf(dateKey: string): number | null {
@@ -488,25 +491,8 @@ const ARCHIVE_YEARS = [2021, 2022, 2023, 2024, 2025, 2026];
 function MootArchive() {
   const [year, setYear] = useState(new Date().getFullYear());
 
-  const all = useMemo(() => {
-    const list: Array<{ time: number; kind: "new" | "full"; no: number }> = [];
-    const raw: Array<{ time: number; kind: "new" | "full" }> = [];
-    for (const y of ARCHIVE_YEARS) {
-      for (const ev of moonsOfYear(y)) {
-        raw.push({ time: mootTimeOf(ev), kind: ev.type });
-      }
-    }
-    raw.sort((a, b) => a.time - b.time);
-    // 第1回 = 2021年8月以降で最初の満月会
-    const firstIdx = raw.findIndex((m) => m.kind === "full" && m.time >= Date.UTC(2021, 7, 1));
-    let no = 0;
-    for (let i = 0; i < raw.length; i++) {
-      if (i < firstIdx) continue;
-      no++;
-      if (raw[i].time <= Date.now()) list.push({ ...raw[i], no });
-    }
-    return list;
-  }, []);
+  // 採番は mootNoList（第126回=2026-08-12新月会のアンカー方式）と同じ台帳を使う
+  const all = useMemo(() => mootNoList().filter((m) => m.time <= Date.now()), []);
 
   const list = all.filter((m) => new Date(m.time + 9 * 3600000).getUTCFullYear() === year);
 

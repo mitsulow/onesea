@@ -62,13 +62,14 @@ export interface Moot {
 /**
  * 会の開催日時（ms UTC）:
  * 新月会 = 新月点に向かう最後の13時 / 満月会 = 満月点に向かう最後の20時。
- * 例: 満月点が8/11 11:00 なら、直前の20時は 8/10 20:00 → 満月会は8/10。
+ * ただし開始から天文点まで**1時間未満**なら会の時間が足りないので前日開催
+ * （ユーザー確定 2026-08-12: 満月点21:00なら当日20時でOK・20:30なら前日20時）。
  */
 export function mootTimeOf(ev: { type: "new" | "full"; time: number }): number {
   const hour = ev.type === "new" ? 13 : 20;
   const jst = new Date(ev.time + 9 * 3600000);
   const cand = Date.UTC(jst.getUTCFullYear(), jst.getUTCMonth(), jst.getUTCDate(), hour) - 9 * 3600000;
-  return cand < ev.time ? cand : cand - 86400000;
+  return cand <= ev.time - 3600000 ? cand : cand - 86400000;
 }
 
 export function upcomingMoots(count = 4): Moot[] {
@@ -76,6 +77,7 @@ export function upcomingMoots(count = 4): Moot[] {
   const events = nextMoons(count + 3);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const now = Date.now();
   return events
     .map((ev) => {
       const mt = mootTimeOf(ev);
@@ -84,15 +86,20 @@ export function upcomingMoots(count = 4): Moot[] {
       const local = new Date(dateKey + "T00:00:00");
       const dday = Math.round((local.getTime() - today.getTime()) / 86400000);
       return {
-        kind: ev.type,
-        dateKey,
-        label: `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
-        dday,
-        hour: ev.type === "new" ? 13 : 20,
+        moot: {
+          kind: ev.type,
+          dateKey,
+          label: `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
+          dday,
+          hour: ev.type === "new" ? 13 : 20,
+        } as Moot,
+        mt,
       };
     })
-    .filter((m) => m.dday >= 0)
-    .slice(0, count);
+    // 会が終わったら（開始から3時間後）自動で次の会の表示に切り替わる
+    .filter((x) => x.mt + 3 * 3600000 > now)
+    .slice(0, count)
+    .map((x) => x.moot);
 }
 
 /** 次のミソカ（晦日）= 次の新月の前日 */
