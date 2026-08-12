@@ -5,15 +5,16 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { isWarawaUntil } from "@/lib/warawa";
+import { isWarawaUntil, warawaHandle, SIR_USER_ID } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
 
 /* eslint-disable @next/next/no-img-element */
 
 /**
- * 名刺モーダル — 人のアイコンを押すと、まず名刺が現れる（旧・楽市楽座の名刺の作り直し）。
- * カバー + 重なるアバター + 名前 + ライフワーク + 📍地域 + SKILL。
- * 「マイページを見る」でその人のページへ。文字はみ出しは truncate / line-clamp / min-w-0 で防止。
+ * 名刺モーダル 2026-08-13版 — 透いた白和紙（耳付き・周囲ほころび）の台紙に、
+ * 細い枠線で囲み、枠線上のトップに小さく「名 刺」。
+ * バッジ: わらわ〜=「わらわ〜プレミアムNo.36」/ 無料会員=「無料わんし〜会員」/
+ *         みつろうだけ「Warawa-Sir」（黒縁）。セカイムラは「セカイムラ沖縄村人」表記。
  */
 
 interface MeishiProfile {
@@ -21,7 +22,6 @@ interface MeishiProfile {
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
-  cover_url: string | null;
   status_line: string | null;
   prefecture: string | null;
   city: string | null;
@@ -32,6 +32,7 @@ interface MeishiProfile {
   warawa_until: string | null;
   created_at: string | null;
   birthday: string | null;
+  murabito: boolean | null;
 }
 
 export function MeishiModal({ username, onClose }: { username: string; onClose: () => void }) {
@@ -42,148 +43,166 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
     const supabase = createClient();
     supabase
       .from("profiles")
-      .select("id, username, display_name, avatar_url, cover_url, status_line, prefecture, city, rice_work, life_work, skills, member_no, created_at, birthday, warawa_until")
+      .select("id, username, display_name, avatar_url, status_line, prefecture, city, rice_work, life_work, skills, member_no, created_at, birthday, warawa_until, murabito")
       .eq("username", username)
       .maybeSingle()
       .then(({ data }) => setP((data as MeishiProfile) ?? null));
   }, [username]);
 
-  // 投稿カードの content-visibility 内に閉じ込められないよう body 直下へポータル描画
   if (typeof document === "undefined") return null;
+
+  const isSir = p?.id === SIR_USER_ID;
+  const isWara = p ? isWarawaUntil(p.warawa_until) : false;
+
   return createPortal(
-    <div
-      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 px-6"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-5" onClick={onClose}>
       <div
-        className="flex w-full max-w-[300px] flex-col overflow-y-auto rounded-xl shadow-2xl"
-        style={{
-          animation: "meishiIn .22s ease-out",
-          background: "url(/meishi-washi.webp) center / 100% 100%, #f6ecd8",
-          aspectRatio: "640 / 1119", // 縦長の名刺（和紙台紙の実寸比）
-          maxHeight: "82vh",
-        }}
+        className="relative w-full max-w-[310px]"
+        style={{ animation: "meishiIn .22s ease-out", maxHeight: "84vh" }}
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`@keyframes meishiIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}`}</style>
 
-        {p === undefined ? (
-          <div className="flex h-48 items-center justify-center">
-            <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#c94d3a] border-t-transparent" />
-          </div>
-        ) : p === null ? (
-          <div className="p-6 text-center text-[13px] text-[#8a7a5a]">この人の名刺は見つかりませんでした</div>
-        ) : (
-          <>
-            {/* 和紙の枠内: 閉じる + アバター（朱線の内側に収める） */}
-            <div className="relative px-8 pt-9">
-              <button
-                onClick={onClose}
-                aria-label="閉じる"
-                className="absolute right-8 top-8 flex h-7 w-7 items-center justify-center rounded-full bg-[#3a3428]/10 text-[13px] text-[#6a5a40]"
-              >
-                ×
-              </button>
-              {p.avatar_url ? (
-                <img
-                  src={srcCdn(p.avatar_url)}
-                  alt=""
-                  referrerPolicy="no-referrer"
-                  className="h-[68px] w-[68px] rounded-full border-[3px] border-[#c94d3a]/50 object-cover shadow-sm"
-                />
-              ) : (
-                <div
-                  className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-[3px] border-[#c94d3a]/50 text-[26px] shadow-sm"
-                  style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}
-                >
-                  <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
-                </div>
-              )}
-            </div>
+        {/* 透いた白和紙の台紙（周囲ほころび・透過PNG） */}
+        <img src="/meishi-washi-white.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" style={{ objectFit: "fill" }} />
 
-            <div className="flex min-h-0 flex-1 flex-col px-8 pb-9 pt-2">
-              {/* 名前 + @ */}
-              <div className="min-w-0">
-                <div className="flex items-center gap-1 truncate text-[17px] font-extrabold text-[#3a3428]">
-                  {p.display_name ?? "むらびと"}
-                  {isWarawaUntil(p.warawa_until) && <WarawaBadge size={15} />}
-                </div>
-                {isWarawaUntil(p.warawa_until) && p.member_no != null && (
-                  <div className="truncate text-[11px] text-[#b0a890]">@Warawer{p.member_no}</div>
+        {/* 和紙の内側: 細い枠線（余白を空けて）。枠線上トップに「名 刺」 */}
+        <div className="relative m-[26px] flex flex-col overflow-y-auto border border-[#b8ae96] px-4 pb-4 pt-5" style={{ maxHeight: "calc(84vh - 52px)", minHeight: 420 }}>
+          <span
+            className="absolute -top-[9px] left-1/2 -translate-x-1/2 px-2 text-[10px] font-bold tracking-[6px] text-[#8a7f66]"
+            style={{ background: "#faf8f2" }}
+          >
+            名 刺
+          </span>
+          <button
+            onClick={onClose}
+            aria-label="閉じる"
+            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] text-[#8a7f66]"
+          >
+            ×
+          </button>
+
+          {p === undefined ? (
+            <div className="flex h-48 items-center justify-center">
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#c94d3a] border-t-transparent" />
+            </div>
+          ) : p === null ? (
+            <div className="p-4 text-center text-[13px] text-[#8a7a5a]">この人の名刺は見つかりませんでした</div>
+          ) : (
+            <>
+              {/* アバター（中央） */}
+              <div className="flex justify-center pt-1.5">
+                {p.avatar_url ? (
+                  <img
+                    src={srcCdn(p.avatar_url)}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="h-[74px] w-[74px] rounded-full border-2 border-[#c9bc9c] object-cover shadow-sm"
+                  />
+                ) : (
+                  <div className="flex h-[74px] w-[74px] items-center justify-center rounded-full border-2 border-[#c9bc9c]" style={{ background: "linear-gradient(140deg,#e8efe0,#cfe0c8)" }}>
+                    <img src="/icons/icon-leaf.webp" alt="" style={{ width: 18, height: 18 }} />
+                  </div>
                 )}
               </div>
 
-              {/* 地球冒険日数（わらわ〜番号は@Warawerでさりげなく） */}
+              {/* 名前 */}
+              <div className="mt-2 flex items-center justify-center gap-1 text-center text-[17px] font-extrabold leading-snug text-[#3a3428]">
+                <span className="min-w-0 truncate">{p.display_name ?? "むらびと"}</span>
+                {isWara && <WarawaBadge size={15} sir={isSir} />}
+              </div>
+
+              {/* 称号バッジ列 */}
+              <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
+                {isSir ? (
+                  <span className="rounded-full border-2 border-[#141414] bg-[#faf6ea] px-2.5 py-0.5 text-[10.5px] font-extrabold tracking-[1px] text-[#141414]">
+                    Warawa-Sir
+                  </span>
+                ) : isWara && p.member_no != null ? (
+                  <span className="rounded-full border border-[#c9a94a] bg-[#faf3dd] px-2.5 py-0.5 text-[10.5px] font-extrabold text-[#8a6a20]">
+                    わらわ〜プレミアムNo.{p.member_no}
+                  </span>
+                ) : isWara ? (
+                  <span className="rounded-full border border-[#c9a94a] bg-[#faf3dd] px-2.5 py-0.5 text-[10.5px] font-extrabold text-[#8a6a20]">
+                    わらわ〜プレミアム会員
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-[#b8c6d6] bg-[#eef4f8] px-2.5 py-0.5 text-[10.5px] font-bold text-[#5a7a94]">
+                    無料わんし〜会員
+                  </span>
+                )}
+                {p.murabito && p.prefecture && (
+                  <span className="rounded-full border border-[#9ab890] bg-[#eef6ea] px-2.5 py-0.5 text-[10.5px] font-bold text-[#3c6a2c]">
+                    セカイムラ{p.prefecture.replace(/[都府県]$/, "")}村人
+                  </span>
+                )}
+              </div>
+
+              {/* 地球冒険日数 */}
               {p.birthday && (
-                <div className="num mt-1.5 text-[10px] font-bold text-[#a09888]">
-                  <img src="/icons/cel-earth.png" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(p.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
+                <div className="num mt-2 text-center text-[10.5px] font-bold text-[#a09888]">
+                  <img src="/icons/cel-earth.png" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> 地球冒険 {(Math.floor((Date.now() - new Date(p.birthday + "T00:00:00+09:00").getTime()) / 86400000) + 1).toLocaleString()}日目
                 </div>
               )}
 
               {/* ひとこと */}
               {p.status_line && (
-                <p className="mt-1.5 line-clamp-2 break-words text-[12.5px] font-medium leading-snug text-[#5a5448]">
+                <p className="mt-2 line-clamp-2 break-words text-center text-[12.5px] font-medium leading-snug text-[#5a5448]">
                   {p.status_line}
                 </p>
               )}
 
               {/* ライフワーク（名刺の主役） */}
-              {(p.life_work || p.rice_work) && (
-                <div className="mt-2 min-w-0">
-                  {p.life_work && (
-                    <div className="line-clamp-2 break-words text-[14px] font-extrabold leading-snug" style={{ color: "#c94d3a" }}>
-                      <img src="/icons/icon-heart.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> {p.life_work}
-                    </div>
-                  )}
-                  {p.rice_work && (
-                    <div className="mt-0.5 line-clamp-1 break-words text-[11.5px] text-[#8a8070]">
-                      <img src="/icons/icon-rice-bowl.webp" alt="" style={{ width: 13, height: 13, display: "inline", verticalAlign: -2.5 }} /> {p.rice_work}
-                    </div>
-                  )}
+              {p.life_work && (
+                <div className="mt-2.5 border-t border-dashed border-[#d8cfb8] pt-2 text-center">
+                  <div className="text-[8.5px] font-bold tracking-[3px] text-[#a09372]">LIFE WORK</div>
+                  <div className="mt-0.5 line-clamp-2 break-words text-[13.5px] font-extrabold leading-snug" style={{ color: "#c94d3a" }}>
+                    {p.life_work}
+                  </div>
+                </div>
+              )}
+              {p.rice_work && (
+                <div className="mt-1 line-clamp-1 break-words text-center text-[11px] text-[#8a8070]">
+                  <img src="/icons/icon-rice-bowl.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /> {p.rice_work}
                 </div>
               )}
 
               {/* 地域 */}
               {(p.prefecture || p.city) && (
-                <div className="mt-1.5 truncate text-[11.5px] text-[#8a8070]">
-                  <img src="/icons/icon-pin.webp" alt="" style={{ width: 12, height: 12, display: "inline", verticalAlign: -2 }} /> {p.prefecture ?? ""}
+                <div className="mt-1.5 truncate text-center text-[11px] text-[#8a8070]">
+                  <img src="/icons/icon-pin.webp" alt="" style={{ width: 11, height: 11, display: "inline", verticalAlign: -1.5 }} /> {p.prefecture ?? ""}
                   {p.city ? ` ${p.city}` : ""}
                 </div>
               )}
 
-              {/* SKILL チップ（最大4つ・折り返し） */}
+              {/* SKILL */}
               {p.skills && p.skills.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap justify-center gap-1.5">
                   {p.skills.slice(0, 4).map((s) => (
-                    <span
-                      key={s}
-                      className="max-w-full truncate rounded-full bg-[#f0e6d2] px-2.5 py-1 text-[10.5px] font-bold text-[#8a6a20]"
-                    >
+                    <span key={s} className="max-w-full truncate rounded-full bg-[#efe8d4] px-2.5 py-1 text-[10px] font-bold text-[#8a6a20]">
                       {s}
                     </span>
                   ))}
-                  {p.skills.length > 4 && (
-                    <span className="rounded-full px-1 py-1 text-[10.5px] text-[#b0a890]">+{p.skills.length - 4}</span>
-                  )}
+                  {p.skills.length > 4 && <span className="px-1 py-1 text-[10px] text-[#b0a890]">+{p.skills.length - 4}</span>}
                 </div>
               )}
 
-              {/* マイページへ（縦長カードの下端・朱線の内側） */}
+              {/* マイページへ */}
               {p.username && (
                 <button
                   onClick={() => {
                     onClose();
                     router.push(`/u/${p.username}`);
                   }}
-                  className="mt-auto w-full rounded-xl py-2.5 pt-2.5 text-[13.5px] font-extrabold text-white shadow-sm"
-                  style={{ background: "#c94d3a", marginTop: "auto" }}
+                  className="mt-auto w-full rounded-lg border border-[#c94d3a] py-2 text-[12.5px] font-extrabold text-[#c94d3a]"
+                  style={{ marginTop: "14px", background: "rgba(201,77,58,.05)" }}
                 >
                   マイページを見る →
                 </button>
               )}
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>,
     document.body

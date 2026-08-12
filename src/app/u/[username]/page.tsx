@@ -17,7 +17,7 @@ import { PostCard } from "@/components/PostCard";
 import { MeishiModal } from "@/components/MeishiModal";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { srcCdn } from "@/lib/images";
-import { isWarawaUntil } from "@/lib/warawa";
+import { isWarawaUntil, warawaHandle, SIR_USER_ID } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
 import { PremiumSetupCard } from "@/components/PremiumSetupCard";
 import { BlogCorner } from "@/components/BlogCorner";
@@ -394,20 +394,27 @@ export default function UserPage() {
           )}
         </div>
         <span className="ml-2 inline-flex flex-col items-start gap-1 align-top pt-0.5">
-          {isWara && profile.member_no != null && (
+          {profile.id === SIR_USER_ID ? (
+            <span
+              className="px-2 py-0.5 text-[9.5px] font-extrabold tracking-[1px]"
+              style={{ background: "#faf6ea", color: "#141414", border: "2px solid #141414" }}
+            >
+              Warawa-Sir
+            </span>
+          ) : isWara && profile.member_no != null ? (
             <span
               className="num px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider text-[#7a5a10]"
               style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
             >
-              わらわ〜No.{profile.member_no}
+              わらわ〜プレミアムNo.{profile.member_no}
             </span>
-          )}
+          ) : null}
           {profile.murabito && (
             <span
               className="px-2 py-0.5 text-[9.5px] font-extrabold"
               style={{ background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }}
             >
-              🌾 セカイムラ{(profile.prefecture ?? "").replace(/[都府県]$/, "") || "ムラビト"}所属
+              セカイムラ{(profile.prefecture ?? "").replace(/[都府県]$/, "") || ""}村人
             </span>
           )}
         </span>
@@ -415,11 +422,11 @@ export default function UserPage() {
         <div className="relative mt-1.5">
           <h1 className="flex items-center gap-1.5 text-[21px] font-extrabold leading-snug text-[#3a3428]">
             {profile.display_name ?? "むらびと"}
-            {isWara && <WarawaBadge size={17} />}
+            {isWara && <WarawaBadge size={17} sir={profile.id === SIR_USER_ID} />}
           </h1>
-          {/* @Warawer・わらわ〜No.はわらわ〜会員（認証済み）だけの称号 */}
-          {isWara && profile.member_no != null && (
-            <div className="text-[12px] text-[#a09888]">@Warawer{profile.member_no}</div>
+          {/* @Warawer・わらわ〜No.はわらわ〜会員（認証済み）だけの称号。みつろうだけWarawa-Sir */}
+          {isWara && warawaHandle(profile.id, profile.member_no) && (
+            <div className="text-[12px] text-[#a09888]">{warawaHandle(profile.id, profile.member_no)}</div>
           )}
           {isMe && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">

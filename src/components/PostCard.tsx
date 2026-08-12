@@ -6,12 +6,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { CotozutePost, toggleLike, deletePost, warawer } from "@/lib/cotozute";
+import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
 import { MeishiModal } from "./MeishiModal";
 import { srcCdn } from "@/lib/images";
 import { useWarawaGate } from "@/lib/warawaGate";
-import { isWarawaUntil } from "@/lib/warawa";
+import { isWarawaUntil, warawaHandle, SIR_USER_ID } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
 
 /* eslint-disable @next/next/no-img-element */
@@ -161,15 +161,15 @@ export function PostCard({
               className="flex max-w-full items-center gap-1 truncate text-left text-[14.5px] font-bold leading-tight text-[#1c1e21]"
             >
               {pr.display_name ?? "むらびと"}
-              {isWarawaUntil(pr?.warawa_until) && <WarawaBadge size={14} />}
+              {isWarawaUntil(pr?.warawa_until) && <WarawaBadge size={14} sir={post.user_id === SIR_USER_ID} />}
             </button>
           ) : (
             <span className="text-[14.5px] font-bold text-[#1c1e21]">むらびと</span>
           )}
           <div className="text-[11.5px] leading-tight text-[#8a8d91]">
             {relTime(post.created_at)}
-            {isWarawaUntil(pr?.warawa_until) && warawer(pr?.member_no) && (
-              <span className="ml-1.5">{warawer(pr?.member_no)}</span>
+            {isWarawaUntil(pr?.warawa_until) && warawaHandle(post.user_id, pr?.member_no) && (
+              <span className="ml-1.5">{warawaHandle(post.user_id, pr?.member_no)}</span>
             )}
           </div>
         </div>

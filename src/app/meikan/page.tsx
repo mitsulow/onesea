@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn } from "@/lib/images";
 import { PREFS } from "@/lib/sekai";
+import { SIR_USER_ID } from "@/lib/warawa";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import TopTone from "@/components/TopTone";
 
@@ -88,7 +89,11 @@ export default function MeikanPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <span className="truncate text-[14px] font-extrabold text-[#3a3428]">{p.display_name ?? "むらびと"}</span>
-                    {p.member_no != null && (
+                    {p.id === SIR_USER_ID ? (
+                      <span className="flex-shrink-0 rounded px-1 py-0.5 text-[8.5px] font-extrabold tracking-[1px] text-[#141414]" style={{ background: "#faf6ea", border: "1.5px solid #141414" }}>
+                        Warawa-Sir
+                      </span>
+                    ) : p.member_no != null && (
                       <span className="num flex-shrink-0 rounded px-1 py-0.5 text-[8.5px] font-extrabold tracking-wider text-[#7a5a10]" style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)" }}>
                         No.{p.member_no}
                       </span>

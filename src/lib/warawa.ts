@@ -15,6 +15,16 @@ export function isWarawaUntil(until: string | null | undefined): boolean {
   return !!until && new Date(until) > new Date();
 }
 
+/** さとうみつろう本人 — 唯一の「Warawa-Sir」称号（番号なし・黒縁バッジ）。
+ *  元のNo.2は member_no_reserve 経由で次の入会者に付与される（ユーザー確定 2026-08-13） */
+export const SIR_USER_ID = "27507412-19f4-4b09-93a2-aa629309f126";
+
+/** 表示用ハンドル: みつろうだけ Warawa-Sir、他は @Warawer番号（前ゼロなし） */
+export function warawaHandle(userId: string | null | undefined, memberNo: number | null | undefined): string | null {
+  if (userId === SIR_USER_ID) return "Warawa-Sir";
+  return memberNo != null ? `@Warawer${memberNo}` : null;
+}
+
 export async function fetchIsWarawa(userId: string | null | undefined): Promise<boolean> {
   if (!userId) return false;
   const supabase = createClient();
