@@ -542,20 +542,38 @@ export function OtohikariGlobe({
       pillarGroup.clear();
       cloudMat = null;
       if (list.length > 60) {
+        // 重なり整理: 約0.8°(数十km)グリッドで1つの光に統合。
+        // 人数が多いセルほど「大きく・強く・消えにくい」光になる(東京>岡山が一目で分かる)
+        const cells = new Map<string, { lat: number; lng: number; n: number }>();
+        for (const loc of list) {
+          if (!loc) continue;
+          const w = Math.max(1, loc[2] ?? 1);
+          const key = Math.round(loc[0] / 0.8) + "_" + Math.round(loc[1] / 0.8);
+          const c = cells.get(key);
+          if (c) { c.lat += loc[0] * w; c.lng += loc[1] * w; c.n += w; }
+          else cells.set(key, { lat: loc[0] * w, lng: loc[1] * w, n: w });
+        }
         const pos: number[] = [];
         const phase: number[] = [];
         const scl: number[] = [];
-        list.forEach((loc, i) => {
-          if (!loc) return;
-          const v = ll2v(loc[0], loc[1], 1.006);
+        const amp: number[] = [];
+        const stay: number[] = [];
+        let i = 0;
+        cells.forEach((c) => {
+          const v = ll2v(c.lat / c.n, c.lng / c.n, 1.006);
           pos.push(v.x, v.y, v.z);
-          phase.push((i * 2.399963) % (Math.PI * 2)); // 黄金角で明滅位相をバラす
-          scl.push(0.055 + Math.min(loc[2] ?? 1, 8) * 0.007);
+          phase.push((i++ * 2.399963) % (Math.PI * 2)); // 黄金角で明滅位相をバラす
+          const lg = Math.log2(1 + c.n);
+          scl.push(0.032 * (1 + lg * 0.38)); // 1人=極小 / 100人≒3.5倍 / 5000人≒6倍
+          amp.push(Math.min(1.35, 0.42 + lg * 0.14)); // 光量も人数で
+          stay.push(Math.min(0.85, lg * 0.1)); // 大きな街はホタル周期の谷でも消えない下支え
         });
         const g = new THREE.BufferGeometry();
         g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
         g.setAttribute("aPhase", new THREE.Float32BufferAttribute(phase, 1));
         g.setAttribute("aScale", new THREE.Float32BufferAttribute(scl, 1));
+        g.setAttribute("aAmp", new THREE.Float32BufferAttribute(amp, 1));
+        g.setAttribute("aStay", new THREE.Float32BufferAttribute(stay, 1));
         cloudMat = new THREE.ShaderMaterial({
           uniforms: {
             uTime: { value: 0 },
@@ -563,14 +581,16 @@ export function OtohikariGlobe({
             uDpr: { value: renderer.getPixelRatio() },
           },
           vertexShader:
-            "attribute float aPhase; attribute float aScale; uniform float uTime; uniform float uDpr; varying float vA;" +
+            "attribute float aPhase; attribute float aScale; attribute float aAmp; attribute float aStay;" +
+            "uniform float uTime; uniform float uDpr; varying float vA;" +
             "void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0);" +
-            // ホタル型: 極小の点で生まれ→ほわわーんと膨らんで柔らかい霞になり→
-            // 近くの光と溶け合い(加算合成)→ふっと消える。約8秒周期・位相バラバラ
+            // ホタル型: 極小の点で生まれ→ほわわーんと膨らんで柔らかい霞になり→ふっと消える。
+            // aStay=人数の下支え(大きな街は谷でも消えず、常灯に近づく)。aAmp=人数による光量
             "  float p = fract(uTime * 0.125 + aPhase * 0.159155);" +
             "  float grow = smoothstep(0.0, 1.0, p);" +
-            "  vA = smoothstep(0.0, 0.10, p) * (1.0 - smoothstep(0.45, 1.0, p));" +
-            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.06 + 2.1 * grow);" +
+            "  float life = smoothstep(0.0, 0.10, p) * (1.0 - smoothstep(0.45, 1.0, p));" +
+            "  vA = aAmp * max(life, aStay);" +
+            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.08 + 2.0 * max(grow, aStay));" +
             "  gl_Position = projectionMatrix * mv; }",
           fragmentShader:
             "uniform sampler2D uTex; varying float vA;" +
