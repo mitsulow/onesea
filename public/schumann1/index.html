@@ -1242,9 +1242,7 @@
 
     <header class="svc-head">
       <a href="/mmm" aria-label="MMMへ戻る" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;height:30px;padding:0 13px;border-radius:15px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#e8d5a0;font-size:12px;font-weight:700;text-decoration:none;">戻る</a>
-      <div class="svc-titles">
-        <div class="site-title">シューマン共振観測所</div>
-      </div>
+      <div class="svc-titles"></div>
       <div class="svc-avwrap">
         <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー"><span id="svcAvFallback" class="svc-guest">ゲスト</span></button>
         <!-- 統一ルール(CLAUDE.md): 全サービス共通の縦リスト。OneSea行は無し -->
@@ -1276,6 +1274,12 @@
 </div>
       </div>
     </header>
+
+    <!-- ヒーロー: でっかい蛍光イナヅマ(MMM下タブと同じアイコン) → 題字 -->
+    <div style="text-align:center;padding:12px 0 2px;">
+      <img src="/icons/icon-schumann2.webp" alt="" style="width:76px;height:76px;object-fit:contain;filter:saturate(1.6) brightness(1.15) drop-shadow(0 0 10px rgba(232,255,0,.85)) drop-shadow(0 0 32px rgba(232,255,0,.45));">
+      <div class="site-title" style="margin-top:4px;">シューマン共振観測所</div>
+    </div>
 
     <!-- 地球儀: 世界の雷がリアルタイムで光る (セクション分けなし、黒に直置き) -->
     <section class="globe-wrap">
