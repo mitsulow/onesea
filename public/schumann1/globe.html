@@ -110,18 +110,25 @@ new THREE.TextureLoader().load(
 
 function ll2v(lat,lng,r){const phi=(90-lat)*Math.PI/180,theta=(lng+180)*Math.PI/180;return new THREE.Vector3(-r*Math.sin(phi)*Math.cos(theta),r*Math.cos(phi),r*Math.sin(phi)*Math.sin(theta));}
 
-// 簡易海岸線 (即表示用フォールバック。詳細データのロード完了後に置き換え)
+// 陸の緑はCanvasテクスチャで塗る(扇形分割は凹んだ大陸=アフリカ等で欠けるため廃止。
+// Canvasの2D塗りは凹多角形も正確・軽い)。海=球の青が下地
 const roughGroup=new THREE.Group();
-const landMat=new THREE.MeshBasicMaterial({color:0x1e6f42,transparent:true,opacity:0.9,side:THREE.DoubleSide}); // 陸=緑の塗りつぶし
-CL.forEach(poly=>{
-  if(poly.length<3)return;
-  const verts=poly.map(p=>ll2v(p[0],p[1],1.0015));
-  const center=new THREE.Vector3();verts.forEach(v=>center.add(v));center.divideScalar(verts.length).normalize().multiplyScalar(1.0015);
-  const pos=[];
-  for(let i=0;i<verts.length;i++){const nx=verts[(i+1)%verts.length];pos.push(center.x,center.y,center.z,verts[i].x,verts[i].y,verts[i].z,nx.x,nx.y,nx.z);}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.computeVertexNormals();
-  roughGroup.add(new THREE.Mesh(g,landMat));
-});
+{
+  const tcv=document.createElement('canvas');tcv.width=2048;tcv.height=1024;
+  const tc=tcv.getContext('2d');
+  tc.fillStyle='#0d3560';tc.fillRect(0,0,2048,1024); // 海
+  const TX=lng=>(lng+180)/360*2048, TY=lat=>(90-lat)/180*1024;
+  tc.fillStyle='#1e6f42'; // 陸
+  CL.forEach(poly=>{
+    if(poly.length<3)return;
+    tc.beginPath();
+    poly.forEach((p,i)=>{i?tc.lineTo(TX(p[1]),TY(p[0])):tc.moveTo(TX(p[1]),TY(p[0]));});
+    tc.closePath();tc.fill();
+  });
+  const etex=new THREE.CanvasTexture(tcv);
+  etex.colorSpace=THREE.SRGBColorSpace!==undefined?THREE.SRGBColorSpace:etex.colorSpace;
+  earth.material.map=etex;earth.material.color.set(0xffffff);earth.material.needsUpdate=true;
+}
 const cMat=new THREE.LineBasicMaterial({color:0x1a6b50,transparent:true,opacity:0.45});
 CL.forEach(line=>{roughGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(line.map(p=>ll2v(p[0],p[1],1.003))),cMat));});
 earth.add(roughGroup);
