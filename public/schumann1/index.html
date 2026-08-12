@@ -1196,9 +1196,9 @@
     align-items:center;justify-content:center;font-size:16px}
   .svc-av img{width:100%;height:100%;object-fit:cover;display:block}
   .svc-guest{font-size:8.5px;font-weight:700;letter-spacing:0.5px;color:#e8d5a0;line-height:1}
-  .svc-menu{position:absolute;top:42px;right:0;min-width:196px;
+  .svc-menu{position:absolute;top:42px;right:0;min-width:224px;max-height:80vh;
     background:#101826;border:1px solid rgba(140,190,230,0.22);border-radius:14px;
-    box-shadow:0 12px 36px rgba(0,0,0,0.5);overflow:hidden;display:none}
+    box-shadow:0 12px 36px rgba(0,0,0,0.5);overflow-y:auto;overflow-x:hidden;display:none}
   .svc-menu.open{display:block}
   .svc-menu a{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:13.5px;color:#d8e4ec;
     text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.05)}
@@ -1247,16 +1247,20 @@
       </div>
       <div class="svc-avwrap">
         <button class="svc-av" id="svcAvBtn" type="button" aria-label="サービスメニュー"><span id="svcAvFallback" class="svc-guest">ゲスト</span></button>
+        <!-- 統一ルール(CLAUDE.md): 全サービス共通の縦リスト。OneSea行は無し -->
         <div class="svc-menu" id="svcMenu">
-          <a href="/"><img src="/icons/tab-home.png" alt="">OneSea</a>
-          <a href="/mmm"><img src="/icons/cel-sun.png" alt="">MMM</a>
+          <a href="/notifications"><span class="svc-mi">🔔</span>お知らせ</a>
+          <a href="/mmm"><img src="/icons/cel-sun.png" alt="">MasterMindMembers</a>
           <a href="/sekai"><img src="/icons/cel-earth.png" alt="">セカイムラ</a>
           <a href="/tsukiyoga-v7/index.html"><img src="/icons/cel-moon.png" alt="">ツキヨガ</a>
-          <a href="/cotozute"><img src="/icons/tab-cotozute2.webp" alt="">コトヅテ</a>
-          <a href="/za"><img src="/icons/icon-za-mark.svg" alt="">楽市楽座</a>
           <a href="/#techo"><img src="/icons/icon-techo.webp" alt="">手帳</a>
-          <a href="/my"><img src="/icons/icon-profile.webp" alt="">マイページ</a>
-          <a href="/talk"><img src="/icons/icon-chat.webp" alt="">TalK</a>
+          <a href="/cotozute"><img src="/icons/tab-cotozute5.webp" alt="">コトヅテ</a>
+          <a href="/za"><img src="/icons/icon-za-mark.svg" alt="">楽市楽座</a>
+          <a href="/moai"><img src="/icons/tab-home.png" alt="">MoAI</a>
+          <a href="/meikan"><span class="svc-mi">🔍</span>人物検索</a>
+          <a href="/talk"><img src="/icons/icon-talk-green.webp" alt="">TalK</a>
+          <a href="/my"><img src="/icons/icon-meishi.webp" alt="">マイページ</a>
+          <a href="/my?inquiry=1" style="font-size:11px;color:#8b93a8;padding:8px 16px;"><span class="svc-mi" style="font-size:12px;">✉️</span>事務局への問い合わせ</a>
           <a href="#" id="svcLogout" style="color:#e08a8a"><img src="/icons/icon-logout.webp" alt="">ログアウト</a>
         </div>
 <div id="svcGuestOv" style="display:none;position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.45);"></div>
