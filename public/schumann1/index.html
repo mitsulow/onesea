@@ -69,11 +69,12 @@
   }
   .hero-dark .mmm-logo .bolt { filter: drop-shadow(0 0 6px rgba(82, 250, 140, 0.6)); }
   .site-title {
-    /* 統一ヘッダー: 黒帯 × 蛍光黄色（雷ネオン）・太字。日本語題字なのでストロークなし */
+    /* 統一ヘッダー: 黒帯 × 蛍光黄色（雷ネオン）・太字。日本語題字なのでストロークなし。
+       ヒーローらしくヘッダー帯の厚みいっぱいの大きさ(ユーザー指定) */
     font-weight: 800;
-    font-size: 14.5px;
-    letter-spacing: 0.18em;
-    text-indent: 0.18em;
+    font-size: clamp(19px, 5.8vw, 26px);
+    letter-spacing: 0.08em;
+    text-indent: 0.08em;
     color: #e8ff00;
     text-shadow: 0 0 10px rgba(232,255,0,.65), 0 0 26px rgba(232,255,0,.3);
     white-space: nowrap;
