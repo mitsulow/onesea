@@ -3574,6 +3574,10 @@
     const btn = document.getElementById("svcAvBtn"), menu = document.getElementById("svcMenu");
     const fb = document.getElementById("svcAvFallback");
     if (!btn || !menu) return;
+    // ★url/uid は try の外で宣言する。中で let すると try の外の
+    //   window.__svcLoggedIn = !!url が ReferenceError になり、クリックハンドラが
+    //   一切登録されず「アバターを押しても無反応」になる(実際に起きたバグ)
+    let url = null, uid = null;
     try {
       // ★Next側は @supabase/ssr が Cookie 保存のため、localStorage + Cookie の両対応
       const parseTok = (raw) => {
@@ -3582,7 +3586,6 @@
           return JSON.parse(raw);
         } catch (e) { return null; }
       };
-      let url = null, uid = null;
       // ★Cookie優先(Next側の現行セッション=正)。localStorageは古い別アカウントが残り得る
       {
         const jar = {};
