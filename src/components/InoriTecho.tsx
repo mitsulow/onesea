@@ -1311,7 +1311,7 @@ function BottomSheet({
                 <div className="num text-[11px] text-[#a09a88]">{evM.sh}:{String(evM.sm).padStart(2, "0")}〜{evM.eh}:{String(evM.em).padStart(2, "0")}</div>
               </div>
               <button onClick={() => { setDelEvId(null); void startShareFor(evM); }} className="block w-full border-b border-[#f0ece4] py-3.5 text-center text-[14px] font-extrabold" style={{ color: "#3070b0" }}>📤 この予定をシェア</button>
-              <button onClick={() => { setDelEvId(null); setEvEdit(evM); }} className="block w-full border-b border-[#f0ece4] py-3.5 text-center text-[14px] font-extrabold text-[#3a3428]">✎ この予定を編集</button>
+              <button onClick={() => { setDelEvId(null); setEvEdit(evM); }} className="block w-full border-b border-[#f0ece4] py-3.5 text-center text-[14px] font-extrabold text-[#3a3428]">この予定を編集</button>
               <button onClick={() => { if (!confirm("本当に削除しますか？")) return; onSaveEv(dk, dayEvs.filter((x) => x.id !== evM.id)); setDelEvId(null); }} className="block w-full border-b border-[#f0ece4] py-3.5 text-center text-[14px] font-extrabold" style={{ color: "#c05030" }}>× この予定を削除</button>
               <button onClick={() => setDelEvId(null)} className="block w-full py-3 text-center text-[12.5px] font-bold text-[#a09a88]">キャンセル</button>
             </div>

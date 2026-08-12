@@ -345,7 +345,7 @@ export default function MoaiListPage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); setEditPost(p); setEditBody(p.body ?? ""); }}
                         className="rounded-full border px-2 py-0.5 text-[10px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f", background: "#fff" }}
-                      >✎</button>
+                      >編集</button>
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
@@ -388,7 +388,7 @@ export default function MoaiListPage() {
       {editPost && (
         <div className="fixed inset-0 z-[96] flex items-center justify-center bg-black/55 px-5" onClick={() => setEditPost(null)}>
           <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: "#c0392b" }}>✎ 投稿を編集{me && editPost.user_id !== me.id ? "（事務局権限）" : ""}</div>
+            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: "#c0392b" }}>投稿を編集{me && editPost.user_id !== me.id ? "（事務局権限）" : ""}</div>
             <textarea
               value={editBody}
               onChange={(e) => setEditBody(e.target.value)}

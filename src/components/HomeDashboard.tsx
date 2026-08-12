@@ -489,13 +489,13 @@ export function HomeDashboard() {
                             onClick={(e) => {
                               e.stopPropagation();
                               e.preventDefault();
-                              // その日の手帳を開く(日付シート側で✎編集できる)
+                              // その日の手帳を開く(日付シート側で編集できる)
                               window.dispatchEvent(new CustomEvent("onesea:openDay", { detail: { key: viewKey } }));
                             }}
-                            className="flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold text-white"
+                            className="flex h-6 items-center justify-center rounded-full px-2 text-[11px] font-bold text-white"
                             style={{ background: "#3070b0" }}
                           >
-                            ✎
+                            編集
                           </span>
                           <span
                             role="button"
@@ -517,7 +517,7 @@ export function HomeDashboard() {
                   <div className="py-1 text-center text-[13.5px] leading-relaxed text-[#b0a890]" style={{ fontFamily: MINCHO }}>
                     今日の予定はありません
                     <br />
-                    <span className="text-[#7ba05b]">タップして書く ✎</span>
+                    <span className="text-[#7ba05b]">タップして書く</span>
                   </div>
                 )}
               </div>

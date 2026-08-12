@@ -274,7 +274,7 @@ export default function TanboDetailPage() {
             {joined ? "✓ 参加中（タップで抜ける）" : "この田んぼに参加する"}
           </button>
           {canManage && (
-            <button onClick={() => { setEName(tanbo.name); setEPref(tanbo.prefecture ?? "東京都"); setENote(tanbo.note ?? ""); setEditing(true); }} className="rounded-xl border border-[#a8c8a0] px-3 py-2.5 text-[12px] font-bold" style={{ color: G }}>✎ 編集</button>
+            <button onClick={() => { setEName(tanbo.name); setEPref(tanbo.prefecture ?? "東京都"); setENote(tanbo.note ?? ""); setEditing(true); }} className="rounded-xl border border-[#a8c8a0] px-3 py-2.5 text-[12px] font-bold" style={{ color: G }}>編集</button>
           )}
           {canManage && (
             <button onClick={async () => { if (!confirm("この田んぼのページを削除しますか？（投稿もすべて消えます）")) return; await deleteTanboPage(tanboId); router.push("/sekai/kome"); }} className="rounded-xl border border-[#c8a8a0] px-3 py-2.5 text-[12px] font-bold text-[#a05a4a]">🗑</button>
@@ -329,7 +329,7 @@ export default function TanboDetailPage() {
                               setEvAt(`${d0.getFullYear()}-${pad(d0.getMonth() + 1)}-${pad(d0.getDate())}T${pad(d0.getHours())}:${pad(d0.getMinutes())}`);
                               setEvEnd(de ? `${de.getFullYear()}-${pad(de.getMonth() + 1)}-${pad(de.getDate())}T${pad(de.getHours())}:${pad(de.getMinutes())}` : "");
                               setEvPlace(p.place_name || p.place_lat != null ? { name: p.place_name ?? null, lat: p.place_lat ?? null, lng: p.place_lng ?? null, url: p.place_url ?? "", image: null } : null);
-                            }} className="rounded-lg border border-[#a8c8a0] px-2.5 py-1 text-[13px] font-bold" style={{ color: G }}>✎ 編集</button>
+                            }} className="rounded-lg border border-[#a8c8a0] px-2.5 py-1 text-[13px] font-bold" style={{ color: G }}>編集</button>
                             <button onClick={async () => { if (!confirm("このイベントを削除しますか？")) return; await createClient().from("tanbo_posts").delete().eq("id", p.id); load(); }} className="rounded-lg border border-[#a8c8a0] px-2 py-1 text-[13px] font-bold" style={{ color: G }}>🗑</button>
                           </>
                         )}
@@ -346,7 +346,7 @@ export default function TanboDetailPage() {
         {joined && (
           <div className="mb-3 grid grid-cols-2 gap-2">
             <button onClick={() => setSheet("event")} className="rounded-xl py-2.5 text-[12.5px] font-extrabold text-white" style={{ background: G }}>📅 イベントを作る</button>
-            <button onClick={() => setSheet("report")} className="rounded-xl border py-2.5 text-[12.5px] font-extrabold" style={{ borderColor: G, color: G }}>✏️ 田んぼの報告</button>
+            <button onClick={() => setSheet("report")} className="rounded-xl border py-2.5 text-[12.5px] font-extrabold" style={{ borderColor: G, color: G }}>📷 田んぼの報告</button>
           </div>
         )}
 
@@ -367,7 +367,7 @@ export default function TanboDetailPage() {
                       <button
                         onClick={() => { setSheet("report"); setEditPostId(p.id); setBody(p.body ?? ""); setPhoto(p.photo_url ?? null); }}
                         className="rounded-lg border border-[#a8c8a0] px-2.5 py-1 text-[12px] font-bold" style={{ color: G }}
-                      >✎ 編集</button>
+                      >編集</button>
                       <button
                         onClick={async () => { if (!confirm("削除しますか？")) return; await createClient().from("tanbo_posts").delete().eq("id", p.id); load(); }}
                         className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eef4ea] text-[13px] text-[#8aa088]"
@@ -471,7 +471,7 @@ export default function TanboDetailPage() {
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/50" onClick={() => { setSheet(null); setEditEvId(null); setEditPostId(null); }}>
           <div className="w-full max-w-[480px] rounded-t-2xl p-4" style={{ background: "#fff", paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }} onClick={(e) => e.stopPropagation()}>
             <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#d0e0c8]" />
-            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a3a28]">{sheet === "event" ? (editEvId ? "📅 イベントを編集" : "📅 イベントを作る") : (editPostId ? "✏️ 報告を編集" : "✏️ 田んぼの報告")}</div>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a3a28]">{sheet === "event" ? (editEvId ? "📅 イベントを編集" : "📅 イベントを作る") : (editPostId ? "📷 報告を編集" : "📷 田んぼの報告")}</div>
             {sheet === "event" && (
               <div className="mb-2 space-y-1.5">
                 <div className="flex items-center gap-2"><span className="w-8 text-[11px] font-bold text-[#8aa088]">開始</span><input type="datetime-local" value={evAt} onChange={(e) => setEvAt(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#d8e8d0] bg-white px-3 py-2 text-[13px] text-[#2a3a28] outline-none" /></div>

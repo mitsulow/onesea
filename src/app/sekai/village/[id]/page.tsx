@@ -440,7 +440,7 @@ export default function VillagePage() {
               className="flex-1 rounded-xl border-2 py-2.5 text-[13px] font-extrabold"
               style={{ borderColor: "#4a8a5c", color: "#3a7a4c", background: "#f4f8f0" }}
             >
-              ✎ 拠点ページを修正する
+              拠点ページを修正する
             </button>
           )}
           <button
@@ -506,7 +506,7 @@ export default function VillagePage() {
       {editing && (
         <div className="mt-4 rounded-xl border border-[#4a8a5c66] bg-[#f7fbf8] p-3">
           <div className="mb-2 text-[12.5px] font-extrabold" style={{ color: GREEN }}>
-            ✎ 拠点を修正する
+            拠点を修正する
           </div>
           <input
             value={eName}

@@ -377,7 +377,7 @@ export default function ShopDetailPage() {
               onClick={() => setEditConsent(true)}
               className="w-full rounded-xl border border-[#c8a860] bg-white py-3 text-[13.5px] font-bold text-[#a08030]"
             >
-              ✎ 事務局権限でこの出品を修正する
+              事務局権限でこの出品を修正する
             </button>
             <button
               onClick={async () => {
@@ -426,7 +426,7 @@ export default function ShopDetailPage() {
               className="w-full rounded-xl border-2 py-3 text-[14px] font-extrabold"
               style={{ borderColor: "#c94d3a", color: "#c94d3a", background: "#fdf6f4" }}
             >
-              ✎ この出品を修正する
+              この出品を修正する
             </button>
             <button
               onClick={remove}
@@ -790,7 +790,7 @@ export default function ShopDetailPage() {
       {editing && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-4">
           <div className="max-h-[85dvh] w-full max-w-[420px] overflow-y-auto rounded-2xl bg-white p-4">
-            <div className="mb-2 text-[14px] font-extrabold" style={{ color: "#c94d3a" }}>✎ 出品を修正する</div>
+            <div className="mb-2 text-[14px] font-extrabold" style={{ color: "#c94d3a" }}>出品を修正する</div>
             <label className="mb-1 block text-[11px] font-bold text-[#8a7a5a]">タイトル</label>
             <input
               value={eName}

@@ -1536,7 +1536,7 @@ export function ActivitySection({ me }: { me: User | null }) {
           >
             <div className="mx-auto mb-2.5 h-1 w-10 rounded-full bg-[#ddd]" />
             <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: GREEN }}>
-              ✏️ 村の報告
+              📷 村の報告
             </div>
             {(myVills.length + myCounties.length > 1) && (
               <select
@@ -1644,7 +1644,7 @@ export function ActivitySection({ me }: { me: User | null }) {
               className="flex w-full items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left"
               style={{ borderColor: "#4a8a5c", background: "#f4faf5" }}
             >
-              <span className="text-[22px]">✏️</span>
+              <span className="text-[22px]">📷</span>
               <span>
                 <span className="block text-[14px] font-extrabold" style={{ color: GREEN }}>② 村の報告</span>
                 <span className="block text-[11px] text-[#8aa890]">写真つきの活動報告。フィードに流れます</span>
@@ -1795,7 +1795,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                 className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                 style={{ background: "#4a8a5c" }}
               >
-                {wSaving ? "保存中..." : evEditId ? "✏️ 変更を保存する" : "📅 イベントを作成する"}
+                {wSaving ? "保存中..." : evEditId ? "変更を保存する" : "📅 イベントを作成する"}
               </button>
             </div>
           </div>
@@ -1938,7 +1938,7 @@ export function ActivitySection({ me }: { me: User | null }) {
                       className="flex-1 rounded-xl border py-2.5 text-[12.5px] font-extrabold"
                       style={{ borderColor: "#4a8a5c", color: GREEN, background: "#f4faf5" }}
                     >
-                      ✏️ 変更する
+                      変更する
                     </button>
                   )}
                   <button

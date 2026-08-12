@@ -113,9 +113,8 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
             <>
               <button
                 onClick={() => { setMEditBody(mBodyNow ?? mura.body ?? ""); setMEditOpen(true); }}
-                aria-label="編集"
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[11px] font-bold text-[#65676b]"
-              >✎</button>
+                className="flex h-6 items-center justify-center rounded-full bg-[#f0f2f5] px-2 text-[11px] font-bold text-[#65676b]"
+              >編集</button>
               <button
                 onClick={doDelete}
                 aria-label="削除"
@@ -175,7 +174,7 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
       {mEditOpen && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setMEditOpen(false)}>
           <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a7a48]">✎ 投稿を編集{amOffice && meId !== (mura as { user_id?: string }).user_id ? "（事務局権限）" : ""}</div>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a7a48]">投稿を編集{amOffice && meId !== (mura as { user_id?: string }).user_id ? "（事務局権限）" : ""}</div>
             <textarea value={mEditBody} onChange={(e) => setMEditBody(e.target.value)} rows={5} className="w-full resize-y rounded-xl border border-[#dce8dc] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none" />
             <div className="mt-2 flex gap-2">
               <button onClick={() => setMEditOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8a9a84]">キャンセル</button>
@@ -309,8 +308,8 @@ export function MoaiFeedCard({ post, onDeleted }: { post: import("@/lib/feed").M
             <>
               <button
                 onClick={() => { setEditBody(bodyNow ?? post.body ?? ""); setEditOpen(true); }}
-                className="flex h-6 w-6 items-center justify-center rounded-full bg-[#f0f2f5] text-[11px] font-bold text-[#65676b]"
-              >✎</button>
+                className="flex h-6 items-center justify-center rounded-full bg-[#f0f2f5] px-2 text-[11px] font-bold text-[#65676b]"
+              >編集</button>
               <button
                 onClick={async () => {
                   if (!confirm(amOffice && meId !== (post as { user_id?: string }).user_id ? "【事務局権限】この投稿を削除しますか？" : "この投稿を削除しますか？")) return;
@@ -332,7 +331,7 @@ export function MoaiFeedCard({ post, onDeleted }: { post: import("@/lib/feed").M
       {editOpen && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setEditOpen(false)}>
           <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: "#c0392b" }}>✎ 投稿を編集{amOffice && meId !== (post as { user_id?: string }).user_id ? "（事務局権限）" : ""}</div>
+            <div className="mb-2 text-[13.5px] font-extrabold" style={{ color: "#c0392b" }}>投稿を編集{amOffice && meId !== (post as { user_id?: string }).user_id ? "（事務局権限）" : ""}</div>
             <textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={5} className="w-full resize-y rounded-xl border border-[#f0d8d4] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none" />
             <div className="mt-2 flex gap-2">
               <button onClick={() => setEditOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a08078]">キャンセル</button>

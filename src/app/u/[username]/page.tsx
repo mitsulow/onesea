@@ -452,7 +452,7 @@ export default function UserPage() {
         {/* わらわ〜会員の未入力情報（本人のみ・全部埋まるまでバッジが消えない） */}
         {isMe && <PremiumSetupCard userId={profile.id} />}
 
-        {/* DDP（端的な夢）— 本人は左の✎から修正できる */}
+        {/* DDP（端的な夢）— 本人は左のボタンから修正できる */}
         {(masterDdp || isMe) && (
           <div
             id="ddp-sec"
@@ -463,9 +463,8 @@ export default function UserPage() {
               {isMe && !editDdp && (
                 <button
                   onClick={() => { setDdpDraft(masterDdp ?? ""); setEditDdp(true); }}
-                  aria-label="DDPを修正"
-                  className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-[#c9b98a] bg-white text-[11px]"
-                >✎</button>
+                  className="flex h-6 flex-shrink-0 items-center justify-center rounded-full border border-[#c9b98a] bg-white px-2 text-[11px] font-bold text-[#8a6a42]"
+                >{masterDdp ? "修正" : "書く"}</button>
               )}
               <div className="text-[10px] font-bold tracking-[2px] text-[#8a6a42]">{profile.display_name ?? "この人"}のDDP</div>
             </div>
@@ -499,7 +498,7 @@ export default function UserPage() {
             ) : masterDdp ? (
               <div className="mt-1 whitespace-pre-wrap text-[15px] font-bold leading-relaxed text-[#4a4030]">{masterDdp}</div>
             ) : (
-              <div className="mt-1 text-[12.5px] text-[#a89878]">まだDDP（端的な夢）が未設定です。✎から書いてみましょう。</div>
+              <div className="mt-1 text-[12.5px] text-[#a89878]">まだDDP（端的な夢）が未設定です。「書く」から書いてみましょう。</div>
             )}
           </div>
         )}

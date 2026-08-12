@@ -5370,7 +5370,7 @@
     z-index: 2;
   }
   .uranai-detail-close { top: 10px; right: 10px; }
-  .uranai-detail-edit { top: 10px; right: 52px; font-size: 0.95rem; }
+  .uranai-detail-edit { top: 10px; right: 52px; width: auto; padding: 0 12px; border-radius: 17px; font-size: 0.8rem; font-weight: 700; }
   .uranai-detail-close:active,
   .uranai-detail-edit:active {
     background: rgba(232, 255, 0, 0.22);
@@ -8375,7 +8375,7 @@
       <!-- ★ 友だちカード詳細モーダル (カードを押すと拡大表示) -->
       <div class="uranai-detail-modal" id="uranaiDetailModal">
         <div class="uranai-detail-modal-content">
-          <button class="uranai-detail-edit" id="uranaiDetailEdit" type="button" aria-label="編集">✎</button>
+          <button class="uranai-detail-edit" id="uranaiDetailEdit" type="button">編集</button>
           <button class="uranai-detail-close" id="uranaiDetailClose" type="button" aria-label="閉じる">×</button>
           <div class="uranai-detail-rarity">★ TSUKIYOGA CARD</div>
           <img class="uranai-detail-img" id="uranaiDetailImg" src="" alt="">
@@ -8482,7 +8482,6 @@
     <!-- 入力欄の折りたたみ展開ボタン (form が閉じている時に表示) -->
     <div class="mypage-edit-row" id="mypageEditRow" style="display:none">
       <button id="mypageEditBtn" class="mypage-edit-btn" type="button">
-        <span class="mypage-edit-icon">✎</span>
         登 録
       </button>
     </div>

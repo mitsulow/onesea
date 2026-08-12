@@ -176,9 +176,8 @@ export function PostCard({
         {(me?.id === post.user_id || amOffice) && (
           <button
             onClick={() => { setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[13px] font-bold text-[#65676b] active:bg-[#e4e6e9]"
-            aria-label="投稿を編集"
-          >✎</button>
+            className="flex h-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] px-2.5 text-[12px] font-bold text-[#65676b] active:bg-[#e4e6e9]"
+          >編集</button>
         )}
         {(me?.id === post.user_id || amOffice) && (
           <button onClick={onDelete} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px] font-bold text-[#65676b] active:bg-[#e4e6e9]" aria-label="自分の投稿を削除">
@@ -285,7 +284,7 @@ export function PostCard({
         {pEditOpen && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setPEditOpen(false)}>
             <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
-              <div className="mb-2 text-[13.5px] font-extrabold text-[#2a6a4a]">✎ 言の葉を編集{amOffice && me?.id !== post.user_id ? "（事務局権限）" : ""}</div>
+              <div className="mb-2 text-[13.5px] font-extrabold text-[#2a6a4a]">言の葉を編集{amOffice && me?.id !== post.user_id ? "（事務局権限）" : ""}</div>
               <textarea value={pEditBody} onChange={(e) => setPEditBody(e.target.value)} rows={5} className="w-full resize-y rounded-xl border border-[#e0e6e0] bg-white px-3 py-2.5 text-[14px] leading-relaxed outline-none" />
               <div className="mt-2 flex gap-2">
                 <button onClick={() => setPEditOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8a8d91]">キャンセル</button>

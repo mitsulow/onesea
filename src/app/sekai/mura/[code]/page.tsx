@@ -767,7 +767,7 @@ export default function SekaiMuraPrefPage() {
                     <button
                       onClick={() => { setFEdit(p); setFEditBody(p.body ?? ""); }}
                       className="ml-auto rounded-full border border-[#d8e4d0] px-2 py-0.5 text-[10.5px] font-bold text-[#5a7a5c]"
-                    >✎ 編集</button>
+                    >編集</button>
                   )}
                 </div>
 
@@ -813,7 +813,7 @@ export default function SekaiMuraPrefPage() {
       {fEdit && (
         <div className="fixed inset-0 z-[118] flex items-center justify-center bg-black/55 px-5" onClick={() => setFEdit(null)}>
           <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a4a34]">✎ 投稿を編集</div>
+            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a4a34]">投稿を編集</div>
             <textarea
               value={fEditBody}
               onChange={(e) => setFEditBody(e.target.value)}

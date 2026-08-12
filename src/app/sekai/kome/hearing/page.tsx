@@ -151,7 +151,7 @@ export default function KomeHearingPage() {
     return (
       <main className="mx-auto min-h-dvh max-w-md pb-28" style={{ background: "#f7f4ec" }}>
         <header className="sticky top-0 z-40 px-4 pb-3 pt-4" style={{ background: "#1a2432" }}>
-          <div className="text-[15px] font-bold text-[#f0e6c8]">✎ ヒアリングシートを修正（事務局）</div>
+          <div className="text-[15px] font-bold text-[#f0e6c8]">ヒアリングシートを修正（事務局）</div>
           <div className="mt-0.5 text-[10px] text-[#7a9ab4]">保存すると即座に本番の質問が入れ替わります。アドレスは変わりません</div>
         </header>
         <div className="space-y-3 px-3 pt-3">
@@ -219,7 +219,7 @@ export default function KomeHearingPage() {
       {amAdmin && (
         <div className="px-4 pt-3">
           <button onClick={startEdit} className="w-full rounded-xl border-2 border-dashed py-2.5 text-[12.5px] font-extrabold" style={{ borderColor: "#a08a3066", color: "#8a7020" }}>
-            ✎ ヒアリングシートページを修正する（事務局）
+            ヒアリングシートページを修正する（事務局）
           </button>
         </div>
       )}
