@@ -168,7 +168,9 @@ export default function CotozutePage() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
       setMe(u);
-      setMyAvatar((u?.user_metadata?.avatar_url as string) ?? null);
+      // 端末キャッシュ優先(遅い回線でGoogleアイコンが先に見える事故防止)→裏で最新化
+      const { cachedAvatar, cacheAvatar } = await import("@/lib/avatarCache");
+      setMyAvatar(cachedAvatar(u?.id) ?? (u?.user_metadata?.avatar_url as string) ?? null);
       let wara = false;
       if (u) {
         setLikedSet(await fetchMyLikes(u.id));
@@ -178,6 +180,7 @@ export default function CotozutePage() {
           .eq("id", u.id)
           .maybeSingle();
         if (prof?.avatar_url) setMyAvatar(prof.avatar_url);
+        if (prof) cacheAvatar(u.id, prof.avatar_url ?? null);
         wara = isWarawaUntil(prof?.warawa_until as string | null);
         setIsWara(wara);
       }

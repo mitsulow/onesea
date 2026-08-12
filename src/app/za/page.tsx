@@ -36,8 +36,14 @@ export default function ZaPage() {
       setAvatar((session?.user?.user_metadata?.avatar_url as string) ?? null);
       const uid = session?.user?.id;
       if (uid) {
-        supabase.from("profiles").select("avatar_url").eq("id", uid).maybeSingle().then(({ data }) => {
-          if (data?.avatar_url) setAvatar(data.avatar_url);
+        // 端末キャッシュ優先(遅い回線でGoogleアイコンが先に見える事故防止)→裏で最新化
+        import("@/lib/avatarCache").then(({ cachedAvatar, cacheAvatar }) => {
+          const c = cachedAvatar(uid);
+          if (c) setAvatar(c);
+          supabase.from("profiles").select("avatar_url").eq("id", uid).maybeSingle().then(({ data }) => {
+            if (data?.avatar_url) setAvatar(data.avatar_url);
+            if (data) cacheAvatar(uid, data.avatar_url ?? null);
+          });
         });
       }
     });

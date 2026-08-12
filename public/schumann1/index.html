@@ -3576,7 +3576,7 @@
           return JSON.parse(raw);
         } catch (e) { return null; }
       };
-      let url = null;
+      let url = null, uid = null;
       // ★Cookie優先(Next側の現行セッション=正)。localStorageは古い別アカウントが残り得る
       {
         const jar = {};
@@ -3591,6 +3591,7 @@
           const s2 = parseTok(bases[b].join(""));
           const u2 = s2 && (s2.user || s2.currentSession?.user || s2.session?.user);
           url = u2?.user_metadata?.avatar_url || u2?.user_metadata?.picture || null;
+          uid = u2?.id || uid;
           if (url) break;
         }
       }
@@ -3601,8 +3602,12 @@
           const s = parseTok(localStorage.getItem(k) || "");
           const u = s && (s.user || s.currentSession?.user || s.session?.user);
           url = u?.user_metadata?.avatar_url || u?.user_metadata?.picture || null;
+          uid = u?.id || uid;
         }
       }
+      // ★端末キャッシュの正式アバターを最優先 (React側 lib/avatarCache と同じキー "onesea-av-<uid>")
+      //   遅い回線で Googleアイコン→正式アバター と切り替わって見える事故防止
+      try { const cached = uid && localStorage.getItem("onesea-av-" + uid); if (cached) url = cached; } catch (e) {}
       let avImg = null;
       if (url) {
         avImg = document.createElement("img");
@@ -3618,6 +3623,7 @@
           }).then(r => r.json()).then(rows => {
             const a2 = rows && rows[0] && rows[0].avatar_url;
             if (a2 && avImg) avImg.src = a2;
+            try { if (a2) localStorage.setItem("onesea-av-" + se.user.id, a2); } catch (e) {}
           }).catch(() => {});
         }
       } catch (e) {}

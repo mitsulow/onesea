@@ -58,9 +58,14 @@ export default function MmmPage() {
       setMe(u);
       setAvatar((u?.user_metadata?.avatar_url as string) ?? null);
       if (u) {
-        // マイページで変えた写真を優先
-        supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
-          if (data?.avatar_url) setAvatar(data.avatar_url);
+        // マイページで変えた写真を優先。端末キャッシュで即描画→裏で最新化
+        import("@/lib/avatarCache").then(({ cachedAvatar, cacheAvatar }) => {
+          const c = cachedAvatar(u.id);
+          if (c) setAvatar(c);
+          supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
+            if (data?.avatar_url) setAvatar(data.avatar_url);
+            if (data) cacheAvatar(u.id, data.avatar_url ?? null);
+          });
         });
       }
       if (!u) {

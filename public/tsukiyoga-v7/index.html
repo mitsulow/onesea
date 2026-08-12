@@ -17175,6 +17175,12 @@ if ('serviceWorker' in navigator) {
     var sess = window.oneseaSessionUser();
     var meta = sess && (sess.user.user_metadata || sess.user.raw_user_meta_data);
     var av = meta && (meta.avatar_url || meta.picture);
+    // ★端末キャッシュの正式アバターを最優先 (React側 lib/avatarCache と同じキー "onesea-av-<uid>")
+    //   遅い回線で Googleアイコン→正式アバター と切り替わって見える事故防止
+    try {
+      var avCached = sess && localStorage.getItem('onesea-av-' + sess.user.id);
+      if (avCached) av = avCached;
+    } catch (eC) {}
     if (av) {
       document.getElementById('oneseaAvatarInner').innerHTML =
         '<img src="' + av + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
@@ -17189,6 +17195,7 @@ if ('serviceWorker' in navigator) {
           var a2 = rows && rows[0] && rows[0].avatar_url;
           var host = document.getElementById('oneseaAvatarInner');
           if (a2 && host) host.innerHTML = '<img src="' + a2 + '" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover;">';
+          try { if (a2) localStorage.setItem('onesea-av-' + seAv.user.id, a2); } catch (eS) {}
         }).catch(function () {});
       }
     } catch (e2) {}

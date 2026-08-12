@@ -61,8 +61,14 @@ export default function TsukiyogaPage() {
       const u: User | null = session?.user ?? null;
       setAvatar((u?.user_metadata?.avatar_url as string) ?? null);
       if (u) {
-        supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
-          if (data?.avatar_url) setAvatar(data.avatar_url);
+        // 端末キャッシュ優先(遅い回線でGoogleアイコンが先に見える事故防止)→裏で最新化
+        import("@/lib/avatarCache").then(({ cachedAvatar, cacheAvatar }) => {
+          const c = cachedAvatar(u.id);
+          if (c) setAvatar(c);
+          supabase.from("profiles").select("avatar_url").eq("id", u.id).maybeSingle().then(({ data }) => {
+            if (data?.avatar_url) setAvatar(data.avatar_url);
+            if (data) cacheAvatar(u.id, data.avatar_url ?? null);
+          });
         });
       }
     });
