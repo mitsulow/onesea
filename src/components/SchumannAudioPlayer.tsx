@@ -200,6 +200,14 @@ export function SchumannAudioPlayer() {
       });
     }
     sendBeacon();
+    // 自分の光: 聴いた場所を端末に保存(その日じゅう地球儀に金色で灯る。集計とは独立)
+    if (posRef.current) {
+      try {
+        const day = new Date(Date.now() + 9 * 3600e3 - (3 * 60 + 36) * 60000).toISOString().slice(0, 10);
+        localStorage.setItem("onesea-my-light", JSON.stringify({ lat: posRef.current.lat, lng: posRef.current.lng, d: day }));
+        window.dispatchEvent(new Event("onesea:myLight"));
+      } catch { /* private mode */ }
+    }
     if (!heartbeatRef.current) heartbeatRef.current = setInterval(sendBeacon, 30000);
     if (user && !countedRef.current) {
       countedRef.current = true;

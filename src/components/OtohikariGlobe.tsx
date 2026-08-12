@@ -18,10 +18,12 @@ export function OtohikariGlobe({
   spots,
   mode = "all",
   connected = false,
+  mySpot = null,
 }: {
   spots: Array<[number, number, number] | null>;
   mode?: MapMode;
   connected?: boolean;
+  mySpot?: [number, number] | null; // 自分が今日聴いた場所 — 金色で灯る
 }) {
   const modeRef = useRef<MapMode>(mode);
   modeRef.current = mode;
@@ -32,6 +34,11 @@ export function OtohikariGlobe({
   const spotsDirtyRef = useRef(true); // 変わった時だけ光柱を組み直す(毎フレームのstringify比較をやめた)
   if (spotsRef.current !== spots) {
     spotsRef.current = spots;
+    spotsDirtyRef.current = true;
+  }
+  const mySpotRef = useRef(mySpot);
+  if (mySpotRef.current !== mySpot) {
+    mySpotRef.current = mySpot;
     spotsDirtyRef.current = true;
   }
 
@@ -538,6 +545,26 @@ export function OtohikariGlobe({
     // 61点以上(将来の25,000人スケール)は Points 1本=1描画命令で描く。
     // スプライト2枚/点の方式は綺麗だが数万ドローコールになりSafariが死ぬので60点まで。
     let cloudMat: THREE.ShaderMaterial | null = null;
+    // 自分の光: 今日聴いた場所に金色のホタル(集計の水色とは別建て・ひときわ見つけやすく)
+    const addMyLight = () => {
+      const my = mySpotRef.current;
+      if (!my) return;
+      const base = ll2v(my[0], my[1], 1.007);
+      const haze = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: glowTex, color: 0xffc86a, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false })
+      );
+      haze.scale.set(0.085, 0.085, 0.085);
+      haze.position.copy(base);
+      haze.userData.baseOpacity = 0.55;
+      pillarGroup.add(haze);
+      const coreS = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: glowTex, color: 0xfff3c0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
+      );
+      coreS.scale.set(0.035, 0.035, 0.035);
+      coreS.position.copy(base);
+      coreS.userData.baseOpacity = 0.95;
+      pillarGroup.add(coreS);
+    };
     const rebuildPillars = (list: Array<[number, number, number] | null>) => {
       pillarGroup.clear();
       cloudMat = null;
@@ -599,6 +626,7 @@ export function OtohikariGlobe({
           blending: THREE.AdditiveBlending,
         });
         pillarGroup.add(new THREE.Points(g, cloudMat));
+        addMyLight();
         return;
       }
       const count = Math.min(list.length, 60);
@@ -627,6 +655,7 @@ export function OtohikariGlobe({
         coreS.userData.baseOpacity = 0.9;
         pillarGroup.add(coreS);
       }
+      addMyLight();
     };
 
     /* ── 流星 ── */

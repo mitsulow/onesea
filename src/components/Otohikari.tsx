@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { OtohikariGlobe, MapMode } from "./OtohikariGlobe";
 import { SCHUMANN, SCHUMANN_DATA_URL, TARGET_HZ } from "@/lib/config";
+import { simulateSpots } from "@/lib/simulateSpots";
 import { Cinzel } from "next/font/google";
 
 // MMM本家と同じ数字フォント（Cinzel）
@@ -80,75 +81,53 @@ export function Otohikari() {
   }, []);
 
   /* ---- 負荷テスト: /mmm?testspots=15000 でランダムN点を光らせる ----
-     本番データは触らない・付けた人の画面だけ。25,000人スケールの体感確認用。
-     点は世界の都市の周りに人口比っぽく散らす(=ほぼ全て陸上。東京・大阪・NYは光が重なる) */
+     本番データは触らない・付けた人の画面だけ。25,000人スケールの体感確認用 */
   const testSpots = useMemo<Spot[] | null>(() => {
     if (typeof window === "undefined") return null;
     const n = parseInt(new URLSearchParams(window.location.search).get("testspots") || "", 10);
     if (!n || n <= 0) return null;
-    // [lat, lng, 重み] 重みが大きいほど点が集まる。日本はユーザー層として厚めに
-    const CITIES: Array<[number, number, number]> = [
-      [35.68, 139.69, 260], [34.69, 135.5, 130], [35.18, 136.91, 80], [33.59, 130.4, 70],
-      [43.06, 141.35, 55], [38.27, 140.87, 40], [34.4, 132.46, 35], [26.21, 127.68, 35],
-      [24.5, 124.24, 12], [35.02, 135.76, 45], [36.59, 136.63, 20], [33.84, 132.77, 15],
-      [40.82, 140.74, 15], [37.9, 139.02, 18], [31.56, 130.56, 20], [34.07, 134.55, 12],
-      [40.71, -74.0, 160], [34.05, -118.24, 90], [41.88, -87.63, 55], [37.77, -122.42, 45],
-      [43.65, -79.38, 45], [19.43, -99.13, 80], [-23.55, -46.63, 90], [-34.6, -58.38, 55],
-      [-12.05, -77.04, 40], [4.71, -74.07, 35], [51.51, -0.13, 90], [48.86, 2.35, 75],
-      [52.52, 13.4, 45], [40.42, -3.7, 40], [41.9, 12.5, 40], [52.37, 4.9, 25],
-      [59.33, 18.07, 22], [55.76, 37.62, 60], [41.01, 28.98, 55], [30.04, 31.24, 60],
-      [6.52, 3.38, 55], [-1.29, 36.82, 30], [-26.2, 28.05, 35], [25.2, 55.27, 35],
-      [24.71, 46.68, 30], [35.69, 51.39, 40], [28.61, 77.21, 110], [19.08, 72.88, 100],
-      [23.81, 90.41, 55], [24.86, 67.0, 50], [13.76, 100.5, 60], [-6.21, 106.85, 90],
-      [1.35, 103.82, 30], [3.14, 101.69, 30], [14.6, 120.98, 60], [10.82, 106.63, 45],
-      [21.03, 105.85, 35], [31.23, 121.47, 110], [39.9, 116.4, 90], [22.32, 114.17, 45],
-      [25.03, 121.57, 45], [37.57, 126.98, 90], [35.1, 129.03, 30], [-33.87, 151.21, 45],
-      [-37.81, 144.96, 40], [-36.85, 174.76, 15], [21.31, -157.86, 10], [61.22, -149.9, 4],
-    ];
-    // 世界の内陸・田舎アンカー [lat, lng, 広がり(度)]。ガウス散布しても海に落ちにくい内陸を選ぶ
-    const RURAL: Array<[number, number, number]> = [
-      [34.66, 133.92, 0.5], [38.25, 140.34, 0.6], [36.65, 138.18, 0.6], [32.79, 130.74, 0.5],
-      [39.7, 141.15, 0.7], [35.5, 134.23, 0.4], [33.56, 133.53, 0.4], [43.77, 142.37, 0.9],
-      [38.5, -98.0, 2.5], [41.9, -93.1, 2.0], [31.5, -97.5, 2.2], [33.0, -83.5, 1.5],
-      [44.5, -114.0, 2.0], [52.0, -106.0, 2.5], [46.5, -63.0, 1.0], [20.7, -101.5, 1.5],
-      [-16.5, -49.5, 2.5], [-31.5, -63.0, 2.5], [-8.5, -74.5, 1.5], [-17.5, -66.0, 1.5],
-      [46.8, 2.5, 1.5], [51.8, 19.0, 1.5], [49.5, 31.5, 2.0], [39.8, -4.0, 1.5],
-      [62.5, 16.0, 1.8], [64.5, 27.0, 1.8], [47.2, 9.0, 0.8], [45.5, 24.5, 1.2],
-      [55.0, 60.0, 2.5], [56.5, 84.0, 2.5], [52.5, 104.0, 2.0], [48.5, 135.0, 1.5],
-      [9.0, 38.7, 1.5], [-6.5, 35.0, 1.8], [13.5, -6.0, 1.8], [12.0, 8.5, 1.5],
-      [-29.0, 26.0, 1.8], [-19.0, 30.0, 1.5], [32.0, 35.5, 0.5], [39.0, 35.5, 2.0],
-      [32.5, 53.5, 2.0], [30.0, 70.0, 1.8], [26.5, 80.5, 2.0], [22.5, 78.5, 2.0],
-      [30.5, 104.0, 1.8], [34.5, 113.5, 1.8], [43.5, 87.5, 1.5], [47.0, 103.0, 2.5],
-      [48.5, 68.0, 2.5], [16.5, 102.5, 1.5], [-7.3, 110.0, 0.9], [21.5, 96.0, 1.2],
-      [-26.5, 148.0, 2.5], [-33.5, 147.0, 2.0], [-41.5, 172.5, 1.0], [64.0, -19.5, 0.8],
-    ];
-    const totalW = CITIES.reduce((s, c) => s + c[2], 0);
-    const gauss = () => {
-      // Box-Muller
-      const u = Math.max(1e-9, Math.random());
-      return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * Math.random());
+    return simulateSpots(n);
+  }, []);
+
+  /* ---- 光の位置のポーリング（5分・エッジキャッシュ・全員ぶん） ----
+     旧spots(人数順500件)は田舎の1人が切り捨てられるため、格子集約の全件APIへ移行。
+     人数カウントより更新が緩やかなので5分に1回だけ取りに行く=パケも一定 */
+  useEffect(() => {
+    if (testSpots) { setSpots(testSpots); return; }
+    let stop = false;
+    const load = async () => {
+      try {
+        const r = await fetch("/api/otohikari-spots");
+        const d = await r.json();
+        if (!stop && Array.isArray(d)) setSpots(d as Spot[]);
+      } catch {}
     };
-    const arr: Spot[] = [];
-    for (let i = 0; i < Math.min(n, 50000); i++) {
-      let lat: number, lng: number, sigma: number, anchor: [number, number];
-      if (Math.random() < 0.3) {
-        // 3割は世界の田舎へ(広めに散らす)
-        const ru = RURAL[Math.floor(Math.random() * RURAL.length)];
-        anchor = [ru[0], ru[1]];
-        sigma = ru[2];
-      } else {
-        // 7割は都市圏(人口の重みで選ぶ)
-        let r = Math.random() * totalW;
-        let city = CITIES[0];
-        for (const c of CITIES) { r -= c[2]; if (r <= 0) { city = c; break; } }
-        anchor = [city[0], city[1]];
-        sigma = 0.12 + Math.sqrt(city[2]) * 0.045;
+    load();
+    const t = setInterval(load, 5 * 60 * 1000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [testSpots]);
+
+  /* ---- 自分の光(今日聴いた場所)は金色で。端末保存から読む(集計とは独立) ---- */
+  const [mySpot, setMySpot] = useState<[number, number] | null>(null);
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = localStorage.getItem("onesea-my-light");
+        if (!raw) return setMySpot(null);
+        const d = JSON.parse(raw) as { lat: number; lng: number; d: string };
+        // 「今日」= 朝3:36リセットの日付
+        const day = new Date(Date.now() + 9 * 3600e3 - (3 * 60 + 36) * 60000).toISOString().slice(0, 10);
+        setMySpot(d.d === day ? [d.lat, d.lng] : null);
+      } catch {
+        setMySpot(null);
       }
-      lat = anchor[0] + gauss() * sigma;
-      lng = anchor[1] + (gauss() * sigma) / Math.max(0.2, Math.cos((anchor[0] * Math.PI) / 180));
-      arr.push([lat, lng, 1]);
-    }
-    return arr;
+    };
+    read();
+    window.addEventListener("onesea:myLight", read);
+    return () => window.removeEventListener("onesea:myLight", read);
   }, []);
 
   /* ---- 集計スナップショットのポーリング（30秒・エッジキャッシュ） ---- */
@@ -161,7 +140,6 @@ export function Otohikari() {
         if (stop) return;
         setNowCount(typeof d.now === "number" ? d.now : 0);
         if (typeof d.today === "number") setTodayCount(d.today);
-        setSpots(testSpots ?? (Array.isArray(d.spots) ? (d.spots as Spot[]) : []));
       } catch {}
     };
     load();
@@ -254,7 +232,7 @@ export function Otohikari() {
 
       {/* 地球儀 + オーバーレイ */}
       <div className="relative">
-        <OtohikariGlobe spots={spots} mode={mode} connected={connected} />
+        <OtohikariGlobe spots={spots} mode={mode} connected={connected} mySpot={mySpot} />
 
         {/* 実測時刻 — セクションの一番下・右端 */}
         {live.updated && (
