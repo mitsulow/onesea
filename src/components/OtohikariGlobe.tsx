@@ -234,28 +234,25 @@ export function OtohikariGlobe({
     fG.setAttribute("aBorn", new THREE.BufferAttribute(fBorn, 1));
     fG.setDrawRange(0, MAX_PTS);
     const ffMat = new THREE.ShaderMaterial({
-      // 雷らしい光: 落ちた瞬間に白い閃光が「多段ストロボ」(本物の再放電のように3回瞬く)、
-      // 十字のスパークが走り、そのあと紫がかった残光が不規則にチラつきながら消える
+      // 雷: 黄金色の控えめな光(昔の色)。シューマン光との区別は「高さ」で —
+      // 聴いた人の光=地表1.006、雷=1.05(宇宙へ抜ける高さ)。瞬きはかすかな二段だけ
       vertexShader: `attribute float aSize,aPhase,aInt,aBorn;varying float vPh,vIn,vBorn;uniform float uTime;
       void main(){vPh=aPhase;vIn=aInt;vBorn=aBorn;vec4 mv=modelViewMatrix*vec4(position,1.0);
       float age=uTime-aBorn;
-      float flash=1.0+1.5*exp(-age*10.0)+0.9*exp(-abs(age-0.18)*25.0)+0.6*exp(-abs(age-0.42)*25.0);
+      float flash=1.0+1.2*exp(-age*6.0)+0.4*exp(-abs(age-0.25)*18.0);
       gl_PointSize=aSize*(80.0/-mv.z)*flash;gl_Position=projectionMatrix*mv;}`,
       fragmentShader: `uniform float uTime,uLife;varying float vPh,vIn,vBorn;
-      void main(){vec2 q=gl_PointCoord-0.5;float d=length(q);if(d>0.5)discard;
+      void main(){float d=length(gl_PointCoord-0.5);if(d>0.5)discard;
       float age=uTime-vBorn;if(age<0.0)discard;
+      float ain=clamp(age/0.15,0.0,1.0);
       float aout=clamp(1.0-age/uLife,0.0,1.0);
-      float strobe=2.6*exp(-age*16.0)+1.8*exp(-abs(age-0.18)*30.0)+1.2*exp(-abs(age-0.42)*30.0);
-      float jitter=0.7+0.3*sin(uTime*9.0+vPh*7.0)*sin(uTime*13.7+vPh*3.0);
-      float ember=0.30*jitter*aout;
-      float ca=cos(vPh),sa=sin(vPh);vec2 r=vec2(q.x*ca-q.y*sa,q.x*sa+q.y*ca);
-      float glow=smoothstep(0.5,0.03,d);
-      float spark=max(pow(max(0.0,1.0-abs(r.x)*4.0),6.0),pow(max(0.0,1.0-abs(r.y)*4.0),6.0))*smoothstep(0.5,0.1,d);
-      float core=smoothstep(0.16,0.0,d);
-      float b=(glow*(ember+strobe*0.55)+spark*strobe*0.9+core*strobe)*vIn;
+      float flash=1.0+1.4*exp(-age*6.0)+0.5*exp(-abs(age-0.25)*18.0);
+      float pulse=sin(uTime*1.4+vPh)*0.25+0.75;
+      float alpha=smoothstep(0.5,0.05,d);float core=smoothstep(0.22,0.0,d);
+      float b=alpha*pulse*vIn*0.55*ain*aout*flash;
       if(b<0.004)discard;
-      vec3 col=mix(vec3(0.62,0.55,1.0),vec3(1.0,1.0,1.0),clamp(strobe,0.0,1.0));
-      gl_FragColor=vec4(col*b,min(b,1.0));}`,
+      vec3 col=mix(vec3(1.0,0.82,0.28),vec3(1.0,1.0,0.9),core);
+      gl_FragColor=vec4(col*b,b);}`,
       uniforms: { uTime: { value: 0 }, uLife: { value: STRIKE_LIFE } },
       transparent: true,
       depthWrite: false,
@@ -270,7 +267,7 @@ export function OtohikariGlobe({
     const addStrike = (lat: number, lon: number, t: number) => {
       const i = strikeIdx;
       strikeIdx = (strikeIdx + 1) % MAX_PTS;
-      const v = ll2v(lat, lon, 1.015);
+      const v = ll2v(lat, lon, 1.05); // 雷は宇宙へ抜ける高さ(聴いた人の光=1.006より一段上の層)
       fPos[i * 3] = v.x;
       fPos[i * 3 + 1] = v.y;
       fPos[i * 3 + 2] = v.z;

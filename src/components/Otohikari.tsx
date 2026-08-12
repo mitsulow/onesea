@@ -35,7 +35,7 @@ export function Otohikari() {
   const [faces, setFaces] = useState<Array<{ name: string | null; avatar: string | null; username: string | null }> | null>(null); // Tune-in中の顔ぶれ(タップで表示)
   const [todayCount, setTodayCount] = useState<number | null>(null);
   const [spots, setSpots] = useState<Spot[]>([]);
-  const [mode, setMode] = useState<MapMode>("all");
+  const [mode, setMode] = useState<MapMode>("otohikari"); // 初期表示はOTO(光柱のみ)。次がINAZUMA、最後がALL
   const [modeOpen, setModeOpen] = useState(false);
   const [connected, setConnected] = useState(false);
 
