@@ -158,12 +158,17 @@ export function SchumannAudioPlayer() {
   const sendBeacon = useCallback(async () => {
     if (!user) return;
     const supabase = createClient();
-    await supabase.from("beacons").upsert({
+    // 位置が取れない時は lat/lng を送らない = 既存の座標を null で上書きしない
+    // （機内などで再生し直すと、朝ホテルで灯した光が消える事故があった）
+    const payload: { user_id: string; last_seen: string; lat?: number; lng?: number } = {
       user_id: user.id,
-      lat: posRef.current?.lat ?? null,
-      lng: posRef.current?.lng ?? null,
       last_seen: new Date().toISOString(),
-    });
+    };
+    if (posRef.current) {
+      payload.lat = posRef.current.lat;
+      payload.lng = posRef.current.lng;
+    }
+    await supabase.from("beacons").upsert(payload);
   }, [user]);
 
   const stopBeacon = useCallback(async () => {
@@ -199,7 +204,12 @@ export function SchumannAudioPlayer() {
     if (user && !countedRef.current) {
       countedRef.current = true;
       const supabase = createClient();
-      await supabase.from("listens").insert({ user_id: user.id });
+      // 「聞いた時に居た場所」を記録 → その日じゅう地球儀に灯る(snapshot側でlistensから集計)
+      await supabase.from("listens").insert({
+        user_id: user.id,
+        lat: posRef.current?.lat ?? null,
+        lng: posRef.current?.lng ?? null,
+      });
     }
   }, [user, warawa, sendBeacon]);
 
