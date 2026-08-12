@@ -538,145 +538,30 @@ export function OtohikariGlobe({
     // 61点以上(将来の25,000人スケール)は Points 1本=1描画命令で描く。
     // スプライト2枚/点の方式は綺麗だが数万ドローコールになりSafariが死ぬので60点まで。
     let cloudMat: THREE.ShaderMaterial | null = null;
-    let linkMat: THREE.ShaderMaterial | null = null;
     const rebuildPillars = (list: Array<[number, number, number] | null>) => {
       pillarGroup.clear();
       cloudMat = null;
-      linkMat = null;
       if (list.length > 60) {
-        // 二層構造で「ぐじゅっとした元気玉の癒着」を防ぐ:
-        //  A) 常夜灯レイヤー: 都市圏を近接統合して1都市=1つの光(人数の対数で大きさ・光量)
-        //  B) ホタルレイヤー: 個人の小さな明滅。田舎は全員表示・大都市は抽選(常夜灯があるので)
-        const CELL = 1.2, MERGE = 2.4, METRO_MIN = 12, CITY_FIREFLY_MAX = 900;
-        type Cell = { latS: number; lngS: number; n: number; pts: Array<[number, number]> };
-        const cells = new Map<string, Cell>();
-        for (const loc of list) {
-          if (!loc) continue;
-          const w = Math.max(1, loc[2] ?? 1);
-          const key = Math.round(loc[0] / CELL) + "_" + Math.round(loc[1] / CELL);
-          let c = cells.get(key);
-          if (!c) { c = { latS: 0, lngS: 0, n: 0, pts: [] }; cells.set(key, c); }
-          c.latS += loc[0] * w; c.lngS += loc[1] * w; c.n += w;
-          c.pts.push([loc[0], loc[1]]);
-        }
-        const cellArr = [...cells.values()].map((c) => ({ lat: c.latS / c.n, lng: c.lngS / c.n, n: c.n, pts: c.pts }));
-        cellArr.sort((a, b) => b.n - a.n);
-        const metros: Array<{ lat: number; lng: number; n: number }> = [];
-        const cityPool: Array<[number, number]> = [];
-        const fireflies: Array<[number, number]> = [];
-        const merged = new Array(cellArr.length).fill(false);
-        for (let a = 0; a < cellArr.length; a++) {
-          if (merged[a]) continue;
-          const A = cellArr[a];
-          if (A.n < METRO_MIN) { fireflies.push(...A.pts); continue; } // 田舎=全員ホタル
-          let latS = A.lat * A.n, lngS = A.lng * A.n, n = A.n;
-          cityPool.push(...A.pts);
-          for (let b = a + 1; b < cellArr.length; b++) {
-            if (merged[b]) continue;
-            const B = cellArr[b];
-            if (Math.abs(B.lat - A.lat) > MERGE) continue;
-            if (Math.abs(B.lng - A.lng) * Math.max(0.2, Math.cos((A.lat * Math.PI) / 180)) > MERGE) continue;
-            merged[b] = true;
-            latS += B.lat * B.n; lngS += B.lng * B.n; n += B.n;
-            cityPool.push(...B.pts);
-          }
-          metros.push({ lat: latS / n, lng: lngS / n, n });
-        }
-        // 大都市のホタルは抽選で数百人だけ舞わせる
-        for (let k = 0; k < CITY_FIREFLY_MAX && cityPool.length > 0; k++) {
-          const idx = Math.floor(Math.random() * cityPool.length);
-          fireflies.push(cityPool[idx]);
-          cityPool[idx] = cityPool[cityPool.length - 1];
-          cityPool.pop();
-        }
+        // 旧MMM(mastermindmembers.net)方式 = 創発メタボール:
+        // 「大きい玉」は作らない。全員を極小の光の粒として描き、粒それぞれが
+        // 位相バラバラでゆっくり明滅する。密集地では粒の重なり(加算合成)が自然に
+        // 白い光の塊になり、縁の粒が暗くなる瞬間に「ちぎれ」、明るくなると「くっつく」。
+        // 統合もクラスタリングもしない — 有機的な動きは粒の集合から勝手に生まれる。
         const pos: number[] = [];
         const phase: number[] = [];
         const scl: number[] = [];
-        const amp: number[] = [];
-        const stay: number[] = [];
         let i = 0;
-        for (const m of metros) {
-          const v = ll2v(m.lat, m.lng, 1.006);
+        for (const loc of list) {
+          if (!loc) continue;
+          const v = ll2v(loc[0], loc[1], 1.006);
           pos.push(v.x, v.y, v.z);
-          phase.push((i++ * 2.399963) % (Math.PI * 2));
-          const lg = Math.log2(1 + m.n);
-          scl.push(0.04 * (1 + lg * 0.3)); // 東京級(数千人)≒岡山級(数十人)の約2.5倍の径
-          amp.push(Math.min(1.2, 0.45 + lg * 0.12));
-          stay.push(1); // 常夜灯: 消えずにゆっくり呼吸
-        }
-        for (const f of fireflies) {
-          const v = ll2v(f[0], f[1], 1.006);
-          pos.push(v.x, v.y, v.z);
-          phase.push((i++ * 2.399963) % (Math.PI * 2));
-          scl.push(0.022); // 小さくほのかに(糸の網で存在感を出す)
-          amp.push(0.8);
-          stay.push(0); // 生まれて膨らんで消えるサイクル
-        }
-        // 有機的なつながり: 近くのホタル同士を細くほのかな光の糸で結ぶ。
-        // 糸自体もゆっくり現れては消える(繋がったり離れたりして見える)。全糸で1描画命令
-        {
-          const LINKR = 2.6, MAXLINKS = 6000;
-          const grid2 = new Map<string, number[]>();
-          fireflies.forEach((f, idx) => {
-            const key = Math.round(f[0] / LINKR) + "_" + Math.round(f[1] / LINKR);
-            const arr2 = grid2.get(key);
-            if (arr2) arr2.push(idx); else grid2.set(key, [idx]);
-          });
-          const linkPos: number[] = [];
-          const linkPhase: number[] = [];
-          let linkCount = 0;
-          for (let idx = 0; idx < fireflies.length && linkCount < MAXLINKS; idx++) {
-            const f = fireflies[idx];
-            const ci = Math.round(f[0] / LINKR), cj = Math.round(f[1] / LINKR);
-            let made = 0;
-            for (let di = -1; di <= 1 && made < 2; di++) {
-              for (let dj = -1; dj <= 1 && made < 2; dj++) {
-                const arr2 = grid2.get(ci + di + "_" + (cj + dj));
-                if (!arr2) continue;
-                for (const jdx of arr2) {
-                  if (jdx <= idx) continue; // 同じ糸を2回張らない
-                  const t2 = fireflies[jdx];
-                  const dLat = t2[0] - f[0];
-                  const dLng = (t2[1] - f[1]) * Math.max(0.2, Math.cos((f[0] * Math.PI) / 180));
-                  if (dLat * dLat + dLng * dLng > LINKR * LINKR) continue;
-                  const va = ll2v(f[0], f[1], 1.005);
-                  const vb = ll2v(t2[0], t2[1], 1.005);
-                  linkPos.push(va.x, va.y, va.z, vb.x, vb.y, vb.z);
-                  const ph = (idx * 2.399963 + jdx * 0.7) % (Math.PI * 2);
-                  linkPhase.push(ph, ph);
-                  linkCount++; made++;
-                  if (made >= 2 || linkCount >= MAXLINKS) break;
-                }
-              }
-            }
-          }
-          if (linkPos.length) {
-            const lgeo = new THREE.BufferGeometry();
-            lgeo.setAttribute("position", new THREE.Float32BufferAttribute(linkPos, 3));
-            lgeo.setAttribute("aPhase", new THREE.Float32BufferAttribute(linkPhase, 1));
-            linkMat = new THREE.ShaderMaterial({
-              uniforms: { uTime: { value: 0 } },
-              vertexShader:
-                "attribute float aPhase; uniform float uTime; varying float vA;" +
-                "void main(){" +
-                "  float p = fract(uTime * 0.09 + aPhase * 0.159155);" + // 約11秒周期でゆっくり
-                "  vA = smoothstep(0.05, 0.35, p) * (1.0 - smoothstep(0.55, 0.95, p));" +
-                "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-              fragmentShader:
-                "varying float vA; void main(){ gl_FragColor = vec4(0.55, 0.83, 1.0, vA * 0.16); }",
-              transparent: true,
-              depthWrite: false,
-              blending: THREE.AdditiveBlending,
-            });
-            pillarGroup.add(new THREE.LineSegments(lgeo, linkMat));
-          }
+          phase.push((i++ * 2.399963) % (Math.PI * 2)); // 黄金角で明滅位相をバラす
+          scl.push(0.019 + Math.min(loc[2] ?? 1, 6) * 0.002); // 全員が極小の粒
         }
         const g = new THREE.BufferGeometry();
         g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
         g.setAttribute("aPhase", new THREE.Float32BufferAttribute(phase, 1));
         g.setAttribute("aScale", new THREE.Float32BufferAttribute(scl, 1));
-        g.setAttribute("aAmp", new THREE.Float32BufferAttribute(amp, 1));
-        g.setAttribute("aStay", new THREE.Float32BufferAttribute(stay, 1));
         cloudMat = new THREE.ShaderMaterial({
           uniforms: {
             uTime: { value: 0 },
@@ -684,22 +569,19 @@ export function OtohikariGlobe({
             uDpr: { value: renderer.getPixelRatio() },
           },
           vertexShader:
-            "attribute float aPhase; attribute float aScale; attribute float aAmp; attribute float aStay;" +
+            "attribute float aPhase; attribute float aScale;" +
             "uniform float uTime; uniform float uDpr; varying float vA;" +
             "void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0);" +
-            // aStay=1: 常夜灯(都市) — 消えずにゆっくり呼吸する澄んだ光
-            // aStay=0: ホタル(個人) — 極小で生まれ→ほわわーんと膨らみ→ふっと消える
-            "  float p = fract(uTime * 0.125 + aPhase * 0.159155);" +
-            "  float grow = smoothstep(0.0, 1.0, p);" +
-            "  float life = smoothstep(0.0, 0.10, p) * (1.0 - smoothstep(0.45, 1.0, p));" +
-            "  float breath = 0.86 + 0.14 * sin(uTime * 0.55 + aPhase);" +
-            "  vA = aAmp * mix(life, breath, aStay);" +
-            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * mix(0.08 + 2.0 * grow, 2.0 * breath, aStay);" +
+            // ゆっくり息づく明滅(約7秒周期・完全には消えない)。1粒の光量は低めにして
+            // 重なりの枚数=人の密度がそのまま明るさの階調になるようにする
+            "  float breath = 0.52 + 0.48 * sin(uTime * 0.9 + aPhase);" +
+            "  vA = 0.36 * (0.25 + 0.75 * breath);" +
+            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.8 + 0.3 * breath);" +
             "  gl_Position = projectionMatrix * mv; }",
           fragmentShader:
             "uniform sampler2D uTex; varying float vA;" +
             "void main(){ vec4 c = texture2D(uTex, gl_PointCoord);" +
-            "  gl_FragColor = vec4(vec3(0.62, 0.87, 1.0) * c.rgb, c.a * vA); }",
+            "  gl_FragColor = vec4(vec3(0.78, 0.93, 1.0) * c.rgb, c.a * vA); }",
           transparent: true,
           depthWrite: false,
           blending: THREE.AdditiveBlending,
@@ -891,9 +773,8 @@ export function OtohikariGlobe({
         rebuildPillars(spotsRef.current);
       }
       if (cloudMat) cloudMat.uniforms.uTime.value = t; // Points版の明滅はGPU側(シェーダー)で
-      if (linkMat) linkMat.uniforms.uTime.value = t; // 光の糸のゆらぎも
       pillarGroup.children.forEach((c, i) => {
-        if ((c as THREE.Points).isPoints || (c as THREE.LineSegments).isLine) return;
+        if ((c as THREE.Points).isPoints) return;
         const m = (c as THREE.Sprite).material as THREE.Material & { opacity: number };
         const base = (c.userData.baseOpacity as number) ?? 0.6;
         // ホタルの明滅（芯とハロで位相をずらして柔らかく息づく）
