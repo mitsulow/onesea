@@ -20,6 +20,7 @@ import { srcCdn } from "@/lib/images";
 import { isWarawaUntil } from "@/lib/warawa";
 import { WarawaBadge } from "@/components/WarawaBadge";
 import { PremiumSetupCard } from "@/components/PremiumSetupCard";
+import { BlogCorner } from "@/components/BlogCorner";
 import { MyRecoMap } from "@/components/MyRecoMap";
 import { QrScanner } from "@/components/QrScan";
 
@@ -502,6 +503,9 @@ export default function UserPage() {
             )}
           </div>
         )}
+
+        {/* 今日の日記(ブログ) */}
+        <BlogCorner userId={profile.id} username={profile.username ?? null} isMe={isMe} />
 
         <FollowingRow userId={profile.id} />
 
