@@ -184,6 +184,8 @@ export function OtohikariGlobe({
         const r50 = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json");
         if (!r50.ok || disposed) return;
         swapTo(await r50.json());
+        // 比較テスト: ?coast=50m を付けると10mへの差し替えをスキップ(前回密度のまま)
+        if (new URLSearchParams(window.location.search).get("coast") === "50m") return;
         const r10 = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/land-10m.json");
         if (!r10.ok || disposed) return;
         swapTo(await r10.json());
@@ -563,8 +565,10 @@ export function OtohikariGlobe({
           vertexShader:
             "attribute float aPhase; attribute float aScale; uniform float uTime; uniform float uDpr; varying float vA;" +
             "void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0);" +
-            "  vA = 0.62 + 0.38 * sin(uTime * 1.1 + aPhase);" + // スプライト版と同じ息づき
-            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z);" +
+            // 波紋型: 小さな明るい点で生まれ→膨らみながら薄れて→また生まれる(場所が目で追える)
+            "  float p = fract(uTime * 0.18 + aPhase * 0.159155);" +
+            "  vA = 0.15 + 0.85 * (1.0 - p);" +
+            "  gl_PointSize = aScale * uDpr * (300.0 / -mv.z) * (0.30 + 1.15 * p);" +
             "  gl_Position = projectionMatrix * mv; }",
           fragmentShader:
             "uniform sampler2D uTex; varying float vA;" +
