@@ -2694,9 +2694,9 @@
         if (!r.ok) return;
         seriesCache = await r.json();
         // 本物の最新観測時刻(data.jsonのtimestamp, UTC)をJSTキーに変換。
-        // seriesの時間軸は実時刻より10〜20分先行し、カーソルより右は前周の残像(~7.8Hzのゴミ)
-        // が読めてしまうため、「時計の今」ではなくこの観測時刻でカットするのが正
-        try { seriesCutKey = new Date(Date.parse((await rd.json()).timestamp) + 9 * 3600e3).toISOString().slice(0, 16); } catch (e) { seriesCutKey = null; }
+        // seriesのキーは実測時刻より約30分遅れる(historyとの相互相関で実測 2026-08-12)。
+        // カーソルより右は前周の残像(~7.8Hzのゴミ)が読めてしまうため、観測時刻-35分でカットする
+        try { seriesCutKey = new Date(Date.parse((await rd.json()).timestamp) + 9 * 3600e3 - 35 * 60e3).toISOString().slice(0, 16); } catch (e) { seriesCutKey = null; }
       }
       const S = seriesCache;
       const COLORS = { F1: "#5ae08a", F2: "#ffd60a", F3: "#c878ff", F4: "#ff96be" };
@@ -2707,14 +2707,16 @@
         const src = kind === "F" ? S.modes : kind === "A" ? S.amp : S.q;
         const ser = src && src[mode];
         if (!ser) return;
-        // 最新観測時刻より右(未来枠)は前周の残像を誤読した平坦なゴミ → 捨てる
-        const cutKey = seriesCutKey || new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 16);
+        // 最新観測時刻(-35分)より右は前周の残像を誤読した平坦なゴミ → 捨てる
+        const cutKey = seriesCutKey || new Date(Date.now() + 9 * 3600e3 - 35 * 60e3).toISOString().slice(0, 16);
         let keys = Object.keys(ser).sort().filter(k => k <= cutKey);
         if (!keys.length) return;
-        // ローリング3日窓 (一昨日00:00〜) — キーはJST
-        const lastDay = keys[keys.length - 1].slice(0, 10);
+        // 3日固定窓(JST): 一昨日00:00〜今日24:00。過去2日は満杯、3日目(今日)は
+        // 「いま」までしか線がなく右側は空白＝これから埋まっていく(ユーザー指定の設計)
+        const lastDay = cutKey.slice(0, 10);
         const cut = new Date(Date.parse(lastDay + "T00:00:00Z") - 2 * 86400e3).toISOString().slice(0, 10) + "T00:00";
         keys = keys.filter(k => k >= cut);
+        if (!keys.length) return;
         const vals = keys.map(k => ser[k]);
         const u = window.devicePixelRatio || 1;
         const W = Math.round(cv.clientWidth * u);
@@ -2728,14 +2730,14 @@
         let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
         const mg = (hi - lo) * 0.15 + 1e-6;
         lo -= mg; hi += mg;
-        const t0 = Date.parse(keys[0] + ":00Z");
-        const t1 = Date.parse(keys[keys.length - 1] + ":00Z");
+        const t0 = Date.parse(cut + ":00Z");
+        const t1 = t0 + 3 * 86400e3; // 右端は常に「今日の24:00」— 線はcutKeyで止まり右に余白が残る
         const X = k => PL + (W - PL - PR) * (Date.parse(k + ":00Z") - t0) / Math.max(1, t1 - t0);
         const Y = v => PT + (H - PT - PB) * (1 - (v - lo) / (hi - lo));
         // 日付境界の縦線
         ctx.strokeStyle = "rgba(255,255,255,0.08)"; ctx.lineWidth = u;
         ctx.fillStyle = "rgba(255,255,255,0.4)"; ctx.font = fs * 0.85 + "px monospace"; ctx.textAlign = "left";
-        for (let t = Date.parse(cut + ":00Z"); t <= t1; t += 86400e3) {
+        for (let t = t0; t < t1; t += 86400e3) {
           const k = new Date(t).toISOString().slice(0, 16);
           const x = X(k);
           if (x > PL) { ctx.beginPath(); ctx.moveTo(x, PT); ctx.lineTo(x, H - PB); ctx.stroke(); }
@@ -2744,7 +2746,7 @@
         // 3時間おきの時刻目盛り（ラベルは6時間おき）
         ctx.textAlign = "center";
         ctx.font = fs * 0.72 + "px monospace";
-        for (let t = Date.parse(cut + ":00Z"); t <= t1; t += 3 * 3600e3) {
+        for (let t = t0; t < t1; t += 3 * 3600e3) {
           const k = new Date(t).toISOString().slice(0, 16);
           const hh = new Date(t).getUTCHours();
           const x = X(k);
