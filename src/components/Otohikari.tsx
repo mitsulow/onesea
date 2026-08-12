@@ -39,19 +39,11 @@ export function Otohikari() {
   const [modeOpen, setModeOpen] = useState(false);
   const [connected, setConnected] = useState(false);
 
-  /* ---- マップモード（端末に記憶） ---- */
-  useEffect(() => {
-    try {
-      const m = localStorage.getItem("onesea-map-mode") as MapMode | null;
-      if (m === "otohikari" || m === "thunder" || m === "all") setMode(m);
-    } catch {}
-  }, []);
+  /* ---- マップモード: 毎回OTOで始まる(前回の選択は復元しない=ユーザー確定 2026-08-12)。
+     右上プルダウンで OTO → INAZUMA → ALL に切替可能 ---- */
   const pickMode = (m: MapMode) => {
     setMode(m);
     setModeOpen(false);
-    try {
-      localStorage.setItem("onesea-map-mode", m);
-    } catch {}
   };
 
   /* ---- プレイヤーからの接続通知 ---- */

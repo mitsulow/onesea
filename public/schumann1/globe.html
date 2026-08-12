@@ -93,7 +93,7 @@ renderer.setClearColor(0x000000,0); // 背景は CSS の青グラデーション
 container.appendChild(renderer.domElement);
 
 // ── 地球 ──
-const earth=new THREE.Mesh(new THREE.SphereGeometry(1,64,64),new THREE.MeshBasicMaterial({color:0x070c1a}));
+const earth=new THREE.Mesh(new THREE.SphereGeometry(1,64,64),new THREE.MeshBasicMaterial({color:0x0d3560})); // 海=青(地球っぽく)
 scene.add(earth);
 earth.add(new THREE.Mesh(new THREE.SphereGeometry(1.001,36,18),new THREE.MeshBasicMaterial({color:0x14305a,wireframe:true,transparent:true,opacity:0.05})));
 
@@ -112,7 +112,7 @@ function ll2v(lat,lng,r){const phi=(90-lat)*Math.PI/180,theta=(lng+180)*Math.PI/
 
 // 簡易海岸線 (即表示用フォールバック。詳細データのロード完了後に置き換え)
 const roughGroup=new THREE.Group();
-const landMat=new THREE.MeshBasicMaterial({color:0x0c1e18,transparent:true,opacity:0.7,side:THREE.DoubleSide});
+const landMat=new THREE.MeshBasicMaterial({color:0x1e6f42,transparent:true,opacity:0.9,side:THREE.DoubleSide}); // 陸=緑の塗りつぶし
 CL.forEach(poly=>{
   if(poly.length<3)return;
   const verts=poly.map(p=>ll2v(p[0],p[1],1.0015));
@@ -150,8 +150,8 @@ earth.add(roughGroup);
       });
     });
     earth.add(detail);
-    earth.remove(roughGroup);
-    roughGroup.traverse(c=>{if(c.geometry)c.geometry.dispose();});
+    // 陸の緑の塗り(ラフ形状)は残し、粗い輪郭線だけ詳細版に置き換える
+    roughGroup.children.filter(c=>c.isLine).forEach(c=>{roughGroup.remove(c);if(c.geometry)c.geometry.dispose();});
   }catch(e){/* オフライン等で失敗したら簡易海岸線のまま */}
 })();
 
@@ -299,12 +299,12 @@ for(const tri of TRIS){
 }
 const permLineG=new THREE.BufferGeometry();
 permLineG.setAttribute('position',new THREE.Float32BufferAttribute(permLinePos,3));
-const permLineMat=new THREE.LineBasicMaterial({color:0x3a80ff,transparent:true,opacity:0.13,blending:THREE.AdditiveBlending,depthWrite:false});
+const permLineMat=new THREE.LineBasicMaterial({color:0xe8ff00,transparent:true,opacity:0.15,blending:THREE.AdditiveBlending,depthWrite:false});
 const permGrid=new THREE.LineSegments(permLineG,permLineMat);
 earth.add(permGrid);
 
 // グリッド頂点の光るノード (MMM動画のシアンの輝点)
-const nodeMat=new THREE.PointsMaterial({color:0x6ec8ff,size:0.032,transparent:true,opacity:0.7,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
+const nodeMat=new THREE.PointsMaterial({color:0xf2ff70,size:0.032,transparent:true,opacity:0.7,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true});
 const nodePts=new THREE.Points(new THREE.BufferGeometry().setFromPoints(GP),nodeMat);
 earth.add(nodePts);
 
@@ -331,7 +331,7 @@ function spawnGridWave(time){
   }
   const lG=new THREE.BufferGeometry();
   lG.setAttribute('position',new THREE.Float32BufferAttribute(linePos,3));
-  const lM=new THREE.LineBasicMaterial({color:0x60b0ff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+  const lM=new THREE.LineBasicMaterial({color:0xeaff5a,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
   group.add(new THREE.LineSegments(lG,lM));
 
   // 反射三角形（選ばれた中のさらに10〜20%が「反射」して光る面）
@@ -345,7 +345,7 @@ function spawnGridWave(time){
     }
     const fG=new THREE.BufferGeometry();
     fG.setAttribute('position',new THREE.Float32BufferAttribute(fPos,3));
-    const fM=new THREE.MeshBasicMaterial({color:0x80d0ff,transparent:true,opacity:0,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false});
+    const fM=new THREE.MeshBasicMaterial({color:0xf6ffa0,transparent:true,opacity:0,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false});
     group.add(new THREE.Mesh(fG,fM));
   }
 
@@ -392,7 +392,7 @@ function spawnMeteor(time){
   pos.z=-Math.abs(pos.z)*0.5-6; // 地球の奥側の空
   const vel=rndDir().multiplyScalar(18+Math.random()*14);
   const g=new THREE.BufferGeometry().setFromPoints([pos,pos]);
-  const m=new THREE.LineBasicMaterial({color:0xcfe4ff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+  const m=new THREE.LineBasicMaterial({color:0xffffd8,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
   const line=new THREE.Line(g,m);
   scene.add(line);
   meteors.push({line,pos:pos.clone(),vel,birth:time,life:1.0+Math.random()*0.8});
