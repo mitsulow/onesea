@@ -557,8 +557,9 @@ export function OtohikariGlobe({
       haze.position.copy(base);
       haze.userData.baseOpacity = 0.55;
       pillarGroup.add(haze);
+      // 芯は通常合成(上に重ね塗り) — 東京の白い光だまりの中でも金色が飲まれず見つけられる
       const coreS = new THREE.Sprite(
-        new THREE.SpriteMaterial({ map: glowTex, color: 0xfff3c0, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
+        new THREE.SpriteMaterial({ map: glowTex, color: 0xffb838, transparent: true, opacity: 0.95, blending: THREE.NormalBlending, depthWrite: false })
       );
       coreS.scale.set(0.035, 0.035, 0.035);
       coreS.position.copy(base);
