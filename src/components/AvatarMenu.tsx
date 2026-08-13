@@ -299,6 +299,13 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
             >
               <span className="flex h-[16px] w-[16px] flex-shrink-0 items-center justify-center text-[12px]">✉️</span> 事務局への問い合わせ
             </button>
+            <Link
+              href="/bug-report"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2.5 border-b border-[#f2ece0] px-4 py-2 text-left text-[11px] font-medium text-[#8a8070] no-underline active:bg-[#faf4ea]"
+            >
+              <span className="flex h-[16px] w-[16px] flex-shrink-0 items-center justify-center text-[12px]">🐛</span> バグを事務局へ報告
+            </Link>
             {isAdmin && (
               <Link href="/office" onClick={() => setOpen(false)} className={item + hereCls("/office")}>
                 {icon("/icons/icon-megaphone.webp")} 事務局

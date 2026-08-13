@@ -27,6 +27,8 @@ export default function OfficePage() {
   const [seeds, setSeeds] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [inqs, setInqs] = useState<any[]>([]);
+  const [bugs, setBugs] = useState<any[]>([]);
+  const [tab, setTab] = useState<"bugs" | "send" | "seeds" | "reports" | "inqs">("bugs");
 
   const load = async (uid: string) => {
     const supabase = createClient();
@@ -63,6 +65,19 @@ export default function OfficePage() {
     setReports(reps);
     const { data: iq } = await supabase.from("inquiries").select("*, profiles!inquiries_user_id_fkey(username, display_name, avatar_url)").order("created_at", { ascending: false }).limit(100);
     setInqs(iq ?? []);
+    // 🐛 バグ報告(アバターメニューの「バグを事務局へ報告」から)
+    {
+      const { data: bg } = await supabase.from("bug_reports").select("*").order("created_at", { ascending: false }).limit(200);
+      let list = (bg ?? []) as any[];
+      const bids = Array.from(new Set(list.map((b) => b.user_id).filter(Boolean)));
+      if (bids.length) {
+        const { data: bp } = await supabase.from("profiles").select("id, username, display_name").in("id", bids);
+        const byB = new Map((bp ?? []).map((x: any) => [x.id, x]));
+        list = list.map((b) => ({ ...b, reporterProf: byB.get(b.user_id) ?? null }));
+      }
+      list.sort((a, b) => (a.status === "open" ? -1 : 0) - (b.status === "open" ? -1 : 0));
+      setBugs(list);
+    }
     void uid;
   };
 
@@ -109,6 +124,72 @@ export default function OfficePage() {
           <p className="mt-1 text-[11px] text-[#a09a88]">「田んぼを使って欲しい」の申請を確認して、写真を足して田んぼページを作ります</p>
         </Link>
 
+        {/* タブ（ページが縦に長くなりすぎたので用件ごとに分ける） */}
+        <div className="hide-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1" data-noswipe>
+          {([
+            ["bugs", `🐛 バグ報告${bugs.filter((b) => b.status === "open").length ? ` (${bugs.filter((b) => b.status === "open").length})` : ""}`],
+            ["send", "📣 一斉送信"],
+            ["seeds", `⛺ 拠点申請${seeds.filter((s) => s.status === "applied").length ? ` (${seeds.filter((s) => s.status === "applied").length})` : ""}`],
+            ["reports", `🚨 通報${reports.filter((r) => r.status === "open").length ? ` (${reports.filter((r) => r.status === "open").length})` : ""}`],
+            ["inqs", `✉️ 問い合わせ${inqs.filter((r) => r.status === "open").length ? ` (${inqs.filter((r) => r.status === "open").length})` : ""}`],
+          ] as const).map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => setTab(v)}
+              className="flex-shrink-0 rounded-full border px-3 py-1.5 text-[11.5px] font-extrabold"
+              style={tab === v ? { background: "#1a2432", borderColor: "#1a2432", color: "#f0e6c8" } : { background: "#fff", borderColor: "#e0d8c6", color: "#6a6255" }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* 🐛 バグ報告一覧（アバターメニューの「バグを事務局へ報告」から届く） */}
+        {tab === "bugs" && (
+        <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
+          <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">■ バグ報告</div>
+          {bugs.length === 0 ? (
+            <p className="py-1 text-[12.5px] text-[#a09888]">バグ報告はありません</p>
+          ) : (
+            bugs.map((b) => (
+              <div key={b.id} className="border-b border-[#f0ece0] py-2.5 last:border-b-0" style={{ opacity: b.status === "open" ? 1 : 0.45 }}>
+                <div className="flex items-center gap-2 text-[11px] text-[#a09888]">
+                  <span className="font-bold">{b.reporterProf?.display_name ?? "会員"}</span>
+                  <span className="num">{new Date(b.created_at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                  {b.page_url && <span className="num rounded bg-[#f0ece0] px-1.5 py-0.5">{b.page_url}</span>}
+                  {b.status !== "open" && <span className="font-bold text-[#2a7a4a]">対応済み</span>}
+                </div>
+                <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-[#3a3428]">{b.body}</p>
+                <div className="mt-1.5 flex gap-2">
+                  <button
+                    onClick={() => {
+                      // クロードコードに流し込みやすい形でコピー
+                      const txt = `【バグ報告】${b.page_url ?? "ページ不明"} / ${new Date(b.created_at).toLocaleString("ja-JP")} / ${b.reporterProf?.display_name ?? "会員"}\n${b.body}\n(UA: ${b.ua ?? "?"})`;
+                      navigator.clipboard.writeText(txt).then(() => alert("コピーしました（クロードに貼り付けてください）"));
+                    }}
+                    className="rounded-lg border border-[#d0c8b0] bg-white px-2.5 py-1 text-[11px] font-bold text-[#6a6255]"
+                  >
+                    📋 コピー
+                  </button>
+                  {b.status === "open" && (
+                    <button
+                      onClick={async () => {
+                        await createClient().from("bug_reports").update({ status: "done" }).eq("id", b.id);
+                        if (me) load(me.id);
+                      }}
+                      className="rounded-lg bg-[#2a7a4a] px-2.5 py-1 text-[11px] font-bold text-white"
+                    >
+                      対応済みにする
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </section>
+        )}
+
+        {tab === "send" && (
         <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
           <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">■ 会員へ一斉送信</div>
           <div className="mb-2 grid grid-cols-2 gap-2">
@@ -176,8 +257,10 @@ export default function OfficePage() {
           </button>
           <p className="mt-1 text-center text-[10px] text-[#a09888]">Gmailの作成画面が開きます。50人ごとに1通に分かれます</p>
         </section>
+        )}
 
         {/* ② 拠点申請の認定 */}
+        {tab === "seeds" && (
         <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
           <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">■ セカイムラ拠点申請</div>
           {seeds.length === 0 ? (
@@ -228,8 +311,10 @@ export default function OfficePage() {
             })
           )}
         </section>
+        )}
 
         {/* ③ 削除依頼（通報） */}
+        {tab === "reports" && (
         <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
           <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">
             ■ 削除依頼（通報）
@@ -329,8 +414,10 @@ export default function OfficePage() {
             })
           )}
         </section>
+        )}
 
-        {/* ✉ 問い合わせ受信箱 — 下に積み上がる */}
+        {/* ✉ 問い合わせ受信箱 */}
+        {tab === "inqs" && (
         <section className="rounded-2xl bg-white p-4" style={{ border: "1px solid #e5dcc8" }}>
           <div className="mb-2 text-[13px] font-extrabold tracking-[2px] text-[#1a2432]">
             ■ 問い合わせ
@@ -376,6 +463,7 @@ export default function OfficePage() {
             ))
           )}
         </section>
+        )}
 
         <p className="pb-2 text-center text-[10.5px] text-[#a09888]">
           事務局メンバー: マスター・西田あかね・マチルダ（アカウント登録時に自動で権限が付きます）
