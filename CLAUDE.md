@@ -89,6 +89,15 @@
 - 通知(notifications)は**タップした分だけ既読**（一覧を開いた瞬間の全既読は却下済み・戻さない）
 - **schumann1（シューマン共振観測所）** = public/schumann1/index.html の静的ページ（旧 mitsulow.github.io/schumann は移設済みでrepo削除済み）。折りたたみの表示順は**CSSの `order`**（DOM順でない）。観測グラフF1〜F4の schumann_series_3d.json には**画像の未来枠（現在カーソルより右）を誤読した平坦ゴミ(~7.8Hz)が常に混じる** → 描画側 drawModeGraphs で「schumann_data.json のtimestamp **-35分** より先のキーを捨てる」処理が必須（seriesキーは実測時刻より約30分遅れる — historyとの相互相関で実測。「時計の今」や「timestamp丁度」でのカットでは残像が残る＝2回失敗済み）。観測グラフは**3日固定窓**（一昨日00:00〜今日24:00 JST・今日の右側は空白が正、データ範囲を幅いっぱいに伸ばすのは間違い＝ユーザー指定の設計）。0Lei側の全幅読み取りは宝の山の自己修復仕様なので直さない。データ収集は GitHub Actions schumann-update（15分毎・0Lei repo）
 
+## 5.5 2026-08-13の大型追加（ブログ/ともだち/称号/バグ報告）
+
+- **ツレヅレ日記(ブログ)**: blog_posts。予約投稿=publish_atが未来だとRLSで非公開→時刻到来で自動公開(cron不要)。URLを叩くと「ブログ記事が無いようです」。**DELETEポリシーなし=過去記事は誰にも消せない**(ユーザー誓約)。公開範囲 visibility(public/friends/private)+ブログトップで一括変更。投稿/引っ越しはis_warawa限定。アメブロ取込=scripts/import_ameblo.py(公開ページ読み取りのみ・画像R2ミラー・レジューム可)、Web版=/blog/import(アメブロ/note・1呼出1記事)。エディタはYouTube/Amazon URL1行で自動埋込
+- **ともだち**: friend_requests。名刺交換(QR:/meishi/[id] とオンライン:MeishiModalボタン)→TALKに申請カード`[[friend-request:id]]`→2ボタン+編集可の定型文。acceptedは誰でも読める(友達一覧公開)。マイページ=ともだち/フォローされている人の2行
+- **称号**: SIR_USER_ID(みつろう)=「Warawa-Sir」黒縁・番号なし。No.2はmember_no_reserve経由で次の入会者へ(採番トリガが予約番号優先)。名刺=白和紙PNG(meishi-washi-white.png・PIL生成スクリプトはscratchpad)。無料会員バッジ=「無料わんし〜会員」
+- **サービス所属**: profiles.mmm_member/tsukiyoga_member(セカイムラはmurabito)。ServiceIntroが初回に説明を自動表示+小さな入会ボタン(様子見OK方式・押し付けない=ユーザー確定)
+- **バグ報告**: アバターメニュー→/bug-report→bug_reports(閲覧は事務局RLS)。事務局ページはタブ化(バグ/一斉送信/拠点/通報/問い合わせ)・バグはコピー(→クロード貼付用)
+- **料金の正**: ツキヨガ月5,500/楽座月4,400/MMM年55,000/セカイムラ入村5,000+月3,000 → 年合計214,800円 → わらわ〜プレミアム39,600円。呼称は「わらわ〜プレミアム会員」に統一(旧OneSea会員/わんし〜会員)
+
 ## 6. 未解決の課題と次にやるべきこと
 
 1. **TURNサーバー導入** — 通話がSTUNのみで、日本のキャリアCGNAT同士は15-30%繋がらない。月$5-10のcoturn/VPSかCloudflare TURN。25,000人前の必須項目
