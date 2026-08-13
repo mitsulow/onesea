@@ -59,7 +59,7 @@ export default function BlogEntry({ params }: { params: Promise<{ username: stri
               // eslint-disable-next-line @next/next/no-img-element
               <img src={srcCdn(owner.avatar_url)} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" referrerPolicy="no-referrer" />
             )}
-            <span className="truncate text-[13.5px] font-extrabold text-[#3a4030]">{owner.display_name ?? owner.username}のブログ</span>
+            <span className="truncate text-[13.5px] font-extrabold text-[#3a4030]">{owner.display_name ?? owner.username}徒然日記</span>
           </Link>
           <AvatarMenu />
         </div>

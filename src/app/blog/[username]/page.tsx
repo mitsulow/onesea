@@ -101,7 +101,7 @@ export default function BlogTop({ params }: { params: Promise<{ username: string
               <img src={srcCdn(owner.avatar_url)} alt="" className="h-8 w-8 flex-shrink-0 rounded-full object-cover" referrerPolicy="no-referrer" />
             )}
             <span className="min-w-0">
-              <span className="block truncate text-[14px] font-extrabold text-[#3a4030]">{owner.display_name ?? owner.username}のブログ</span>
+              <span className="block truncate text-[14px] font-extrabold text-[#3a4030]">{owner.display_name ?? owner.username}徒然日記</span>
               <span className="block text-[9.5px] tracking-[1.5px] text-[#a0a894]">DIARY {arch ? `・全${arch.total}記事` : ""}</span>
             </span>
           </Link>
