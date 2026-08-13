@@ -91,14 +91,33 @@ export async function blogNeighbors(userId: string, postedAt: string) {
   return { prev: prev.data ?? null, next: next.data ?? null };
 }
 
-/** 表示前の無害化: script/イベントハンドラ/javascript: を除去（引っ越しHTMLをそのまま流さない） */
+/** 表示前の無害化+アメブロHTMLの復元。
+ *  - script/イベントハンドラ/javascript: を除去
+ *  - アメブロの遅延読み込みを解除: <noscript>の重複を消し、プレースホルダSVGの
+ *    srcを data-src(本物のURL) に差し替え（これをしないと画像が1枚も表示されない）
+ *  - 裸のアメブロ記事リンク(リブログ先など)は押しやすいリンクカードに */
 export function sanitizeHtml(html: string): string {
-  return html
+  let out = html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<script[^>]*>/gi, "")
     .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
     .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
     .replace(/(href|src)\s*=\s*(["'])\s*javascript:[^"']*\2/gi, '$1="#"');
+  // 遅延読み込み解除
+  out = out.replace(/<noscript>[\s\S]*?<\/noscript>/gi, "");
+  out = out.replace(/<img\b[^>]*>/gi, (tag) => {
+    const ds = tag.match(/data-src="([^"]+)"/);
+    if (ds && /src="data:image\/svg[^"]*"/.test(tag)) {
+      return tag.replace(/src="data:image\/svg[^"]*"/, `src="${ds[1]}" loading="lazy"`);
+    }
+    return tag;
+  });
+  // 裸のアメブロ記事リンク → カード（リブログ先への導線）
+  out = out.replace(
+    /<a href="(https:\/\/ameblo\.jp\/[\w.-]+\/entry-\d+\.html)"([^>]*)>\s*(?:\1|こちら|リブログ元の記事)\s*<\/a>/g,
+    '<div class="blog-embed"><a href="$1" target="_blank" rel="noopener noreferrer">📖 リブログ元の記事を読む<span class="blog-embed-url">$1</span></a></div>'
+  );
+  return out;
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
