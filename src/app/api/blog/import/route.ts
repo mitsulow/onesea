@@ -48,14 +48,20 @@ async function fetchText(url: string): Promise<string> {
 
 const escRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+/** 画像保存の上限: 1人あたり合計10GBまで。超えた分は元ブログの画像URLをそのまま使う
+ *  （記事は必ず取り込まれる。画像の「保管」だけが上限対象） */
+const IMAGE_CAP_BYTES = 10 * 1024 * 1024 * 1024;
+
 /** 本文中の画像(stat.ameba.jp / assets.st-note.com)をR2へコピーしてURL書き換え */
-async function mirrorImages(userId: string, key: string, body: string): Promise<{ body: string; thumb: string | null }> {
-  if (!r2Ready()) return { body, thumb: null };
+async function mirrorImages(userId: string, key: string, body: string, budget: number): Promise<{ body: string; thumb: string | null; used: number }> {
+  if (!r2Ready()) return { body, thumb: null, used: 0 };
   const found = body.match(/https:\/\/(?:stat\.ameba\.jp\/user_images|assets\.st-note\.com\/(?:production\/uploads|img))\/[^"'\s<>\\)]+/g) ?? [];
   const bases = [...new Set(found.map((u) => u.split("?")[0]))];
   let thumb: string | null = null;
   let n = 0;
+  let used = 0;
   for (const base of bases.slice(0, 40)) {
+    if (used >= budget) break; // 上限到達: 以降は元URLのまま
     try {
       const r = await fetch(base, { headers: UA });
       if (!r.ok) continue;
@@ -64,15 +70,17 @@ async function mirrorImages(userId: string, key: string, body: string): Promise<
       const ext = ct.includes("png") ? "png" : ct.includes("gif") ? "gif" : ct.includes("webp") ? "webp" : "jpg";
       const bytes = new Uint8Array(await r.arrayBuffer());
       if (bytes.length > 15 * 1024 * 1024) continue;
+      if (used + bytes.length > budget) continue;
       const r2url = await r2Put(`blog/${userId}/${key}/${n}.${ext}`, bytes, ct);
       if (!r2url) continue;
       // 「?クエリ付き」参照を先にクエリなしへ正規化 → 単純置換で一括書き換え
       body = body.replace(new RegExp(escRe(base) + "\\?[^\"'\\s<>\\\\)]*", "g"), base).split(base).join(r2url);
       if (!thumb) thumb = r2url;
+      used += bytes.length;
       n++;
     } catch { /* 取得できない画像は元URLのまま残す(消さない) */ }
   }
-  return { body, thumb };
+  return { body, thumb, used };
 }
 
 export async function POST(req: NextRequest) {
@@ -108,14 +116,20 @@ export async function POST(req: NextRequest) {
       const { data: exists } = await supabase.from("blog_posts").select("slug").eq("user_id", user.id).eq("slug", slug).maybeSingle();
       if (exists) return NextResponse.json({ ok: true, skipped: true });
 
+      // 画像保存の残り枠(1人10GB)。使い切っていたら画像は元URLのまま取り込む
+      const { data: stg } = await supabase.from("blog_storage").select("bytes").eq("user_id", user.id).maybeSingle();
+      const budget = Math.max(0, IMAGE_CAP_BYTES - (stg?.bytes ?? 0));
+
       let row: Record<string, unknown> | null = null;
+      let usedBytes = 0;
       if (source === "ameba") {
         const html = await fetchText(`https://ameblo.jp/${blogId}/entry-${entryId}.html`);
         const d = extractInitData(html);
         const em = ((d?.entryState as Record<string, unknown>)?.entryMap ?? {}) as Record<string, Record<string, unknown>>;
         const e = em[String(entryId)] ?? Object.values(em)[0];
         if (!e || !e.entry_text) return NextResponse.json({ ok: false, reason: "非公開(アメンバー限定など)のためスキップ" });
-        const m = await mirrorImages(user.id, String(entryId), String(e.entry_text));
+        const m = await mirrorImages(user.id, String(entryId), String(e.entry_text), budget);
+        usedBytes = m.used;
         row = {
           user_id: user.id, slug,
           title: (e.entry_title as string) || "(無題)",
@@ -131,7 +145,8 @@ export async function POST(req: NextRequest) {
         if (!r.ok) return NextResponse.json({ ok: false, reason: `note ${r.status}` });
         const d = (await r.json())?.data;
         if (!d?.body) return NextResponse.json({ ok: false, reason: "本文なし(有料記事など)のためスキップ" });
-        const m = await mirrorImages(user.id, String(entryId), String(d.body));
+        const m = await mirrorImages(user.id, String(entryId), String(d.body), budget);
+        usedBytes = m.used;
         row = {
           user_id: user.id, slug,
           title: d.name || "(無題)",
@@ -149,6 +164,8 @@ export async function POST(req: NextRequest) {
 
       const { error } = await supabase.from("blog_posts").insert(row);
       if (error) return NextResponse.json({ ok: false, reason: error.message });
+      // 画像使用量を加算(1人10GB上限の台帳)
+      if (usedBytes > 0) { try { await supabase.rpc("add_blog_bytes", { n: usedBytes }); } catch { /* noop */ } }
       return NextResponse.json({ ok: true });
     }
 
