@@ -532,9 +532,6 @@ export default function UserPage() {
           </div>
         )}
 
-        {/* ツレヅレ日記(ブログ) */}
-        <BlogCorner userId={profile.id} username={profile.username ?? null} isMe={isMe} />
-
         {/* ともだち(名刺交換→承認で成立) + フォローされている人 */}
         <FriendsRow userId={profile.id} />
         <FollowersRow userId={profile.id} />
@@ -1022,6 +1019,13 @@ export default function UserPage() {
           </div>
         </div>
       )}
+
+      {/* ツレヅレ日記(ブログ) — マイページの一番下(ユーザー指定 8/13)。
+          書いてない人: 他人からは何も表示されない。本人には「書く/引っ越し」の始めようカードが出る */}
+      <div className="pt-5">
+        <BlogCorner userId={profile.id} username={profile.username ?? null} isMe={isMe} />
+      </div>
+
       {scanOpen && (
         <QrScanner
           onClose={() => setScanOpen(false)}
