@@ -71,7 +71,7 @@ export default function MeishiExchangePage() {
             <div className="min-w-0 flex-1 pb-1">
               {other.murabito && (
                 <span className="rounded-full px-2 py-0.5 text-[9px] font-extrabold" style={{ background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }}>
-                  セカイムラ{(other.prefecture ?? "").replace(/[都府県]$/, "")}村人
+                  セカイムラ{(other.prefecture ?? "").replace(/[都府県]$/, "")}の村人
                 </span>
               )}
             </div>

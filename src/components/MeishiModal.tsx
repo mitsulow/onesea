@@ -84,21 +84,23 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
         {/* 透いた白和紙の台紙（周囲ほころび・透過PNG） */}
         <img src="/meishi-washi-white.png" alt="" className="pointer-events-none absolute inset-0 h-full w-full" style={{ objectFit: "fill" }} />
 
-        {/* 和紙の内側: 細い枠線（余白を空けて）。枠線上トップに「名 刺」 */}
-        <div className="relative m-[26px] flex flex-col overflow-y-auto border border-[#b8ae96] px-4 pb-4 pt-5" style={{ maxHeight: "calc(84vh - 52px)", minHeight: 420 }}>
+        {/* 和紙の内側: 細い枠線（余白を空けて）。枠線上トップに「名 刺」。
+            ※「名 刺」はスクロール枠の外側に置く（overflow内に入れると枠の上の文字が切れて消えるバグがあった） */}
+        <div className="relative m-[26px]" style={{ maxHeight: "calc(84vh - 52px)" }}>
           <span
-            className="absolute -top-[9px] left-1/2 -translate-x-1/2 px-2 text-[10px] font-bold tracking-[6px] text-[#8a7f66]"
-            style={{ background: "#faf8f2" }}
+            className="absolute -top-[8px] left-1/2 z-10 -translate-x-1/2 px-2 text-[10px] font-bold tracking-[6px] text-[#8a7f66]"
+            style={{ background: "#f7f4ec" }}
           >
             名 刺
           </span>
           <button
             onClick={onClose}
             aria-label="閉じる"
-            className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full text-[13px] text-[#8a7f66]"
+            className="absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full text-[13px] text-[#8a7f66]"
           >
             ×
           </button>
+          <div className="flex flex-col overflow-y-auto border border-[#b8ae96] px-4 pb-4 pt-5" style={{ maxHeight: "calc(84vh - 52px)", minHeight: 420 }}>
 
           {p === undefined ? (
             <div className="flex h-48 items-center justify-center">
@@ -150,8 +152,11 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                   </span>
                 )}
                 {p.murabito && p.prefecture && (
-                  <span className="rounded-full border border-[#9ab890] bg-[#eef6ea] px-2.5 py-0.5 text-[10.5px] font-bold text-[#3c6a2c]">
-                    セカイムラ{p.prefecture.replace(/[都府県]$/, "")}村人
+                  <span
+                    className="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold text-[#1e5c34]"
+                    style={{ background: "linear-gradient(135deg,#eef8ee,#cfe8d2)", border: "1px solid #a8d0b0" }}
+                  >
+                    セカイムラ{p.prefecture.replace(/[都府県]$/, "")}の村人
                   </span>
                 )}
               </div>
@@ -217,10 +222,12 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
                 </button>
               )}
 
-              {/* マイページへ */}
+              {/* マイページへ。名刺から飛んだ時はマイページ側の「まず名刺」自動表示をスキップ
+                  (名刺→マイページ→また名刺 の二重表示バグ対策) */}
               {p.username && (
                 <button
                   onClick={() => {
+                    try { sessionStorage.setItem("meishi-skip-once", p.username!); } catch { /* noop */ }
                     onClose();
                     router.push(`/u/${p.username}`);
                   }}
@@ -232,6 +239,7 @@ export function MeishiModal({ username, onClose }: { username: string; onClose: 
               )}
             </>
           )}
+          </div>
         </div>
       </div>
     </div>,

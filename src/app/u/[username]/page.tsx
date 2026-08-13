@@ -193,6 +193,14 @@ export default function UserPage() {
   useEffect(() => {
     if (!profile || meishiShown.current || !authReady) return;
     if (me?.id === profile.id) return;
+    // 名刺モーダルの「マイページを見る」から来た直後は、また名刺が出る二重表示になるので1回だけスキップ
+    try {
+      if (sessionStorage.getItem("meishi-skip-once") === profile.username) {
+        sessionStorage.removeItem("meishi-skip-once");
+        meishiShown.current = true;
+        return;
+      }
+    } catch { /* noop */ }
     meishiShown.current = true;
     setShowMeishi(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -393,28 +401,41 @@ export default function UserPage() {
             </>
           )}
         </div>
-        <span className="ml-2 inline-flex flex-col items-start gap-1 align-top pt-0.5">
+        <span className="ml-2 inline-flex flex-col items-end gap-1 align-top pt-0.5">
           {profile.id === SIR_USER_ID ? (
             <span
-              className="px-2 py-0.5 text-[9.5px] font-extrabold tracking-[1px]"
-              style={{ background: "#faf6ea", color: "#141414", border: "2px solid #141414" }}
+              className="rounded-full px-2.5 py-1 text-[9.5px] font-extrabold tracking-[1.5px]"
+              style={{
+                background: "linear-gradient(135deg,#1c1c1c,#000)",
+                color: "#f6e9c4",
+                border: "1px solid #3a3a3a",
+                boxShadow: "0 2px 8px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.14)",
+              }}
             >
-              Warawa-Sir
+              ✦ Warawa-Sir
             </span>
           ) : isWara && profile.member_no != null ? (
             <span
-              className="num px-2 py-0.5 text-[9.5px] font-extrabold tracking-wider text-[#7a5a10]"
-              style={{ background: "linear-gradient(135deg,#f8e8b0,#e8cc70)", border: "1px solid #d4b96a" }}
+              className="num rounded-full px-2.5 py-1 text-[9.5px] font-extrabold tracking-wide text-[#6a4c08]"
+              style={{
+                background: "linear-gradient(135deg,#faf0c8,#eccf74 55%,#f6e6a8)",
+                border: "1px solid #d4b96a",
+                boxShadow: "0 2px 6px rgba(180,140,50,.28), inset 0 1px 0 rgba(255,255,255,.7)",
+              }}
             >
-              わらわ〜プレミアムNo.{profile.member_no}
+              ✦ わらわ〜プレミアム No.{profile.member_no}
             </span>
           ) : null}
           {profile.murabito && (
             <span
-              className="px-2 py-0.5 text-[9.5px] font-extrabold"
-              style={{ background: "#e8f4ec", color: "#2a7a48", border: "1px solid #bcdcc8" }}
+              className="rounded-full px-2.5 py-1 text-[9.5px] font-extrabold text-[#1e5c34]"
+              style={{
+                background: "linear-gradient(135deg,#eef8ee,#cfe8d2)",
+                border: "1px solid #a8d0b0",
+                boxShadow: "0 2px 6px rgba(60,130,80,.18), inset 0 1px 0 rgba(255,255,255,.8)",
+              }}
             >
-              セカイムラ{(profile.prefecture ?? "").replace(/[都府県]$/, "") || ""}村人
+              セカイムラ{(profile.prefecture ?? "").replace(/[都府県]$/, "") || ""}の村人
             </span>
           )}
         </span>
