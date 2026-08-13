@@ -50,7 +50,7 @@ const cfg: LPConfig = {
     { img: "/sekai/moot-thumb-4.webp", caption: "新月会アーカイブ" },
   ],
   priceMain: "月 3,000円",
-  priceSub: "単体プラン（入会金 5,000円 ＋ 月額 3,000円 ／ 学割 入会金2,500・月1,500円）",
+  priceSub: "単体プラン（入村料 5,000円 ＋ 月額 3,000円 ＝ 年 41,000円 ／ 学割 入会金2,500・月1,500円）",
   campaignServices: "MMM・ツキヨガ・楽市楽座",
 };
 

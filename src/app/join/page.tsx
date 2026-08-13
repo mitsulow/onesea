@@ -27,10 +27,10 @@ export default function JoinPage() {
       style={{ background: "linear-gradient(170deg,#0e1e2e 0%,#14324a 62%,#1e4a66 100%)" }}
     >
       <div className="text-[13px] tracking-[4px] text-[#9ab8cc]">無料アプリOneSea から</div>
-      <h1 className="mt-1 text-[26px] font-extrabold tracking-[3px] text-[#f0e6c8]">わらわ〜会員へ</h1>
+      <h1 className="mt-1 text-[26px] font-extrabold tracking-[3px] text-[#f0e6c8]">わらわ〜プレミアム会員へ</h1>
       <p className="mt-3 text-[13px] leading-loose text-[#b8ccda]">
         無料のままでも、手帳とシューマン共振はずっと使えます。<br />
-        わらわ〜会員になると、見るだけだった海に、入れるようになります。
+        わらわ〜プレミアム会員になると、見るだけだった海に、入れるようになります。
       </p>
 
       <div className="mx-auto mt-6 max-w-[360px] space-y-2 text-left">
@@ -46,7 +46,7 @@ export default function JoinPage() {
       </div>
 
       <div className="mx-auto mt-6 max-w-[360px] rounded-2xl border border-[#d4b96a]/40 bg-[#d4b96a]/10 px-4 py-4">
-        <div className="text-[12px] text-[#c8b88a]">わらわ〜（年会費）</div>
+        <div className="text-[12px] text-[#c8b88a]">わらわ〜プレミアム（年会費）</div>
         <div className="num mt-0.5 text-[26px] font-extrabold text-[#f0e6c8]">
           39,600<span className="text-[13px]">円 / 年</span>
         </div>

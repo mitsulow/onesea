@@ -196,15 +196,16 @@ export function ServiceLP({ cfg }: { cfg: LPConfig }) {
           {cfg.priceSub && <div className="num mt-2 text-[12px]" style={{ color: t.sub }}>{cfg.priceSub}</div>}
 
           <div className="mx-auto mt-6 max-w-[440px] rounded-2xl px-4 py-4 text-left" style={{ background: "rgba(255,255,255,0.06)", border: `1px dashed ${t.accent}` }}>
-            <div className="text-[12px] font-extrabold" style={{ color: t.accent }}>いま、OneSeaキャンペーン中</div>
+            <div className="text-[12px] font-extrabold" style={{ color: t.accent }}>いま、わらわ〜プレミアムキャンペーン中</div>
             <p className="mt-1 text-[12px] leading-relaxed" style={{ color: t.ink }}>
-              {cfg.title}に加えて<b>{cfg.campaignServices}</b>の全機能が、単体4つ分の総額 <span className="num">210,000円</span> のところ
+              {cfg.title}に加えて<b>{cfg.campaignServices}</b>の全機能が、単体4つ分の総額 <span className="num">214,800円</span> のところ、
+              <b>わらわ〜プレミアム会員</b>なら
               <b className="num" style={{ color: t.accent }}> 39,600円 / 年</b> で全部使えます。
             </p>
           </div>
 
           <a href={WARAWA_LP_URL} className="mt-5 block w-full rounded-2xl py-4 text-[15px] font-extrabold no-underline" style={{ background: t.ctaBg, color: t.ctaInk }}>
-            入会に進む（OneSeaキャンペーン）
+            わらわ〜プレミアム会員になる
           </a>
           <p className="mt-2.5 text-[10.5px]" style={{ color: t.sub }}>お支払いは OneSea のみ。1回のご入会で四つの扉すべてが開きます。</p>
         </section>

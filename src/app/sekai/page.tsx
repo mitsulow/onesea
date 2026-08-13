@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { ServiceIntro } from "@/components/ServiceIntro";
 import {
   SekaiShell,
   MootsSection,
@@ -18,6 +19,7 @@ export default function SekaiHomePage() {
   const { me, myPref, mootCount, refreshMootCount } = useSekaiMe();
   return (
     <SekaiShell>
+      <ServiceIntro svc="sekai" />
       <MootsSection me={me} myPref={myPref} mootCount={mootCount} onRsvped={refreshMootCount} />
       <ActivitySection me={me} />
       <CafeBar pref={myPref} />

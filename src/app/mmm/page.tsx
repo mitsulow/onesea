@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { Otohikari } from "@/components/Otohikari";
+import { ServiceIntro } from "@/components/ServiceIntro";
 import { MorningOpening } from "@/components/MorningOpening";
 import { SchumannAudioPlayer } from "@/components/SchumannAudioPlayer";
 import { CotozuteTeaser } from "@/components/CotozuteTeaser";
@@ -123,6 +124,7 @@ export default function MmmPage() {
 
       {/* ① OTOHIKARI MAP + ② シューマン音（地球儀は全幅の没入バンド） */}
       <div className="px-4">
+        <ServiceIntro svc="mmm" />
         <Otohikari />
         <SchumannAudioPlayer />
       </div>

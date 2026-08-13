@@ -12,7 +12,7 @@ const cfg: LPConfig = {
   brandKicker: "R A K U I C H I  R A K U Z A",
   title: "楽市楽座",
   tagline: "あなたの手仕事を、村の家族へ。\n0円出品から、日本人総フリーランス化計画。",
-  lead: "楽市楽座は、OneSeaの中のマーケットです。プロの商品も、0円のお試しも、ブツブツ交換も。閲覧と購入は誰でも、出品はOneSea会員から。取引の相談はそのままTALKで。信頼でつながる、村の市場です。",
+  lead: "楽市楽座は、OneSeaの中のマーケットです。プロの商品も、0円のお試しも、ブツブツ交換も。閲覧と購入は誰でも、出品はわらわ〜プレミアム会員から。取引の相談はそのままTALKで。信頼でつながる、村の市場です。",
   heroImg: "/rakuichi/logo-emblem.webp",
   heroContain: true,
   featuresHeading: "楽市楽座の仕組み",
@@ -22,8 +22,8 @@ const cfg: LPConfig = {
     { no: "3", title: "商談はTALKで", body: "気になった品は、出品者とそのままTALK（メッセージ・ビデオ通話）でやりとり。" },
     { no: "4", title: "共通のマイページ名刺", body: "五つのサービス共通のマイページが、あなたの信頼の名刺になります。" },
   ],
-  priceMain: "月 4,000円",
-  priceSub: "単体プラン（出品・年 48,000円分）",
+  priceMain: "月 4,400円",
+  priceSub: "単体プラン（出品・年 52,800円分）",
   campaignServices: "MMM・ツキヨガ・セカイムラ",
 };
 

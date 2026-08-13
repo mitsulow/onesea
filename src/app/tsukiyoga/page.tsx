@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { PriceBanner } from "@/components/PriceBanner";
+import { ServiceIntro } from "@/components/ServiceIntro";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { moonOf, nextMoons, todayKey, YOBI, type MoonEvent } from "@/lib/almanac";
 
@@ -97,6 +98,7 @@ export default function TsukiyogaPage() {
         </span>
       </header>
       <PriceBanner service="ツキヨガ" price="月5,500円" lp="/lp/tsukiyoga" color="#f0e0a8" />
+      <ServiceIntro svc="tsukiyoga" />
 
       {/* 今日の月 */}
       <section className="card" style={{ background: "linear-gradient(160deg,#141020,#1e1830)", border: "none" }}>
