@@ -61,6 +61,22 @@ function IcoDots() {
   );
 }
 
+/** 自分のプロフィール(顔+名前)をページ内で1回だけ取得して全カードで共有（いいね直後に自分の顔を並べる用） */
+let myProfCache: Promise<{ avatar_url: string | null; display_name: string | null }> | null = null;
+function getMyProf(uid: string) {
+  if (!myProfCache) {
+    myProfCache = import("@/lib/supabase/client").then(({ createClient }) =>
+      createClient()
+        .from("profiles")
+        .select("avatar_url, display_name")
+        .eq("id", uid)
+        .maybeSingle()
+        .then(({ data }) => ({ avatar_url: data?.avatar_url ?? null, display_name: data?.display_name ?? null }))
+    );
+  }
+  return myProfCache;
+}
+
 /** 1,000以上は「1K」「1.5K」「12K」、100万以上は「1M」表記（Threads/Instagram式） */
 function fmtCount(n: number): string {
   if (n < 1000) return String(n);
@@ -122,6 +138,7 @@ export function PostCard({
   const [cBody, setCBody] = useState("");
   const [cSending, setCSending] = useState(false);
   const [gone, setGone] = useState(false);
+  const [myProf, setMyProf] = useState<{ avatar_url: string | null; display_name: string | null } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [meishi, setMeishi] = useState(false);
   const [expanded, setExpanded] = useState(hd);
@@ -136,6 +153,7 @@ export function PostCard({
     if (!(await gate.check("いいね"))) return;
     setIsLiked(!isLiked);
     setLikeCount((c) => c + (isLiked ? -1 : 1));
+    getMyProf(me.id).then(setMyProf).catch(() => {});
     await toggleLike(post.id, me.id, isLiked);
   };
 
@@ -205,6 +223,12 @@ export function PostCard({
       <img src="/icons/icon-leaf.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} />
     </div>
   );
+
+  // いいねした人の顔: 自分が押した瞬間に自分の顔を先頭へ(外したら消す)。読込済みの配列と重複しないよう顔URLで間引く
+  const baseLikers = (likers ?? []).filter(
+    (l) => !myProf || l.avatar_url !== myProf.avatar_url || l.display_name !== myProf.display_name
+  );
+  const shownLikers = isLiked && myProf ? [myProf, ...baseLikers].slice(0, 3) : baseLikers;
 
   return (
     <div className="py-2.5">
@@ -405,9 +429,9 @@ export function PostCard({
       </div>
 
       {/* いいねした人の顔（FB風） */}
-      {likers && likers.length > 0 && (
+      {shownLikers.length > 0 && (
         <div className="mt-1 flex items-center">
-          {likers.map((l, i) => (
+          {shownLikers.map((l, i) => (
             <span key={i} style={{ marginLeft: i === 0 ? 0 : -6 }}>
               {l.avatar_url ? (
                 <img
@@ -424,7 +448,7 @@ export function PostCard({
             </span>
           ))}
           <span className="ml-1.5 text-[11px] text-[#8a8d91]">
-            {likers[0]?.display_name ?? ""}
+            {shownLikers[0]?.display_name ?? ""}
             {likeCount > 1 ? ` 他${fmtCount(likeCount - 1)}人` : ""}
           </span>
         </div>
