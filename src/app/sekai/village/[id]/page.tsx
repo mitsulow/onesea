@@ -7,6 +7,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage, fetchGroupMessages, sendGroupMessage } from "@/lib/line";
+import { DotsMenu, EditSheet } from "@/components/PostKit";
 import { uploadImage } from "@/lib/images";
 import { SnsIcon } from "@/components/SnsIcon";
 import { EmbedCard } from "@/components/EmbedCard";
@@ -76,6 +77,8 @@ export default function VillagePage() {
   const [editing, setEditing] = useState(false);
   const [amWara, setAmWara] = useState<boolean | null>(null); // わらわ〜会員か(無料はnullでなくfalse)
   const [reportPost, setReportPost] = useState<{ id: string; body: string } | null>(null);
+  const [vEdit, setVEdit] = useState<{ id: string; body: string } | null>(null);
+  const [vSaving, setVSaving] = useState(false);
   useEffect(() => {
     if (!me) return;
     const supabase = createClient();
@@ -781,22 +784,19 @@ export default function VillagePage() {
                   <span className="num ml-auto text-[10px] text-[#c0c8c0]">
                     {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                   </span>
-                  {me && amOffice && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm("【事務局権限】この村の投稿を削除しますか？")) return;
-                        const supabase = createClient();
-                        await supabase.from("village_posts").delete().eq("id", p.id);
-                        load();
-                      }}
-                      className="ml-1 text-[9px] font-bold text-[#c05030] underline"
-                    >削除</button>
-                  )}
                   {me && (
-                    <button
-                      onClick={() => setReportPost({ id: p.id, body: String(p.body ?? "") })}
-                      className="ml-1 text-[9px] text-[#c0c8c0] underline"
-                    >通報</button>
+                    <span className="ml-1">
+                      <DotsMenu
+                        canEdit={me.id === p.user_id || amOffice}
+                        onEdit={() => setVEdit({ id: p.id, body: String(p.body ?? "") })}
+                        onDelete={async () => {
+                          if (!confirm(me.id === p.user_id ? "この投稿を削除しますか？" : "【事務局権限】この村の投稿を削除しますか？")) return;
+                          await createClient().from("village_posts").delete().eq("id", p.id);
+                          load();
+                        }}
+                        onReport={() => setReportPost({ id: p.id, body: String(p.body ?? "") })}
+                      />
+                    </span>
                   )}
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">
@@ -922,6 +922,23 @@ export default function VillagePage() {
           </section>
         )}
       </div>
+      {vEdit && (
+        <EditSheet
+          value={vEdit.body}
+          onChange={(v) => setVEdit({ ...vEdit, body: v })}
+          saving={vSaving}
+          onCancel={() => setVEdit(null)}
+          onSave={async () => {
+            if (!vEdit.body.trim() || vSaving) return;
+            setVSaving(true);
+            const { error } = await createClient().from("village_posts").update({ body: vEdit.body.trim() }).eq("id", vEdit.id);
+            setVSaving(false);
+            if (error) { alert("保存できませんでした: " + error.message); return; }
+            setVEdit(null);
+            load();
+          }}
+        />
+      )}
       {reportPost && (
         <ReportDialog kind="village_post" targetId={reportPost.id} targetUrl={`/sekai/village/${villageId}`} excerpt={reportPost.body} meId={me?.id ?? null} onClose={() => setReportPost(null)} />
       )}

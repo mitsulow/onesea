@@ -7,6 +7,8 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import { useWarawaGate } from "@/lib/warawaGate";
+import { DotsMenu, EditSheet } from "@/components/PostKit";
+import { ReportDialog } from "@/components/ReportDialog";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { PREFS, fetchVillagePostComments, addVillagePostComment, type VillagePostComment } from "@/lib/sekai";
 import { SeedSection } from "@/components/sekai/sections";
@@ -161,6 +163,8 @@ export default function SekaiMuraPrefPage() {
   const [villages, setVillages] = useState<any[]>([]);
   const [upBusy, setUpBusy] = useState<"cover" | "icon" | null>(null);
   const [tab, setTab] = useState<"feed" | "members" | "chat">("feed");
+  const [fReport, setFReport] = useState<{ id: string; body: string } | null>(null);
+  const [fSaving, setFSaving] = useState(false);
   /* 県の村長(3人まで) */
   const [leaders, setLeaders] = useState<any[]>([]);
   const [leaderBusy, setLeaderBusy] = useState(false);
@@ -747,15 +751,19 @@ export default function SekaiMuraPrefPage() {
                   <span className="num ml-auto text-[10px] text-[#c0c8c0]">
                     {new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}
                   </span>
-                  {me && (me.id === p.user_id || amOffice) && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm("この投稿を削除しますか？")) return;
-                        await createClient().from("village_posts").delete().eq("id", p.id);
-                        if (room) loadFeed(room.id);
-                      }}
-                      className="ml-1 text-[9px] font-bold text-[#c05030] underline"
-                    >削除</button>
+                  {me && (
+                    <span className="ml-1">
+                      <DotsMenu
+                        canEdit={me.id === p.user_id || amOffice}
+                        onEdit={() => { setFEdit(p); setFEditBody(p.body ?? ""); }}
+                        onDelete={async () => {
+                          if (!confirm("この投稿を削除しますか？")) return;
+                          await createClient().from("village_posts").delete().eq("id", p.id);
+                          if (room) loadFeed(room.id);
+                        }}
+                        onReport={() => setFReport({ id: p.id, body: p.body ?? "" })}
+                      />
+                    </span>
                   )}
                 </div>
                 <p className="mt-1 whitespace-pre-wrap break-words text-[13px] leading-relaxed text-[#5a5448]">{p.body}</p>
@@ -776,12 +784,7 @@ export default function SekaiMuraPrefPage() {
                   >
                     💬 {(fCmts[p.id] ?? []).length}
                   </button>
-                  {me && me.id === p.user_id && (
-                    <button
-                      onClick={() => { setFEdit(p); setFEditBody(p.body ?? ""); }}
-                      className="ml-auto rounded-full border border-[#d8e4d0] px-2 py-0.5 text-[10.5px] font-bold text-[#5a7a5c]"
-                    >編集</button>
-                  )}
+
                 </div>
 
                 {/* コメント欄 */}
@@ -823,28 +826,18 @@ export default function SekaiMuraPrefPage() {
       </section>
       </>)}
 
-      {/* FEED投稿の編集(本人) */}
+      {/* FEED投稿の編集 — コトヅテ準拠の全画面シート */}
       {fEdit && (
-        <div className="fixed inset-0 z-[118] flex items-center justify-center bg-black/55 px-5" onClick={() => setFEdit(null)}>
-          <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-2 text-[13.5px] font-extrabold text-[#2a4a34]">投稿を編集</div>
-            <textarea
-              value={fEditBody}
-              onChange={(e) => setFEditBody(e.target.value)}
-              rows={5}
-              className="w-full resize-y rounded-xl border border-[#dce8d8] bg-white px-3 py-2.5 text-[13.5px] leading-relaxed outline-none"
-            />
-            <div className="mt-2 flex gap-2">
-              <button onClick={() => setFEdit(null)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8a9a84]">キャンセル</button>
-              <button
-                onClick={saveFEdit}
-                disabled={!fEditBody.trim()}
-                className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40"
-                style={{ background: GREEN }}
-              >保存する</button>
-            </div>
-          </div>
-        </div>
+        <EditSheet
+          value={fEditBody}
+          onChange={setFEditBody}
+          saving={fSaving}
+          onCancel={() => setFEdit(null)}
+          onSave={async () => { if (!fEditBody.trim() || fSaving) return; setFSaving(true); await saveFEdit(); setFSaving(false); }}
+        />
+      )}
+      {fReport && (
+        <ReportDialog kind="mura" targetId={fReport.id} targetUrl={`/sekai/mura/${idx}`} excerpt={fReport.body} meId={me?.id ?? null} onClose={() => setFReport(null)} />
       )}
 
       {/* メインのセカイムラ選択(2県目以降に参加した時だけ) */}

@@ -7,6 +7,8 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import { DotsMenu } from "@/components/PostKit";
+import { ReportDialog } from "@/components/ReportDialog";
 import { useSnackbar } from "@/components/Snackbar";
 import { IosBackButton } from "@/components/IosBackButton";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
@@ -62,6 +64,7 @@ export default function TanboDetailPage() {
   const [chat, setChat] = useState<any[]>([]);
   const [chatBody, setChatBody] = useState("");
 
+  const [postReport, setPostReport] = useState<{ id: string; body: string } | null>(null);
   // 編集シート
   const [editing, setEditing] = useState(false);
   const [eName, setEName] = useState("");
@@ -362,17 +365,13 @@ export default function TanboDetailPage() {
                     <div className="truncate text-[13px] font-bold text-[#2a3a28]">{p.profiles?.display_name ?? "メンバー"}</div>
                     <div className="num text-[10px] text-[#8aa088]">{new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}</div>
                   </div>
-                  {me && (me.id === p.user_id || tanbo.user_id === me.id || amAdmin) && (
-                    <span className="flex flex-shrink-0 items-center gap-1.5">
-                      <button
-                        onClick={() => { setSheet("report"); setEditPostId(p.id); setBody(p.body ?? ""); setPhoto(p.photo_url ?? null); }}
-                        className="rounded-lg border border-[#a8c8a0] px-2.5 py-1 text-[12px] font-bold" style={{ color: G }}
-                      >編集</button>
-                      <button
-                        onClick={async () => { if (!confirm("削除しますか？")) return; await createClient().from("tanbo_posts").delete().eq("id", p.id); load(); }}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#eef4ea] text-[13px] text-[#8aa088]"
-                      >×</button>
-                    </span>
+                  {me && (
+                    <DotsMenu
+                      canEdit={me.id === p.user_id || tanbo.user_id === me.id || amAdmin}
+                      onEdit={() => { setSheet("report"); setEditPostId(p.id); setBody(p.body ?? ""); setPhoto(p.photo_url ?? null); }}
+                      onDelete={async () => { if (!confirm("削除しますか？")) return; await createClient().from("tanbo_posts").delete().eq("id", p.id); load(); }}
+                      onReport={() => setPostReport({ id: p.id, body: p.body ?? "" })}
+                    />
                   )}
                 </div>
                 <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#3a4a34]">{p.body}</p>
@@ -505,6 +504,10 @@ export default function TanboDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {postReport && (
+        <ReportDialog kind="tanbo" targetId={postReport.id} targetUrl={`/sekai/kome/${tanboId}`} excerpt={postReport.body} meId={me?.id ?? null} onClose={() => setPostReport(null)} />
       )}
 
       {/* 編集シート(名前・県・ひとこと) */}

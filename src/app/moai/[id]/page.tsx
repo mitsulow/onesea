@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import { DotsMenu } from "@/components/PostKit";
+import { ReportDialog } from "@/components/ReportDialog";
 import { IosBackButton } from "@/components/IosBackButton";
 import { PlaceOverlay, type PlaceInfo } from "@/components/PlaceOverlay";
 import { fetchMoai, joinMoai, leaveMoai, fetchMoaiMemberIds, fetchMoaiMembers, updateMoai, deleteMoai, fetchMoaiComments, addMoaiComment, fetchMoaiPending, approveMoaiMember, rejectMoaiMember, myMoaiStatus, moaiCat, MOAI_CATEGORIES, type Moai } from "@/lib/moai";
@@ -85,6 +87,7 @@ export default function MoaiDetailPage() {
   const isOya = !!me && (moai?.created_by === me.id || ((moai?.leaders ?? []) as string[]).includes(me.id));
   const [myStatus, setMyStatus] = useState<string | null>(null);
   const [pending, setPending] = useState<any[]>([]);
+  const [postReport, setPostReport] = useState<{ id: string; body: string } | null>(null);
   const [amAdmin, setAmAdmin] = useState(false);
   useEffect(() => {
     if (!me) return;
@@ -381,17 +384,13 @@ export default function MoaiDetailPage() {
                     <div className="truncate text-[13px] font-bold text-[#3a2420]">{p.profiles?.display_name ?? "メンバー"}</div>
                     <div className="num text-[10px] text-[#b09088]">{new Date(p.created_at).getMonth() + 1}/{new Date(p.created_at).getDate()}</div>
                   </div>
-                  {me && (me.id === p.user_id || moai.created_by === me.id || amAdmin) && (
-                    <span className="flex flex-shrink-0 items-center gap-1.5">
-                      <button
-                        onClick={() => { setSheet("report"); setEditPostId(p.id); setBody(p.body ?? ""); setPhoto(p.photo_url ?? null); }}
-                        className="rounded-lg border px-2.5 py-1 text-[12px] font-bold text-[#c0392b]" style={{ borderColor: "#e0a89f" }}
-                      >編集</button>
-                      <button
-                        onClick={async () => { if (!confirm("削除しますか？")) return; await createClient().from("moai_posts").delete().eq("id", p.id); load(); }}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-[#f0ece8] text-[13px] text-[#a08078]"
-                      >×</button>
-                    </span>
+                  {me && (
+                    <DotsMenu
+                      canEdit={me.id === p.user_id || moai.created_by === me.id || amAdmin}
+                      onEdit={() => { setSheet("report"); setEditPostId(p.id); setBody(p.body ?? ""); setPhoto(p.photo_url ?? null); }}
+                      onDelete={async () => { if (!confirm("削除しますか？")) return; await createClient().from("moai_posts").delete().eq("id", p.id); load(); }}
+                      onReport={() => setPostReport({ id: p.id, body: p.body ?? "" })}
+                    />
                   )}
                 </div>
                 <p className={`mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#4a3630] ${expanded.has(p.id) ? "" : "line-clamp-3"}`}>{p.body}</p>
@@ -510,6 +509,10 @@ export default function MoaiDetailPage() {
           )
         )}
       </div>
+
+      {postReport && (
+        <ReportDialog kind="moai" targetId={postReport.id} targetUrl={`/moai/${moaiId}`} excerpt={postReport.body} meId={me?.id ?? null} onClose={() => setPostReport(null)} />
+      )}
 
       {/* 投稿シート */}
       {sheet && me && (
