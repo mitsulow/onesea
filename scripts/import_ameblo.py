@@ -31,7 +31,7 @@ mgmt_tok = re.search(r'SUPABASE_ACCESS_TOKEN="?([^"\r\n]+)', open(os.path.expand
 
 def mgmt(url):
     req = urllib.request.Request(url, headers={"Authorization": "Bearer " + mgmt_tok, "User-Agent": "curl/8.0"})
-    return json.loads(urllib.request.urlopen(req).read())
+    return json.loads(urllib.request.urlopen(req, timeout=30).read())  # timeout無しだと圏外時に永久ハング(実際に起きた)
 
 keys = mgmt("https://api.supabase.com/v1/projects/hpgofjkxqguzgrptchqj/api-keys")
 SERVICE_KEY = next(k["api_key"] for k in keys if k["name"] == "service_role")
