@@ -40,7 +40,7 @@ const IG_HEADER = 54; // 埋め込み上部（アバター+名前）の高さ
 const IG_FOOTER = 168; // ★「Instagramでもっと見る」リンク行まで含めて切り落とす // 下部（♡💬↗ボタン列+リンク行）の高さ
 
 /** Instagramのメディア部分だけを見せる埋め込み */
-function InstagramMediaOnly({ igId }: { igId: string }) {
+function InstagramMediaOnly({ igId, flush }: { igId: string; flush?: boolean }) {
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [h, setH] = useState<number | null>(null); // iframe全体の実寸
 
@@ -62,7 +62,7 @@ function InstagramMediaOnly({ igId }: { igId: string }) {
   const cropped = h != null && h > IG_HEADER + IG_FOOTER + 120;
   return (
     <div
-      className="relative mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]"
+      className={`relative mt-2 overflow-hidden bg-[#faf8f2] ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}
       style={{ height: cropped ? h! - IG_HEADER - IG_FOOTER : 560 }}
     >
       <iframe
@@ -89,7 +89,7 @@ function InstagramMediaOnly({ igId }: { igId: string }) {
  * 動画・画像のデータは各SNSのCDN→視聴者に直接流れ、OneSeaのサーバーは通らない。
  * 外部サイトへ飛ばさない=無限フィードに吸われず、コトヅテに留まる。
  */
-export function EmbedCard({ embed }: { embed: OGPEmbed }) {
+export function EmbedCard({ embed, flush }: { embed: OGPEmbed; flush?: boolean }) {
   const url = embed.url;
   const [on, setOn] = useState(false);
 
@@ -100,7 +100,7 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
   /* YouTube: サムネはYouTube公式CDNの静止画（無料・軽量）→タップでその場再生 */
   if (ytId) {
     return (
-      <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8]">
+      <div className={`mt-2 overflow-hidden ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}>
         <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
           {on ? (
             <iframe
@@ -144,14 +144,14 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
      それを受けてヘッダー(54px)と下のボタン列(約102px)を枠外にはみ出させて隠す。
      動画はiframe内の▶を押すまで再生されない。loading=lazyで画面に近い枠だけ読込 */
   if (igId) {
-    return <InstagramMediaOnly igId={igId} />;
+    return <InstagramMediaOnly igId={igId} flush={flush} />;
   }
 
   /* X: タップするまでiframeを読まない */
   if (tweetId) {
     if (on) {
       return (
-        <div className="mt-2 overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2]">
+        <div className={`mt-2 overflow-hidden bg-[#faf8f2] ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}>
           <iframe
             src={`https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=light`}
             className="w-full"
@@ -169,7 +169,7 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
           e.stopPropagation();
           setOn(true);
         }}
-        className="relative mt-2 block w-full overflow-hidden rounded-xl border border-[#ede5d8] bg-[#faf8f2] text-left"
+        className={`relative mt-2 block w-full overflow-hidden bg-[#faf8f2] text-left ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}
         aria-label="投稿をここで表示"
       >
         {embed.image ? (
@@ -210,7 +210,7 @@ export function EmbedCard({ embed }: { embed: OGPEmbed }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-2 block overflow-hidden rounded-xl border border-[#ede5d8] no-underline transition-colors hover:bg-[#faf8f2]"
+      className={`mt-2 block overflow-hidden no-underline transition-colors hover:bg-[#faf8f2] ${flush ? "" : "rounded-xl border border-[#ede5d8]"}`}
     >
       {embed.image && <img src={embed.image} alt="" loading="lazy" className="h-36 w-full object-cover" />}
       <div className="p-2.5">

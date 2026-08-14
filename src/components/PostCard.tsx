@@ -25,7 +25,7 @@ import { WarawaBadge } from "@/components/WarawaBadge";
 /** ハート: 白抜き→いいねで赤塗り（スレッズ風・形は少しふっくらさせた別物） */
 function IcoHeart({ on }: { on: boolean }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#1c1e21"} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
+    <svg width="27" height="27" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#1c1e21"} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
       <path d="M12 20.4C7 17.2 3.4 13.9 3.4 9.8c0-2.7 2.1-4.7 4.6-4.7 1.7 0 3.3 1 4 2.5.7-1.5 2.3-2.5 4-2.5 2.5 0 4.6 2 4.6 4.7 0 4.1-3.6 7.4-8.6 10.6z" />
     </svg>
   );
@@ -34,7 +34,7 @@ function IcoHeart({ on }: { on: boolean }) {
 /** コメント: 角丸の吹き出し（尻尾つき） */
 function IcoBubble() {
   return (
-    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1c1e21" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1c1e21" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 4.4c4.8 0 8.3 2.9 8.3 6.8s-3.5 6.8-8.3 6.8c-.9 0-1.7-.1-2.5-.3l-3.9 1.8 1-3.4c-1.8-1.2-2.9-3-2.9-4.9 0-3.9 3.5-6.8 8.3-6.8z" />
     </svg>
   );
@@ -43,7 +43,7 @@ function IcoBubble() {
 /** シェア: 紙飛行機 */
 function IcoPlane() {
   return (
-    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#1c1e21" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1c1e21" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20.7 3.3 4.1 10c-.9.4-.8 1.6.1 1.9l6 2 2 5.9c.3.9 1.6 1 1.9.1l6.7-16.6z" />
       <path d="M20.7 3.3 10.2 13.9" />
     </svg>
@@ -343,7 +343,7 @@ export function PostCard({
       )}
       {post.embed && (
         <div className="-mx-4">
-          <EmbedCard embed={post.embed} />
+          <EmbedCard embed={post.embed} flush />
         </div>
       )}
 

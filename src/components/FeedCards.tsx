@@ -158,8 +158,8 @@ export function MuraFeedCard({ mura, onDeleted }: { mura: MuraPost; onDeleted?: 
         </div>
       )}
       {mura.embed && (
-        <div className="mt-2">
-          <EmbedCard embed={mura.embed} />
+        <div className="-mx-4 mt-2">
+          <EmbedCard embed={mura.embed} flush />
         </div>
       )}
 
