@@ -2,11 +2,10 @@
 
 import { ReportDialog } from "@/components/ReportDialog";
 import { fetchFollowees, toggleFollow } from "@/lib/follows";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
+import { CotozutePost, CotozuteComment, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
 import { MeishiModal } from "./MeishiModal";
 import { srcCdn } from "@/lib/images";
@@ -116,7 +115,12 @@ export function PostCard({
     ? (rawBody ?? "").split(post.embed.url).join("").trim()
     : rawBody;
   const [likeCount, setLikeCount] = useState(post.likes?.[0]?.count ?? 0);
-  const commentCount = post.comments?.[0]?.count ?? 0;
+  const [cCount, setCCount] = useState(post.comments?.[0]?.count ?? 0);
+  // フィード内コメント（本編を開かずその場で読める・書ける）
+  const [cOpen, setCOpen] = useState(false);
+  const [cList, setCList] = useState<CotozuteComment[] | null>(null);
+  const [cBody, setCBody] = useState("");
+  const [cSending, setCSending] = useState(false);
   const [gone, setGone] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [meishi, setMeishi] = useState(false);
@@ -145,6 +149,33 @@ export function PostCard({
     if (!me) return;
     import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(me.id).then(setAmOffice)).catch(() => {});
   }, [me]);
+
+  const loadComments = async () => {
+    const { fetchComments } = await import("@/lib/cotozute");
+    setCList(await fetchComments(post.id));
+  };
+  const onCommentToggle = () => {
+    if (hd) {
+      // 詳細ページには下に常設のコメント欄がある → そこへスクロール
+      document.querySelector<HTMLTextAreaElement>("main textarea")?.focus();
+      return;
+    }
+    const v = !cOpen;
+    setCOpen(v);
+    if (v && cList === null) loadComments();
+  };
+  const submitComment = async () => {
+    if (!me || !cBody.trim() || cSending) return;
+    if (!(await gate.check("コメント"))) return;
+    setCSending(true);
+    const { addComment, ensureProfile } = await import("@/lib/cotozute");
+    await ensureProfile(me);
+    await addComment(post.id, me.id, cBody.trim());
+    setCBody("");
+    setCSending(false);
+    setCCount((c) => c + 1);
+    loadComments();
+  };
 
   const onDelete = async () => {
     if (!me || (me.id !== post.user_id && !amOffice)) return;
@@ -220,24 +251,30 @@ export function PostCard({
               <>
                 <div className="fixed inset-0 z-[70]" onClick={() => setMenuOpen(false)} />
                 <div className="absolute right-0 top-9 z-[71] w-[176px] overflow-hidden rounded-2xl border border-[#e8eaed] bg-white py-1 shadow-xl">
-                  {(me.id === post.user_id || amOffice) ? (
-                    <>
-                      <button
-                        onClick={() => { setMenuOpen(false); setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
-                        className="block w-full px-4 py-2.5 text-left text-[13.5px] font-bold text-[#1c1e21] active:bg-[#f0f2f5]"
-                      >記事の編集</button>
-                      <div className="mx-3 h-px bg-[#f0f2f5]" />
-                      <button
-                        onClick={() => { setMenuOpen(false); onDelete(); }}
-                        className="block w-full px-4 py-2.5 text-left text-[13.5px] font-bold text-[#e0455a] active:bg-[#f0f2f5]"
-                      >記事の削除</button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => { setMenuOpen(false); setReportOpen(true); }}
-                      className="block w-full px-4 py-2.5 text-left text-[13.5px] font-bold text-[#65676b] active:bg-[#f0f2f5]"
-                    >事務局へ削除依頼</button>
-                  )}
+                  {/* 編集/削除は投稿者と事務局だけ押せる。他の人には薄いグレーで表示（ユーザー指定） */}
+                  {(() => {
+                    const can = me.id === post.user_id || amOffice;
+                    return (
+                      <>
+                        <button
+                          onClick={() => { if (!can) return; setMenuOpen(false); setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
+                          disabled={!can}
+                          className={`block w-full px-4 py-2.5 text-left text-[13.5px] font-bold ${can ? "text-[#1c1e21] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
+                        >編集</button>
+                        <div className="mx-3 h-px bg-[#f0f2f5]" />
+                        <button
+                          onClick={() => { if (!can) return; setMenuOpen(false); onDelete(); }}
+                          disabled={!can}
+                          className={`block w-full px-4 py-2.5 text-left text-[13.5px] font-bold ${can ? "text-[#e0455a] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
+                        >削除</button>
+                        <div className="mx-3 h-px bg-[#f0f2f5]" />
+                        <button
+                          onClick={() => { setMenuOpen(false); setReportOpen(true); }}
+                          className="block w-full px-4 py-2.5 text-left text-[13.5px] font-bold text-[#65676b] active:bg-[#f0f2f5]"
+                        >通報</button>
+                      </>
+                    );
+                  })()}
                 </div>
               </>
             )}
@@ -299,14 +336,14 @@ export function PostCard({
             <span className="num text-[13px]" style={{ color: isLiked ? "#e8384f" : "#65676b" }}>{fmtCount(likeCount)}</span>
           )}
         </button>
-        <Link
-          href={`/post/${post.id}`}
-          className="flex items-center gap-1.5 rounded-full py-1.5 pl-1 pr-4 no-underline transition-transform active:scale-90"
+        <button
+          onClick={onCommentToggle}
+          className="flex items-center gap-1.5 rounded-full py-1.5 pl-1 pr-4 transition-transform active:scale-90"
           aria-label="コメント"
         >
           <IcoBubble />
-          {commentCount > 0 && <span className="num text-[13px] text-[#65676b]">{fmtCount(commentCount)}</span>}
-        </Link>
+          {cCount > 0 && <span className="num text-[13px] text-[#65676b]">{fmtCount(cCount)}</span>}
+        </button>
         <button
           onClick={async () => {
             const url = `https://onesea.vercel.app/post/${post.id}`;
@@ -390,6 +427,69 @@ export function PostCard({
             {likers[0]?.display_name ?? ""}
             {likeCount > 1 ? ` 他${fmtCount(likeCount - 1)}人` : ""}
           </span>
+        </div>
+      )}
+
+      {/* フィード内コメント欄（本編を開かず、その場で読み書き） */}
+      {cOpen && !hd && (
+        <div className="mt-2 rounded-2xl bg-[#f5f6f8] px-3 pb-2.5 pt-2">
+          {cList === null ? (
+            <div className="flex justify-center py-3">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#c8ccd1] border-t-transparent" />
+            </div>
+          ) : cList.length === 0 ? (
+            <p className="py-1.5 text-[12px] text-[#9aa0a6]">まだコメントはありません。最初のひとことをどうぞ</p>
+          ) : (
+            cList.map((c) => (
+              <div key={c.id} className="flex gap-2 py-1.5">
+                <span className="mt-0.5 h-[26px] w-[26px] flex-shrink-0 overflow-hidden rounded-full">
+                  {c.profiles?.avatar_url ? (
+                    <img src={srcCdn(c.profiles.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center" style={{ background: "linear-gradient(140deg,#cfe8d8,#9cc8ac)" }}>
+                      <img src="/icons/icon-leaf.webp" alt="" style={{ width: 12, height: 12 }} />
+                    </span>
+                  )}
+                </span>
+                <div className="min-w-0 flex-1 rounded-xl bg-white px-2.5 py-1.5">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-[11.5px] font-bold text-[#1c1e21]">{c.profiles?.display_name ?? "むらびと"}</span>
+                    <span className="num flex-shrink-0 text-[10px] text-[#b0b3b8]">{relTime(c.created_at)}</span>
+                  </div>
+                  <p className="break-words text-[13px] leading-relaxed text-[#33363a]">{c.body}</p>
+                </div>
+              </div>
+            ))
+          )}
+          {me ? (
+            <div className="mt-1.5 flex items-end gap-1.5">
+              <textarea
+                value={cBody}
+                onChange={(e) => setCBody(e.target.value)}
+                rows={1}
+                placeholder="そっと、ひとこと..."
+                className="min-h-[38px] flex-1 resize-none rounded-full border border-[#dcdfe4] bg-white px-3.5 py-2 text-[13.5px] leading-snug outline-none focus:border-[#2CB7DE]"
+              />
+              <button
+                onClick={submitComment}
+                disabled={!cBody.trim() || cSending}
+                aria-label="コメントを送信"
+                className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-full text-white disabled:opacity-35"
+                style={{ background: "#2CB7DE" }}
+              >
+                {cSending ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20.7 3.3 4.1 10c-.9.4-.8 1.6.1 1.9l6 2 2 5.9c.3.9 1.6 1 1.9.1l6.7-16.6z" />
+                    <path d="M20.7 3.3 10.2 13.9" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          ) : (
+            <p className="pt-1 text-[11.5px] text-[#9aa0a6]">コメントするにはログインしてください</p>
+          )}
         </div>
       )}
     </div>
