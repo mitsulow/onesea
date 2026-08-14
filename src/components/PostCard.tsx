@@ -4,7 +4,7 @@ import { ReportDialog } from "@/components/ReportDialog";
 import { fetchFollowees, toggleFollow } from "@/lib/follows";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { CotozutePost, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
@@ -17,10 +17,50 @@ import { WarawaBadge } from "@/components/WarawaBadge";
 /* eslint-disable @next/next/no-img-element */
 
 /**
- * 言の葉カード — Facebook型。
- * ヘッダー（丸アイコン・太字名・時間）→ 本文1行+もっと見る → 写真は左右いっぱい
- * → ❤コメント シェア → いいねした人の顔。アイコンタップで名刺。
+ * 言の葉カード — Threads型のシンプル路線（2026-08-14ユーザー指定）。
+ * ヘッダー（丸アイコン・太字名・時間・右上⋯メニュー）→ 本文 → 写真
+ * → 左寄せのアイコン行（白抜きハート→押すと赤 / 吹き出し / 紙飛行機）→ いいねした人の顔。
+ * 編集・削除は右上⋯に集約（旧: 編集ピル+×ボタン+長押し削除は全廃）。
  */
+
+/** ハート: 白抜き→いいねで赤塗り（スレッズ風・形は少しふっくらさせた別物） */
+function IcoHeart({ on }: { on: boolean }) {
+  return (
+    <svg width="21" height="21" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#43464a"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
+      <path d="M12 20.4C7 17.2 3.4 13.9 3.4 9.8c0-2.7 2.1-4.7 4.6-4.7 1.7 0 3.3 1 4 2.5.7-1.5 2.3-2.5 4-2.5 2.5 0 4.6 2 4.6 4.7 0 4.1-3.6 7.4-8.6 10.6z" />
+    </svg>
+  );
+}
+
+/** コメント: 角丸の吹き出し（尻尾つき） */
+function IcoBubble() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#43464a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 4.4c4.8 0 8.3 2.9 8.3 6.8s-3.5 6.8-8.3 6.8c-.9 0-1.7-.1-2.5-.3l-3.9 1.8 1-3.4c-1.8-1.2-2.9-3-2.9-4.9 0-3.9 3.5-6.8 8.3-6.8z" />
+    </svg>
+  );
+}
+
+/** シェア: 紙飛行機 */
+function IcoPlane() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#43464a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.7 3.3 4.1 10c-.9.4-.8 1.6.1 1.9l6 2 2 5.9c.3.9 1.6 1 1.9.1l6.7-16.6z" />
+      <path d="M20.7 3.3 10.2 13.9" />
+    </svg>
+  );
+}
+
+/** 右上の⋯（3つの点） */
+function IcoDots() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#7a7d82">
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
 
 function relTime(iso: string): string {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -68,7 +108,7 @@ export function PostCard({
   const [reportOpen, setReportOpen] = useState(false);
   const [meishi, setMeishi] = useState(false);
   const [expanded, setExpanded] = useState(hd);
-  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   if (gone) return null;
 
   const needsFold = !hd && !!bodyText && (bodyText.length > 42 || bodyText.includes("\n"));
@@ -80,17 +120,6 @@ export function PostCard({
     setIsLiked(!isLiked);
     setLikeCount((c) => c + (isLiked ? -1 : 1));
     await toggleLike(post.id, me.id, isLiked);
-  };
-
-  const startPress = () => {
-    if (me?.id !== post.user_id) return;
-    pressTimer.current = setTimeout(() => onDelete(), 600);
-  };
-  const endPress = () => {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
   };
 
   const [amOffice, setAmOffice] = useState(false);
@@ -134,15 +163,7 @@ export function PostCard({
   );
 
   return (
-    <div
-      className="py-2.5"
-      onTouchStart={startPress}
-      onTouchEnd={endPress}
-      onTouchMove={endPress}
-      onMouseDown={startPress}
-      onMouseUp={endPress}
-      onMouseLeave={endPress}
-    >
+    <div className="py-2.5">
       {meishi && pr?.username && <MeishiModal username={pr.username} onClose={() => setMeishi(false)} />}
 
       {/* ヘッダー */}
@@ -173,16 +194,41 @@ export function PostCard({
             )}
           </div>
         </div>
-        {(me?.id === post.user_id || amOffice) && (
-          <button
-            onClick={() => { setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
-            className="flex h-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] px-2.5 text-[12px] font-bold text-[#65676b] active:bg-[#e4e6e9]"
-          >編集</button>
-        )}
-        {(me?.id === post.user_id || amOffice) && (
-          <button onClick={onDelete} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#f0f2f5] text-[16px] font-bold text-[#65676b] active:bg-[#e4e6e9]" aria-label="自分の投稿を削除">
-            ×
-          </button>
+        {me && (
+          <span className="relative flex-shrink-0">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-full active:bg-[#f0f2f5]"
+              aria-label="投稿メニュー"
+            >
+              <IcoDots />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-[70]" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-9 z-[71] w-[176px] overflow-hidden rounded-2xl border border-[#e8eaed] bg-white py-1 shadow-xl">
+                  {(me.id === post.user_id || amOffice) ? (
+                    <>
+                      <button
+                        onClick={() => { setMenuOpen(false); setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
+                        className="block w-full px-4 py-2.5 text-left text-[13.5px] font-bold text-[#1c1e21] active:bg-[#f0f2f5]"
+                      >記事の編集</button>
+                      <div className="mx-3 h-px bg-[#f0f2f5]" />
+                      <button
+                        onClick={() => { setMenuOpen(false); onDelete(); }}
+                        className="block w-full px-4 py-2.5 text-left text-[13.5px] font-bold text-[#e0455a] active:bg-[#f0f2f5]"
+                      >記事の削除</button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => { setMenuOpen(false); setReportOpen(true); }}
+                      className="block w-full px-4 py-2.5 text-left text-[13.5px] font-bold text-[#65676b] active:bg-[#f0f2f5]"
+                    >事務局へ削除依頼</button>
+                  )}
+                </div>
+              </>
+            )}
+          </span>
         )}
       </div>
 
@@ -227,22 +273,26 @@ export function PostCard({
         </div>
       )}
 
-      {/* アクション（❤ 数字 / <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> 数字 / シェア） */}
-      <div className="mt-2 flex items-center border-t border-[#f0f2f5] pt-1.5">
+      {/* アクション行 — Threads風: 左寄せ・アイコンのみ・数字は右隣に小さく（区切り線なし） */}
+      <div className="mt-1.5 flex items-center">
         <button
           onClick={onLike}
           disabled={!me}
-          className={`flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] transition-transform active:scale-110 ${
-            isLiked ? "font-bold text-[#e0455a]" : "text-[#65676b]"
-          }`}
+          className="flex items-center gap-1 rounded-full py-1.5 pl-0 pr-2.5 transition-transform active:scale-90"
+          aria-label="いいね"
         >
-          <img src="/icons/icon-heart.webp" alt="" style={{ width: 16, height: 16, display: "inline", verticalAlign: -3, filter: isLiked ? "none" : "grayscale(1) opacity(.45)" }} /> {likeCount > 0 && <span className="num">{likeCount}</span>}
+          <IcoHeart on={isLiked} />
+          {likeCount > 0 && (
+            <span className="num text-[12.5px]" style={{ color: isLiked ? "#e8384f" : "#65676b" }}>{likeCount}</span>
+          )}
         </button>
         <Link
           href={`/post/${post.id}`}
-          className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] text-[#65676b] no-underline"
+          className="flex items-center gap-1 rounded-full px-2.5 py-1.5 no-underline transition-transform active:scale-90"
+          aria-label="コメント"
         >
-          <img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> {commentCount > 0 && <span className="num">{commentCount}</span>}
+          <IcoBubble />
+          {commentCount > 0 && <span className="num text-[12.5px] text-[#65676b]">{commentCount}</span>}
         </Link>
         <button
           onClick={async () => {
@@ -257,9 +307,10 @@ export function PostCard({
               } catch {}
             }
           }}
-          className="flex flex-1 items-center justify-center gap-1.5 py-1.5 text-[13px] text-[#65676b]"
+          className="flex items-center rounded-full px-2.5 py-1.5 transition-transform active:scale-90"
+          aria-label="シェア"
         >
-          <img src="/icons/icon-share2.webp" alt="シェア" style={{ width: 16, height: 16 }} />
+          <IcoPlane />
         </button>
         {me && me.id !== post.user_id && following !== null && (
           <button
@@ -268,18 +319,11 @@ export function PostCard({
               await toggleFollow(me.id, post.user_id, following);
               setFollowing(!following);
             }}
-            className="flex flex-1 items-center justify-center gap-1 py-1.5 text-[12px] font-bold"
-            style={{ color: following ? "#0abab5" : "#65676b" }}
+            className="ml-auto py-1.5 pl-2 text-[12px] font-bold"
+            style={{ color: following ? "#0abab5" : "#8a8d91" }}
           >
             {following ? "✓ フォロー中" : "＋ フォロー"}
           </button>
-        )}
-        {me && me.id !== post.user_id && (
-          <button
-            onClick={() => setReportOpen(true)}
-            className="flex w-9 items-center justify-center py-1.5 text-[10px] text-[#b0b3b8]"
-            aria-label="削除依頼"
-          >⚑</button>
         )}
         {pEditOpen && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setPEditOpen(false)}>
