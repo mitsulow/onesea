@@ -95,7 +95,7 @@
 
 ## 5.5 2026-08-13の大型追加（ブログ/ともだち/称号/バグ報告）
 
-- **ツレヅレ日記(ブログ)**: blog_posts。予約投稿=publish_atが未来だとRLSで非公開→時刻到来で自動公開(cron不要)。URLを叩くと「ブログ記事が無いようです」。**DELETEポリシーなし=過去記事は誰にも消せない**(ユーザー誓約)。公開範囲 visibility(public/friends/private)+ブログトップで一括変更。投稿/引っ越しはis_warawa限定。アメブロ取込=scripts/import_ameblo.py(公開ページ読み取りのみ・画像R2ミラー・レジューム可)、Web版=/blog/import(アメブロ/note・1呼出1記事)。エディタはYouTube/Amazon URL1行で自動埋込
+- **ツレヅレ日記(ブログ)**: blog_posts。予約投稿=publish_atが未来だとRLSで非公開→時刻到来で自動公開(cron不要)。URLを叩くと「ブログ記事が無いようです」。**DELETEポリシーなし=過去記事は誰にも消せない**(ユーザー誓約)。公開範囲 visibility(public/friends/private)+ブログトップで一括変更。投稿/引っ越しはis_warawa限定。アメブロ取込=scripts/import_ameblo.py(公開ページ読み取りのみ・画像R2ミラー・レジューム可)。みつろう全量5,373件取込済み(2026-08-15完了・アメブロ側total_countと一致)。本文中の過去記事リンクはrelink_ameblo.pyで16,543本を内部アドレス化済み(非公開・削除済み記事への1,128本はアメブロのまま温存=リンク切れ防止)。残タスク=予約投稿25件(Chromeのダウンロード許可待ち)、Web版=/blog/import(アメブロ/note・1呼出1記事)。エディタはYouTube/Amazon URL1行で自動埋込
 - **ともだち**: friend_requests。名刺交換(QR:/meishi/[id] とオンライン:MeishiModalボタン)→TALKに申請カード`[[friend-request:id]]`→2ボタン+編集可の定型文。acceptedは誰でも読める(友達一覧公開)。マイページ=ともだち/フォローされている人の2行
 - **称号**: SIR_USER_ID(みつろう)=「Warawa-Sir」黒縁・番号なし。No.2はmember_no_reserve経由で次の入会者へ(採番トリガが予約番号優先)。名刺=白和紙PNG(meishi-washi-white.png・PIL生成スクリプトはscratchpad)。無料会員バッジ=「無料わんし〜会員」
 - **サービス所属**: profiles.mmm_member/tsukiyoga_member(セカイムラはmurabito)。ServiceIntroが初回に説明を自動表示+小さな入会ボタン(様子見OK方式・押し付けない=ユーザー確定)
