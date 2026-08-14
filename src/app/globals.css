@@ -190,7 +190,11 @@ body {
 /* ブログ本文(アメブロから引っ越したHTML・エディタ製HTML共通の読みやすさ) */
 .blog-body { padding: 16px 0 8px; font-size: 15px; line-height: 2; color: #33382c; word-break: break-word; }
 .blog-body p { margin: 0 0 0.4em; }
-.blog-body img { max-width: 100%; height: auto; border-radius: 8px; }
+/* Tailwindのリセットがimgをdisplay:blockにするため、アメブロ由来のHTMLで
+   「バナー2つ横並び」が縦積みになり「text-align:centerの中央寄せ」も効かなくなる。
+   本文内はブラウザ標準のinline挙動に戻す(本家アメブロと同じ見た目にするため) */
+.blog-body img { display: inline-block; max-width: 100%; height: auto; border-radius: 8px; }
+.blog-body iframe { display: inline-block; }
 .blog-body a { color: #3a7abc; }
 .blog-body iframe { max-width: 100%; }
 .blog-body .blog-yt { position: relative; width: 100%; aspect-ratio: 16 / 9; margin: 10px 0; }
