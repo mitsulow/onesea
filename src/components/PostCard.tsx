@@ -274,7 +274,7 @@ export function PostCard({
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-[70]" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-9 z-[71] w-[128px] overflow-hidden rounded-2xl border border-[#e8eaed] bg-white py-1 shadow-xl">
+                <div className="absolute right-0 top-9 z-[71] overflow-hidden whitespace-nowrap rounded-2xl border border-[#e8eaed] bg-white py-1 shadow-xl">
                   {/* 編集/削除は投稿者と事務局だけ押せる。他の人には薄いグレーで表示（ユーザー指定） */}
                   {(() => {
                     const can = me.id === post.user_id || amOffice;
@@ -283,18 +283,18 @@ export function PostCard({
                         <button
                           onClick={() => { if (!can) return; setMenuOpen(false); setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
                           disabled={!can}
-                          className={`block w-full px-4 py-2.5 text-right text-[13.5px] font-bold ${can ? "text-[#1c1e21] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
+                          className={`block w-full px-5 py-2.5 text-center text-[13.5px] font-bold ${can ? "text-[#1c1e21] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
                         >編集</button>
                         <div className="mx-3 h-px bg-[#f0f2f5]" />
                         <button
                           onClick={() => { if (!can) return; setMenuOpen(false); onDelete(); }}
                           disabled={!can}
-                          className={`block w-full px-4 py-2.5 text-right text-[13.5px] font-bold ${can ? "text-[#e0455a] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
+                          className={`block w-full px-5 py-2.5 text-center text-[13.5px] font-bold ${can ? "text-[#e0455a] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
                         >削除</button>
                         <div className="mx-3 h-px bg-[#f0f2f5]" />
                         <button
                           onClick={() => { setMenuOpen(false); setReportOpen(true); }}
-                          className="block w-full px-4 py-2.5 text-right text-[13.5px] font-bold text-[#65676b] active:bg-[#f0f2f5]"
+                          className="block w-full px-5 py-2.5 text-center text-[13.5px] font-bold text-[#65676b] active:bg-[#f0f2f5]"
                         >通報</button>
                       </>
                     );
