@@ -13,10 +13,12 @@ import {
   fetchComments,
   fetchMyLikes,
   addComment,
-  updatePost,
   ensureProfile,
 } from "@/lib/cotozute";
 import { PostCard } from "@/components/PostCard";
+import { ImagePair, uploadImagePair, srcCdn } from "@/lib/images";
+
+/* eslint-disable @next/next/no-img-element */
 
 /** 言の葉の詳細 — 文を寄せる（コメント） */
 export default function PostDetailPage() {
@@ -33,6 +35,9 @@ export default function PostDetailPage() {
   const [editing, setEditing] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  const [editImgs, setEditImgs] = useState<ImagePair[]>([]);
+  const [upBusy, setUpBusy] = useState(false);
+  const [amOffice, setAmOffice] = useState(false);
 
   const load = useCallback(async () => {
     const [p, c] = await Promise.all([fetchPost(postId), fetchComments(postId)]);
@@ -45,10 +50,27 @@ export default function PostDetailPage() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       const u = session?.user ?? null;
       setMe(u);
-      if (u) setLikedSet(await fetchMyLikes(u.id));
+      if (u) {
+        setLikedSet(await fetchMyLikes(u.id));
+        import("@/lib/line").then(({ isTalkAdmin }) => isTalkAdmin(u.id).then(setAmOffice)).catch(() => {});
+      }
     });
     load();
   }, [load]);
+
+  /** 修正モードに入る（本文+写真を編集対象にする） */
+  const startEdit = useCallback((p: CotozutePost) => {
+    setEditDraft(p.body ?? "");
+    setEditImgs((p.image_urls ?? []).map((f, i) => ({ full: f, thumb: p.thumb_urls?.[i] ?? f })));
+    setEditing(true);
+  }, []);
+
+  /* フィードの⋯→編集から ?edit=1 で来たら、修正ボタンを押した後の状態で開く */
+  useEffect(() => {
+    if (!post || !me || editing) return;
+    if (!new URLSearchParams(window.location.search).get("edit")) return;
+    if (me.id === post.user_id || amOffice) startEdit(post);
+  }, [post, me, amOffice, editing, startEdit]);
 
   const submit = async () => {
     if (!me || !body.trim() || sending) return;
@@ -97,28 +119,76 @@ export default function PostDetailPage() {
         <div className="card">
           {editing ? (
             <div className="py-2">
-              <div className="mb-1.5 text-[11px] font-bold text-[#8a7a5a]">コトヅテを修正</div>
+              <div className="mb-1.5 text-[11px] font-bold text-[#8a7a5a]">
+                コトヅテを修正{amOffice && me?.id !== post.user_id ? "（事務局権限）" : ""}
+              </div>
               <textarea
                 value={editDraft}
                 onChange={(e) => setEditDraft(e.target.value)}
-                rows={4}
+                rows={6}
                 autoFocus
                 className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[15px] leading-relaxed outline-none focus:border-[#c94d3a]"
               />
+              {/* 写真の差し替え: ✕で外す・+で追加（合計4枚まで） */}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {editImgs.map((im, i) => (
+                  <div key={im.thumb + i} className="relative">
+                    <img src={srcCdn(im.thumb)} alt="" className="h-20 w-20 rounded-lg object-cover" />
+                    <button
+                      onClick={() => setEditImgs(editImgs.filter((_, j) => j !== i))}
+                      aria-label="この写真を外す"
+                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-[10px] text-white"
+                    >✕</button>
+                  </div>
+                ))}
+                {editImgs.length < 4 && (
+                  <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-[#c8bfa8] bg-white text-[11px] font-bold text-[#8a7a5a]">
+                    {upBusy ? "⏳" : <>＋<span>写真</span></>}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        if (!me || !e.target.files?.length || upBusy) return;
+                        setUpBusy(true);
+                        const files = Array.from(e.target.files).slice(0, 4 - editImgs.length);
+                        const pairs: ImagePair[] = [];
+                        for (const f of files) {
+                          const pair = await uploadImagePair("post-images", me.id, f);
+                          if (pair) pairs.push(pair);
+                        }
+                        if (pairs.length) setEditImgs((prev) => [...prev, ...pairs].slice(0, 4));
+                        setUpBusy(false);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+              </div>
               <div className="mt-2 flex gap-2">
                 <button onClick={() => setEditing(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#a09888]">
                   キャンセル
                 </button>
                 <button
                   onClick={async () => {
-                    if (!me || !editDraft.trim() || editSaving) return;
+                    if (!me || editSaving) return;
+                    if (!editDraft.trim() && editImgs.length === 0) return;
                     setEditSaving(true);
-                    await updatePost(post.id, me.id, editDraft.trim());
+                    const { error } = await createClient()
+                      .from("posts")
+                      .update({
+                        body: editDraft.trim(),
+                        image_urls: editImgs.map((i) => i.full),
+                        thumb_urls: editImgs.map((i) => i.thumb),
+                      })
+                      .eq("id", post.id);
                     setEditSaving(false);
+                    if (error) { alert("保存できませんでした: " + error.message); return; }
                     setEditing(false);
                     load();
                   }}
-                  disabled={!editDraft.trim() || editSaving}
+                  disabled={(!editDraft.trim() && editImgs.length === 0) || editSaving || upBusy}
                   className="flex-1 rounded-xl py-2.5 text-[13.5px] font-extrabold text-white disabled:opacity-40"
                   style={{ background: "#c94d3a" }}
                 >
@@ -129,12 +199,9 @@ export default function PostDetailPage() {
           ) : (
             <>
               <PostCard post={post} me={me} liked={likedSet.has(post.id)} hd />
-              {me?.id === post.user_id && (
+              {me && (me.id === post.user_id || amOffice) && (
                 <button
-                  onClick={() => {
-                    setEditDraft(post.body ?? "");
-                    setEditing(true);
-                  }}
+                  onClick={() => startEdit(post)}
                   className="mt-2 w-full rounded-xl border border-[#e8dcc4] bg-white py-2 text-[12.5px] font-bold text-[#8a7a5a]"
                 >
                   コトヅテを修正

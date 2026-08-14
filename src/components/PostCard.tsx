@@ -2,11 +2,12 @@
 
 import { ReportDialog } from "@/components/ReportDialog";
 import { fetchFollowees, toggleFollow } from "@/lib/follows";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { CotozutePost, CotozuteComment, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
-import { DotsMenu, EditSheet, Lightbox } from "./PostKit";
+import { DotsMenu, Lightbox } from "./PostKit";
 import { MeishiModal } from "./MeishiModal";
 import { srcCdn } from "@/lib/images";
 import { useWarawaGate } from "@/lib/warawaGate";
@@ -109,12 +110,10 @@ export function PostCard({
   likers?: Array<{ avatar_url: string | null; display_name: string | null }>;
 }) {
   void flush;
+  const router = useRouter();
   const pr = post.profiles;
   const [isLiked, setIsLiked] = useState(liked);
-  const [pEditOpen, setPEditOpen] = useState(false);
-  const [pEditBody, setPEditBody] = useState("");
-  const [pBodyNow, setPBodyNow] = useState<string | null>(null);
-  const rawBody = pBodyNow ?? post.body;
+  const rawBody = post.body;
   const bodyText = post.embed?.url
     ? (rawBody ?? "").split(post.embed.url).join("").trim()
     : rawBody;
@@ -128,7 +127,6 @@ export function PostCard({
   const [gone, setGone] = useState(false);
   const [imgIdx, setImgIdx] = useState(0); // 複数写真カルーセルの現在枚数
   const [lbStart, setLbStart] = useState<number | null>(null); // ライトボックス(フル画質)の開始枚数
-  const [pEditSaving, setPEditSaving] = useState(false);
   const [myProf, setMyProf] = useState<{ avatar_url: string | null; display_name: string | null } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [meishi, setMeishi] = useState(false);
@@ -255,7 +253,7 @@ export function PostCard({
         {me && (
           <DotsMenu
             canEdit={me.id === post.user_id || amOffice}
-            onEdit={() => { setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
+            onEdit={() => router.push(`/post/${post.id}?edit=1`)}
             onDelete={onDelete}
             onReport={() => setReportOpen(true)}
           />
@@ -392,25 +390,6 @@ export function PostCard({
           >
             {following ? "✓ フォロー中" : "＋ フォロー"}
           </button>
-        )}
-        {pEditOpen && (
-          <EditSheet
-            title={amOffice && me?.id !== post.user_id ? "投稿を編集（事務局権限）" : "投稿を編集"}
-            value={pEditBody}
-            onChange={setPEditBody}
-            saving={pEditSaving}
-            onCancel={() => setPEditOpen(false)}
-            onSave={async () => {
-              if (!pEditBody.trim() || pEditSaving) return;
-              setPEditSaving(true);
-              const { createClient } = await import("@/lib/supabase/client");
-              const { error } = await createClient().from("posts").update({ body: pEditBody.trim() }).eq("id", post.id);
-              setPEditSaving(false);
-              if (error) { alert("保存できませんでした: " + error.message); return; }
-              setPBodyNow(pEditBody.trim());
-              setPEditOpen(false);
-            }}
-          />
         )}
         {lbStart != null && post.image_urls && (
           <Lightbox urls={post.image_urls.map((u) => srcCdn(u) ?? u)} start={lbStart} onClose={() => setLbStart(null)} />
