@@ -35,7 +35,8 @@ while True:
 have_ids = {s.replace("entry-", "") for s in slugs}
 print(f"こっちに存在する記事: {len(have_ids)}件")
 
-LINK_RE = re.compile(r"https://ameblo\.jp/" + re.escape(AMEBA_ID) + r"/entry-(\d+)\.html")
+# 昔の記事は http:// や //(プロトコル相対) のリンクなので全形式に対応。.html直後のクエリ(?frm=等)も飲み込む
+LINK_RE = re.compile(r"(?:https?:)?//ameblo\.jp/" + re.escape(AMEBA_ID) + r"/entry-(\d+)\.html(?:\?[^\"'\s<>]*)?")
 
 def rewrite(body):
     changed = 0
