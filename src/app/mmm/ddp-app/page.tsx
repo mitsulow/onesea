@@ -157,6 +157,7 @@ export default function DdpRitualPage() {
       `}</style>
 
       <header className="relative z-[60] flex items-center justify-center px-6 py-2.5" style={{ background: "#0a0e26" }}>
+        <a href="/mmm" aria-label="MMMへ戻る" className="absolute left-2.5 top-1/2 z-20 flex h-[30px] -translate-y-1/2 items-center rounded-full border border-white/25 bg-white/10 px-3.5 text-[12px] font-bold text-[#e8d5a0] no-underline">戻る</a>
         <span className="mincho text-[16px] font-bold tracking-[4px]" style={{ color: C.ink }}>
 夢叶えナビ <span className="text-[11px]" style={{ color: C.sub }}>〜DDPを設定する〜</span>
         </span>

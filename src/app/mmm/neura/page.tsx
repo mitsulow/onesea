@@ -172,6 +172,7 @@ export default function NeuraPage() {
   return (
     <main className="min-h-screen pb-24" style={{ background: "linear-gradient(180deg,#0a1410,#101a28)" }}>
       <header className="relative z-[60] flex items-center justify-center px-6 py-2" style={{ background: "#0a1410" }}>
+        <a href="/mmm" aria-label="MMMへ戻る" className="absolute left-2.5 top-1/2 z-20 flex h-[30px] -translate-y-1/2 items-center rounded-full border border-white/25 bg-white/10 px-3.5 text-[12px] font-bold text-[#e8d5a0] no-underline">戻る</a>
         <span className="text-[16px] font-extrabold tracking-[3px]" style={{ color: "#a8b8f0", textShadow: "0 0 10px rgba(140,160,255,.6)" }}>
           <img src="/icons/icon-neura-red.webp" alt="" style={{ width: 18, height: 18, display: "inline", verticalAlign: -3.5 }} /> ニューラ5
         </span>

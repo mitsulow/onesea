@@ -67,6 +67,7 @@ export default function KouryuListPage() {
         </div>
       )}
       <header className="relative flex h-[52px] flex-col items-center justify-center border-b border-[#2a4a63] px-6 text-center">
+        <a href="/mmm" aria-label="MMMへ戻る" className="absolute left-2.5 top-1/2 z-20 flex h-[30px] -translate-y-1/2 items-center rounded-full border border-white/25 bg-white/10 px-3.5 text-[12px] font-bold text-[#e8d5a0] no-underline">戻る</a>
         <div className="text-[10px] tracking-[3px] text-[#7a9ab4]">同じ県の仲間と、つながろう。</div>
         <div className="text-[16px] font-extrabold tracking-[3px] text-[#f0e6c8]">県別の交流</div>
         <span className="absolute right-3 top-1/2 -translate-y-1/2"><AvatarMenu /></span>
