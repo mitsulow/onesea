@@ -138,6 +138,7 @@ export function PostCard({
   const [cBody, setCBody] = useState("");
   const [cSending, setCSending] = useState(false);
   const [gone, setGone] = useState(false);
+  const [imgIdx, setImgIdx] = useState(0); // 複数写真カルーセルの現在枚数
   const [myProf, setMyProf] = useState<{ avatar_url: string | null; display_name: string | null } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [meishi, setMeishi] = useState(false);
@@ -325,21 +326,54 @@ export function PostCard({
         </div>
       )}
 
-      {/* 写真（左右いっぱい） */}
-      {post.image_urls && post.image_urls.length > 0 && (
-        <div className={`-mx-4 mt-2 grid gap-0.5 ${post.image_urls.length > 1 ? "grid-cols-2" : ""}`}>
-          {post.image_urls.map((full, i) => (
-            <a key={i} href={full} target="_blank" rel="noopener noreferrer">
-              <img
-                src={srcCdn(hd ? full : post.thumb_urls?.[i] ?? full)}
-                alt=""
-                loading="lazy"
-                className="w-full object-cover"
-                style={post.image_urls!.length > 1 ? { aspectRatio: "1" } : { maxHeight: 480 }}
-              />
-            </a>
-          ))}
+      {/* 写真（左右いっぱい）。複数枚はインスタ式: 横スワイプ切替+下に●ドット */}
+      {post.image_urls && post.image_urls.length === 1 && (
+        <div className="-mx-4 mt-2">
+          <a href={post.image_urls[0]} target="_blank" rel="noopener noreferrer">
+            <img
+              src={srcCdn(hd ? post.image_urls[0] : post.thumb_urls?.[0] ?? post.image_urls[0])}
+              alt=""
+              loading="lazy"
+              className="w-full object-cover"
+              style={{ maxHeight: 480 }}
+            />
+          </a>
         </div>
+      )}
+      {post.image_urls && post.image_urls.length > 1 && (
+        <>
+          <div
+            data-noswipe
+            className="hide-scrollbar -mx-4 mt-2 flex snap-x snap-mandatory overflow-x-auto"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              const i = Math.round(el.scrollLeft / el.clientWidth);
+              if (i !== imgIdx) setImgIdx(i);
+            }}
+          >
+            {post.image_urls.map((full, i) => (
+              <a key={i} href={full} target="_blank" rel="noopener noreferrer" className="w-full flex-shrink-0 snap-center">
+                <img
+                  src={srcCdn(hd ? full : post.thumb_urls?.[i] ?? full)}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                  style={{ aspectRatio: "1" }}
+                />
+              </a>
+            ))}
+          </div>
+          {/* いま何枚目かのドット（複数枚の時だけ） */}
+          <div className="mt-2 flex justify-center gap-[5px]">
+            {post.image_urls.map((_, i) => (
+              <span
+                key={i}
+                className="rounded-full transition-colors"
+                style={{ width: 6, height: 6, background: i === imgIdx ? "#2CB7DE" : "#d4d8dc" }}
+              />
+            ))}
+          </div>
+        </>
       )}
       {post.embed && (
         <div className="-mx-4">

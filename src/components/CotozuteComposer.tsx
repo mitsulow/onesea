@@ -233,7 +233,7 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
             </button>
           </div>
         ))}
-        {images.length < 1 && (
+        {images.length < 4 && (
           <label className="flex h-16 cursor-pointer items-center gap-1.5 rounded-lg border border-[#e8dcc4] bg-white px-4 text-[12.5px] font-bold text-[#8a7a5a]">
             {uploading ? (
               "⏳ 圧縮中..."
@@ -249,13 +249,21 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
             <input
               type="file"
               accept="image/*"
+              multiple
               className="hidden"
               onChange={async (e) => {
-                if (!user || !e.target.files?.[0] || uploading) return;
+                if (!user || !e.target.files?.length || uploading) return;
                 setUploading(true);
-                const pair = await uploadImagePair("post-images", user.id, e.target.files[0]);
-                if (pair) setImages([pair]); // 1投稿につき1枚
+                // 1投稿につき最大4枚（インスタ式カルーセル表示）
+                const files = Array.from(e.target.files).slice(0, 4 - images.length);
+                const pairs: ImagePair[] = [];
+                for (const f of files) {
+                  const pair = await uploadImagePair("post-images", user.id, f);
+                  if (pair) pairs.push(pair);
+                }
+                if (pairs.length) setImages((prev) => [...prev, ...pairs].slice(0, 4));
                 setUploading(false);
+                e.target.value = "";
               }}
             />
           </label>
