@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { getOrCreateChat, sendMessage } from "@/lib/line";
+import { getOrCreateChat, sendMessage, fetchGroupMessages, sendGroupMessage } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
 import { SnsIcon } from "@/components/SnsIcon";
 import { EmbedCard } from "@/components/EmbedCard";
@@ -54,6 +54,15 @@ export default function VillagePage() {
   const [members, setMembers] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [joined, setJoined] = useState(false);
+  const [tab, setTab] = useState<"feed" | "members" | "chat">("feed");
+  const [gchat, setGchat] = useState<any[] | null>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [gchatBody, setGchatBody] = useState("");
+
+  /* CHATタブを開いた時だけグループトーク(最新30件)を取得 */
+  useEffect(() => {
+    if (tab !== "chat" || gchat !== null) return;
+    fetchGroupMessages("village", villageId).then((r) => setGchat(r.slice(-30)));
+  }, [tab, gchat, villageId]);
   const [body, setBody] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -627,7 +636,14 @@ export default function VillagePage() {
       )}
 
       <div className="space-y-3.5 pt-4">
-        {/* 村人 */}
+        {/* ページ内タブ: FEED / MEMBERS / CHAT（MoAIサークルと同じ構成・2026-08-14ユーザー指定） */}
+        <div className="flex gap-1.5 px-3">
+          {([["feed", "FEED"], ["members", `MEMBERS ${members.filter((mm: any) => mm.status !== "pending").length}`], ["chat", "CHAT"]] as const).map(([v, l]) => (
+            <button key={v} onClick={() => setTab(v)} className="flex-1 rounded-full py-2 text-[12px] font-extrabold" style={tab === v ? { background: "#4a8a5c", color: "#fff" } : { background: "#fff", color: "#8a9a84", border: "1px solid #d8e4d0" }}>{l}</button>
+          ))}
+        </div>
+
+        {tab === "members" && (
         <section className="card">
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
             {village.name}の村人
@@ -683,8 +699,9 @@ export default function VillagePage() {
             {members.length === 0 && <p className="text-[12px] text-[#a0aca0]">まだ村人がいません</p>}
           </div>
         </section>
+        )}
 
-        {/* 囲炉裏 */}
+        {tab === "feed" && (
         <section className="card">
           <div className="mb-2 text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>
             {village.name}の活動
@@ -851,6 +868,59 @@ export default function VillagePage() {
             ))
           )}
         </section>
+        )}
+
+        {tab === "chat" && (
+          <section className="card">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[12px] font-extrabold tracking-[2px]" style={{ color: GREEN }}>{village.name}のグループトーク</span>
+              <a href={`/talk/g/village/${villageId}`} className="text-[11px] font-bold no-underline" style={{ color: GREEN }}>TalKで開く →</a>
+            </div>
+            {!joined ? (
+              <p className="py-6 text-center text-[12px] text-[#a0aca0]">村人になるとグループトークが使えます</p>
+            ) : gchat === null ? (
+              <div className="flex justify-center py-6"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#d8e4d0] border-t-[#4a8a5c]" /></div>
+            ) : (
+              <>
+                <div className="mb-2 max-h-72 space-y-1.5 overflow-y-auto rounded-xl bg-[#f4f8f2] p-2">
+                  {gchat.length === 0 ? (
+                    <p className="py-3 text-center text-[11px] text-[#a0aca0]">まだ会話がありません。ひとこと目をどうぞ🏡</p>
+                  ) : (
+                    gchat.map((m: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                      const mine = m.sender_id === me?.id;
+                      return (
+                        <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                          <div className="max-w-[80%]">
+                            {!mine && <div className="pl-1 text-[9px] text-[#8a9a84]">{m.profiles?.display_name ?? "むらびと"}</div>}
+                            <div className={`rounded-2xl px-3 py-1.5 text-[13px] ${mine ? "text-white" : "bg-white text-[#3a4438]"}`} style={mine ? { background: "#4a8a5c" } : undefined}>
+                              {m.image_url && <img src={srcCdn(m.image_url)} alt="" className="mb-1 max-w-[180px] rounded-lg" />}
+                              {m.body === "📷 写真" && m.image_url ? "" : m.body}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                <div className="flex items-end gap-1.5">
+                  <textarea value={gchatBody} onChange={(e) => setGchatBody(e.target.value)} rows={1} placeholder="メッセージ..." className="hide-scrollbar max-h-24 min-h-[36px] flex-1 resize-none rounded-2xl border border-[#d8e4d0] bg-white px-3 py-2 text-[13px] outline-none focus:border-[#4a8a5c]" />
+                  <button
+                    onClick={async () => {
+                      const t = gchatBody.trim();
+                      if (!t || !me) return;
+                      setGchatBody("");
+                      await sendGroupMessage("village", villageId, me.id, t);
+                      fetchGroupMessages("village", villageId).then((r) => setGchat(r.slice(-30)));
+                    }}
+                    disabled={!gchatBody.trim()}
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-white disabled:opacity-40"
+                    style={{ background: "#4a8a5c" }}
+                  >➤</button>
+                </div>
+              </>
+            )}
+          </section>
+        )}
       </div>
       {reportPost && (
         <ReportDialog kind="village_post" targetId={reportPost.id} targetUrl={`/sekai/village/${villageId}`} excerpt={reportPost.body} meId={me?.id ?? null} onClose={() => setReportPost(null)} />

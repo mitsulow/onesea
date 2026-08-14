@@ -160,6 +160,7 @@ export default function SekaiMuraPrefPage() {
   };
   const [villages, setVillages] = useState<any[]>([]);
   const [upBusy, setUpBusy] = useState<"cover" | "icon" | null>(null);
+  const [tab, setTab] = useState<"feed" | "members" | "chat">("feed");
   /* 県の村長(3人まで) */
   const [leaders, setLeaders] = useState<any[]>([]);
   const [leaderBusy, setLeaderBusy] = useState(false);
@@ -493,7 +494,15 @@ export default function SekaiMuraPrefPage() {
         </div>
       </header>
 
-      {/* 💬 チャット: 背景のすぐ下に最新6件を最初から表示 */}
+      {/* ページ内タブ: FEED / MEMBERS / CHAT（MoAIサークルと同じ構成・2026-08-14ユーザー指定） */}
+      <div className="flex gap-1.5 px-3 pt-3">
+        {([["feed", "FEED"], ["members", `MEMBERS ${memberCount ?? villagers.length}`], ["chat", "CHAT"]] as const).map(([v, l]) => (
+          <button key={v} onClick={() => setTab(v)} className="flex-1 rounded-full py-2 text-[12px] font-extrabold" style={tab === v ? { background: GREEN, color: "#fff" } : { background: "#fff", color: "#8a9a84", border: "1px solid #d8e4d0" }}>{l}</button>
+        ))}
+      </div>
+
+      {tab === "chat" && (<>
+      {/* 💬 チャット: 最新6件を最初から表示 */}
       <section className="px-3 pt-3">
         <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
           <div className="mb-1.5 flex items-center justify-between">
@@ -536,7 +545,9 @@ export default function SekaiMuraPrefPage() {
           </Link>
         </div>
       </section>
+      </>)}
 
+      {tab === "members" && (<>
       {/* 👑 セカイムラ◯◯の村長(3人まで) */}
       <section className="px-3 pt-4">
         <div className="rounded-xl bg-white p-2.5" style={{ border: "1px solid #d8e4d0" }}>
@@ -613,7 +624,9 @@ export default function SekaiMuraPrefPage() {
           )}
         </div>
       </section>
+      </>)}
 
+      {tab === "feed" && (<>
       {/* 🏡 この県の拠点 — 右スワイプで並ぶ。タッチで拠点ページへ */}
       <section className="px-3 pt-3">
         <div className="mb-1.5 flex items-center justify-between">
@@ -808,6 +821,7 @@ export default function SekaiMuraPrefPage() {
           )}
         </div>
       </section>
+      </>)}
 
       {/* FEED投稿の編集(本人) */}
       {fEdit && (

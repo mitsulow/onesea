@@ -25,6 +25,8 @@ export default function KouryuRoomPage() {
   const [reads, setReads] = useState<Array<{ user_id: string; last_read_at: string }>>([]);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [tab, setTab] = useState<"feed" | "members" | "chat">("feed");
+  const [memberProfs, setMemberProfs] = useState<Array<{ user_id: string; username: string | null; display_name: string | null; avatar_url: string | null }> | null>(null);
   const [photoSending, setPhotoSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const joinedRef = useRef(false);
@@ -107,9 +109,22 @@ export default function KouryuRoomPage() {
     return () => clearInterval(t);
   }, [poll]);
 
+  /* MEMBERSタブを開いた時だけ一覧を取得(通常閲覧では通信ゼロ) */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+    if (tab !== "members" || memberProfs !== null) return;
+    (async () => {
+      const supabase = createClient();
+      const { data: rows } = await supabase.from("pref_room_members").select("user_id").eq("room_id", roomId).limit(200);
+      const ids = (rows ?? []).map((r) => r.user_id);
+      if (!ids.length) { setMemberProfs([]); return; }
+      const { data: profs } = await supabase.from("profiles").select("id, username, display_name, avatar_url").in("id", ids);
+      setMemberProfs((profs ?? []).map((pr) => ({ user_id: pr.id, username: pr.username, display_name: pr.display_name, avatar_url: pr.avatar_url })));
+    })();
+  }, [tab, memberProfs, roomId]);
+
+  useEffect(() => {
+    if (tab === "chat") bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, tab]);
 
   /* 写真送信(TalKと同じ: 圧縮→R2直行→転送料ゼロ) */
   const sendPhoto = async (f: File) => {
@@ -171,7 +186,66 @@ export default function KouryuRoomPage() {
         <a href={`/talk/g/pref/${roomId}`} className="flex-shrink-0 text-[11px] text-[#7a9ab4] no-underline">TalKで開く →</a>
       </header>
 
-      {/* メッセージ(掲示板×チャット) */}
+      {/* ページ内タブ: FEED / MEMBERS / CHAT（MoAIサークルと同じ構成・2026-08-14ユーザー指定） */}
+      <div className="sticky top-[60px] z-30 flex gap-1.5 px-3 pb-2 pt-1" style={{ background: "#0e1e2e" }}>
+        {([["feed", "FEED"], ["members", `MEMBERS ${memberCount ?? ""}`], ["chat", "CHAT"]] as const).map(([v, l]) => (
+          <button key={v} onClick={() => setTab(v)} className="flex-1 rounded-full py-2 text-[12px] font-extrabold" style={tab === v ? { background: GOLD, color: "#0e1e2e" } : { background: "transparent", color: "#7a9ab4", border: "1px solid #2a4a63" }}>{l}</button>
+        ))}
+      </div>
+
+      {/* ===== FEED: 同じ書き込みを「掲示板」として新しい順のカードで ===== */}
+      {tab === "feed" && (
+        <div className="flex-1 space-y-2.5 px-3 py-4">
+          {messages.length === 0 && (
+            <p className="py-10 text-center text-[12.5px] leading-relaxed text-[#5a7a94]">まだ書き込みがありません。<br />{pref}のみなさん、ひとこと目をどうぞ🗾</p>
+          )}
+          {messages.slice().reverse().map((m) => {
+            const prof = (m as any).profiles; // eslint-disable-line @typescript-eslint/no-explicit-any
+            const d = new Date(m.created_at);
+            return (
+              <div key={m.id} className="rounded-xl p-3" style={{ background: "#14293c", border: "1px solid #23405a" }}>
+                <div className="flex items-center gap-2.5">
+                  {prof?.avatar_url
+                    ? <img src={srcCdn(prof.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-8 w-8 rounded-full object-cover" />
+                    : <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1e3a52] text-[13px]">🗾</span>}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-bold text-[#e8f0f8]">{prof?.display_name ?? "むらびと"}</div>
+                    <div className="num text-[10px] text-[#5a7a94]">{d.getMonth() + 1}/{d.getDate()} {d.getHours()}:{String(d.getMinutes()).padStart(2, "0")}</div>
+                  </div>
+                </div>
+                {(m as any).image_url && <img src={srcCdn((m as any).image_url)} alt="" loading="lazy" className="mt-2 max-h-96 w-full rounded-xl object-cover" />}
+                {!(m.body === "📷 写真" && (m as any).image_url) && <p className="mt-2 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-[#c8d8e4]">{m.body}</p>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ===== MEMBERS ===== */}
+      {tab === "members" && (
+        <div className="flex-1 space-y-1.5 px-3 py-4">
+          {memberProfs === null ? (
+            <div className="flex justify-center py-8"><div className="h-6 w-6 animate-spin rounded-full border-2 border-[#2a4a63] border-t-[#d4b96a]" /></div>
+          ) : memberProfs.length === 0 ? (
+            <p className="py-8 text-center text-[12px] text-[#5a7a94]">まだメンバーがいません</p>
+          ) : (
+            memberProfs.map((pr) => {
+              const row = (
+                <div className="flex items-center gap-3 rounded-xl p-2.5" style={{ background: "#14293c", border: "1px solid #23405a" }}>
+                  {pr.avatar_url
+                    ? <img src={srcCdn(pr.avatar_url)} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover" />
+                    : <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1e3a52] text-[15px]">🗾</span>}
+                  <span className="min-w-0 flex-1 truncate text-[14px] font-bold text-[#e8f0f8]">{pr.display_name ?? "むらびと"}</span>
+                </div>
+              );
+              return pr.username ? <Link key={pr.user_id} href={`/u/${pr.username}`} className="block no-underline">{row}</Link> : <div key={pr.user_id}>{row}</div>;
+            })
+          )}
+        </div>
+      )}
+
+      {/* ===== CHAT: 時系列チャット(TalKグループと同期) ===== */}
+      {tab === "chat" && (
       <div className="flex-1 space-y-2.5 px-3 py-4">
         {messages.length === 0 && (
           <p className="py-10 text-center text-[12.5px] leading-relaxed text-[#5a7a94]">
@@ -201,6 +275,7 @@ export default function KouryuRoomPage() {
         })}
         <div ref={bottomRef} />
       </div>
+      )}
 
       {photoSending && (
         <div className="fixed inset-0 z-[120] flex flex-col items-center justify-center bg-black/60">
@@ -210,6 +285,7 @@ export default function KouryuRoomPage() {
       )}
 
       {/* 入力欄(下固定・キーボード追従) */}
+      {tab !== "members" && (
       <div className="fixed left-1/2 z-50 w-full max-w-md -translate-x-1/2 px-3 pb-3 lg:max-w-3xl" style={{ bottom: kb > 0 ? kb : 56 }}>
         {me ? (
           <div className="flex items-end gap-2 rounded-2xl p-2" style={{ background: "#17384e", border: "1px solid #2a4a63" }}>
@@ -230,6 +306,7 @@ export default function KouryuRoomPage() {
           <Link href="/" className="block rounded-2xl py-3 text-center text-[13px] font-bold text-[#0e1e2e] no-underline" style={{ background: GOLD }}>ログインして参加する</Link>
         )}
       </div>
+      )}
     </main>
   );
 }
