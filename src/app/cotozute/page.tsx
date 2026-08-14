@@ -603,7 +603,9 @@ export default function CotozutePage() {
     const out: React.ReactNode[] = [];
     items.forEach((it, i) => {
       out.push(
-        <div key={feedKey(it)} style={{ contentVisibility: "auto", containIntrinsicSize: "auto 160px" }}>
+        {/* content-visibility は自箱の外の描画を切り落とすため、写真の-mx-4ぶんを
+            この層自身に持たせる(-mx-4 px-4)。無いと画像の左右16pxが白く欠ける */}
+        <div key={feedKey(it)} className="-mx-4 px-4" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 160px" }}>
           {it.kind === "coto" ? (
             <PostCard
               post={it.post}
