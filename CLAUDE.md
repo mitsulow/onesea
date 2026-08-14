@@ -89,6 +89,9 @@
 - 通知(notifications)は**タップした分だけ既読**（一覧を開いた瞬間の全既読は却下済み・戻さない）
 - **schumann1（シューマン共振観測所）** = public/schumann1/index.html の静的ページ（旧 mitsulow.github.io/schumann は移設済みでrepo削除済み）。折りたたみの表示順は**CSSの `order`**（DOM順でない）。観測グラフF1〜F4の schumann_series_3d.json には**画像の未来枠（現在カーソルより右）を誤読した平坦ゴミ(~7.8Hz)が常に混じる** → 描画側 drawModeGraphs で「schumann_data.json のtimestamp **-35分** より先のキーを捨てる」処理が必須（seriesキーは実測時刻より約30分遅れる — historyとの相互相関で実測。「時計の今」や「timestamp丁度」でのカットでは残像が残る＝2回失敗済み）。観測グラフは**3日固定窓**（一昨日00:00〜今日24:00 JST・今日の右側は空白が正、データ範囲を幅いっぱいに伸ばすのは間違い＝ユーザー指定の設計）。0Lei側の全幅読み取りは宝の山の自己修復仕様なので直さない。データ収集は GitHub Actions schumann-update（15分毎・0Lei repo）
 
+- **CotoZuteフィードの content-visibility 層は「自箱の外の描画を切り落とす」**（ペイント封じ込め）。カード内に fixed のモーダルや -mx-4 のはみ出し画像を書くと投稿の縦幅/横幅に閉じ込められる（編集画面が潰れる・画像の左右16pxが白く欠ける＝両方実際に起きた）。対策は2つ: ①はみ出し分は層自身に `-mx-4 px-4` を持たせる ②モーダル/メニュー/ライトボックスは **PostKit.tsx（DotsMenu/EditSheet/Lightbox）** の portal 方式で body 直下に描画。カード系のオーバーレイUIは必ず PostKit を使う
+- **投稿カードの統一挙動（2026-08-14確定）**: 右上⋯=編集/削除/通報（権限外は薄グレー表示・幅は文字に自動フィット）。本文タップの個別ページ遷移は廃止（もっと見る⇔折りたたむ）。写真タップ=Lightbox（フィードはサムネ・フル画質はLightboxで初読込=パケ設計維持）。個別ページ /post/[id] はシェアURL・通知の着地専用。コメントはフィード内インライン展開
+
 ## 5.5 2026-08-13の大型追加（ブログ/ともだち/称号/バグ報告）
 
 - **ツレヅレ日記(ブログ)**: blog_posts。予約投稿=publish_atが未来だとRLSで非公開→時刻到来で自動公開(cron不要)。URLを叩くと「ブログ記事が無いようです」。**DELETEポリシーなし=過去記事は誰にも消せない**(ユーザー誓約)。公開範囲 visibility(public/friends/private)+ブログトップで一括変更。投稿/引っ越しはis_warawa限定。アメブロ取込=scripts/import_ameblo.py(公開ページ読み取りのみ・画像R2ミラー・レジューム可)、Web版=/blog/import(アメブロ/note・1呼出1記事)。エディタはYouTube/Amazon URL1行で自動埋込
