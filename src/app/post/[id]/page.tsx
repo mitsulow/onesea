@@ -200,7 +200,7 @@ export default function PostDetailPage() {
                 <textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  placeholder="そっと、ひとこと..."
+                  placeholder="コメントで応援する"
                   rows={2}
                   className="w-full resize-y rounded-xl border border-[#e8dcc4] bg-white p-3 text-[14px] leading-relaxed outline-none focus:border-[#c94d3a]"
                 />
