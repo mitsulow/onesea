@@ -112,10 +112,15 @@ export function sanitizeHtml(html: string): string {
     }
     return tag;
   });
-  // 裸のアメブロ記事リンク → カード（リブログ先への導線）
+  // 裸のアメブロ記事リンク(他人のブログへのリブログ等・http://の旧形式も) → カード
   out = out.replace(
-    /<a href="(https:\/\/ameblo\.jp\/[\w.-]+\/entry-\d+\.html)"([^>]*)>\s*(?:\1|こちら|リブログ元の記事)\s*<\/a>/g,
+    /<a href="((?:https?:)?\/\/ameblo\.jp\/[\w.-]+\/entry-\d+\.html[^"]*)"([^>]*)>\s*(?:\1|こちら|リブログ元の記事)\s*<\/a>/g,
     '<div class="blog-embed"><a href="$1" target="_blank" rel="noopener noreferrer">📖 リブログ元の記事を読む<span class="blog-embed-url">$1</span></a></div>'
+  );
+  // 内部化された過去記事リンク(relink_ameblo.py書き換え後) → カード（OneSea内で完結する導線）
+  out = out.replace(
+    /<a href="(\/blog\/[\w.-]+\/entry-\d+)"([^>]*)>\s*(?:\1|こちら|リブログ元の記事)\s*<\/a>/g,
+    '<div class="blog-embed"><a href="$1">📖 過去の記事を読む<span class="blog-embed-url">onesea.vercel.app$1</span></a></div>'
   );
   return out;
 }
