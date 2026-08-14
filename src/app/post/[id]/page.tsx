@@ -210,7 +210,8 @@ export default function PostDetailPage() {
             </>
           )}
 
-          {/* コメント */}
+          {/* コメント（修正モード中は出さない — 修正だけに集中・ユーザー指定） */}
+          {!editing && (
           <div className="mt-3">
             <div className="sec mb-2"><img src="/icons/icon-chat.webp" alt="" style={{ width: 14, height: 14, display: "inline", verticalAlign: -2.5 }} /> コメント</div>
             {gate.node}
@@ -286,6 +287,7 @@ export default function PostDetailPage() {
               <p className="pt-2 text-[11.5px] text-[#b8b0a0]">コメントするにはログインしてください</p>
             )}
           </div>
+          )}
         </div>
       </div>
     </main>
