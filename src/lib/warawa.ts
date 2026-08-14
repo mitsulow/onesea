@@ -19,9 +19,9 @@ export function isWarawaUntil(until: string | null | undefined): boolean {
  *  元のNo.2は member_no_reserve 経由で次の入会者に付与される（ユーザー確定 2026-08-13） */
 export const SIR_USER_ID = "27507412-19f4-4b09-93a2-aa629309f126";
 
-/** 表示用ハンドル: みつろうだけ Warawa-Sir、他は @Warawer番号（前ゼロなし） */
+/** 表示用ハンドル: みつろうだけ @Warawa-Sir、他は @Warawer番号（前ゼロなし） */
 export function warawaHandle(userId: string | null | undefined, memberNo: number | null | undefined): string | null {
-  if (userId === SIR_USER_ID) return "Warawa-Sir";
+  if (userId === SIR_USER_ID) return "@Warawa-Sir";
   return memberNo != null ? `@Warawer${memberNo}` : null;
 }
 

@@ -2,11 +2,11 @@
 
 import { ReportDialog } from "@/components/ReportDialog";
 import { fetchFollowees, toggleFollow } from "@/lib/follows";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { CotozutePost, CotozuteComment, toggleLike, deletePost } from "@/lib/cotozute";
 import { EmbedCard } from "./EmbedCard";
+import { DotsMenu, EditSheet, Lightbox } from "./PostKit";
 import { MeishiModal } from "./MeishiModal";
 import { srcCdn } from "@/lib/images";
 import { useWarawaGate } from "@/lib/warawaGate";
@@ -46,17 +46,6 @@ function IcoPlane() {
     <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0abab5" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ transform: "translateY(2px)" }}>
       <path d="M20.7 3.3 4.1 10c-.9.4-.8 1.6.1 1.9l6 2 2 5.9c.3.9 1.6 1 1.9.1l6.7-16.6z" />
       <path d="M20.7 3.3 10.2 13.9" />
-    </svg>
-  );
-}
-
-/** 右上の⋯（3つの点） */
-function IcoDots() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#5a5d61">
-      <circle cx="5" cy="12" r="1.8" />
-      <circle cx="12" cy="12" r="1.8" />
-      <circle cx="19" cy="12" r="1.8" />
     </svg>
   );
 }
@@ -120,7 +109,6 @@ export function PostCard({
   likers?: Array<{ avatar_url: string | null; display_name: string | null }>;
 }) {
   void flush;
-  const router = useRouter();
   const pr = post.profiles;
   const [isLiked, setIsLiked] = useState(liked);
   const [pEditOpen, setPEditOpen] = useState(false);
@@ -139,11 +127,12 @@ export function PostCard({
   const [cSending, setCSending] = useState(false);
   const [gone, setGone] = useState(false);
   const [imgIdx, setImgIdx] = useState(0); // 複数写真カルーセルの現在枚数
+  const [lbStart, setLbStart] = useState<number | null>(null); // ライトボックス(フル画質)の開始枚数
+  const [pEditSaving, setPEditSaving] = useState(false);
   const [myProf, setMyProf] = useState<{ avatar_url: string | null; display_name: string | null } | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [meishi, setMeishi] = useState(false);
   const [expanded, setExpanded] = useState(hd);
-  const [menuOpen, setMenuOpen] = useState(false);
   if (gone) return null;
 
   const needsFold = !hd && !!bodyText && (bodyText.length > 42 || bodyText.includes("\n"));
@@ -264,57 +253,23 @@ export function PostCard({
           </div>
         </div>
         {me && (
-          <span className="relative flex-shrink-0">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="flex h-8 w-8 items-center justify-center rounded-full active:bg-[#f0f2f5]"
-              aria-label="投稿メニュー"
-            >
-              <IcoDots />
-            </button>
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-[70]" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-9 z-[71] overflow-hidden whitespace-nowrap rounded-2xl border border-[#e8eaed] bg-white py-1 shadow-xl">
-                  {/* 編集/削除は投稿者と事務局だけ押せる。他の人には薄いグレーで表示（ユーザー指定） */}
-                  {(() => {
-                    const can = me.id === post.user_id || amOffice;
-                    return (
-                      <>
-                        <button
-                          onClick={() => { if (!can) return; setMenuOpen(false); setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
-                          disabled={!can}
-                          className={`block w-full px-5 py-2.5 text-center text-[13.5px] font-bold ${can ? "text-[#1c1e21] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
-                        >編集</button>
-                        <div className="mx-3 h-px bg-[#f0f2f5]" />
-                        <button
-                          onClick={() => { if (!can) return; setMenuOpen(false); onDelete(); }}
-                          disabled={!can}
-                          className={`block w-full px-5 py-2.5 text-center text-[13.5px] font-bold ${can ? "text-[#e0455a] active:bg-[#f0f2f5]" : "cursor-default text-[#c8ccd1]"}`}
-                        >削除</button>
-                        <div className="mx-3 h-px bg-[#f0f2f5]" />
-                        <button
-                          onClick={() => { setMenuOpen(false); setReportOpen(true); }}
-                          className="block w-full px-5 py-2.5 text-center text-[13.5px] font-bold text-[#65676b] active:bg-[#f0f2f5]"
-                        >通報</button>
-                      </>
-                    );
-                  })()}
-                </div>
-              </>
-            )}
-          </span>
+          <DotsMenu
+            canEdit={me.id === post.user_id || amOffice}
+            onEdit={() => { setPEditBody(rawBody ?? ""); setPEditOpen(true); }}
+            onDelete={onDelete}
+            onReport={() => setReportOpen(true)}
+          />
         )}
       </div>
 
-      {/* 本文（1行 → もっと見る） */}
+      {/* 本文（1行 → もっと見る → 折りたたむ）。個別ページへの自動遷移は廃止(フィード内完結・ユーザー指定) */}
       {bodyText?.trim() && (
         <div className="mt-2">
           <p
             className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed text-[#1c1e21] ${
               expanded ? "" : "line-clamp-1"
             }`}
-            onClick={() => (needsFold && !expanded ? setExpanded(true) : router.push(`/post/${post.id}`))}
+            onClick={() => { if (needsFold && !expanded) setExpanded(true); }}
           >
             {bodyText}
           </p>
@@ -323,13 +278,18 @@ export function PostCard({
               …もっと見る
             </button>
           )}
+          {needsFold && expanded && !hd && (
+            <button onClick={() => setExpanded(false)} className="mt-1 text-[13.5px] text-[#8a8d91]">
+              △ 折りたたむ
+            </button>
+          )}
         </div>
       )}
 
       {/* 写真（左右いっぱい）。複数枚はインスタ式: 横スワイプ切替+下に●ドット */}
       {post.image_urls && post.image_urls.length === 1 && (
         <div className="-mx-4 mt-2">
-          <a href={post.image_urls[0]} target="_blank" rel="noopener noreferrer">
+          <button onClick={() => setLbStart(0)} className="block w-full" aria-label="写真をフル画質で見る">
             <img
               src={srcCdn(hd ? post.image_urls[0] : post.thumb_urls?.[0] ?? post.image_urls[0])}
               alt=""
@@ -337,7 +297,7 @@ export function PostCard({
               className="w-full object-cover"
               style={{ maxHeight: 480 }}
             />
-          </a>
+          </button>
         </div>
       )}
       {post.image_urls && post.image_urls.length > 1 && (
@@ -352,7 +312,7 @@ export function PostCard({
             }}
           >
             {post.image_urls.map((full, i) => (
-              <a key={i} href={full} target="_blank" rel="noopener noreferrer" className="w-full flex-shrink-0 snap-center">
+              <button key={i} onClick={() => setLbStart(i)} className="w-full flex-shrink-0 snap-center" aria-label="写真をフル画質で見る">
                 <img
                   src={srcCdn(hd ? full : post.thumb_urls?.[i] ?? full)}
                   alt=""
@@ -360,7 +320,7 @@ export function PostCard({
                   className="h-full w-full object-cover"
                   style={{ aspectRatio: "1" }}
                 />
-              </a>
+              </button>
             ))}
           </div>
           {/* いま何枚目かのドット（複数枚の時だけ） */}
@@ -434,27 +394,26 @@ export function PostCard({
           </button>
         )}
         {pEditOpen && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-5" onClick={() => setPEditOpen(false)}>
-            <div className="w-full max-w-[400px] rounded-2xl bg-white p-4" onClick={(e) => e.stopPropagation()}>
-              <div className="mb-2 text-[13.5px] font-extrabold text-[#2a6a4a]">言の葉を編集{amOffice && me?.id !== post.user_id ? "（事務局権限）" : ""}</div>
-              <textarea value={pEditBody} onChange={(e) => setPEditBody(e.target.value)} rows={5} className="w-full resize-y rounded-xl border border-[#e0e6e0] bg-white px-3 py-2.5 text-[14px] leading-relaxed outline-none" />
-              <div className="mt-2 flex gap-2">
-                <button onClick={() => setPEditOpen(false)} className="rounded-xl px-3 py-2 text-[12px] font-bold text-[#8a8d91]">キャンセル</button>
-                <button
-                  onClick={async () => {
-                    if (!pEditBody.trim()) return;
-                    const { createClient } = await import("@/lib/supabase/client");
-                    const { error } = await createClient().from("posts").update({ body: pEditBody.trim() }).eq("id", post.id);
-                    if (error) { alert("保存できませんでした: " + error.message); return; }
-                    setPBodyNow(pEditBody.trim());
-                    setPEditOpen(false);
-                  }}
-                  disabled={!pEditBody.trim()}
-                  className="flex-1 rounded-xl py-2 text-[13px] font-extrabold text-white disabled:opacity-40" style={{ background: "#2a8a4a" }}
-                >保存する</button>
-              </div>
-            </div>
-          </div>
+          <EditSheet
+            title={amOffice && me?.id !== post.user_id ? "投稿を編集（事務局権限）" : "投稿を編集"}
+            value={pEditBody}
+            onChange={setPEditBody}
+            saving={pEditSaving}
+            onCancel={() => setPEditOpen(false)}
+            onSave={async () => {
+              if (!pEditBody.trim() || pEditSaving) return;
+              setPEditSaving(true);
+              const { createClient } = await import("@/lib/supabase/client");
+              const { error } = await createClient().from("posts").update({ body: pEditBody.trim() }).eq("id", post.id);
+              setPEditSaving(false);
+              if (error) { alert("保存できませんでした: " + error.message); return; }
+              setPBodyNow(pEditBody.trim());
+              setPEditOpen(false);
+            }}
+          />
+        )}
+        {lbStart != null && post.image_urls && (
+          <Lightbox urls={post.image_urls.map((u) => srcCdn(u) ?? u)} start={lbStart} onClose={() => setLbStart(null)} />
         )}
         {gate.node}
         {reportOpen && (
