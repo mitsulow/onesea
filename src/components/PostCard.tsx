@@ -26,7 +26,7 @@ import { WarawaBadge } from "@/components/WarawaBadge";
 /** ハート: 白抜き→いいねで赤塗り（スレッズ風・形は少しふっくらさせた別物） */
 function IcoHeart({ on }: { on: boolean }) {
   return (
-    <svg width="21" height="21" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#43464a"} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill={on ? "#e8384f" : "none"} stroke={on ? "#e8384f" : "#43464a"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ transition: "fill .12s, stroke .12s" }}>
       <path d="M12 20.4C7 17.2 3.4 13.9 3.4 9.8c0-2.7 2.1-4.7 4.6-4.7 1.7 0 3.3 1 4 2.5.7-1.5 2.3-2.5 4-2.5 2.5 0 4.6 2 4.6 4.7 0 4.1-3.6 7.4-8.6 10.6z" />
     </svg>
   );
@@ -35,7 +35,7 @@ function IcoHeart({ on }: { on: boolean }) {
 /** コメント: 角丸の吹き出し（尻尾つき） */
 function IcoBubble() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#43464a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#43464a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 4.4c4.8 0 8.3 2.9 8.3 6.8s-3.5 6.8-8.3 6.8c-.9 0-1.7-.1-2.5-.3l-3.9 1.8 1-3.4c-1.8-1.2-2.9-3-2.9-4.9 0-3.9 3.5-6.8 8.3-6.8z" />
     </svg>
   );
@@ -44,7 +44,7 @@ function IcoBubble() {
 /** シェア: 紙飛行機 */
 function IcoPlane() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#43464a" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#43464a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <path d="M20.7 3.3 4.1 10c-.9.4-.8 1.6.1 1.9l6 2 2 5.9c.3.9 1.6 1 1.9.1l6.7-16.6z" />
       <path d="M20.7 3.3 10.2 13.9" />
     </svg>
@@ -60,6 +60,19 @@ function IcoDots() {
       <circle cx="19" cy="12" r="1.8" />
     </svg>
   );
+}
+
+/** 1,000以上は「1K」「1.5K」「12K」、100万以上は「1M」表記（Threads/Instagram式） */
+function fmtCount(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 1000000) {
+    const k = n / 1000;
+    const s = k < 10 ? (Math.floor(k * 10) / 10).toFixed(1).replace(/\.0$/, "") : String(Math.floor(k));
+    return `${s}K`;
+  }
+  const m = n / 1000000;
+  const s = m < 10 ? (Math.floor(m * 10) / 10).toFixed(1).replace(/\.0$/, "") : String(Math.floor(m));
+  return `${s}M`;
 }
 
 function relTime(iso: string): string {
@@ -278,21 +291,21 @@ export function PostCard({
         <button
           onClick={onLike}
           disabled={!me}
-          className="flex items-center gap-1 rounded-full py-1.5 pl-0 pr-2.5 transition-transform active:scale-90"
+          className="flex items-center gap-1.5 rounded-full py-1.5 pl-0 pr-4 transition-transform active:scale-90"
           aria-label="いいね"
         >
           <IcoHeart on={isLiked} />
           {likeCount > 0 && (
-            <span className="num text-[12.5px]" style={{ color: isLiked ? "#e8384f" : "#65676b" }}>{likeCount}</span>
+            <span className="num text-[13px]" style={{ color: isLiked ? "#e8384f" : "#65676b" }}>{fmtCount(likeCount)}</span>
           )}
         </button>
         <Link
           href={`/post/${post.id}`}
-          className="flex items-center gap-1 rounded-full px-2.5 py-1.5 no-underline transition-transform active:scale-90"
+          className="flex items-center gap-1.5 rounded-full py-1.5 pl-1 pr-4 no-underline transition-transform active:scale-90"
           aria-label="コメント"
         >
           <IcoBubble />
-          {commentCount > 0 && <span className="num text-[12.5px] text-[#65676b]">{commentCount}</span>}
+          {commentCount > 0 && <span className="num text-[13px] text-[#65676b]">{fmtCount(commentCount)}</span>}
         </Link>
         <button
           onClick={async () => {
@@ -307,7 +320,7 @@ export function PostCard({
               } catch {}
             }
           }}
-          className="flex items-center rounded-full px-2.5 py-1.5 transition-transform active:scale-90"
+          className="flex items-center rounded-full py-1.5 pl-1 pr-4 transition-transform active:scale-90"
           aria-label="シェア"
         >
           <IcoPlane />
@@ -375,7 +388,7 @@ export function PostCard({
           ))}
           <span className="ml-1.5 text-[11px] text-[#8a8d91]">
             {likers[0]?.display_name ?? ""}
-            {likeCount > 1 ? ` 他${likeCount - 1}人` : ""}
+            {likeCount > 1 ? ` 他${fmtCount(likeCount - 1)}人` : ""}
           </span>
         </div>
       )}
