@@ -24,7 +24,7 @@ export function CotoZuteLogo({
   return (
     <span
       className={titan.className}
-      style={{ color, fontSize: size, lineHeight: 1, display: "inline-flex", alignItems: "center", gap: size * 0.28 }}
+      style={{ color, fontSize: size, lineHeight: 1, display: "inline-flex", alignItems: "center", gap: size * 0.12 }}
     >
       CotoZute
       {arrow && (
@@ -34,7 +34,7 @@ export function CotoZuteLogo({
           viewBox="0 0 44 26"
           fill="none"
           stroke={color}
-          strokeWidth="7.5"
+          strokeWidth="9"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden

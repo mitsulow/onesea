@@ -47,7 +47,7 @@ export function CotozuteTeaser() {
     >
       <Link href="/cotozute" className="no-underline">
         <span
-          className="mb-1.5 inline-flex items-center gap-1.5 rounded-full px-3.5 pb-[6px] pt-[7px]"
+          className="mb-1.5 inline-flex items-center gap-1.5 rounded-full px-3 pb-[2px] pt-[3px]"
           style={{
             background: "linear-gradient(120deg,#2CB7DE,#1B8FB5)",
             boxShadow: "0 4px 14px rgba(44,183,222,.35)",
@@ -57,7 +57,7 @@ export function CotozuteTeaser() {
             ✦<span className="absolute -right-1.5 -top-1 text-[8px]">✦</span>
           </span>
           <span className="relative top-[-1px]">
-            <CotoZuteLogo size={15} color="#fff" />
+            <CotoZuteLogo size={19} color="#fff" />
           </span>
         </span>
       </Link>
