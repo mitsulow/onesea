@@ -13,6 +13,7 @@ import { CotozuteComposer } from "@/components/CotozuteComposer";
 import { PostCard } from "@/components/PostCard";
 import { MuraFeedCard, MoaiFeedCard, ShopStripCard } from "@/components/FeedCards";
 import { AvatarMenu } from "@/components/AvatarMenu";
+import { CotoZuteLogo } from "@/components/CotoZuteLogo";
 import { UpgradeDialog } from "@/components/UpgradeGate";
 import { VillagerSuggestions } from "@/components/VillagerSuggestions";
 import { DragScroll } from "@/components/DragScroll";
@@ -671,9 +672,9 @@ export default function CotozutePage() {
           <button onClick={() => setDrawer(true)} aria-label="メニュー" className="text-[22px] leading-none text-[#1c1e21]">
             ☰
           </button>
-          <span className="flex items-center gap-1.5 text-[22px] font-extrabold tracking-tight" style={{ color: TIFFANY }}>
+          <span className="flex items-center gap-1.5" style={{ color: TIFFANY }}>
             <img src="/icons/tab-cotozute5.webp" alt="" className="h-[26px] w-[26px] object-contain" />
-            CotoZute →
+            <CotoZuteLogo size={23} />
           </span>
           <span className="ml-auto">
             <AvatarMenu ring="#c8beac" />
@@ -689,9 +690,9 @@ export default function CotozutePage() {
           <div className="fixed left-0 top-0 z-[86] h-full w-[270px] overflow-y-auto bg-white shadow-2xl">
             <div className="px-5 pb-2 pt-5">
               <div className="text-[10px] tracking-[2px] text-[#9ad2d0]">幸せの波紋を拡げよう</div>
-              <div className="flex items-center gap-2 text-[20px] font-extrabold" style={{ color: TIFFANY }}>
+              <div className="flex items-center gap-2" style={{ color: TIFFANY }}>
                 <img src="/icons/tab-cotozute5.webp" alt="" className="h-[24px] w-[24px] object-contain" />
-                CotoZute
+                <CotoZuteLogo size={20} arrow={false} />
               </div>
             </div>
             <Link

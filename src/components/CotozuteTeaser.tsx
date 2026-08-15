@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CotozutePost, fetchPostsPage, fetchMyLikes } from "@/lib/cotozute";
 import { PostCard } from "./PostCard";
 import { srcCdn } from "@/lib/images";
+import { CotoZuteLogo } from "@/components/CotoZuteLogo";
 
 /**
  * Cotozuteチラ見せ — 最新5件だけ見せて、本体（/cotozute の無限フィード）へ誘う。
@@ -55,9 +56,8 @@ export function CotozuteTeaser() {
           <span className="relative text-[14px] leading-none text-white">
             ✦<span className="absolute -right-1.5 -top-1 text-[8px]">✦</span>
           </span>
-          {/* 文字が下詰まりに見えるため、行ボックスを締めて1px持ち上げる */}
-          <span className="relative top-[-1px] text-[15px] font-extrabold leading-none text-white" style={{ letterSpacing: 0 }}>
-            CotoZute<span style={{ marginLeft: "-0.08em" }}>→</span>
+          <span className="relative top-[-1px]">
+            <CotoZuteLogo size={15} color="#fff" />
           </span>
         </span>
       </Link>
