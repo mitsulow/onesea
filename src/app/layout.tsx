@@ -49,6 +49,15 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
+        {/* 朝いちアニメ前の黒カバー: 描画前に同期実行して手帳/MMMが一瞬見えるのを防ぐ。
+            判定はMorningOpening/MorningRedirectと同じAM3:00切り替え・同じlocalStorageキー。
+            カバー解除はMorningOpeningがオーバーレイ表示時に行う(保険で12秒後に自動解除) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){try{var p=location.pathname;if(p!=="/"&&p!=="/mmm")return;var t=new Date(Date.now()-108e5);var k=t.getFullYear()+"-"+(t.getMonth()+1)+"-"+t.getDate();if(localStorage.getItem("onesea-morning-shown")===k)return;document.documentElement.classList.add("morning-cover");setTimeout(function(){document.documentElement.classList.remove("morning-cover")},12000)}catch(e){}})();',
+          }}
+        />
         <VersionGuard />
         <IosBackButton />
         <CallRingListener />

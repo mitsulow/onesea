@@ -203,3 +203,14 @@ body {
 .blog-body .blog-embed a { display: block; border: 1px solid #e0d8c4; background: #fdf9ee; border-radius: 12px; padding: 12px 14px; font-weight: 700; color: #8a6a2a; text-decoration: none; }
 .blog-body .blog-embed .blog-embed-url { display: block; margin-top: 2px; font-size: 11px; font-weight: 400; color: #b0a48a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .blog-body blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid #d8dece; color: #6a7260; }
+
+/* 朝いちアニメ前の黒カバー(layout.tsxのインラインスクリプトが描画前に付与)。
+   手帳/MMMが一瞬見えてからアニメが始まるちらつきの防止。
+   MorningOpeningのオーバーレイ(z-200)のすぐ下に敷き、アニメ表示時に外す */
+html.morning-cover body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: #02060e; /* MorningOpeningの背景と同色 */
+  z-index: 199;
+}

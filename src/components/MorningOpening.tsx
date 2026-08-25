@@ -56,6 +56,9 @@ export function MorningOpening() {
 
   useEffect(() => {
     if (!show) return;
+    // ★ちらつき防止カバーを解除: この時点でオーバーレイ(z-200)はDOMに載っているので
+    //   layout.tsxのインラインスクリプトが敷いた黒カバー(z-199)はもう不要
+    document.documentElement.classList.remove("morning-cover");
     const canvas = canvasRef.current;
     const earth = earthRef.current;
     const root = rootRef.current;
