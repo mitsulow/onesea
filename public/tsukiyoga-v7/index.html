@@ -445,6 +445,17 @@
             altitude: altitudeF(H, phi, eq.dec)
           };
         });
+      },
+      // ★v7.4: 銀河中心（いて座A* 大質量ブラックホール）の方位・高度
+      // J2000固定赤道座標: RA 17h45m40s / Dec -29°00'28"（恒星カタログと同じ扱い・歳差ズレは0.4°未満）
+      getGalacticCenter: function(date, lat, lng) {
+        const lw = rad * -lng;
+        const phi = rad * lat;
+        const d = toDays(date);
+        const lst = siderealTime(d, lw);
+        const H = lst - (17.7611223 * 15 * rad);
+        const decRad = -29.007806 * rad;
+        return { azimuth: azimuthF(H, phi, decRad), altitude: altitudeF(H, phi, decRad) };
       }
     };
   })();
@@ -6180,6 +6191,35 @@
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
   }
 
+  /* ★v7.4: 月⇄銀河中心の切り替えピル（モーダル類 z20〜50 より下） */
+  .nav-target-toggle {
+    position: absolute;
+    top: 14px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 15;
+    display: flex;
+    background: rgba(3, 8, 24, 0.55);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(201, 169, 97, 0.28);
+    border-radius: 16px;
+    overflow: hidden;
+    pointer-events: auto;
+  }
+  .nav-target-btn {
+    background: none;
+    border: none;
+    color: var(--ink-dim);
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .nav-target-btn.active {
+    color: #ffd86b;
+    background: rgba(201, 169, 97, 0.16);
+  }
+
   .nav-status {
     position: absolute;
     bottom: 20px; left: 0; right: 0;
@@ -7881,13 +7921,19 @@
     </div>
   </div>
 
+  <!-- ★v7.4: 探す対象の切り替え（月 / 銀河の中心ブラックホール） -->
+  <div class="nav-target-toggle" id="navTargetToggle">
+    <button class="nav-target-btn active" data-target="moon">🌙 月</button>
+    <button class="nav-target-btn" data-target="galaxy">🌌 銀河の中心</button>
+  </div>
+
   <div class="nav-instruction">
     <div class="nav-headline" id="navHeadline"></div>
     <div class="nav-sub" id="navSub"></div>
   </div>
 
   <div class="nav-status">
-    <div class="nav-status-label">月 の 方 位 · 高 度</div>
+    <div class="nav-status-label" id="navStatusLabel">月 の 方 位 · 高 度</div>
     <div class="nav-status-value" id="navStatusValue">—</div>
   </div>
 
@@ -13945,7 +13991,8 @@ const COASTLINES = [
     permitted: false, animId: null,
     hasOrientation: false, eventCount: 0,
     hasAbsoluteSource: false,  // ★v7.1: 絶対方位イベント受信済みフラグ（相対との二重ストリーム排除）
-    moonLockOn: false,         // ★v7.1: 「月見つけた」ヒステリシス状態
+    moonLockOn: false,         // ★v7.1: 「見つけた」ヒステリシス状態（v7.4: 月/銀河中心で共用）
+    navTarget: 'moon',         // ★v7.4: 探す対象（moon=月 / galaxy=銀河の中心ブラックホール）
     headingBuf: [],            // ★v7.2: 方位の3サンプルメディアン用バッファ（単発スパイク除去）
     arrowAzDiff: null,         // ★v7.2: ガイド矢印の連続化方位差（±180°境界の左右迷い防止）
     arrowAltDiff: 0,           // ★v7.2: ガイド矢印の高度差（平滑化用）
@@ -14037,24 +14084,46 @@ const COASTLINES = [
     return text;
   }
 
-  function moonBodyWords(moonAz, moonAlt) {
+  // ★v7.4: 銀河中心の次の昇り時刻（恒星時基準・毎日約4分早まる。renderループ毎フレーム呼びのため1分キャッシュ）
+  let gcRiseCache = { minute: -1, text: '' };
+  function nextGcRiseText() {
+    const nowMin = Math.floor(Date.now() / 60000);
+    if (gcRiseCache.minute === nowMin) return gcRiseCache.text;
+    let text = '';
+    const start = new Date();
+    let prevAlt = SunCalc.getGalacticCenter(start, NAHA.lat, NAHA.lon).altitude;
+    for (let m = 5; m <= 26 * 60; m += 5) {
+      const t = new Date(start.getTime() + m * 60000);
+      const alt = SunCalc.getGalacticCenter(t, NAHA.lat, NAHA.lon).altitude;
+      if (prevAlt < 0 && alt >= 0) {
+        text = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')} ご ろ 昇 る`;
+        break;
+      }
+      prevAlt = alt;
+    }
+    gcRiseCache = { minute: nowMin, text };
+    return text;
+  }
+
+  // ★v7.4: 体感ことばの共通部（月と銀河中心で共用）
+  function targetBodyWords(az, alt, nameJp, riseTextFn) {
     const hour = new Date().getHours();
     const body = getBodyOrientation(hour);
-    let relAz = shortAngle(moonAz, body.facing);
+    let relAz = shortAngle(az, body.facing);
     const absAz = Math.abs(relAz);
-    const altDeg = moonAlt;
+    const altDeg = alt;
 
     if (altDeg < -5) {
       // ★v7.2: 「深さ◯°」より「次にいつ昇るか」の方がユーザーに有用
-      const rise = nextMoonRiseText();
+      const rise = riseTextFn ? riseTextFn() : '';
       return {
-        main: '月 は 足 元',
+        main: `${nameJp} は 足 元`,
         sub: rise ? `地 球 の 裏 側 · ${rise}` : `地 球 の 裏 側 · 深 さ ${Math.abs(altDeg).toFixed(0)}°`
       };
     }
 
     if (altDeg > 75) {
-      return { main: '月 は 真 上', sub: `${body.label} · 見 上 げ て` };
+      return { main: `${nameJp} は 真 上`, sub: `${body.label} · 見 上 げ て` };
     }
 
     let heightWord;
@@ -14088,6 +14157,13 @@ const COASTLINES = [
       main: main,
       sub: `${body.label} · ${absAz.toFixed(0)}° / 高 度 ${altDeg.toFixed(0)}°`
     };
+  }
+
+  function moonBodyWords(moonAz, moonAlt) {
+    return targetBodyWords(moonAz, moonAlt, '月', nextMoonRiseText);
+  }
+  function galaxyBodyWords(gcAz, gcAlt) {
+    return targetBodyWords(gcAz, gcAlt, '銀 河 の 中 心', nextGcRiseText);
   }
 
   function lpfAngle(current, target, alpha) {
@@ -14351,6 +14427,19 @@ const COASTLINES = [
       (err) => alert('位置情報を取得できませんでした: ' + err.message),
       { enableHighAccuracy: true, timeout: 10000 }
     );
+  });
+
+  // ★v7.4: 月⇄銀河中心の切り替え（ロック・矢印の連続化状態はリセット）
+  document.querySelectorAll('#navTargetToggle .nav-target-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      if (navState.navTarget === target) return;
+      navState.navTarget = target;
+      navState.moonLockOn = false;
+      navState.arrowAzDiff = null;
+      document.querySelectorAll('#navTargetToggle .nav-target-btn').forEach(b =>
+        b.classList.toggle('active', b === btn));
+    });
   });
 
   const navCanvas = document.getElementById('navCanvas');
@@ -14705,12 +14794,64 @@ const COASTLINES = [
       navCtx.stroke();
     }
 
-    const azDiff = shortAngle(moonAz, heading);
-    const altDiff = moonAlt - pitch;
+    // ★v7.4: 銀河中心（いて座A* 大質量ブラックホール）。galaxyモード時のみ描画
+    const isGalaxy = navState.navTarget === 'galaxy';
+    const gcPos = SunCalc.getGalacticCenter(now, NAHA.lat, NAHA.lon);
+    const gcAlt = applyRefraction(gcPos.altitude) * 180 / Math.PI;
+    const gcAz = norm360(gcPos.azimuth * 180 / Math.PI + 180);
+    let gp = null;
+    let gcOnScreen = false;
+    if (isGalaxy) {
+      gp = skyToScreen(gcAz, gcAlt, heading, pitch, roll, w, h, fov);
+      gcOnScreen = !!gp && gp.x >= -40 && gp.x <= w + 40 && gp.y >= -40 && gp.y <= h + 40;
+      if (gcOnScreen) {
+        // 降着円盤の淡い光（外側ハロ・暖色）
+        const hg = navCtx.createRadialGradient(gp.x, gp.y, 0, gp.x, gp.y, 58);
+        hg.addColorStop(0, 'rgba(255, 190, 120, 0.40)');
+        hg.addColorStop(0.35, 'rgba(255, 150, 80, 0.16)');
+        hg.addColorStop(1, 'rgba(255, 150, 80, 0)');
+        navCtx.fillStyle = hg;
+        navCtx.beginPath();
+        navCtx.arc(gp.x, gp.y, 58, 0, Math.PI * 2);
+        navCtx.fill();
+        // 光子リング（ゆっくり脈動）
+        const ringR = 15 + Math.sin(Date.now() / 625) * 1.2;
+        navCtx.strokeStyle = 'rgba(255, 240, 200, 0.35)';
+        navCtx.lineWidth = 6;
+        navCtx.beginPath();
+        navCtx.arc(gp.x, gp.y, ringR + 3, 0, Math.PI * 2);
+        navCtx.stroke();
+        navCtx.strokeStyle = 'rgba(255, 205, 130, 0.9)';
+        navCtx.lineWidth = 3;
+        navCtx.beginPath();
+        navCtx.arc(gp.x, gp.y, ringR, 0, Math.PI * 2);
+        navCtx.stroke();
+        // 事象の地平面（黒い芯）
+        navCtx.fillStyle = 'rgba(0, 0, 0, 0.96)';
+        navCtx.beginPath();
+        navCtx.arc(gp.x, gp.y, ringR - 4, 0, Math.PI * 2);
+        navCtx.fill();
+        // ラベル
+        navCtx.fillStyle = 'rgba(255, 225, 170, 0.85)';
+        navCtx.font = '11px "Shippori Mincho", serif';
+        navCtx.textAlign = 'center';
+        navCtx.textBaseline = 'top';
+        navCtx.fillText('銀河の中心 · いて座A*', gp.x, gp.y + ringR + 10);
+      }
+    }
+
+    // ガイド矢印・ロックオンの対象を月⇄銀河中心で切り替え
+    const targetAz = isGalaxy ? gcAz : moonAz;
+    const targetAlt = isGalaxy ? gcAlt : moonAlt;
+    const targetOnScreen = isGalaxy ? gcOnScreen : moonOnScreen;
+    const tp = isGalaxy ? gp : mp;
+
+    const azDiff = shortAngle(targetAz, heading);
+    const altDiff = targetAlt - pitch;
     const cx = w / 2;
     const cy = h / 2;
 
-    if (!moonOnScreen) {
+    if (!targetOnScreen) {
       // ★v7.2: 矢印方位の連続化＋平滑化
       // 月が真後ろ（±180°境界）にあると、わずかなセンサー揺れで azDiff の符号が
       // +180⇄-180 と反転し、矢印が画面の右端⇄左端へ「ぐるん」と飛んでいた。
@@ -14799,9 +14940,9 @@ const COASTLINES = [
     const sub = document.getElementById('navSub');
     const statusVal = document.getElementById('navStatusValue');
 
-    if (moonOnScreen) {
+    if (targetOnScreen && tp) {
       const distFromCenter = Math.sqrt(
-        Math.pow((mp.x - cx) / cx, 2) + Math.pow((mp.y - cy) / cy, 2)
+        Math.pow((tp.x - cx) / cx, 2) + Math.pow((tp.y - cy) / cy, 2)
       );
       // ★v7.1: ヒステリシス。単一しきい値(0.2)だと境界上でセンサーの揺れにより
       // 「見つけた⇄そこに月」が毎フレーム切り替わってかくかくする。
@@ -14817,23 +14958,40 @@ const COASTLINES = [
       }
       if (navState.moonLockOn) {
         headline.classList.add('locked');
-        headline.textContent = '月 · 見 つ け た';
-        sub.textContent = 'そ の ま ま 月 を 感 じ て';
+        if (isGalaxy) {
+          headline.textContent = '銀 河 の 中 心 · 見 つ け た';
+          sub.textContent = 'あ の 世 の 入 り 口 · 大 質 量 ブ ラ ッ ク ホ ー ル';
+        } else {
+          headline.textContent = '月 · 見 つ け た';
+          sub.textContent = 'そ の ま ま 月 を 感 じ て';
+        }
       } else {
         headline.classList.remove('locked');
-        headline.textContent = 'そ こ に 月';
+        headline.textContent = isGalaxy ? 'そ こ に 銀 河 の 中 心' : 'そ こ に 月';
         sub.textContent = 'も う 少 し 中 央 へ';
       }
     } else {
       navState.moonLockOn = false;
       headline.classList.remove('locked');
-      const bodyWords = moonBodyWords(moonAz, moonAlt);
+      const bodyWords = isGalaxy ? galaxyBodyWords(gcAz, gcAlt) : moonBodyWords(moonAz, moonAlt);
       headline.textContent = bodyWords.main;
       sub.textContent = bodyWords.sub;
     }
 
-    const azJp = azimuthToJp(moonPos.azimuth);
-    statusVal.textContent = `${azJp.en} ${azJp.deg.toFixed(0)}° · alt ${moonAlt.toFixed(0)}°`;
+    const azJp = azimuthToJp(isGalaxy ? gcPos.azimuth : moonPos.azimuth);
+    const statusLabel = document.getElementById('navStatusLabel');
+    if (statusLabel) statusLabel.textContent = isGalaxy ? '銀 河 中 心 の 方 位 · 高 度' : '月 の 方 位 · 高 度';
+    let statusText = `${azJp.en} ${azJp.deg.toFixed(0)}° · alt ${(isGalaxy ? gcAlt : moonAlt).toFixed(0)}°`;
+    if (isGalaxy) {
+      // ★v7.4: 月との離角。2025-2026はメジャー・ルナ・スタンドスティル（18.6年周期）で
+      // 月の赤緯が±28.7°まで振れ、赤緯-29°の銀河中心に月が最接近できる時期
+      const D2Rs = Math.PI / 180;
+      const cosSep = Math.sin(moonAlt * D2Rs) * Math.sin(gcAlt * D2Rs) +
+                     Math.cos(moonAlt * D2Rs) * Math.cos(gcAlt * D2Rs) * Math.cos((moonAz - gcAz) * D2Rs);
+      const sep = Math.acos(Math.max(-1, Math.min(1, cosSep))) / D2Rs;
+      statusText += ` · 月 と ${sep.toFixed(0)}°`;
+    }
+    statusVal.textContent = statusText;
 
     document.getElementById('navDebug').innerHTML =
       `ev: ${navState.eventCount} · so: ${navState.screenOrient}°<br>` +
