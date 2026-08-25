@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
 import { SekaiShell, TasuketeSection, useSekaiMe } from "@/components/sekai/sections";
+import { useImageCrop } from "@/components/PhotoCropper";
 
 /** 助けて — 災害時のコミュニティのページ（大見出し＋背景/アイコン＋これまでの取り組み＋掲示板） */
 export default function SekaiTasuketePage() {
@@ -17,6 +18,7 @@ export default function SekaiTasuketePage() {
   const [body, setBody] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const crop = useImageCrop();
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -52,6 +54,7 @@ export default function SekaiTasuketePage() {
 
   return (
     <SekaiShell>
+      {crop.element}
       {/* 大見出し + 背景 */}
       <section className="card overflow-hidden p-0" style={{ border: "none" }}>
         <div className="relative flex min-h-[128px] items-center justify-center px-4 py-6 text-center" style={{ background: page.cover_url ? `linear-gradient(160deg, rgba(10,20,30,.5), rgba(14,30,44,.66)), url(${page.cover_url}) center/cover` : "linear-gradient(150deg,#0e2a3e,#173a52)" }}>
@@ -60,7 +63,7 @@ export default function SekaiTasuketePage() {
           </h1>
           {me && (
             <label className="absolute bottom-2 right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[13px] shadow">📷
-              <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("cover", e.target.files?.[0] ?? null)} />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "cover", (f) => changeImage("cover", f)); e.currentTarget.value = ""; }} />
             </label>
           )}
         </div>
@@ -70,7 +73,7 @@ export default function SekaiTasuketePage() {
               {page.icon_url ? <img src={srcCdn(page.icon_url)} alt="" className="h-full w-full object-cover" /> : "🤝"}
             </span>
             {me && <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] shadow">📷</span>}
-            {me && <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("icon", e.target.files?.[0] ?? null)} />}
+            {me && <input type="file" accept="image/*" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "icon", (f) => changeImage("icon", f)); e.currentTarget.value = ""; }} />}
           </label>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-extrabold text-[#1c3448]">セカイムラ 助け合い</div>

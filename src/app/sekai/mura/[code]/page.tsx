@@ -10,6 +10,7 @@ import { useWarawaGate } from "@/lib/warawaGate";
 import { DotsMenu, EditSheet } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
 import { srcCdn, uploadImage } from "@/lib/images";
+import { useImageCrop } from "@/components/PhotoCropper";
 import { PREFS, fetchVillagePostComments, addVillagePostComment, type VillagePostComment } from "@/lib/sekai";
 import { SeedSection } from "@/components/sekai/sections";
 import { fetchGroupMessages, type GroupMessageRow } from "@/lib/line";
@@ -339,6 +340,7 @@ export default function SekaiMuraPrefPage() {
 
   const canEdit = amOffice || (!!me && leaders.some((l: any) => l.user_id === me.id));
 
+  const crop = useImageCrop();
   const changeImage = async (kind: "cover" | "icon", f: File | null) => {
     if (!f || !me || !room || upBusy) return;
     setUpBusy(kind);
@@ -410,6 +412,7 @@ export default function SekaiMuraPrefPage() {
 
   return (
     <main className="mx-auto min-h-dvh max-w-md pb-20 lg:max-w-3xl" style={{ background: "#eef4ee" }}>
+      {crop.element}
       {/* ヘッダー — Facebookページ型: 小さめの背景 + 左下に重なる丸アイコン */}
       <header className="relative">
         <div
@@ -432,7 +435,7 @@ export default function SekaiMuraPrefPage() {
           {canEdit && (
             <label className="absolute bottom-2 right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white text-[14px] shadow-lg">
               {upBusy === "cover" ? "⏳" : "📷"}
-              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("cover", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "cover", (f) => changeImage("cover", f)); e.currentTarget.value = ""; }} />
             </label>
           )}
         </div>
@@ -456,7 +459,7 @@ export default function SekaiMuraPrefPage() {
                   <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[11px] shadow">
                     {upBusy === "icon" ? "⏳" : "📷"}
                   </span>
-                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { changeImage("icon", e.target.files?.[0] ?? null); e.currentTarget.value = ""; }} />
+                  <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "icon", (f) => changeImage("icon", f)); e.currentTarget.value = ""; }} />
                 </>
               )}
             </label>

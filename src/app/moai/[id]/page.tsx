@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn, uploadImage } from "@/lib/images";
+import { useImageCrop } from "@/components/PhotoCropper";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -139,6 +140,7 @@ export default function MoaiDetailPage() {
     load();
   };
 
+  const crop = useImageCrop();
   const changeImage = async (which: "icon" | "cover", f: File | null) => {
     if (!f || !me) return;
     const url = await uploadImage("post-images", me.id, f, which === "cover" ? 1600 : 512, which === "cover" ? 0.75 : 0.8);
@@ -228,6 +230,7 @@ export default function MoaiDetailPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md pb-20" style={{ background: "#fbf7f5" }}>
       <IosBackButton />
+      {crop.element}
       {/* カバー画像ブロック（写真だけ・文字は乗せない） */}
       <div className="relative h-[150px]" style={{ background: moai.cover_url ? `url(${moai.cover_url}) center/cover` : "linear-gradient(160deg,#e8564a,#c0392b)" }}>
         <div className="absolute left-3 top-3"><Link href="/moai" className="rounded-full bg-black/35 px-2.5 py-1 text-[12px] font-bold text-white no-underline">◀ MoAI</Link></div>
@@ -235,7 +238,7 @@ export default function MoaiDetailPage() {
         {isLeader && (
           <label className="absolute bottom-2 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg">
             📷
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("cover", e.target.files?.[0] ?? null)} />
+            <input type="file" accept="image/*" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "cover", (f) => changeImage("cover", f)); e.currentTarget.value = ""; }} />
           </label>
         )}
       </div>
@@ -250,7 +253,7 @@ export default function MoaiDetailPage() {
             {isLeader && (
               <>
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[13px] shadow">📷</span>
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => changeImage("icon", e.target.files?.[0] ?? null)} />
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "icon", (f) => changeImage("icon", f)); e.currentTarget.value = ""; }} />
               </>
             )}
           </label>

@@ -14,6 +14,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage } from "@/lib/line";
 import { uploadImage } from "@/lib/images";
+import { useImageCrop } from "@/components/PhotoCropper";
 import {
   PREFS,
   MEISTER_SKILLS,
@@ -3740,6 +3741,7 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
   const [pref, setPref] = useState("");
   const [cover, setCover] = useState<string | null>(null);
   const [up, setUp] = useState(false);
+  const crop = useImageCrop();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -3942,14 +3944,19 @@ export function SeedSection({ me, presetPref }: { me: User | null; presetPref?: 
               <div className="mt-2 mb-1 text-[11px] font-extrabold text-[#5a6a54]">② 集まる場所の写真（古民家・アパートなど）</div>
               <label className="block cursor-pointer rounded-lg border border-dashed border-[#a8cca0] py-2 text-center text-[10.5px] font-bold" style={{ color: GREEN }}>
                 {up ? "アップ中..." : cover ? "✓ 写真を設定しました（変更）" : "写真を選ぶ（あとからでもOK）"}
-                <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
                   const f = e.target.files?.[0];
+                  e.currentTarget.value = "";
                   if (!f || !me) return;
-                  setUp(true);
-                  try { setCover(await uploadImage("post-images", me.id, f, 1600, 0.75)); } catch {}
-                  setUp(false);
+                  crop.open(f, "cover", async (cf) => {
+                    if (!cf) return;
+                    setUp(true);
+                    try { setCover(await uploadImage("post-images", me.id, cf, 1600, 0.75)); } catch {}
+                    setUp(false);
+                  });
                 }} />
               </label>
+              {crop.element}
               <input value={pref} onChange={(e) => setPref(e.target.value)} placeholder="都道府県（例: 沖縄県）" className="mt-2 w-full rounded-lg border border-[#d8e4d0] px-2.5 py-2 text-[12px] outline-none focus:border-[#4a9a5a]" />
               <button onClick={plant} disabled={saving} className="mt-2 w-full rounded-xl py-2.5 text-[12.5px] font-extrabold text-white disabled:opacity-40" style={{ background: "#c94d3a" }}>
                 {saving ? "まいています..." : "🌱 この名前で種をまく（自分が1人目）"}

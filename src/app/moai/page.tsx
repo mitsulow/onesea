@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useWarawaGate } from "@/lib/warawaGate";
 import { srcCdn, uploadImage } from "@/lib/images";
+import { useImageCrop } from "@/components/PhotoCropper";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { IosBackButton } from "@/components/IosBackButton";
 import { fetchMoais, createMoai, fetchMoaiFeed, moaiNameTaken, MOAI_CATEGORIES, moaiCat, type Moai } from "@/lib/moai";
@@ -108,6 +109,7 @@ export default function MoaiListPage() {
     }
   };
 
+  const crop = useImageCrop();
   const up = async (f: File | null, set: (u: string | null) => void, big: boolean) => {
     if (!f || !me) return;
     const u = await uploadImage("post-images", me.id, f, big ? 1600 : 512, big ? 0.75 : 0.8);
@@ -146,6 +148,7 @@ export default function MoaiListPage() {
     >
     <main className="mx-auto min-h-dvh w-full pb-16" style={{ background: "#fbf7f5" }}>
       <IosBackButton />
+      {crop.element}
       <header className="relative flex h-[64px] flex-col items-center justify-center border-b border-[#f0d8d4] px-6 text-center" style={{ background: "url(/icons/bg-kawara.webp) center/cover" }}>
         <span className="absolute left-3 top-1/2 -translate-y-1/2"><ServiceMenuButton textColor="#1a1008" /></span>
         <div className="text-[10px] font-bold tracking-[3px] text-[#5a3420]" style={{ textShadow: "0 0 6px #fff, 0 0 3px #fff" }}>シュミサークル部活道</div>
@@ -176,11 +179,11 @@ export default function MoaiListPage() {
             <div className="relative mb-8 h-24 overflow-hidden rounded-xl bg-[#f6e4e0]">
               {cover ? <img src={srcCdn(cover)} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-[11px] text-[#b09088]">背景写真</div>}
               <label className="absolute right-2 top-2 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-white/90 text-[13px] shadow">📷
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => up(e.target.files?.[0] ?? null, setCover, true)} />
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "cover", (f) => up(f, setCover, true)); e.currentTarget.value = ""; }} />
               </label>
               <label className="absolute -bottom-6 left-3 flex h-14 w-14 cursor-pointer items-center justify-center overflow-hidden rounded-full border-4 border-[#fff] bg-[#f3ded9] text-[18px] shadow-lg">
                 {icon ? <img src={srcCdn(icon)} alt="" className="h-full w-full object-cover" /> : "🗿"}
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => up(e.target.files?.[0] ?? null, setIcon, false)} />
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "icon", (f) => up(f, setIcon, false)); e.currentTarget.value = ""; }} />
               </label>
             </div>
             <input value={name} onChange={(e) => { setName(e.target.value); setNameTaken(null); }} onBlur={async () => { if (name.trim()) setNameTaken(await moaiNameTaken(name)); }} placeholder="MoAIの名前（例: 朝ラン部、味噌づくりの会）" className="mb-1 w-full rounded-xl border bg-[#fff] px-3 py-2 text-[13.5px] text-[#3a2420] outline-none" style={{ borderColor: nameTaken ? "#c0392b" : "#f0d8d4" }} />

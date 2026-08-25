@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getOrCreateChat, sendMessage, fetchGroupMessages, sendGroupMessage } from "@/lib/line";
 import { DotsMenu, EditSheet } from "@/components/PostKit";
 import { uploadImage } from "@/lib/images";
+import { useImageCrop } from "@/components/PhotoCropper";
 import { SnsIcon } from "@/components/SnsIcon";
 import { EmbedCard } from "@/components/EmbedCard";
 import {
@@ -51,6 +52,7 @@ export default function VillagePage() {
   }, [me]);
   const { show: snack, node: snackNode } = useSnackbar();
   const [imgBusy, setImgBusy] = useState<"icon" | "cover" | null>(null);
+  const crop = useImageCrop();
   const [village, setVillage] = useState<any | null | undefined>(undefined);
   const [members, setMembers] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
@@ -238,6 +240,7 @@ export default function VillagePage() {
   return (
     <main className="pb-20">
       <SekaiMenuButton floating />
+      {crop.element}
       <header
         className="relative px-4 pb-5 pt-4 text-center"
         style={{
@@ -287,24 +290,27 @@ export default function VillagePage() {
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
-                  onChange={async (e) => {
+                  onChange={(e) => {
                     const f = e.target.files?.[0];
                     e.currentTarget.value = "";
                     if (!f || !me || imgBusy) return;
-                    setImgBusy("icon");
-                    try {
-                      const { uploadImage } = await import("@/lib/images");
-                      const url = await uploadImage("post-images", me.id, f, 512, 0.8);
-                      if (!url) throw new Error("upload");
-                      const supabase = createClient();
-                      const { error } = await supabase.from("villages").update({ icon_url: url }).eq("id", villageId);
-                      if (error) throw error;
-                      await load();
-                      snack("アイコンを変更しました ✓");
-                    } catch {
-                      snack("アイコンを変更できませんでした。もう一度お試しください", false);
-                    }
-                    setImgBusy(null);
+                    crop.open(f, "icon", async (cf) => {
+                      if (!cf) return;
+                      setImgBusy("icon");
+                      try {
+                        const { uploadImage } = await import("@/lib/images");
+                        const url = await uploadImage("post-images", me.id, cf, 512, 0.8);
+                        if (!url) throw new Error("upload");
+                        const supabase = createClient();
+                        const { error } = await supabase.from("villages").update({ icon_url: url }).eq("id", villageId);
+                        if (error) throw error;
+                        await load();
+                        snack("アイコンを変更しました ✓");
+                      } catch {
+                        snack("アイコンを変更できませんでした。もう一度お試しください", false);
+                      }
+                      setImgBusy(null);
+                    });
                   }}
                 />
               </>
@@ -356,22 +362,25 @@ export default function VillagePage() {
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               className="hidden"
-              onChange={async (e) => {
+              onChange={(e) => {
                 const f = e.target.files?.[0];
                 e.currentTarget.value = "";
                 if (!f || !me || imgBusy) return;
-                setImgBusy("cover");
-                try {
-                  const url = await uploadImage("post-images", me.id, f, 1600, 0.75);
-                  if (!url) throw new Error("upload");
-                  const { error } = await createClient().rpc("set_village_cover", { vid: villageId, url });
-                  if (error) throw error;
-                  await load();
-                  snack("背景写真を変更しました ✓");
-                } catch {
-                  snack("背景写真を変更できませんでした。もう一度お試しください", false);
-                }
-                setImgBusy(null);
+                crop.open(f, "cover", async (cf) => {
+                  if (!cf) return;
+                  setImgBusy("cover");
+                  try {
+                    const url = await uploadImage("post-images", me.id, cf, 1600, 0.75);
+                    if (!url) throw new Error("upload");
+                    const { error } = await createClient().rpc("set_village_cover", { vid: villageId, url });
+                    if (error) throw error;
+                    await load();
+                    snack("背景写真を変更しました ✓");
+                  } catch {
+                    snack("背景写真を変更できませんでした。もう一度お試しください", false);
+                  }
+                  setImgBusy(null);
+                });
               }}
             />
           </label>
@@ -573,12 +582,16 @@ export default function VillagePage() {
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
-                onChange={async (e) => {
+                onChange={(e) => {
                   const f = e.target.files?.[0];
+                  e.currentTarget.value = "";
                   if (!f || !me) return;
-                  setECoverUp(true);
-                  setECover(await uploadImage("post-images", me.id, f, 1600, 0.75));
-                  setECoverUp(false);
+                  crop.open(f, "wide", async (cf) => {
+                    if (!cf) return;
+                    setECoverUp(true);
+                    setECover(await uploadImage("post-images", me.id, cf, 1600, 0.75));
+                    setECoverUp(false);
+                  });
                 }}
               />
             </label>

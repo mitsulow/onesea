@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { srcCdn, uploadImage } from "@/lib/images";
+import { useImageCrop } from "@/components/PhotoCropper";
 import { AvatarMenu } from "@/components/AvatarMenu";
 import { DotsMenu } from "@/components/PostKit";
 import { ReportDialog } from "@/components/ReportDialog";
@@ -123,6 +124,7 @@ export default function TanboDetailPage() {
     load();
   };
 
+  const crop = useImageCrop();
   const changeImage = async (which: "icon" | "cover", f: File | null) => {
     if (!f || !me || imgBusy) return;
     setImgBusy(which);
@@ -217,6 +219,7 @@ export default function TanboDetailPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md pb-20" style={{ background: "#f6faf4" }}>
       <IosBackButton />
+      {crop.element}
       {/* カバー画像ブロック */}
       <div className="relative h-[150px]" style={{ background: cover ? `url(${srcCdn(cover)}) center/cover` : "linear-gradient(160deg,#7ab86a,#2a7a48)" }}>
         <div className="absolute left-3 top-3"><Link href="/sekai/kome" className="rounded-full bg-black/35 px-2.5 py-1 text-[12px] font-bold text-white no-underline">◀ 米部</Link></div>
@@ -224,7 +227,7 @@ export default function TanboDetailPage() {
         {joined && (
           <label className="absolute bottom-2 right-3 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white text-[15px] shadow-lg">
             📷
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => changeImage("cover", e.target.files?.[0] ?? null)} />
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "cover", (f) => changeImage("cover", f)); e.currentTarget.value = ""; }} />
           </label>
         )}
       </div>
@@ -239,7 +242,7 @@ export default function TanboDetailPage() {
             {joined && (
               <>
                 <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[13px] shadow">📷</span>
-                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => changeImage("icon", e.target.files?.[0] ?? null)} />
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(e) => { crop.open(e.target.files?.[0], "icon", (f) => changeImage("icon", f)); e.currentTarget.value = ""; }} />
               </>
             )}
           </label>
