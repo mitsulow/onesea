@@ -107,7 +107,11 @@ export default function SekaiMuraChatPage() {
 
   useEffect(() => {
     if (!roomId) return;
-    const t = setInterval(() => poll(roomId), 5000);
+    // 12秒ポーリング(増分取得のみ。タブ非表示・未ログイン中は打たない=わらわ〜障害の教訓)
+    const t = setInterval(() => {
+      if (document.hidden || !meRef.current) return;
+      poll(roomId);
+    }, 12000);
     return () => clearInterval(t);
   }, [roomId, poll]);
 

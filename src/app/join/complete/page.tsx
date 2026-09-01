@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { ensureAuthAlive } from "@/components/ServiceStatus";
 import { ensureProfile } from "@/lib/cotozute";
 import { isWarawaUntil } from "@/lib/warawa";
 import MUNI from "@/data/municipalities.json";
@@ -62,6 +63,7 @@ export default function JoinCompletePage() {
   }, []);
 
   const login = async () => {
+    if (!(await ensureAuthAlive())) return; // 障害中は赤帯を出して固まらせない
     try { localStorage.setItem("onesea-return", "/join/complete"); } catch {}
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${window.location.origin}/callback`, queryParams: { prompt: "select_account" } } });

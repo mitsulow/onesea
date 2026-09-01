@@ -8,6 +8,7 @@ import { AvatarMenu } from "@/components/AvatarMenu";
 import { NEURA_SIZE, NeuraTeam, fetchMyDdp, myNeuraTeam } from "@/lib/mmm";
 import {
   fetchGroupMessages,
+  fetchGroupMessagesSince,
   sendGroupMessage,
   markGroupRead,
   GroupMessageRow,
@@ -376,17 +377,41 @@ function NeuraChat({ teamId, me }: { teamId: string; me: User }) {
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const lastAtRef = useRef<string | null>(null);
   const load = useCallback(async () => {
     const list = await fetchGroupMessages("neura", teamId);
     setMsgs(list);
+    lastAtRef.current = list.length ? list[list.length - 1].created_at : new Date(0).toISOString();
     markGroupRead("neura", teamId, me.id);
   }, [teamId, me.id]);
 
+  /* 見張りは新着だけの増分取得(全件5秒再取得はわらわ〜障害の教訓でやめた) */
+  const poll = useCallback(async () => {
+    const since = lastAtRef.current;
+    if (!since) {
+      load();
+      return;
+    }
+    const news = await fetchGroupMessagesSince("neura", teamId, since);
+    if (news.length) {
+      setMsgs((prev) => {
+        const seen = new Set(prev.map((m) => m.id));
+        const add = news.filter((m) => !seen.has(m.id));
+        if (!add.length) return prev;
+        lastAtRef.current = add[add.length - 1].created_at;
+        return [...prev, ...add];
+      });
+      markGroupRead("neura", teamId, me.id);
+    }
+  }, [teamId, me.id, load]);
+
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
+    const t = setInterval(() => {
+      if (!document.hidden) poll();
+    }, 12000);
     return () => clearInterval(t);
-  }, [load]);
+  }, [load, poll]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });

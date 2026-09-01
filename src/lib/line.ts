@@ -160,9 +160,13 @@ export async function markRead(chatId: string, myId: string) {
   window.dispatchEvent(new Event("onesea:unreadRefresh"));
 }
 
-/** ナビバッジ用: 個人チャット + グループ + 事務局お知らせの未読合計 */
+/** ナビバッジ用: 個人チャット + グループ + 事務局お知らせの未読合計
+ * わらわ〜障害(2026-08-16)の教訓でDB関数1発(unread_total・SECURITY DEFINER)に集約。
+ * 旧方式はクエリ約17本の束だったのでRPCが使えない時だけのフォールバック */
 export async function fetchUnreadTotal(myId: string): Promise<number> {
   const supabase = createClient();
+  const { data: rpcN, error: rpcErr } = await supabase.rpc("unread_total");
+  if (!rpcErr && typeof rpcN === "number") return rpcN;
   const [{ count }, groups, bc] = await Promise.all([
     supabase
       .from("messages")

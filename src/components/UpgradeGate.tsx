@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { ensureAuthAlive } from "@/components/ServiceStatus";
 import { WARAWA_LP_URL } from "@/lib/warawa";
 
 /**
@@ -26,6 +27,7 @@ export function UpgradeDialog({
   const detailHref = lp ?? WARAWA_LP_URL;
 
   const login = async () => {
+    if (!(await ensureAuthAlive())) return; // 障害中は赤帯を出して固まらせない
     try {
       localStorage.removeItem("onesea-return");
     } catch {}

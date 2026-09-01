@@ -18,30 +18,12 @@ tar --exclude="onesea/node_modules" --exclude="onesea/.next" --exclude="onesea/.
 tar --exclude="0Lei/.git" -czf "$bk\0Lei-シューマン蓄積と港データ.tar.gz" -C $env:USERPROFILE 0Lei 2>$null
 "0lei ok" | Out-File $log -Append -Encoding utf8
 
-# ③ DB全テーブル
-$token = ""
-Get-Content "$env:USERPROFILE\.rakuichi-env" | ForEach-Object {
-  if ($_ -match "SUPABASE_ACCESS_TOKEN\s*=\s*(.+)") { $token = $Matches[1].Trim().Trim('"').Trim("'") }
-}
-if ($token) {
-  $api = "https://api.supabase.com/v1/projects/hpgofjkxqguzgrptchqj/database/query"
-  $hdr = @{ Authorization = "Bearer $token"; "Content-Type" = "application/json" }
-  try {
-    $body = '{"query":"SELECT relname FROM pg_stat_user_tables WHERE schemaname=''public'' ORDER BY relname"}'
-    $tables = Invoke-RestMethod -Method Post -Uri $api -Headers $hdr -Body $body
-    foreach ($t in $tables) {
-      $name = $t.relname
-      $q = '{"query":"SELECT COALESCE(jsonb_agg(t), ''[]''::jsonb) AS j FROM ' + $name + ' t"}'
-      try {
-        $r = Invoke-RestMethod -Method Post -Uri $api -Headers $hdr -Body ([System.Text.Encoding]::UTF8.GetBytes($q))
-        $r[0].j | ConvertTo-Json -Depth 20 | Out-File "$bk\db\$name.json" -Encoding utf8
-      } catch { "table $name FAIL" | Out-File $log -Append -Encoding utf8 }
-    }
-    "db ok ($($tables.Count) tables)" | Out-File $log -Append -Encoding utf8
-  } catch { "db list FAIL: $_" | Out-File $log -Append -Encoding utf8 }
-} else {
-  "no token" | Out-File $log -Append -Encoding utf8
-}
+# ③ DB全テーブル (pooler直結・Management APIトークン失効2026-09-01を機に移行)
+$env:PYTHONIOENCODING = "utf-8"; $env:PYTHONUTF8 = "1"
+try {
+  $out = python "$env:USERPROFILE\onesea\scripts\db_dump.py" "$bk\db" 2>&1
+  $out | Out-File $log -Append -Encoding utf8
+} catch { "db dump FAIL: $_" | Out-File $log -Append -Encoding utf8 }
 
 # ④ README
 @"

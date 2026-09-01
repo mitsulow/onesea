@@ -8,6 +8,7 @@
 - 本番: https://onesea.vercel.app / repo: mitsulow/onesea（main直push OK・solo dev）
 - 毎リクエスト完結: 実装 → build → commit/push → `vercel deploy --prod` → `/api/version` で反映SHAを確認、まで一気にやる
 - DB操作は Supabase Management API（トークン: `~/.rakuichi-env`）。**1リクエスト=1トランザクション**なので、末尾にrollbackを書くとDDLごと消える。検証は別リクエストで
+  - **【2026-09-01】トークン失効中（401）**。代替=pooler直結: pg8000で `postgres.hpgofjkxqguzgrptchqj` @ `aws-0-ap-northeast-1.pooler.supabase.com:5432`・パスは `~/.onesea-env` の ONESEA_DB_PASS・`ssl_context=True`（検証付きだと自己署名エラー）。実装例 scripts/db_dump.py。新トークンは supabase.com/dashboard/account/tokens で発行して ~/.rakuichi-env を書き換え（プラン変更などbilling系はトークン必須）
 - R2直アップロードは boto3 + `~/.onesea-r2.txt`（/api/uploadはログイン必須なのでスクリプトからは使えない）
 - 権限の最終権威 = デスクトップの **「会員区分別アクセス権限シート.xlsx」**。UIの思いつきで権限を変えない。迷ったらシートを読み直す
 
@@ -61,6 +62,8 @@
   - CotoZute新着 → countFreshFeed（件数だけ・本文は「追いつく」押下時に初取得）
   - TalK一覧30秒 → 4点プローブ（最終メッセージ時刻・未読数・お知らせ・グループ最新）で変化時のみフル取得
   - どれも document.hidden 中は停止
+- **わらわ〜公開初日障害(2026-08-16)の移植（2026-09-01実施）**: ①未読合計はDB関数 `unread_total()`（SECURITY DEFINER・DM+グループ+お知らせを1発。旧17クエリ束はフォールバックに残置）②チャット系ポーリングはDM7秒/グループ12秒+「非表示・未ログイン中は打たない」③`ServiceStatus`（layout常駐の赤帯「アクセス集中」・REST8秒疎通・30秒再確認）④全ログインボタン8箇所に `ensureAuthAlive()`（Auth疎通8秒タイムアウト→失敗なら赤帯表示で「Googleへ移動中…」固まり防止）。新しいポーリングを書く時もこの3原則（増分・12秒以上・hidden/未ログイン停止）
+- **毎晩バックアップのDB部分はpooler直結の scripts/db_dump.py**（2026-09-01根治）。旧Management API版は blog_posts の jsonb_agg 一発集約がタイムアウトして**8月中旬からdbが2テーブルしか取れていなかった**。行単位 to_jsonb で全82テーブル/154MB確認済み。大テーブルをjsonb_aggで丸ごと取るのは禁止
 - 重量級アセットは外部無料CDN: シューマンmp3=jsDelivr（config.tsのurl。publicのは fallback なので消さない）、海岸線land-50m/月テクスチャ=jsDelivr
 - HEIC: acceptを `image/jpeg,image/png,image/webp,image/gif` に限定すると**iOSが端末側で即JPEG変換**して渡す（heic2anyのブラウザ内変換10-20秒を回避）。compressImageにheic2anyフォールバックあり。写真変更UIは必ず「バックドロップ+スナックバー(useSnackbar)」で結果を告げる（無反応が一番のクレーム源だった）
 
@@ -129,4 +132,5 @@
 7. **楽座出品の編集範囲** — 修正は「軽微な文章と写真のみ」方針（値段等はトラブル防止で不可）。pay_url後付けは再出品が必要なまま
 8. **手帳朝いちコンテンツパック**（潮/今日生まれ/何の日/気圧/検証済み占い）— 提案済み・GO待ち。データはC:\Users\waras\data_harvest\night2\ に収集済み
 9. **帝王暦術** — 検定完了（職業シグナルなし・実装しない合意）。実在周期(月・潮・気圧・シューマン)は「予報」、暦術は「文化」として扱う方針
-10. スケール時の課金順序: 5,000人超えたら Supabase Pro + Vercel Pro（現状無料枠で足りる。写真R2化と増分ポーリング済みなので25,000人でも月8千円前後の試算）
+10. スケール時の課金順序: 本番公開の**前日までに** Supabase Pro + Compute Small（実質$30/月・わらわ〜障害の教訓「必要になる日は公開初日に来る」）。ユーザー合意済み(2026-09-01)・**Management APIトークン再発行待ちで未実施**。Vercel Proは大規模告知の前に
+11. 見るだけの公開フィードのCDNキャッシュ配信（Route Handler + s-maxage=10）— わらわ〜報告書の理想③。1万人告知の前に必須・未実装

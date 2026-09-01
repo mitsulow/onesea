@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { ensureAuthAlive } from "@/components/ServiceStatus";
 import { srcCdn } from "@/lib/images";
 import { getOrCreateChat } from "@/lib/line";
 import { sendFriendRequest } from "@/lib/friends";
@@ -121,6 +122,7 @@ export default function MeishiExchangePage() {
           ) : me === null ? (
             <button
               onClick={async () => {
+                if (!(await ensureAuthAlive())) return; // 障害中は赤帯を出して固まらせない
                 try { localStorage.setItem("onesea-return", `/meishi/${otherId}`); } catch {}
                 await createClient().auth.signInWithOAuth({
                   provider: "google",

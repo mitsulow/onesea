@@ -84,7 +84,9 @@ export default function ChatPage() {
     let stop = false;
     const check = () => peekCall(chatId).then((n) => !stop && setCallActive(n));
     check();
-    const t = setInterval(check, 7000);
+    const t = setInterval(() => {
+      if (!document.hidden) check();
+    }, 7000);
     return () => {
       stop = true;
       clearInterval(t);
@@ -121,10 +123,12 @@ export default function ChatPage() {
   const load = useCallback(async () => {
     const full = cursorRef.current === null || tickRef.current % 6 === 0;
     tickRef.current++;
+    let hasIncomingUnread = false;
     if (full) {
       const list = await fetchMessages(chatId);
       setMessages(list);
       if (list.length) cursorRef.current = list[list.length - 1].created_at;
+      hasIncomingUnread = list.some((m) => m.sender_id !== meRef.current?.id && !m.read_at);
     } else {
       const fresh = await fetchMessagesSince(chatId, cursorRef.current!);
       if (fresh.length) {
@@ -133,9 +137,11 @@ export default function ChatPage() {
           const seen = new Set(prev.map((m) => m.id));
           return [...prev, ...fresh.filter((m) => !seen.has(m.id))];
         });
+        hasIncomingUnread = fresh.some((m) => m.sender_id !== meRef.current?.id);
       }
     }
-    if (meRef.current) markRead(chatId, meRef.current.id);
+    // 既読UPDATEは相手からの未読がある時だけ(毎ポーリングの空UPDATEをやめる=わらわ〜障害の教訓)
+    if (meRef.current && hasIncomingUnread) markRead(chatId, meRef.current.id);
   }, [chatId]);
 
   useEffect(() => {
@@ -163,9 +169,12 @@ export default function ChatPage() {
     });
   }, [chatId, load]);
 
-  // 5秒ポーリング
+  // 7秒ポーリング(タブ非表示・未ログイン中は打たない=わらわ〜障害の教訓)
   useEffect(() => {
-    const t = setInterval(load, 5000);
+    const t = setInterval(() => {
+      if (document.hidden || !meRef.current) return;
+      load();
+    }, 7000);
     return () => clearInterval(t);
   }, [load]);
 

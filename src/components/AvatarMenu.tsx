@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { ensureAuthAlive } from "@/components/ServiceStatus";
 import { subscribeUnread } from "@/lib/unreadStore";
 import { setBadge, ensureSw } from "@/lib/push";
 import { fetchWarawaMissing } from "@/lib/warawa";
@@ -113,6 +114,7 @@ export function AvatarMenu({ ring = "#d4b96a" }: { ring?: string }) {
   );
 
   const login = async () => {
+    if (!(await ensureAuthAlive())) return; // 障害中は赤帯を出して「Googleへ移動中…」で固まらせない
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",

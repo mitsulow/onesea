@@ -5,6 +5,7 @@ import { ConsentDialog } from "@/components/ConsentDialog";
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { ensureAuthAlive } from "@/components/ServiceStatus";
 import { useWarawaGate } from "@/lib/warawaGate";
 import { ensureProfile } from "@/lib/cotozute";
 import { EmbedCard, OGPEmbed } from "./EmbedCard";
@@ -127,6 +128,10 @@ export function CotozuteComposer({ onPosted }: { onPosted?: () => void }) {
   };
 
   const login = async () => {
+    if (!(await ensureAuthAlive())) {
+      setMessage("ただ今アクセス集中により繋がりません。10分後にもう一度どうぞ🙏");
+      return;
+    }
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

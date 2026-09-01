@@ -1,4 +1,5 @@
 import { VersionGuard } from "@/components/VersionGuard";
+import { ServiceStatus } from "@/components/ServiceStatus";
 import { IosBackButton } from "@/components/IosBackButton";
 import { CallRingListener } from "@/components/CallRingListener";
 import type { Metadata, Viewport } from "next";
@@ -62,6 +63,7 @@ export default function RootLayout({
         <IosBackButton />
         <CallRingListener />
         <div className="mx-auto min-h-screen max-w-[480px] md:max-w-[820px] lg:max-w-[1080px] bg-washi pb-14">
+          <ServiceStatus />
           <PullToReload />
           <SwipeNav />
           {children}

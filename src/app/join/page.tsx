@@ -1,10 +1,12 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { ensureAuthAlive } from "@/components/ServiceStatus";
 
 /** わらわ〜会員の入会案内（無料アプリからのグレードアップ先） */
 export default function JoinPage() {
   const login = async () => {
+    if (!(await ensureAuthAlive())) return; // 障害中は赤帯を出して固まらせない
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",

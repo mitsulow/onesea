@@ -167,8 +167,12 @@ export default function GroupChatPage() {
     });
   }, [type, id, load]);
 
+  // 12秒ポーリング(増分取得のみ。タブ非表示・未ログイン中は打たない=わらわ〜障害の教訓)
   useEffect(() => {
-    const t = setInterval(poll, 5000);
+    const t = setInterval(() => {
+      if (document.hidden || !meRef.current) return;
+      poll();
+    }, 12000);
     return () => clearInterval(t);
   }, [poll]);
 

@@ -3,6 +3,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { ensureAuthAlive } from "@/components/ServiceStatus";
 
 /**
  * ゲスト（未ログイン）が無料会員機能（手帳の書き込み等）に触れたときの案内。
@@ -22,6 +23,7 @@ export function SignupDialog({
   if (!open || !mounted) return null;
 
   const login = async () => {
+    if (!(await ensureAuthAlive())) return; // 障害中は赤帯を出して固まらせない
     try {
       localStorage.removeItem("onesea-return");
     } catch {}
