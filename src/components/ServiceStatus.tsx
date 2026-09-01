@@ -13,6 +13,13 @@ export function ServiceStatus() {
   const [down, setDown] = useState(false);
 
   useEffect(() => {
+    // デバッグ: ?testdown=1 で赤帯を強制表示(testspotsと同じ流儀・疎通確認はしない)
+    try {
+      if (new URLSearchParams(window.location.search).has("testdown")) {
+        setDown(true);
+        return;
+      }
+    } catch {}
     let alive = true;
     const check = async () => {
       const ctrl = new AbortController();

@@ -14,7 +14,13 @@ export default function LoginPage() {
   const [down, setDown] = useState(false);
 
   useEffect(() => {
-    const ret = new URLSearchParams(window.location.search).get("return") || "/";
+    const qs = new URLSearchParams(window.location.search);
+    // デバッグ: ?testdown=1 で障害時の案内を強制表示
+    if (qs.has("testdown")) {
+      setDown(true);
+      return;
+    }
+    const ret = qs.get("return") || "/";
     try { localStorage.setItem("onesea-return", ret); } catch {}
     (async () => {
       if (!(await ensureAuthAlive())) {
