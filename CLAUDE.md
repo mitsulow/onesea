@@ -8,7 +8,7 @@
 - 本番: https://onesea.vercel.app / repo: mitsulow/onesea（main直push OK・solo dev）
 - 毎リクエスト完結: 実装 → build → commit/push → `vercel deploy --prod` → `/api/version` で反映SHAを確認、まで一気にやる
 - DB操作は Supabase Management API（トークン: `~/.rakuichi-env`）。**1リクエスト=1トランザクション**なので、末尾にrollbackを書くとDDLごと消える。検証は別リクエストで
-  - **【2026-09-01】トークン失効中（401）**。代替=pooler直結: pg8000で `postgres.hpgofjkxqguzgrptchqj` @ `aws-0-ap-northeast-1.pooler.supabase.com:5432`・パスは `~/.onesea-env` の ONESEA_DB_PASS・`ssl_context=True`（検証付きだと自己署名エラー）。実装例 scripts/db_dump.py。新トークンは supabase.com/dashboard/account/tokens で発行して ~/.rakuichi-env を書き換え（プラン変更などbilling系はトークン必須）
+  - トークンは失効することがある（2026-09-01に401→ユーザーが再発行して復旧）。**User-Agentヘッダ必須**（無いとCloudflare 403 code 1010）。トークン無しの代替=pooler直結: pg8000で `postgres.hpgofjkxqguzgrptchqj` @ `aws-0-ap-northeast-1.pooler.supabase.com:5432`・パスは `~/.onesea-env` の ONESEA_DB_PASS・`ssl_context=True`（検証付きだと自己署名エラー）。実装例 scripts/db_dump.py
 - R2直アップロードは boto3 + `~/.onesea-r2.txt`（/api/uploadはログイン必須なのでスクリプトからは使えない）
 - 権限の最終権威 = デスクトップの **「会員区分別アクセス権限シート.xlsx」**。UIの思いつきで権限を変えない。迷ったらシートを読み直す
 
@@ -132,5 +132,5 @@
 7. **楽座出品の編集範囲** — 修正は「軽微な文章と写真のみ」方針（値段等はトラブル防止で不可）。pay_url後付けは再出品が必要なまま
 8. **手帳朝いちコンテンツパック**（潮/今日生まれ/何の日/気圧/検証済み占い）— 提案済み・GO待ち。データはC:\Users\waras\data_harvest\night2\ に収集済み
 9. **帝王暦術** — 検定完了（職業シグナルなし・実装しない合意）。実在周期(月・潮・気圧・シューマン)は「予報」、暦術は「文化」として扱う方針
-10. スケール時の課金順序: 本番公開の**前日までに** Supabase Pro + Compute Small（実質$30/月・わらわ〜障害の教訓「必要になる日は公開初日に来る」）。ユーザー合意済み(2026-09-01)・**Management APIトークン再発行待ちで未実施**。Vercel Proは大規模告知の前に
+10. ~~スケール時の課金~~ **Supabase Compute Small適用済み(2026-09-01)**: 組織はPro（わらわ〜障害時から）・OneSeaにci_small追加（+$15/月・2GB/2コア/プーラー400接続）。大規模告知日は当日だけLargeへ（時間課金）。Vercel Proは大規模告知の前に
 11. 見るだけの公開フィードのCDNキャッシュ配信（Route Handler + s-maxage=10）— わらわ〜報告書の理想③。1万人告知の前に必須・未実装
