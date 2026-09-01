@@ -1,14 +1,15 @@
 "use client";
 
-import { Titan_One } from "next/font/google";
+import { Baloo_2 } from "next/font/google";
 
 /**
- * CotoZuteロゴ — フォント総選挙で⑨Titan Oneに決定(2026-08-15ユーザー選定)。
- * 「→」のグリフは極太のTitan Oneに対して細すぎるため、
- * 同じ太さ感の手描きSVG矢印(丸キャップ)を添える。
+ * CotoZuteロゴ — 総選挙⑨Titan Oneは「太すぎる」となり(2026-09-01ユーザー指示)、
+ * 同じ丸ゴ系で一段軽いBaloo 2(700)へ変更。
+ * 「→」のグリフはロゴ文字に対して細すぎるため、
+ * 同じ太さ感の手描きSVG矢印(丸キャップ)を添える(太さはフォントと連動して調整)。
  */
 
-const titan = Titan_One({ weight: "400", subsets: ["latin"], display: "swap" });
+const balo = Baloo_2({ weight: "700", subsets: ["latin"], display: "swap" });
 
 export function CotoZuteLogo({
   size = 22,
@@ -23,7 +24,7 @@ export function CotoZuteLogo({
 }) {
   return (
     <span
-      className={titan.className}
+      className={balo.className}
       style={{ color, fontSize: size, lineHeight: 1, display: "inline-flex", alignItems: "center", gap: size * 0.12 }}
     >
       CotoZute
@@ -34,7 +35,7 @@ export function CotoZuteLogo({
           viewBox="0 0 44 26"
           fill="none"
           stroke={color}
-          strokeWidth="9"
+          strokeWidth="6.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden
