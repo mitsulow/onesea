@@ -27,7 +27,7 @@ function fmt(sec: number): string {
 type ProgramKind = "meditation" | "idea" | "synchro";
 
 /**
- * MasterMindSystem — シューマン音©（令和八年夏至点）プレイヤー。
+ * MasterMindSystem — シューマン音©（令和八年秋分点）プレイヤー。
  * - 通常再生: ▶ ボタン
  * - 瞑想モード(10/15/30分・トータル制): 間→鈴3打(実測シューマン×64Hz)→間→シューマン音→間→鐘1打
  *   →静寂(F1〜F4可聴ドローン+ヘミシンクL/R差7.83Hz+黄金比ゆらぎ)→鐘3打。全てAudioClock予約で画面オフ対応
@@ -479,7 +479,7 @@ export function SchumannAudioPlayer() {
           >
             シューマン音
           </span>
-          <span className="ml-1.5 text-[11.5px] text-white/85">（夏至 {SCHUMANN.hz}HZ）</span>
+          <span className="ml-1.5 text-[11.5px] text-white/85">（秋分 {SCHUMANN.hz}HZ）</span>
         </div>
         <button
           onClick={() => setShowDlInfo((v) => !v)}
@@ -492,9 +492,9 @@ export function SchumannAudioPlayer() {
       {showDlInfo && (
         <div className="mt-1.5 rounded-xl bg-white/85 px-3 py-1.5 text-[11.5px] leading-relaxed text-[#2a6a66]">
           {dl === "cached"
-            ? "✅ 音源はこの端末に保存済みです。再生してもギガは減りません（初回の1回だけ約10MBをダウンロードします）。"
+            ? "✅ 音源はこの端末に保存済みです。再生してもギガは減りません（初回の1回だけ約13MBをダウンロードします）。"
             : dl === "loading"
-              ? "⏬ 音源をこの端末に保存しています…（約10MB・初回のみ）"
+              ? "⏬ 音源をこの端末に保存しています…（約13MB・初回のみ）"
               : "🌐 いまはストリーミング再生です。通信環境の良い場所で開き直すと端末に保存されます。"}
         </div>
       )}
@@ -808,5 +808,5 @@ export function SchumannAudioPlayer() {
   );
 }
 
-/** メタデータ未取得時のフォールバック表示（5:36） */
-const SCHUMANN_FALLBACK_SEC = 336;
+/** メタデータ未取得時のフォールバック表示（6:30） */
+const SCHUMANN_FALLBACK_SEC = 390;

@@ -21,7 +21,7 @@ const PHI = 1.6180339887498949;
 const DELTA = 8.0219032748; // 左右差(固定)
 const MINUTES = [10, 15, 20, 25, 30] as const;
 const GEN_KINDS = ["φ", "α", "β", "γ", "θ"] as const;
-const SCHU = 336; // 実録シューマン音の長さ(秒・約5分36秒)
+const SCHU = 390; // 実録シューマン音の長さ(秒・約6分30秒)
 /** 各モードの5音の整数比(φは 1/5:1/3:1:3:5 を15倍した整数比) */
 const GEN_RATIOS: Record<string, string> = {
   "φ": "3:5:15:45:75",
@@ -146,7 +146,7 @@ export default function MeditationAlphaPage() {
     const midBellAt = { v: null as number | null };
 
     // 実録シューマン音(約5分)。終わったら鐘3回 → 選んだ過ごし方へ
-    const el = new Audio("/audio/schumann_r8_geshi.mp3");
+    const el = new Audio("/audio/schumann_r8_shubun.mp3");
     el.preload = "auto";
     audioRef.current = el;
     // リピート: 瞑想時間内に何回流せるかを整数で計算し、あまりの時間は無音
@@ -332,7 +332,7 @@ export default function MeditationAlphaPage() {
             </div>
             {kind === "repeat" && (
               <div className="mt-1.5 rounded-lg bg-white/15 px-2.5 py-1.5 text-[10.5px] font-bold leading-relaxed text-white">
-                {mins}分だとシューマン音(約5分36秒)が{Math.max(1, Math.floor((mins * 60) / SCHU))}回流れ、
+                {mins}分だとシューマン音(約6分30秒)が{Math.max(1, Math.floor((mins * 60) / SCHU))}回流れ、
                 残り{fmt(mins * 60 - Math.max(1, Math.floor((mins * 60) / SCHU)) * SCHU)}は無音になります
               </div>
             )}

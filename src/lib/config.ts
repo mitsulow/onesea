@@ -1,13 +1,13 @@
 /** 料金・特典・パラメータのハードコード禁止ルールにより設定値を集約 */
 export const SCHUMANN = {
-  /** 現行運用の基本周波数（Hz）。夏至バージョン 7.95Hz */
-  hz: 7.95,
+  /** 現行運用の基本周波数（Hz）。秋分バージョン 7.92Hz */
+  hz: 7.92,
   /** 可聴域への逓倍数（7.83Hz × 64 = 501.12Hz が基準） */
   mult: 64,
   /** 無料試聴秒数（フェードアウト込み） */
   freeSec: 10,
-  label: "夏至バージョン",
-  length: "5:36",
+  label: "秋分バージョン",
+  length: "6:30",
 } as const;
 
 /** 目標周波数（恒星日 86,164秒 ÷ (8回転 × 86,400秒) 由来）— schumann API v1 と共通 */
@@ -17,13 +17,14 @@ export const TARGET_HZ = 8.0219032748;
 export const SCHUMANN_DATA_URL = "/api/sr/schumann_data.json" // 回覧板(5分エッジキャッシュ)経由;
 
 /**
- * シューマン音© 音源（令和八年夏至点）。
+ * シューマン音© 音源（令和八年秋分点）。
  * 初回アクセス時に端末へ保存し、以後はローカル再生 — 運営の帯域はほぼゼロ。
  * 一次配信は jsDelivr（GitHub の無料CDN）、失敗時は自サイト配信にフォールバック。
+ * 差し替えは必ず新ファイル名で（jsDelivr @main とクライアントCacheが旧名で残るため）。旧 geshi は残す。
  */
 export const AUDIO = {
-  url: "https://cdn.jsdelivr.net/gh/mitsulow/onesea@main/public/audio/schumann_r8_geshi.mp3",
-  fallbackUrl: "/audio/schumann_r8_geshi.mp3",
+  url: "https://cdn.jsdelivr.net/gh/mitsulow/onesea@main/public/audio/schumann_r8_shubun.mp3",
+  fallbackUrl: "/audio/schumann_r8_shubun.mp3",
 } as const;
 
 export const LINKS = {
