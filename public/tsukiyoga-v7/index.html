@@ -6863,6 +6863,15 @@
     background: rgba(201, 169, 97, 0.2);
     color: var(--moon-white);
   }
+  /* ★v7.5: 磁気センサー精度が悪いとき（iOS webkitCompassAccuracy > 30°）に脈動して促す */
+  .nav-recalibrate.warn {
+    border-color: rgba(201, 169, 97, 0.9);
+    animation: navRecalPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes navRecalPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201, 169, 97, 0.55); }
+    50%      { box-shadow: 0 0 0 9px rgba(201, 169, 97, 0); }
+  }
 
   .nav-calibrate {
     position: absolute;
@@ -13993,9 +14002,15 @@ const COASTLINES = [
     hasAbsoluteSource: false,  // ★v7.1: 絶対方位イベント受信済みフラグ（相対との二重ストリーム排除）
     moonLockOn: false,         // ★v7.1: 「見つけた」ヒステリシス状態（v7.4: 月/銀河中心で共用）
     navTarget: 'moon',         // ★v7.4: 探す対象（moon=月 / galaxy=銀河の中心ブラックホール）
-    headingBuf: [],            // ★v7.2: 方位の3サンプルメディアン用バッファ（単発スパイク除去）
-    arrowAzDiff: null,         // ★v7.2: ガイド矢印の連続化方位差（±180°境界の左右迷い防止）
-    arrowAltDiff: 0,           // ★v7.2: ガイド矢印の高度差（平滑化用）
+    arrowVec: null,            // ★v7.5: ガイド矢印の画面上向き（平滑化用・画面内に入ったらリセット）
+    // ★v7.5: 姿勢は角度ではなく「カメラの向き f」「画面の上向き u」の単位ベクトル（地上座標 E/N/U）で持つ。
+    // alpha/beta/gamma を直接使うと、スマホを立てた姿勢（beta≈90°）でオイラー角が特異点になり
+    // alpha が180°飛ぶ（＝空全体が「ぐるん」と回る）。ベクトルなら特異点が無い。
+    fSmooth: null, uSmooth: null,
+    yawOffset: null,           // ★v7.5: iOS用。相対alpha基準と磁北の差（相補フィルタでゆっくり追従）
+    compassAccuracy: null,     // ★v7.5: iOS webkitCompassAccuracy（°）。大きいとキャリブ促し
+    source: 'deviceorientation', // ★v7.5: 'aos' = AbsoluteOrientationSensor 稼働中（Android）
+    aos: null,
     stars: [], screenOrient: 0
   };
 
@@ -14032,21 +14047,37 @@ const COASTLINES = [
     return d;
   }
 
-  // ★v7.3: 角度の N サンプルメディアン（既定5）
-  // 磁気センサーは金属接近・再校正で数フレーム続けて外れた値を吐くことがあり、
-  // それが snap 追従で画面ごと「ぐるん」と回る根本原因。3サンプルだと2連続スパイクを
-  // 取り逃すので5サンプルに拡張（2つまでの連続外れ値を完全に消す。実回転は数フレーム遅れで素通り）。
-  function angularMedianN(buf) {
-    const n = buf.length;
-    if (n === 0) return 0;
-    if (n < 3) return buf[n - 1];
-    let best = buf[0], bestCost = Infinity;
-    for (const v of buf) {
-      let cost = 0;
-      for (const u of buf) cost += Math.abs(shortAngle(u, v));
-      if (cost < bestCost) { bestCost = cost; best = v; }
-    }
-    return best;
+  // ★v7.5: 3次元ベクトルの小道具（姿勢は角度でなくベクトルで扱う）
+  function vDot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+  function vCross(a, b) { return { x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x }; }
+  function vNorm(a) {
+    const l = Math.hypot(a.x, a.y, a.z);
+    return l > 1e-9 ? { x: a.x / l, y: a.y / l, z: a.z / l } : null;
+  }
+  // 地上座標（x=東, y=北, z=上）のベクトルの方位角（北0°・東90°）
+  function vecHeading(v) { return norm360(Math.atan2(v.x, v.y) * 180 / Math.PI); }
+  // 方位角に deg を足す回転（鉛直軸まわり）
+  function rotateYaw(v, deg) {
+    const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+    return { x: v.x * c + v.y * s, y: -v.x * s + v.y * c, z: v.z };
+  }
+  // コンパス盤用の方位。平置き（カメラが真下）なら端末の上辺、立てれば背面カメラの向きを
+  // 使いたい。両方の水平成分を足すと姿勢に関わらず途切れなく繋がる（傾けても同じ方角を指す）
+  function dialHeading(f, u) { return vecHeading({ x: f.x + u.x, y: f.y + u.y, z: 0 }); }
+
+  // ★v7.5: ベクトル空間での適応平滑化（角度LPF＋メディアン＋デッドゾーンの三段重ねを置換）
+  // 変化が小さいほど強く均し、大きな動き（意図的な向き替え）は素早く追う。デッドゾーンは
+  // 置かない（0.9°で止めると「止まって→カクッ」の微小ガタつきになる）
+  function smoothVec(cur, target) {
+    if (!cur) return { x: target.x, y: target.y, z: target.z };
+    const d = Math.acos(Math.max(-1, Math.min(1, vDot(cur, target)))) * 180 / Math.PI;
+    let a;
+    if (d < 1)       a = 0.10;
+    else if (d < 4)  a = 0.25;
+    else if (d < 20) a = 0.50;
+    else             a = 0.70;
+    const r = vNorm({ x: cur.x + (target.x - cur.x) * a, y: cur.y + (target.y - cur.y) * a, z: cur.z + (target.z - cur.z) * a });
+    return r || { x: target.x, y: target.y, z: target.z };
   }
 
   function norm360(a) { return ((a % 360) + 360) % 360; }
@@ -14166,52 +14197,6 @@ const COASTLINES = [
     return targetBodyWords(gcAz, gcAlt, '銀 河 の 中 心', nextGcRiseText);
   }
 
-  function lpfAngle(current, target, alpha) {
-    const diff = shortAngle(target, current);
-    return norm360(current + diff * alpha);
-  }
-  function lpfLinear(current, target, alpha) {
-    return current + (target - current) * alpha;
-  }
-
-  // ★v6: 適応LPF（センサーのブルブル震え対策）
-  // 「秘伝のタレ」: 動きの大きさに応じて平滑化を可変にする
-  // - 微小変化（<0.5°）: ほぼ完全に無視（ノイズ扱い）
-  // - 小さい変化（<3°）: 強平滑化（ゆっくり追従）
-  // - 中変化（<15°）: 通常追従
-  // - 大変化（>=15°）: 即追従（ユーザー意図的な動き）
-  function adaptiveLpfAngle(current, target, opts) {
-    opts = opts || {};
-    const diff = shortAngle(target, current);
-    const absDiff = Math.abs(diff);
-    // ★v7.3: dead zone を 0.9° に拡大（磁気センサーの実ノイズは1〜2°あり、
-    // 0.4°では金星などに重ねて静止したときに画面が細かく震えていた）
-    if (absDiff < 0.9) return current;
-    let alpha;
-    if (absDiff < 2)       alpha = opts.calm || 0.08;
-    else if (absDiff < 6)  alpha = opts.slow || 0.22;
-    else if (absDiff < 20) alpha = opts.fast || 0.45;
-    // ★v7.3: 大差でも snap を 0.5 に（従来1.0=瞬間テレポート）。
-    // 2〜3フレームでスッと寄るので「ぐるん」と一気に振れなくなる（体感遅延は約50ms）
-    else                    alpha = opts.snap || 0.5;
-    // ★v7.2: gain（天頂減衰など）。スマホを真上に向けると方位が数学的に不定になり
-    // コンパス値が大きく振れるため、追従そのものを弱めて画面の「ぐるん」を抑える
-    if (typeof opts.gain === 'number') alpha = Math.min(1, alpha * opts.gain);
-    return norm360(current + diff * alpha);
-  }
-  function adaptiveLpfLinear(current, target, opts) {
-    opts = opts || {};
-    const diff = target - current;
-    const absDiff = Math.abs(diff);
-    if (absDiff < 0.9) return current;  // dead zone（v7.3で0.4→0.9）
-    let alpha;
-    if (absDiff < 2)       alpha = opts.calm || 0.08;
-    else if (absDiff < 6)  alpha = opts.slow || 0.22;
-    else if (absDiff < 20) alpha = opts.fast || 0.45;
-    else                    alpha = opts.snap || 0.5;
-    return current + diff * alpha;
-  }
-
   // ★v6: 大気差補正（Bennett 1982の公式）
   // 地平線付近の天体は大気屈折で実際より浮き上がって見える（最大約0.57度）
   // 入力/出力ともラジアン
@@ -14234,42 +14219,84 @@ const COASTLINES = [
     return moonPos.altitude - HP * Math.cos(moonPos.altitude);
   }
 
-  function deviceToSky(alpha, beta, gamma, screenOrient) {
-    const _x = beta * Math.PI / 180;
-    const _y = gamma * Math.PI / 180;
-    const _z = alpha * Math.PI / 180;
-    const _o = screenOrient * Math.PI / 180;
-
+  // ★v7.5: 回転行列（端末座標→地上座標 x=東,y=北,z=上）から
+  //   f = 背面カメラの向き（端末 -z 軸）、u = 画面の上向き（端末 +y 軸を画面回転ぶん回したもの）
+  // を取り出す。行列は特異点を通っても連続なので、オイラー角の180°飛びが起きない。
+  // これが Sky Map / Stellarium 系アプリと同じ扱い方
+  function matrixToVectors(m, screenOrient) {
+    const o = (screenOrient || 0) * Math.PI / 180, cO = Math.cos(o), sO = Math.sin(o);
+    return {
+      f: { x: -m[2], y: -m[5], z: -m[8] },
+      u: { x: m[0] * (-sO) + m[1] * cO, y: m[3] * (-sO) + m[4] * cO, z: m[6] * (-sO) + m[7] * cO }
+    };
+  }
+  // W3C DeviceOrientation: R = Rz(alpha) · Rx(beta) · Ry(gamma)
+  function eulerToVectors(alpha, beta, gamma, screenOrient) {
+    const _x = beta * Math.PI / 180, _y = gamma * Math.PI / 180, _z = alpha * Math.PI / 180;
     const cX = Math.cos(_x), cY = Math.cos(_y), cZ = Math.cos(_z);
     const sX = Math.sin(_x), sY = Math.sin(_y), sZ = Math.sin(_z);
+    return matrixToVectors([
+      cZ * cY - sZ * sX * sY, -cX * sZ, cY * sZ * sX + cZ * sY,
+      cY * sZ + cZ * sX * sY,  cZ * cX, sZ * sY - cZ * cY * sX,
+      -cX * sY,                sX,      cX * cY
+    ], screenOrient);
+  }
+  // AbsoluteOrientationSensor のクォータニオン [x, y, z, w]
+  function quatToVectors(q, screenOrient) {
+    const x = q[0], y = q[1], z = q[2], w = q[3];
+    return matrixToVectors([
+      1 - 2 * (y * y + z * z), 2 * (x * y - z * w),     2 * (x * z + y * w),
+      2 * (x * y + z * w),     1 - 2 * (x * x + z * z), 2 * (y * z - x * w),
+      2 * (x * z - y * w),     2 * (y * z + x * w),     1 - 2 * (x * x + y * y)
+    ], screenOrient);
+  }
 
-    const m11 = cZ * cY - sZ * sX * sY;
-    const m12 = -cX * sZ;
-    const m13 = cY * sZ * sX + cZ * sY;
-    const m21 = cY * sZ + cZ * sX * sY;
-    const m22 = cZ * cX;
-    const m23 = sZ * sY - cZ * cY * sX;
-    const m31 = -cX * sY;
-    const m32 = sX;
-    const m33 = cX * cY;
+  // ★v7.5: 姿勢ベクトルを受け取り、平滑化して派生値（方位・高度・コンパス盤）を更新
+  function applyOrientation(f, u) {
+    navState.fSmooth = smoothVec(navState.fSmooth, f);
+    navState.uSmooth = smoothVec(navState.uSmooth, u);
+    const fs = navState.fSmooth;
+    navState.heading = vecHeading(fs);
+    navState.pitch = Math.asin(Math.max(-1, Math.min(1, fs.z))) * 180 / Math.PI;
+    navState.compassRaw = dialHeading(fs, navState.uSmooth);
+  }
 
-    const cO = Math.cos(_o), sO = Math.sin(_o);
-    const fx = -m13;
-    const fy = -m23;
-    const fz = -m33;
-
-    const ux = m11 * (-sO) + m12 * cO;
-    const uy = m21 * (-sO) + m22 * cO;
-    const uz = m31 * (-sO) + m32 * cO;
-
-    let heading = Math.atan2(fx, fy) * 180 / Math.PI;
-    heading = norm360(heading);
-
-    const fHoriz = Math.sqrt(fx * fx + fy * fy);
-    let pitch = Math.atan2(fz, fHoriz) * 180 / Math.PI;
-    let roll = 0;
-
-    return { heading, pitch, roll };
+  // ★v7.5: Android Chrome の AbsoluteOrientationSensor（加速度+ジャイロ+磁気の融合済み
+  // クォータニオン。Google Sky Map が使う ROTATION_VECTOR と同じもの）。iOS には無い。
+  // 一度でも読めたら deviceorientation は無視する（二重ストリーム防止）。失敗時はそのまま
+  // deviceorientation にフォールバック
+  function tryStartAbsoluteSensor() {
+    if (navState.aos || typeof window.AbsoluteOrientationSensor !== 'function') return;
+    let sensor;
+    try {
+      sensor = new AbsoluteOrientationSensor({ frequency: 60 });
+    } catch (err) {
+      console.warn('AbsoluteOrientationSensor unavailable:', err);
+      return;
+    }
+    const giveUp = (why) => {
+      console.warn('AbsoluteOrientationSensor stopped:', why);
+      try { sensor.stop(); } catch (_) {}
+      navState.aos = null;
+      navState.source = 'deviceorientation';
+    };
+    sensor.addEventListener('reading', () => {
+      const q = sensor.quaternion;
+      if (!q || q.length < 4) return;
+      navState.source = 'aos';
+      navState.hasOrientation = true;
+      navState.eventCount++;
+      const v = quatToVectors(q, navState.screenOrient);
+      const decl = getMagneticDeclination(NAHA.lat, NAHA.lon);
+      applyOrientation(rotateYaw(v.f, decl), rotateYaw(v.u, decl));
+    });
+    sensor.addEventListener('error', (ev) => giveUp(ev.error ? ev.error.name : 'error'));
+    try {
+      sensor.start();
+      navState.aos = sensor;
+    } catch (err) {
+      giveUp(err);
+    }
   }
 
   // ★v6: 磁気偏角（Magnetic Declination）補正
@@ -14302,66 +14329,56 @@ const COASTLINES = [
     if (isAbsoluteSource) navState.hasAbsoluteSource = true;
     if (navState.hasAbsoluteSource && !isAbsoluteSource) return;
 
+    // ★v7.5: AbsoluteOrientationSensor が動いていればそちらを正とする
+    if (navState.source === 'aos') return;
+    if (typeof e.alpha !== 'number' || typeof e.beta !== 'number') return;
+
     navState.hasOrientation = true;
     navState.eventCount++;
-    const alpha = e.alpha || 0;
-    const beta = e.beta || 0;
-    const gamma = e.gamma || 0;
+    const alpha = e.alpha;
+    const beta = e.beta;
+    const gamma = typeof e.gamma === 'number' ? e.gamma : 0;
     navState.rawAlpha = alpha;
     navState.rawBeta = beta;
     navState.rawGamma = gamma;
 
-    // ★v6: heading（方位）は、webkitCompassHeading または (360 - alpha) を直接使う
-    // これがMDN/オープンソースの王道パターン。余計な補正を一切かけない
-    let heading = null;
+    // ★v7.5: 「ぐるん」の真犯人はオイラー角（alpha/beta/gamma）の特異点。
+    //   端末を立てて南の低い空（銀河中心が居る高さ）に向けると beta≈90° でジンバルロック、
+    //   alpha が 180° 飛ぶ。以前の版はその飛んだ alpha を方位として使い、メディアン・不感帯・
+    //   天頂減衰で症状を抑えようとしていたが、原因（角度表現）はそのままだった。
+    //   ここでは alpha/beta/gamma を一旦回転行列に戻し、カメラの向きベクトルで扱う。
+    //   ベクトルは特異点でも連続なので飛ばない。
+    const v = eulerToVectors(alpha, beta, gamma, navState.screenOrient);
+    const decl = getMagneticDeclination(NAHA.lat, NAHA.lon);   // 磁北→真北（那覇≈-5°、東京≈-8°）
+    let yaw;  // ベクトルに加える方位補正（度、時計回り）
+
     if (typeof e.webkitCompassHeading === 'number') {
-      heading = e.webkitCompassHeading;
-    } else if (typeof e.alpha === 'number') {
-      heading = (360 - e.alpha) % 360;
-    }
-
-    // pitch（傾き）はbetaから計算（スマホが縦/横/空向きかの判定）
-    // beta: X軸まわりの回転、スマホを水平に前後に傾けた角度（0=水平、90=直立、-90=裏返し）
-    // 空を向いた時にbeta=90付近（スマホ画面を上向きに立てる）
-    // 本アプリでは「空を見上げる方向」をpitch=0として扱うため、
-    // beta=90（直立）→pitch=0、beta=0（水平下向き）→pitch=-90 の変換
-    let pitch = beta - 90;
-    // -90～90の範囲にクランプ
-    if (pitch > 90) pitch = 180 - pitch;
-    if (pitch < -90) pitch = -180 - pitch;
-
-    // ★v6: rollは0固定（スマホを空に向けた時のジンバルロックで
-    // gammaが暴れて水平線がぐるぐる回るのを防ぐ）
-    let roll = 0;
-
-    if (heading !== null) {
-      // ★v7.3: ① 5サンプル角度メディアンで連続スパイク（「ぐるん」の根本原因）を除去
-      navState.headingBuf.push(heading);
-      if (navState.headingBuf.length > 5) navState.headingBuf.shift();
-      const medHeading = angularMedianN(navState.headingBuf);
-
-      // ★v7.2: ② 天頂/真下付近では方位が不定になるため追従を減衰（cos(pitch)、下限0.15）
-      const zenithGain = Math.max(0.15, Math.cos(pitch * Math.PI / 180));
-
-      // ★v6: 適応LPF（震え対策）。動きの大きさで平滑化を可変
-      navState.heading = adaptiveLpfAngle(navState.heading, medHeading, { gain: zenithGain });
-      navState.pitch = adaptiveLpfLinear(navState.pitch, pitch);
-      navState.roll = adaptiveLpfLinear(navState.roll, roll);
-
-      // ★v7.3: 空の描画は compassRaw を使うので、そちらにも天頂減衰を渡す
-      // （上空の金星/月に重ねて静止したときのブレを抑える）
-      handleRawCompass(medHeading, zenithGain);
-    }
-  }
-
-  // ★v6: コンパス画面専用の方位平滑化
-  // ★v7.3: zenithGain を受け取り、空の追従も天頂付近で減衰させる
-  function handleRawCompass(raw, gain) {
-    if (navState.compassRaw === null) {
-      navState.compassRaw = raw;
+      // iOS: alpha はジャイロ融合で滑らかだが基準は「ページ読込時の向き」。
+      // webkitCompassHeading は磁北基準だが磁気ノイズが乗る。
+      // → 相補フィルタ: alpha 由来の向きと磁気方位の差（yawOffset）だけをゆっくり追従させ、
+      //   速い動きはジャイロ、絶対基準は磁気、と役割分担する（Sky Map 系の定石）
+      navState.compassAccuracy = e.webkitCompassAccuracy;
+      const acc = e.webkitCompassAccuracy;
+      if (typeof acc === 'number' && acc < 0) {
+        // 磁気センサー未較正。方位は前回オフセットで続行
+        yaw = navState.yawOffset ?? 0;
+      } else {
+        const magneticDial = e.webkitCompassHeading + decl;       // 真北基準に直す
+        const target = shortAngle(magneticDial, dialHeading(v.f, v.u));
+        if (navState.yawOffset === null) {
+          navState.yawOffset = norm360(target);
+        } else {
+          const k = navState.eventCount < 60 ? 0.2 : 0.04;
+          navState.yawOffset = norm360(navState.yawOffset + shortAngle(target, navState.yawOffset) * k);
+        }
+        yaw = navState.yawOffset;
+      }
     } else {
-      navState.compassRaw = adaptiveLpfAngle(navState.compassRaw, raw, { gain: gain });
+      // Android deviceorientationabsolute: alpha は磁北基準 → 偏角だけ足す
+      yaw = decl;
     }
+
+    applyOrientation(rotateYaw(v.f, yaw), rotateYaw(v.u, yaw));
   }
 
   async function requestNavPermission() {
@@ -14384,6 +14401,7 @@ const COASTLINES = [
     navState.permitted = true;
     window.addEventListener('deviceorientation', handleNavOrientation, true);
     window.addEventListener('deviceorientationabsolute', handleNavOrientation, true);
+    tryStartAbsoluteSensor();   // ★v7.5: Android は融合済みセンサーを優先（無ければ何もしない）
     document.getElementById('navPermission').style.display = 'none';
     document.getElementById('navCalibrate').classList.add('visible');
 
@@ -14436,7 +14454,7 @@ const COASTLINES = [
       if (navState.navTarget === target) return;
       navState.navTarget = target;
       navState.moonLockOn = false;
-      navState.arrowAzDiff = null;
+      navState.arrowVec = null;
       document.querySelectorAll('#navTargetToggle .nav-target-btn').forEach(b =>
         b.classList.toggle('active', b === btn));
     });
@@ -14460,32 +14478,33 @@ const COASTLINES = [
   }
   window.addEventListener('resize', resizeNavCanvas);
 
-  function skyToScreen(az, alt, heading, pitch, roll, w, h, fovDeg) {
-    const azRad = az * Math.PI / 180;
-    const altRad = alt * Math.PI / 180;
-    const x = Math.sin(azRad) * Math.cos(altRad);
-    const y = Math.cos(azRad) * Math.cos(altRad);
-    const z = Math.sin(altRad);
+  // ★v7.5: 方位・高度からその天体の単位ベクトル（x=東,y=北,z=上）
+  function skyVec(az, alt) {
+    const azRad = az * Math.PI / 180, altRad = alt * Math.PI / 180;
+    return { x: Math.sin(azRad) * Math.cos(altRad), y: Math.cos(azRad) * Math.cos(altRad), z: Math.sin(altRad) };
+  }
 
-    const hRad = heading * Math.PI / 180;
-    const cH = Math.cos(hRad), sH = Math.sin(hRad);
-    const x1 = x * cH - y * sH;
-    const y1 = x * sH + y * cH;
-    const z1 = z;
+  // ★v7.5: 平滑化済み姿勢からビュー基底 { f: 前, u: 画面上, r: 画面右 } を作る。
+  // heading/pitch/roll の3角度に分解しないので、端末を立てても真上に向けても連続
+  function buildView() {
+    let f = navState.fSmooth || { x: 0, y: 1, z: 0 };
+    let u = navState.uSmooth || { x: 0, y: 0, z: 1 };
+    // u を f に直交化（平滑化で僅かに崩れた直交性を戻す）
+    let d = vDot(u, f);
+    let uo = vNorm({ x: u.x - f.x * d, y: u.y - f.y * d, z: u.z - f.z * d });
+    if (!uo) {
+      d = f.z;
+      uo = vNorm({ x: -f.x * d, y: -f.y * d, z: 1 - f.z * d }) || { x: 0, y: 0, z: 1 };
+    }
+    return { f, u: uo, r: vCross(f, uo) };
+  }
 
-    const pRad = pitch * Math.PI / 180;
-    const cP = Math.cos(pRad), sP = Math.sin(pRad);
-    const x2 = x1;
-    const y2 = y1 * cP + z1 * sP;
-    const z2 = -y1 * sP + z1 * cP;
-
-    const rRad = roll * Math.PI / 180;
-    const cR = Math.cos(rRad), sR = Math.sin(rRad);
-    const x3 = x2 * cR - z2 * sR;
-    const y3 = y2;
-    const z3 = x2 * sR + z2 * cR;
-
+  function skyToScreen(az, alt, view, w, h, fovDeg) {
+    const t = skyVec(az, alt);
+    const y3 = vDot(t, view.f);
     if (y3 <= 0.01) return null;
+    const x3 = vDot(t, view.r);
+    const z3 = vDot(t, view.u);
 
     const fovRad = fovDeg * Math.PI / 180;
     const scale = (Math.min(w, h) / 2) / Math.tan(fovRad / 2);
@@ -14506,13 +14525,14 @@ const COASTLINES = [
 
     // ★v6: 2段目の平滑化は削除（遅延が大きすぎて月が逃げる症状の原因）
     // handleNavOrientationで既に1段目のLPFが入ってる。それで十分滑らか。
-    const heading = (navState.compassRaw !== null) ? navState.compassRaw : navState.heading;
+    // ★v7.5: 描画は姿勢ベクトル（buildView）で行う。heading/pitch はテキスト・矢印用
+    const view = buildView();
+    const heading = navState.heading;
     const pitch = navState.pitch;
-    const roll = navState.roll;
     const fov = 70;
 
     for (const star of navState.stars) {
-      const p = skyToScreen(star.az, star.alt, heading, pitch, roll, w, h, fov);
+      const p = skyToScreen(star.az, star.alt, view, w, h, fov);
       if (!p) continue;
       if (p.x < -20 || p.x > w + 20 || p.y < -20 || p.y > h + 20) continue;
       navCtx.beginPath();
@@ -14526,7 +14546,7 @@ const COASTLINES = [
     navCtx.beginPath();
     let prevP = null;
     for (let az = 0; az <= 360; az += 3) {
-      const p = skyToScreen(az, 0, heading, pitch, roll, w, h, fov);
+      const p = skyToScreen(az, 0, view, w, h, fov);
       if (p && p.x >= -50 && p.x <= w + 50 && p.y >= -50 && p.y <= h + 50) {
         if (prevP) {
           navCtx.moveTo(prevP.x, prevP.y);
@@ -14549,7 +14569,7 @@ const COASTLINES = [
     navCtx.textAlign = 'center';
     navCtx.textBaseline = 'middle';
     for (const d of dirs) {
-      const p = skyToScreen(d.az, 0, heading, pitch, roll, w, h, fov);
+      const p = skyToScreen(d.az, 0, view, w, h, fov);
       if (!p) continue;
       if (p.x < 0 || p.x > w || p.y < 0 || p.y > h) continue;
       navCtx.fillStyle = d.color;
@@ -14564,7 +14584,7 @@ const COASTLINES = [
       const altDeg = applyRefraction(s.altitude) * 180 / Math.PI;
       if (altDeg < -3) continue;
       const azDeg = norm360(s.azimuth * 180 / Math.PI + 180);
-      const p = skyToScreen(azDeg, altDeg, heading, pitch, roll, w, h, fov);
+      const p = skyToScreen(azDeg, altDeg, view, w, h, fov);
       if (!p) continue;
       if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40) continue;
       // 等級→サイズ変換（mag -1.5 → 4.5px、 mag 5 → 1px）
@@ -14599,7 +14619,7 @@ const COASTLINES = [
       const altDeg = applyRefraction(pl.altitude) * 180 / Math.PI;
       if (altDeg < -3) continue;
       const azDeg = norm360(pl.azimuth * 180 / Math.PI + 180);
-      const p = skyToScreen(azDeg, altDeg, heading, pitch, roll, w, h, fov);
+      const p = skyToScreen(azDeg, altDeg, view, w, h, fov);
       if (!p) continue;
       if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40) continue;
       // 金星・木星は明るいので大きく
@@ -14641,7 +14661,7 @@ const COASTLINES = [
     let sunAz = norm360(sunPos.azimuth * 180 / Math.PI + 180);
     const sunAlt = sunAltApparent * 180 / Math.PI;
 
-    const sp = skyToScreen(sunAz, sunAlt, heading, pitch, roll, w, h, fov);
+    const sp = skyToScreen(sunAz, sunAlt, view, w, h, fov);
     if (sp) {
       // ★v6: 太陽は images/sun.png を drawImage（絵文字は廃止）
       if (sunImg.complete && sunImg.naturalWidth > 0) {
@@ -14660,7 +14680,7 @@ const COASTLINES = [
       }
     }
 
-    const mp = skyToScreen(moonAz, moonAlt, heading, pitch, roll, w, h, fov);
+    const mp = skyToScreen(moonAz, moonAlt, view, w, h, fov);
     const moonOnScreen = !!mp && mp.x >= -40 && mp.x <= w + 40 && mp.y >= -40 && mp.y <= h + 40;
 
     if (moonOnScreen) {
@@ -14720,7 +14740,7 @@ const COASTLINES = [
           const P = { e: M.e * ce + t.e * se, n: M.n * ce + t.n * se, u: M.u * ce + t.u * se };
           const altP = Math.asin(Math.max(-1, Math.min(1, P.u))) / D2R;
           const azP = norm360(Math.atan2(P.e, P.n) / D2R);
-          const pSun = skyToScreen(azP, altP, heading, pitch, roll, w, h, fov);
+          const pSun = skyToScreen(azP, altP, view, w, h, fov);
           if (pSun && mp) {
             const bdx = pSun.x - mp.x, bdy = pSun.y - mp.y;
             if (Math.hypot(bdx, bdy) > 0.5) brightAngle = Math.atan2(bdy, bdx);
@@ -14802,7 +14822,7 @@ const COASTLINES = [
     let gp = null;
     let gcOnScreen = false;
     if (isGalaxy) {
-      gp = skyToScreen(gcAz, gcAlt, heading, pitch, roll, w, h, fov);
+      gp = skyToScreen(gcAz, gcAlt, view, w, h, fov);
       gcOnScreen = !!gp && gp.x >= -40 && gp.x <= w + 40 && gp.y >= -40 && gp.y <= h + 40;
       if (gcOnScreen) {
         // 降着円盤の淡い光（外側ハロ・暖色）
@@ -14852,23 +14872,31 @@ const COASTLINES = [
     const cy = h / 2;
 
     if (!targetOnScreen) {
-      // ★v7.2: 矢印方位の連続化＋平滑化
-      // 月が真後ろ（±180°境界）にあると、わずかなセンサー揺れで azDiff の符号が
-      // +180⇄-180 と反転し、矢印が画面の右端⇄左端へ「ぐるん」と飛んでいた。
-      // 前回値からの最短差分で連続的に追従させ、境界をまたいでも矢印が飛ばないようにする。
-      if (navState.arrowAzDiff === null) {
-        navState.arrowAzDiff = azDiff;
-        navState.arrowAltDiff = altDiff;
-      } else {
-        navState.arrowAzDiff += shortAngle(azDiff, navState.arrowAzDiff) * 0.25;
-        navState.arrowAltDiff += (altDiff - navState.arrowAltDiff) * 0.25;
+      // ★v7.5: 矢印の向きは「目標ベクトルを画面の右/上軸に射影」で決める。
+      // 方位差・高度差の角度で決めると、端末を立てたときや真後ろ（±180°）で飛んでいた。
+      // ベクトル射影なら画面上のどちらに目標があるかを姿勢に関係なく連続に指せる
+      const tv = skyVec(targetAz, targetAlt);
+      let raw = { x: vDot(tv, view.r), y: -vDot(tv, view.u) };
+      let rl = Math.hypot(raw.x, raw.y);
+      if (rl < 1e-6) {
+        // 真後ろ（射影がゼロ）: 前回の向き、無ければ「右へ」
+        raw = navState.arrowVec ? { x: navState.arrowVec.x, y: navState.arrowVec.y } : { x: 1, y: 0 };
+        rl = Math.hypot(raw.x, raw.y) || 1;
       }
-      const azD = navState.arrowAzDiff;
-      const altD = navState.arrowAltDiff;
-
-      const vec = { x: azD, y: -altD };
-      const len = Math.sqrt(vec.x * vec.x + vec.y * vec.y);
-      if (len > 0) { vec.x /= len; vec.y /= len; }
+      raw.x /= rl; raw.y /= rl;
+      if (!navState.arrowVec) {
+        navState.arrowVec = raw;
+      } else {
+        navState.arrowVec = {
+          x: navState.arrowVec.x + (raw.x - navState.arrowVec.x) * 0.25,
+          y: navState.arrowVec.y + (raw.y - navState.arrowVec.y) * 0.25
+        };
+      }
+      const vec = { x: navState.arrowVec.x, y: navState.arrowVec.y };
+      const len = Math.hypot(vec.x, vec.y);
+      if (len > 1e-6) { vec.x /= len; vec.y /= len; } else { vec.x = 1; vec.y = 0; }
+      const azD = azDiff;
+      const altD = altDiff;
       const marginX = 60;
       const marginY = 130;
       const sx2 = cx + vec.x * (cx - marginX);
@@ -14916,7 +14944,7 @@ const COASTLINES = [
       }
     } else {
       // 画面内に月が来たら矢印の連続化状態をリセット（次回は今の位置から再開）
-      navState.arrowAzDiff = null;
+      navState.arrowVec = null;
     }
 
     // ★v7.2: 中央レティクル（照準）— 「どこに月を持ってくればいいか」を常に可視化
@@ -14993,8 +15021,17 @@ const COASTLINES = [
     }
     statusVal.textContent = statusText;
 
+    // ★v7.5: iOS の磁気精度が悪いときは再キャリブボタンを脈動させて促す（押下は任意）
+    const recal = document.getElementById('navRecalibrate');
+    if (recal) {
+      const acc = navState.compassAccuracy;
+      recal.classList.toggle('warn', typeof acc === 'number' && (acc < 0 || acc > 30));
+    }
+
+    const accTxt = (typeof navState.compassAccuracy === 'number') ? ` acc ${navState.compassAccuracy.toFixed(0)}°` : '';
+    const yawTxt = (navState.yawOffset !== null) ? ` yaw ${navState.yawOffset.toFixed(0)}°` : '';
     document.getElementById('navDebug').innerHTML =
-      `ev: ${navState.eventCount} · so: ${navState.screenOrient}°<br>` +
+      `ev: ${navState.eventCount} · so: ${navState.screenOrient}° · src ${navState.source}${accTxt}${yawTxt}<br>` +
       `raw α${navState.rawAlpha.toFixed(0)} β${navState.rawBeta.toFixed(0)} γ${navState.rawGamma.toFixed(0)}<br>` +
       `head ${heading.toFixed(0)}° pitch ${pitch.toFixed(0)}°<br>` +
       `moon ${moonAz.toFixed(0)}°/${moonAlt.toFixed(0)}°<br>` +
