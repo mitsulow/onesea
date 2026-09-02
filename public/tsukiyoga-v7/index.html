@@ -275,8 +275,99 @@
       // 夏の大三角
       { id: 'vega',    name: 'ベガ',       ra: 18.6156, dec: 38.7837, mag: 0.03, color: '#cfe0ff', group: 'summer', show: true },
       { id: 'deneb',   name: 'デネブ',     ra: 20.6905, dec: 45.2803, mag: 1.25, color: '#fffce6', group: 'summer', show: true },
-      { id: 'altair',  name: 'アルタイル', ra: 19.8464, dec:  8.8683, mag: 0.77, color: '#fffce6', group: 'summer', show: true }
+      { id: 'altair',  name: 'アルタイル', ra: 19.8464, dec:  8.8683, mag: 0.77, color: '#fffce6', group: 'summer', show: true },
+
+      // ★v7.5: 追加分 —— 銀河中心のまわり（さそり座・いて座の南斗）、季節の道しるべ、北の目印
+      // さそり座（アンタレス＝銀河中心のすぐ西。「銀河の中心」モードの目印）
+      { id: 'antares',  name: 'アンタレス', ra: 16.4901, dec: -26.4320, mag: 1.06, color: '#ff9a70', group: 'scorpius', show: true  },
+      { id: 'dschubba', name: '',           ra: 16.0056, dec: -22.6217, mag: 2.32, color: '#cfe0ff', group: 'scorpius', show: false },
+      { id: 'wei',      name: '',           ra: 16.8361, dec: -34.2932, mag: 2.29, color: '#ffe0b0', group: 'scorpius', show: false },
+      { id: 'sargas',   name: '',           ra: 17.6220, dec: -42.9978, mag: 1.87, color: '#fff5e0', group: 'scorpius', show: false },
+      { id: 'shaula',   name: 'さそりの尾', ra: 17.5601, dec: -37.1038, mag: 1.62, color: '#cfe0ff', group: 'scorpius', show: true  },
+      // いて座の「南斗六星」（ティーポット）。銀河中心はこの注ぎ口のすぐ先
+      { id: 'alnasl',    name: '',       ra: 18.0968, dec: -30.4240, mag: 2.98, color: '#ffe0b0', group: 'teapot', show: false },
+      { id: 'kausmedia', name: '',       ra: 18.3499, dec: -29.8281, mag: 2.72, color: '#ffe0b0', group: 'teapot', show: false },
+      { id: 'kausaust',  name: '南斗六星', ra: 18.4029, dec: -34.3846, mag: 1.85, color: '#cfe0ff', group: 'teapot', show: true  },
+      { id: 'kausbor',   name: '',       ra: 18.4662, dec: -25.4217, mag: 2.82, color: '#ffe0b0', group: 'teapot', show: false },
+      { id: 'phisgr',    name: '',       ra: 18.7594, dec: -26.9908, mag: 3.17, color: '#cfe0ff', group: 'teapot', show: false },
+      { id: 'nunki',     name: '',       ra: 18.9211, dec: -26.2967, mag: 2.05, color: '#cfe0ff', group: 'teapot', show: false },
+      { id: 'tausgr',    name: '',       ra: 19.1157, dec: -27.6704, mag: 3.32, color: '#ffe0b0', group: 'teapot', show: false },
+      { id: 'ascella',   name: '',       ra: 19.0435, dec: -29.8801, mag: 2.60, color: '#fffce6', group: 'teapot', show: false },
+      // 北斗七星（北極星の見つけ方の定番）
+      { id: 'dubhe',  name: '北斗七星', ra: 11.0621, dec: 61.7510, mag: 1.79, color: '#ffe0b0', group: 'dipper', show: true  },
+      { id: 'merak',  name: '',         ra: 11.0307, dec: 56.3824, mag: 2.37, color: '#fffce6', group: 'dipper', show: false },
+      { id: 'phecda', name: '',         ra: 11.8972, dec: 53.6948, mag: 2.44, color: '#fffce6', group: 'dipper', show: false },
+      { id: 'megrez', name: '',         ra: 12.2571, dec: 57.0326, mag: 3.31, color: '#fffce6', group: 'dipper', show: false },
+      { id: 'alioth', name: '',         ra: 12.9005, dec: 55.9598, mag: 1.77, color: '#fffce6', group: 'dipper', show: false },
+      { id: 'mizar',  name: '',         ra: 13.3988, dec: 54.9254, mag: 2.23, color: '#fffce6', group: 'dipper', show: false },
+      { id: 'alkaid', name: '',         ra: 13.7923, dec: 49.3133, mag: 1.86, color: '#cfe0ff', group: 'dipper', show: false },
+      // カシオペヤ座（W字。北斗が沈む秋冬の北極星探し）
+      { id: 'caph',     name: '',             ra: 0.1530, dec: 59.1498, mag: 2.28, color: '#fffce6', group: 'cassiopeia', show: false },
+      { id: 'schedar',  name: 'カシオペヤ座', ra: 0.6751, dec: 56.5373, mag: 2.24, color: '#ffe0b0', group: 'cassiopeia', show: true  },
+      { id: 'gammacas', name: '',             ra: 0.9451, dec: 60.7167, mag: 2.47, color: '#cfe0ff', group: 'cassiopeia', show: false },
+      { id: 'ruchbah',  name: '',             ra: 1.4303, dec: 60.2353, mag: 2.68, color: '#fffce6', group: 'cassiopeia', show: false },
+      { id: 'segin',    name: '',             ra: 1.9066, dec: 63.6701, mag: 3.38, color: '#cfe0ff', group: 'cassiopeia', show: false },
+      // 冬の大三角（シリウス・ベテルギウスと）＋ 冬の一等星
+      { id: 'procyon',   name: 'プロキオン',   ra: 7.6551, dec:   5.2250, mag: 0.34, color: '#fffce6', group: 'winter', show: true },
+      { id: 'capella',   name: 'カペラ',       ra: 5.2782, dec:  45.9980, mag: 0.08, color: '#ffe8c0', group: 'winter', show: true },
+      { id: 'aldebaran', name: 'アルデバラン', ra: 4.5987, dec:  16.5093, mag: 0.85, color: '#ffb070', group: 'winter', show: true },
+      { id: 'pollux',    name: 'ポルックス',   ra: 7.7553, dec:  28.0262, mag: 1.14, color: '#ffe0b0', group: 'winter', show: true },
+      { id: 'castor',    name: '',             ra: 7.5767, dec:  31.8883, mag: 1.58, color: '#fffce6', group: 'winter', show: false },
+      // カノープス（南極老人星・沖縄でだけ低く見える長寿の星。那覇で最大高度11°）
+      { id: 'canopus',   name: 'カノープス · 長寿の星', ra: 6.3992, dec: -52.6957, mag: -0.74, color: '#fff5e0', group: 'south', show: true },
+      // 春の大三角
+      { id: 'arcturus',  name: 'アークトゥルス', ra: 14.2612, dec:  19.1824, mag: -0.05, color: '#ffd9a0', group: 'spring', show: true  },
+      { id: 'spica',     name: 'スピカ',         ra: 13.4199, dec: -11.1613, mag:  0.97, color: '#cfe0ff', group: 'spring', show: true  },
+      { id: 'denebola',  name: '',               ra: 11.8177, dec:  14.5720, mag:  2.14, color: '#fffce6', group: 'spring', show: false },
+      { id: 'regulus',   name: 'レグルス',       ra: 10.1395, dec:  11.9672, mag:  1.35, color: '#cfe0ff', group: 'spring', show: true  },
+      // 秋の四辺形（ペガスス）＋ 秋のひとつ星
+      { id: 'markab',    name: '秋の四辺形', ra: 23.0793, dec:  15.2053, mag: 2.49, color: '#fffce6', group: 'autumn', show: true  },
+      { id: 'scheat',    name: '',           ra: 23.0629, dec:  28.0828, mag: 2.42, color: '#ffb070', group: 'autumn', show: false },
+      { id: 'algenib',   name: '',           ra:  0.2206, dec:  15.1836, mag: 2.83, color: '#cfe0ff', group: 'autumn', show: false },
+      { id: 'alpheratz', name: '',           ra:  0.1398, dec:  29.0905, mag: 2.06, color: '#cfe0ff', group: 'autumn', show: false },
+      { id: 'fomalhaut', name: 'フォーマルハウト', ra: 22.9608, dec: -29.6222, mag: 1.16, color: '#fffce6', group: 'autumn', show: true }
     ];
+
+    // ★v7.5: 星をつなぐ線（星座線）。id のペア
+    const STAR_LINES = [
+      // オリオン座
+      ['betelgeuse','bellatrix'], ['bellatrix','mintaka'], ['mintaka','alnilam'], ['alnilam','alnitak'],
+      ['alnitak','saiph'], ['saiph','rigel'], ['rigel','mintaka'], ['betelgeuse','alnitak'],
+      // 夏の大三角 / 冬の大三角 / 春の大三角
+      ['vega','deneb'], ['deneb','altair'], ['altair','vega'],
+      ['sirius','procyon'], ['procyon','betelgeuse'], ['betelgeuse','sirius'],
+      ['arcturus','spica'], ['spica','denebola'], ['denebola','arcturus'],
+      // 北斗七星 / カシオペヤ
+      ['dubhe','merak'], ['merak','phecda'], ['phecda','megrez'], ['megrez','dubhe'],
+      ['megrez','alioth'], ['alioth','mizar'], ['mizar','alkaid'],
+      ['caph','schedar'], ['schedar','gammacas'], ['gammacas','ruchbah'], ['ruchbah','segin'],
+      // さそり座（頭→心臓→尾）
+      ['dschubba','antares'], ['antares','wei'], ['wei','sargas'], ['sargas','shaula'],
+      // いて座の南斗六星（ティーポット）
+      ['alnasl','kausmedia'], ['kausmedia','kausaust'], ['kausaust','ascella'], ['ascella','tausgr'],
+      ['tausgr','nunki'], ['nunki','phisgr'], ['phisgr','kausbor'], ['kausbor','kausmedia'], ['phisgr','ascella'],
+      // 秋の四辺形 / ふたご座
+      ['markab','scheat'], ['scheat','alpheratz'], ['alpheratz','algenib'], ['algenib','markab'],
+      ['castor','pollux']
+    ];
+
+    // ★v7.5: 天の川（銀河面 b=0）を銀河経度 l で等間隔サンプル → 赤道座標（J2000）
+    // 変換定数: 銀河北極 α=192.85948° δ=27.12825°、天の北極の銀河経度 l=122.93192°
+    const GAL_POLE_RA = 192.85948 * rad, GAL_POLE_DEC = 27.12825 * rad, GAL_L_NCP = 122.93192 * rad;
+    function galacticToEquatorial(lRad, bRad) {
+      const sb = Math.sin(bRad), cb = Math.cos(bRad);
+      const dl = GAL_L_NCP - lRad;
+      const sinDec = Math.sin(GAL_POLE_DEC) * sb + Math.cos(GAL_POLE_DEC) * cb * Math.cos(dl);
+      const ra = GAL_POLE_RA + Math.atan2(cb * Math.sin(dl), Math.cos(GAL_POLE_DEC) * sb - Math.sin(GAL_POLE_DEC) * cb * Math.cos(dl));
+      return { ra: ra, dec: Math.asin(Math.max(-1, Math.min(1, sinDec))) };
+    }
+    const MILKY_WAY_POINTS = [];
+    for (let l = 0; l < 360; l += 4) {
+      const eq = galacticToEquatorial(l * rad, 0);
+      // 明るさ: 銀河中心(l=0)で最大、反対側(l=180)で最小。実際の天の川の濃淡に近い形
+      const c = (Math.cos(l * rad) + 1) / 2;
+      MILKY_WAY_POINTS.push({ l: l, ra: eq.ra, dec: eq.dec, bright: 0.25 + 0.75 * c * c });
+    }
 
     // ============================================
     // ★v6: 惑星カタログ（5惑星、Schlyter簡易式）
@@ -456,6 +547,19 @@
         const H = lst - (17.7611223 * 15 * rad);
         const decRad = -29.007806 * rad;
         return { azimuth: azimuthF(H, phi, decRad), altitude: altitudeF(H, phi, decRad) };
+      },
+      // ★v7.5: 星座線（id ペア）
+      getStarLines: function() { return STAR_LINES; },
+      // ★v7.5: 天の川の帯（銀河面）の現在位置。l 昇順・4°刻み・bright は 0.25〜1
+      getMilkyWay: function(date, lat, lng) {
+        const lw = rad * -lng;
+        const phi = rad * lat;
+        const d = toDays(date);
+        const lst = siderealTime(d, lw);
+        return MILKY_WAY_POINTS.map(p => {
+          const H = lst - p.ra;
+          return { l: p.l, bright: p.bright, azimuth: azimuthF(H, phi, p.dec), altitude: altitudeF(H, phi, p.dec) };
+        });
       }
     };
   })();
@@ -6157,52 +6261,81 @@
     display: block;
   }
 
+  /* ★v7.5: 月ナビ HUD の再設計
+     - 見出しは「小さな前置き（eyebrow）／大きな一語（headline）／補足（sub）」の3段。
+       文字間の全角スペース詰めをやめ letter-spacing で組む → 折り返し位置が崩れない
+     - 上: 対象切替ピルだけ。下: 現在地・方位高度・北合わせ を1本のドックに集約
+       （旧: 右上「現在地を取得」がピルと重なっていた） */
   .nav-instruction {
     position: absolute;
-    top: 90px; left: 0; right: 0;
+    top: 72px; left: 0; right: 0;
     text-align: center;
     z-index: 10;
-    padding: 0 20px;
+    padding: 0 28px;
     pointer-events: none;
+  }
+
+  .nav-eyebrow {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.35em;
+    text-indent: 0.35em;
+    color: rgba(201, 169, 97, 0.85);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9);
+    margin-bottom: 0.35rem;
+    min-height: 1em;
+    transition: color 0.4s;
   }
 
   .nav-headline {
     font-family: 'Shippori Mincho', serif;
-    font-size: 1.6rem;
+    font-size: clamp(1.3rem, 6.2vw, 1.7rem);
     font-weight: 500;
-    letter-spacing: 0.2em;
+    line-height: 1.35;
+    letter-spacing: 0.18em;
+    text-indent: 0.18em;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
     color: var(--moon-white);
-    text-shadow: 0 0 30px rgba(244, 239, 216, 0.3), 0 2px 4px rgba(0,0,0,0.8);
-    margin-bottom: 0.4rem;
+    text-shadow: 0 0 30px rgba(244, 239, 216, 0.3), 0 2px 6px rgba(0,0,0,0.9);
+    margin: 0 auto 0.45rem;
+    max-width: 22em;
     transition: color 0.4s;
   }
 
   .nav-headline.locked {
     color: #ffd86b;
-    text-shadow: 0 0 40px rgba(255, 216, 107, 0.6), 0 2px 4px rgba(0,0,0,0.8);
+    text-shadow: 0 0 40px rgba(255, 216, 107, 0.6), 0 2px 6px rgba(0,0,0,0.9);
   }
+  .nav-eyebrow.locked { color: #ffd86b; }
 
   .nav-sub {
-    font-family: 'Cinzel', serif;
-    font-style: italic;
-    font-size: 0.78rem;
-    letter-spacing: 0.25em;
+    font-family: 'Shippori Mincho', serif;
+    font-size: 0.76rem;
+    line-height: 1.7;
+    letter-spacing: 0.2em;
+    text-indent: 0.2em;
+    word-break: keep-all;
+    text-wrap: balance;
     color: var(--ink-dim);
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.9);
   }
 
-  /* ★v7.4: 月⇄銀河中心の切り替えピル（モーダル類 z20〜50 より下） */
+  /* 対象切替ピル（モーダル類 z20〜50 より下） */
   .nav-target-toggle {
     position: absolute;
-    top: 14px; left: 50%;
+    top: 12px; left: 50%;
     transform: translateX(-50%);
     z-index: 15;
     display: flex;
-    background: rgba(3, 8, 24, 0.55);
-    backdrop-filter: blur(8px);
+    padding: 3px;
+    gap: 2px;
+    background: rgba(3, 8, 24, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(201, 169, 97, 0.28);
-    border-radius: 16px;
-    overflow: hidden;
+    border-radius: 999px;
     pointer-events: auto;
   }
   .nav-target-btn {
@@ -6210,38 +6343,95 @@
     border: none;
     color: var(--ink-dim);
     font-family: 'Shippori Mincho', serif;
-    font-size: 0.66rem;
+    font-size: 0.74rem;
     letter-spacing: 0.12em;
-    padding: 7px 12px;
+    padding: 0 16px;
+    min-height: 34px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     cursor: pointer;
+    transition: color 0.25s, background 0.25s;
+    -webkit-tap-highlight-color: transparent;
   }
+  .nav-target-btn .nav-target-icon { font-size: 0.9rem; line-height: 1; }
   .nav-target-btn.active {
     color: #ffd86b;
-    background: rgba(201, 169, 97, 0.16);
+    background: rgba(201, 169, 97, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(201, 169, 97, 0.35);
   }
+
+  /* 下部ドック: [現在地] 方位·高度 [北合わせ] */
+  .nav-dock {
+    position: absolute;
+    left: 14px; right: 14px; bottom: 14px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+  }
+  .nav-dock-btn {
+    flex: 0 0 auto;
+    width: 48px; height: 48px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2px;
+    background: rgba(3, 8, 24, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(201, 169, 97, 0.32);
+    border-radius: 50%;
+    color: var(--gold);
+    font-family: inherit;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background 0.25s, color 0.25s, border-color 0.25s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .nav-dock-btn svg { width: 18px; height: 18px; display: block; }
+  .nav-dock-label {
+    font-size: 0.48rem;
+    letter-spacing: 0.1em;
+    color: rgba(201, 169, 97, 0.8);
+    line-height: 1;
+  }
+  .nav-dock-btn:active { background: rgba(201, 169, 97, 0.22); color: var(--moon-white); }
+  #navCalibrate { visibility: hidden; }
+  #navCalibrate.visible { visibility: visible; }
 
   .nav-status {
-    position: absolute;
-    bottom: 20px; left: 0; right: 0;
+    flex: 1 1 auto;
+    min-width: 0;
     text-align: center;
-    pointer-events: none;
-    z-index: 10;
+    padding: 8px 10px;
+    background: rgba(3, 8, 24, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(110, 196, 245, 0.14);
+    border-radius: 16px;
+    pointer-events: auto;
   }
-
   .nav-status-label {
+    font-family: 'Shippori Mincho', serif;
     font-size: 0.58rem;
-    letter-spacing: 0.35em;
-    color: rgba(138, 160, 184, 0.55);
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+    color: rgba(138, 160, 184, 0.7);
     margin-bottom: 3px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-
   .nav-status-value {
-    font-family: 'Cinzel', serif;
-    font-size: 0.85rem;
-    letter-spacing: 0.2em;
+    font-family: 'Cinzel', 'Shippori Mincho', serif;
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
     color: var(--seiten);
-    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .nav-permission {
@@ -6839,32 +7029,8 @@
     background: linear-gradient(180deg, rgba(201, 169, 97, 0.35), rgba(201, 169, 97, 0.15));
   }
 
-  /* ★v6: 再キャリブレーションボタン（小さく、画面下） */
-  .nav-recalibrate {
-    position: absolute;
-    bottom: 1.1rem;
-    right: 1.1rem;
-    width: 38px;
-    height: 38px;
-    background: rgba(201, 169, 97, 0.08);
-    border: 1px solid rgba(201, 169, 97, 0.32);
-    color: var(--gold);
-    font-size: 1rem;
-    border-radius: 50%;
-    cursor: pointer;
-    pointer-events: auto;
-    z-index: 15;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.25s;
-  }
-  .nav-recalibrate:hover, .nav-recalibrate:active {
-    background: rgba(201, 169, 97, 0.2);
-    color: var(--moon-white);
-  }
-  /* ★v7.5: 磁気センサー精度が悪いとき（iOS webkitCompassAccuracy > 30°）に脈動して促す */
-  .nav-recalibrate.warn {
+  /* ★v7.5: 磁気センサー精度が悪いとき（iOS webkitCompassAccuracy > 30°）に北合わせボタンが脈動 */
+  .nav-dock-btn.warn {
     border-color: rgba(201, 169, 97, 0.9);
     animation: navRecalPulse 1.6s ease-in-out infinite;
   }
@@ -6873,24 +7039,7 @@
     50%      { box-shadow: 0 0 0 9px rgba(201, 169, 97, 0); }
   }
 
-  .nav-calibrate {
-    position: absolute;
-    top: 16px; right: 16px;
-    z-index: 15;
-    background: rgba(3, 8, 24, 0.6);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(110, 196, 245, 0.2);
-    color: var(--ink-dim);
-    padding: 6px 10px;
-    font-size: 0.58rem;
-    letter-spacing: 0.2em;
-    border-radius: 14px;
-    pointer-events: auto;
-    cursor: pointer;
-    display: none;
-  }
-  .nav-calibrate.visible { display: block; }
-
+  /* ★v7.5: デバッグ表示は既定で非表示（方位高度を5回タップ or ?navdebug=1 で表示） */
   .nav-debug {
     position: absolute;
     top: 16px; left: 16px;
@@ -6898,10 +7047,12 @@
     font-family: 'Cinzel', serif;
     font-size: 0.55rem;
     letter-spacing: 0.1em;
-    color: rgba(138, 160, 184, 0.35);
+    color: rgba(138, 160, 184, 0.5);
     pointer-events: none;
     line-height: 1.5;
+    display: none;
   }
+  .nav-debug.visible { display: block; }
 
   /* カレンダービュー */
   .calendar-view {
@@ -7931,23 +8082,40 @@
   </div>
 
   <!-- ★v7.4: 探す対象の切り替え（月 / 銀河の中心ブラックホール） -->
-  <div class="nav-target-toggle" id="navTargetToggle">
-    <button class="nav-target-btn active" data-target="moon">🌙 月</button>
-    <button class="nav-target-btn" data-target="galaxy">🌌 銀河の中心</button>
+  <div class="nav-target-toggle" id="navTargetToggle" role="tablist">
+    <button class="nav-target-btn active" data-target="moon" role="tab"><span class="nav-target-icon">🌙</span>月</button>
+    <button class="nav-target-btn" data-target="galaxy" role="tab"><span class="nav-target-icon">🌌</span>銀河の中心</button>
   </div>
 
+  <!-- ★v7.5: 3段見出し（前置き / 一語 / 補足） -->
   <div class="nav-instruction">
+    <div class="nav-eyebrow" id="navEyebrow"></div>
     <div class="nav-headline" id="navHeadline"></div>
     <div class="nav-sub" id="navSub"></div>
   </div>
 
-  <div class="nav-status">
-    <div class="nav-status-label" id="navStatusLabel">月 の 方 位 · 高 度</div>
-    <div class="nav-status-value" id="navStatusValue">—</div>
+  <!-- ★v7.5: 下部ドック [現在地] 方位·高度 [北合わせ] -->
+  <div class="nav-dock">
+    <button class="nav-dock-btn" id="navCalibrate" title="現在地を取得">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8"/>
+        <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/>
+      </svg>
+      <span class="nav-dock-label">現在地</span>
+    </button>
+    <div class="nav-status" id="navStatus">
+      <div class="nav-status-label" id="navStatusLabel">月の方位 · 高度</div>
+      <div class="nav-status-value" id="navStatusValue">—</div>
+    </div>
+    <button class="nav-dock-btn" id="navRecalibrate" title="コンパスを整え直す">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M15.5 8.5l-2.2 5.3-5.3 2.2 2.2-5.3z"/>
+        <circle cx="12" cy="12" r="0.8" fill="currentColor"/>
+      </svg>
+      <span class="nav-dock-label">北合わせ</span>
+    </button>
   </div>
-
-  <button class="nav-calibrate" id="navCalibrate">現 在 地 を 取 得</button>
-  <button class="nav-recalibrate" id="navRecalibrate" title="コンパスを整え直す">↺</button>
 
   <div class="nav-debug" id="navDebug"></div>
 </div>
@@ -13971,10 +14139,23 @@ const COASTLINES = [
     hideCompassCalModal();
   });
 
-  // 手動でキャリブやり直し（月ナビ画面右下の↺ボタン）
+  // 手動でキャリブやり直し（月ナビ画面 下部ドック右の「北合わせ」）
   document.getElementById('navRecalibrate').addEventListener('click', () => {
     showCompassCalModal();
   });
+
+  // ★v7.5: デバッグ表示の切替。方位高度の欄を5回タップ、または ?navdebug=1
+  {
+    const dbg = document.getElementById('navDebug');
+    if (/[?&]navdebug=1/.test(location.search)) dbg.classList.add('visible');
+    let taps = 0, lastTap = 0;
+    document.getElementById('navStatus').addEventListener('click', () => {
+      const t = Date.now();
+      taps = (t - lastTap < 600) ? taps + 1 : 1;
+      lastTap = t;
+      if (taps >= 5) { taps = 0; dbg.classList.toggle('visible'); }
+    });
+  }
 
   // 「常時」許可ボタン
   document.getElementById('navPermissionAlways').addEventListener('click', async () => {
@@ -14084,11 +14265,11 @@ const COASTLINES = [
 
   function getBodyOrientation(hour) {
     if (hour >= 6 && hour < 12) {
-      return { facing: 0, label: '北 を 向 い て 立 っ て', posture: 'standing' };
+      return { facing: 0, label: '北を向いて立つ', posture: 'standing' };
     } else if (hour >= 12 && hour < 18) {
-      return { facing: 180, label: '南 を 向 い て 立 っ て', posture: 'standing' };
+      return { facing: 180, label: '南を向いて立つ', posture: 'standing' };
     } else {
-      return { facing: 0, label: '北 を 向 い て 座 っ て', posture: 'sitting' };
+      return { facing: 0, label: '北を向いて座る', posture: 'sitting' };
     }
   }
 
@@ -14106,7 +14287,7 @@ const COASTLINES = [
       const t = new Date(start.getTime() + m * 60000);
       const alt = SunCalc.getMoonPosition(t, NAHA.lat, NAHA.lon).altitude;
       if (prevAlt < 0 && alt >= 0) {
-        text = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')} ご ろ 月 の 出`;
+        text = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}ごろ 月の出`;
         break;
       }
       prevAlt = alt;
@@ -14127,7 +14308,7 @@ const COASTLINES = [
       const t = new Date(start.getTime() + m * 60000);
       const alt = SunCalc.getGalacticCenter(t, NAHA.lat, NAHA.lon).altitude;
       if (prevAlt < 0 && alt >= 0) {
-        text = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')} ご ろ 昇 る`;
+        text = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}ごろ 昇る`;
         break;
       }
       prevAlt = alt;
@@ -14137,56 +14318,59 @@ const COASTLINES = [
   }
 
   // ★v7.4: 体感ことばの共通部（月と銀河中心で共用）
+  // ★v7.5: 返り値は { eyebrow, main, sub } の3段。文字間スペースは入れない（CSS letter-spacing で組む）
+  //   eyebrow = 「月は」「銀河の中心は」と小さく前置き、main = 体の向きを基準にした一語、sub = 姿勢と数字
   function targetBodyWords(az, alt, nameJp, riseTextFn) {
     const hour = new Date().getHours();
     const body = getBodyOrientation(hour);
     let relAz = shortAngle(az, body.facing);
     const absAz = Math.abs(relAz);
     const altDeg = alt;
+    const eyebrow = `${nameJp}は`;
 
     if (altDeg < -5) {
       // ★v7.2: 「深さ◯°」より「次にいつ昇るか」の方がユーザーに有用
       const rise = riseTextFn ? riseTextFn() : '';
       return {
-        main: `${nameJp} は 足 元`,
-        sub: rise ? `地 球 の 裏 側 · ${rise}` : `地 球 の 裏 側 · 深 さ ${Math.abs(altDeg).toFixed(0)}°`
+        eyebrow,
+        main: '地球の裏側',
+        sub: rise ? rise : `足元の深さ ${Math.abs(altDeg).toFixed(0)}°`
       };
     }
 
     if (altDeg > 75) {
-      return { main: `${nameJp} は 真 上`, sub: `${body.label} · 見 上 げ て` };
+      return { eyebrow, main: '真上', sub: `${body.label} · そのまま見上げて` };
     }
 
     let heightWord;
-    if (altDeg > 55) heightWord = '頭 上';
-    else if (altDeg > 30) heightWord = '空 高 く';
-    else if (altDeg > 10) heightWord = '斜 め 上';
-    else if (altDeg > -5) heightWord = '地 平 線';
-    else heightWord = '足 元 の 方 向';
+    if (altDeg > 55) heightWord = '頭上';
+    else if (altDeg > 30) heightWord = '空高く';
+    else if (altDeg > 10) heightWord = '斜め上';
+    else heightWord = '地平線のあたり';
 
     let sideWord;
-    if (absAz < 20) sideWord = '正 面';
-    else if (absAz < 60) sideWord = relAz < 0 ? '左 斜 め 前' : '右 斜 め 前';
-    else if (absAz < 110) sideWord = relAz < 0 ? '左 側' : '右 側';
-    else if (absAz < 150) sideWord = relAz < 0 ? '左 斜 め 後 ろ' : '右 斜 め 後 ろ';
-    else sideWord = '真 後 ろ';
+    if (absAz < 20) sideWord = '正面';
+    else if (absAz < 60) sideWord = relAz < 0 ? '左斜め前' : '右斜め前';
+    else if (absAz < 110) sideWord = relAz < 0 ? '左' : '右';
+    else if (absAz < 150) sideWord = relAz < 0 ? '左斜め後ろ' : '右斜め後ろ';
+    else sideWord = '真後ろ';
 
     let main;
     if (altDeg > 10 && altDeg <= 55 && absAz >= 60 && absAz <= 120) {
-      main = relAz < 0 ? '左 肩 の 上' : '右 肩 の 上';
-    } else if (altDeg <= 10 && altDeg > -5 && absAz >= 60 && absAz <= 120) {
-      main = relAz < 0 ? '左 の 足 元 近 く' : '右 の 足 元 近 く';
-    } else if (altDeg <= -5) {
-      main = `${sideWord} の 足 元`;
-    } else if (heightWord === '正 面' || sideWord === '正 面') {
-      main = `${heightWord}`;
+      main = relAz < 0 ? '左肩の上' : '右肩の上';
+    } else if (altDeg <= 10 && absAz >= 60 && absAz <= 120) {
+      main = relAz < 0 ? '左手の地平線' : '右手の地平線';
+    } else if (sideWord === '正面') {
+      main = altDeg > 10 ? `正面の${heightWord}` : '正面の地平線';
     } else {
       main = `${sideWord} · ${heightWord}`;
     }
 
+    const turn = absAz < 20 ? '' : (relAz < 0 ? `左へ ${absAz.toFixed(0)}° · ` : `右へ ${absAz.toFixed(0)}° · `);
     return {
-      main: main,
-      sub: `${body.label} · ${absAz.toFixed(0)}° / 高 度 ${altDeg.toFixed(0)}°`
+      eyebrow,
+      main,
+      sub: `${body.label} · ${turn}高度 ${altDeg.toFixed(0)}°`
     };
   }
 
@@ -14194,7 +14378,7 @@ const COASTLINES = [
     return targetBodyWords(moonAz, moonAlt, '月', nextMoonRiseText);
   }
   function galaxyBodyWords(gcAz, gcAlt) {
-    return targetBodyWords(gcAz, gcAlt, '銀 河 の 中 心', nextGcRiseText);
+    return targetBodyWords(gcAz, gcAlt, '銀河の中心', nextGcRiseText);
   }
 
   // ★v6: 大気差補正（Bennett 1982の公式）
@@ -14530,6 +14714,7 @@ const COASTLINES = [
     const heading = navState.heading;
     const pitch = navState.pitch;
     const fov = 70;
+    const isGalaxy = navState.navTarget === 'galaxy';
 
     for (const star of navState.stars) {
       const p = skyToScreen(star.az, star.alt, view, w, h, fov);
@@ -14578,8 +14763,72 @@ const COASTLINES = [
 
     const now = new Date();
 
+    // ★v7.5: 天の川の帯。銀河面を4°刻みで投影し、中心に近いほど濃く・太く描く。
+    // 「銀河の中心」モードで帯が一点（いて座A*）へ収束して見えるのが狙い。
+    // 影(shadowBlur)は毎フレームだと重いので、太さ違いの半透明ストロークを3本重ねて滲ませる
+    {
+      const mw = SunCalc.getMilkyWay(now, NAHA.lat, NAHA.lon);
+      const pts = mw.map(p => {
+        const altDeg = p.altitude * 180 / Math.PI;
+        if (altDeg < -8) return null;
+        const q = skyToScreen(norm360(p.azimuth * 180 / Math.PI + 180), altDeg, view, w, h, fov);
+        return q ? { x: q.x, y: q.y, b: p.bright } : null;
+      });
+      const band = isGalaxy ? 1.35 : 1.0;   // 銀河モードでは少し強調
+      const layers = [[54, 0.040], [28, 0.055], [10, 0.075]];
+      navCtx.save();
+      navCtx.lineCap = 'round';
+      navCtx.lineJoin = 'round';
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i], b = pts[(i + 1) % pts.length];
+        if (!a || !b) continue;
+        // 投影の裏返り（画面外で大きく飛ぶ区間）は繋がない
+        if (Math.abs(a.x - b.x) > w || Math.abs(a.y - b.y) > h) continue;
+        if ((a.x < -80 && b.x < -80) || (a.x > w + 80 && b.x > w + 80) ||
+            (a.y < -80 && b.y < -80) || (a.y > h + 80 && b.y > h + 80)) continue;
+        const br = (a.b + b.b) / 2 * band;
+        for (const [lw, al] of layers) {
+          navCtx.strokeStyle = `rgba(205, 215, 250, ${(al * br).toFixed(3)})`;
+          navCtx.lineWidth = lw * (0.6 + 0.4 * br);
+          navCtx.beginPath();
+          navCtx.moveTo(a.x, a.y);
+          navCtx.lineTo(b.x, b.y);
+          navCtx.stroke();
+        }
+      }
+      navCtx.restore();
+    }
+
     // ★v6: 主要恒星の描画（シリウス／オリオン／プレアデス／北極星／夏の大三角）
+    // ★v7.5: 星座線（オリオン・三つの大三角・北斗七星・カシオペヤ・さそり・南斗六星・秋の四辺形）
     const starsList = SunCalc.getStars(now, NAHA.lat, NAHA.lon);
+    const starPos = {};
+    for (const s of starsList) {
+      const altDeg = applyRefraction(s.altitude) * 180 / Math.PI;
+      if (altDeg < -3) continue;
+      const azDeg = norm360(s.azimuth * 180 / Math.PI + 180);
+      const p = skyToScreen(azDeg, altDeg, view, w, h, fov);
+      if (p) starPos[s.id] = p;
+    }
+    navCtx.save();
+    navCtx.strokeStyle = 'rgba(150, 185, 235, 0.22)';
+    navCtx.lineWidth = 1;
+    navCtx.beginPath();
+    for (const [a, b] of SunCalc.getStarLines()) {
+      const pa = starPos[a], pb = starPos[b];
+      if (!pa || !pb) continue;
+      if ((pa.x < -40 && pb.x < -40) || (pa.x > w + 40 && pb.x > w + 40) ||
+          (pa.y < -40 && pb.y < -40) || (pa.y > h + 40 && pb.y > h + 40)) continue;
+      // 星の芯を避けて、少し内側から内側へ引く（星が線に刺さって見えない）
+      const dx = pb.x - pa.x, dy = pb.y - pa.y, len = Math.hypot(dx, dy);
+      if (len < 14) continue;
+      const ux = dx / len, uy = dy / len;
+      navCtx.moveTo(pa.x + ux * 6, pa.y + uy * 6);
+      navCtx.lineTo(pb.x - ux * 6, pb.y - uy * 6);
+    }
+    navCtx.stroke();
+    navCtx.restore();
+
     for (const s of starsList) {
       const altDeg = applyRefraction(s.altitude) * 180 / Math.PI;
       if (altDeg < -3) continue;
@@ -14815,7 +15064,6 @@ const COASTLINES = [
     }
 
     // ★v7.4: 銀河中心（いて座A* 大質量ブラックホール）。galaxyモード時のみ描画
-    const isGalaxy = navState.navTarget === 'galaxy';
     const gcPos = SunCalc.getGalacticCenter(now, NAHA.lat, NAHA.lon);
     const gcAlt = applyRefraction(gcPos.altitude) * 180 / Math.PI;
     const gcAz = norm360(gcPos.azimuth * 180 / Math.PI + 180);
@@ -14927,11 +15175,11 @@ const COASTLINES = [
       let hint = null;
       const azAbs = Math.min(180, Math.abs(Math.round(azD)));
       if (Math.abs(azD) >= 20) {
-        hint = (azD > 0 ? '右 へ ' : '左 へ ') + azAbs + '°';
+        hint = (azD > 0 ? '右へ ' : '左へ ') + azAbs + '°';
       } else if (altD >= 15) {
-        hint = '上 へ ' + Math.round(altD) + '°';
+        hint = '上へ ' + Math.round(altD) + '°';
       } else if (altD <= -15) {
-        hint = '下 へ ' + Math.round(-altD) + '°';
+        hint = '下へ ' + Math.round(-altD) + '°';
       }
       if (hint) {
         const tx = sx2 - vec.x * 52;
@@ -14964,9 +15212,19 @@ const COASTLINES = [
     navCtx.stroke();
     navCtx.restore();
 
+    const eyebrow = document.getElementById('navEyebrow');
     const headline = document.getElementById('navHeadline');
     const sub = document.getElementById('navSub');
     const statusVal = document.getElementById('navStatusValue');
+    const targetName = isGalaxy ? '銀河の中心' : '月';
+    // ★v7.5: 3段見出しをまとめて更新（DOM書き換えは値が変わった時だけ）
+    const setWords = (eb, main, sb, locked) => {
+      if (eyebrow.textContent !== eb) eyebrow.textContent = eb;
+      if (headline.textContent !== main) headline.textContent = main;
+      if (sub.textContent !== sb) sub.textContent = sb;
+      eyebrow.classList.toggle('locked', locked);
+      headline.classList.toggle('locked', locked);
+    };
 
     if (targetOnScreen && tp) {
       const distFromCenter = Math.sqrt(
@@ -14985,31 +15243,26 @@ const COASTLINES = [
         }
       }
       if (navState.moonLockOn) {
-        headline.classList.add('locked');
         if (isGalaxy) {
-          headline.textContent = '銀 河 の 中 心 · 見 つ け た';
-          sub.textContent = 'あ の 世 の 入 り 口 · 大 質 量 ブ ラ ッ ク ホ ー ル';
+          setWords('見つけた', '銀河の中心', 'あの世の入り口 · いて座A* ブラックホール', true);
         } else {
-          headline.textContent = '月 · 見 つ け た';
-          sub.textContent = 'そ の ま ま 月 を 感 じ て';
+          setWords('見つけた', '月', 'そのまま、月を感じて', true);
         }
       } else {
-        headline.classList.remove('locked');
-        headline.textContent = isGalaxy ? 'そ こ に 銀 河 の 中 心' : 'そ こ に 月';
-        sub.textContent = 'も う 少 し 中 央 へ';
+        setWords('そこに', targetName, 'もう少し中央へ', false);
       }
     } else {
       navState.moonLockOn = false;
-      headline.classList.remove('locked');
       const bodyWords = isGalaxy ? galaxyBodyWords(gcAz, gcAlt) : moonBodyWords(moonAz, moonAlt);
-      headline.textContent = bodyWords.main;
-      sub.textContent = bodyWords.sub;
+      setWords(bodyWords.eyebrow, bodyWords.main, bodyWords.sub, false);
     }
 
     const azJp = azimuthToJp(isGalaxy ? gcPos.azimuth : moonPos.azimuth);
     const statusLabel = document.getElementById('navStatusLabel');
-    if (statusLabel) statusLabel.textContent = isGalaxy ? '銀 河 中 心 の 方 位 · 高 度' : '月 の 方 位 · 高 度';
-    let statusText = `${azJp.en} ${azJp.deg.toFixed(0)}° · alt ${(isGalaxy ? gcAlt : moonAlt).toFixed(0)}°`;
+    const labelText = isGalaxy ? '銀河の中心 · 方位と高度' : '月 · 方位と高度';
+    if (statusLabel && statusLabel.textContent !== labelText) statusLabel.textContent = labelText;
+    const tAlt = isGalaxy ? gcAlt : moonAlt;
+    let statusText = `${azJp.name} ${azJp.deg.toFixed(0)}° · 高度 ${tAlt.toFixed(0)}°`;
     if (isGalaxy) {
       // ★v7.4: 月との離角。2025-2026はメジャー・ルナ・スタンドスティル（18.6年周期）で
       // 月の赤緯が±28.7°まで振れ、赤緯-29°の銀河中心に月が最接近できる時期
@@ -15017,9 +15270,9 @@ const COASTLINES = [
       const cosSep = Math.sin(moonAlt * D2Rs) * Math.sin(gcAlt * D2Rs) +
                      Math.cos(moonAlt * D2Rs) * Math.cos(gcAlt * D2Rs) * Math.cos((moonAz - gcAz) * D2Rs);
       const sep = Math.acos(Math.max(-1, Math.min(1, cosSep))) / D2Rs;
-      statusText += ` · 月 と ${sep.toFixed(0)}°`;
+      statusText += ` · 月まで ${sep.toFixed(0)}°`;
     }
-    statusVal.textContent = statusText;
+    if (statusVal.textContent !== statusText) statusVal.textContent = statusText;
 
     // ★v7.5: iOS の磁気精度が悪いときは再キャリブボタンを脈動させて促す（押下は任意）
     const recal = document.getElementById('navRecalibrate');
@@ -15028,9 +15281,11 @@ const COASTLINES = [
       recal.classList.toggle('warn', typeof acc === 'number' && (acc < 0 || acc > 30));
     }
 
+    const dbg = document.getElementById('navDebug');
+    if (!dbg.classList.contains('visible')) return;
     const accTxt = (typeof navState.compassAccuracy === 'number') ? ` acc ${navState.compassAccuracy.toFixed(0)}°` : '';
     const yawTxt = (navState.yawOffset !== null) ? ` yaw ${navState.yawOffset.toFixed(0)}°` : '';
-    document.getElementById('navDebug').innerHTML =
+    dbg.innerHTML =
       `ev: ${navState.eventCount} · so: ${navState.screenOrient}° · src ${navState.source}${accTxt}${yawTxt}<br>` +
       `raw α${navState.rawAlpha.toFixed(0)} β${navState.rawBeta.toFixed(0)} γ${navState.rawGamma.toFixed(0)}<br>` +
       `head ${heading.toFixed(0)}° pitch ${pitch.toFixed(0)}°<br>` +
